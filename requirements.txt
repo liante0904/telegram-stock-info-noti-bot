@@ -1,0 +1,11 @@
+telegram
+
+python-telegram-bot
+
+beautifulsoup4
+
+requests
+
+pymysql
+
+openpyxl
