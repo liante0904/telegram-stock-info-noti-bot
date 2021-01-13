@@ -8,14 +8,20 @@
 #https://medium.com/@jesamkim/%EC%BD%94%EB%A1%9C%EB%82%9819-%EA%B5%AD%EB%82%B4-%EB%B0%9C%EC%83%9D-%ED%98%84%ED%99%A9-%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8-%EC%95%8C%EB%A6%BC%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-792022cec710
 #pip install python-telegram-bot
 #https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
+# 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
+
 
 import telegram
 import requests
 import time
 from bs4 import BeautifulSoup
 
+
+# 텔레그램 발송 메세지 변수
 sendMessageText = ""
+# 발송한 연속키
 nNxtIdx = 0
+# 새로 올라온 게시글 개수
 nNewFeedCnt = 0
 
 def send():
@@ -31,8 +37,6 @@ def send():
     chat_id = bot.getUpdates()[-1].message.chat.id
     #print('user id : ', chat_id)
 
-    #사용자 id로 메시지 보내기
-    #bot.sendMessage(chat_id, u'bot이 보낸 메시지')
     bot.sendMessage(chat_id=chat_id, text = sendMessageText)
     time.sleep(10) # 모바일 알림을 받기 위해 10초 텀을 둠(loop 호출시)
 
