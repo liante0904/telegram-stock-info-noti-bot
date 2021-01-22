@@ -17,11 +17,17 @@ import requests
 import time
 from bs4 import BeautifulSoup
 
+# 기본 URL
+ARTICLE_BASE_URL = ""
+# 파싱 게시판 개수
+BOARD_CNT = 3 
+# 게시판 이름
+BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석"]
 
 # 텔레그램 발송 메세지 변수
 sendMessageText = ""
 # 발송한 연속키
-nNxtIdx = 0
+nNxtIdx = [0, 0, 0]
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
 
@@ -60,58 +66,83 @@ def checkNewArticle():
     global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
+    global ARTICLE_BASE_URL
 
     requests.packages.urllib3.disable_warnings()
 
-    articleBaseUrl = 'https://www.ebestsec.co.kr/EtwFrontBoard/'
+    ARTICLE_BASE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/'
+    # 이슈브리프
+    TARGET_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
     # 이베스트 기업분석 게시판
-    target_url = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
+    TARGET_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
+    # 산업분석
+    TARGET_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+    
+    # URL GET
+    for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        parse(idx, TARGET_URL)
+        
 
-    # URL GET(이베스트 기업분석 게시판)
-    webpage = requests.get(target_url, verify=False)
+def parse(idx, TARGET_URL):
+
+    # 파싱 게시판 개수
+    global BOARD_CNT 
+    # 게시판 이름
+    global BOARD_NAME
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     
     # 현재 최근 게시글 인덱스
     ntotalIdx = int( soup.select('span.info')[0].text.replace("Total", "").replace("Page 1", "").strip() )
-    #nNxtIdx = int( totalIdx[0].text.replace("Total", "").replace("Page 1", "").strip() )
-    print('전체 게시글', ntotalIdx, '게시글 연속키', nNxtIdx)
-    if nNxtIdx == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
+    #nNxtIdx[idx] = int( totalIdx[0].text.replace("Total", "").replace("Page 1", "").strip() )
+    print('전체 게시글', ntotalIdx, '게시글 연속키', nNxtIdx[idx])
+    if nNxtIdx[idx] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
         # 게시글 제목
         soup = soup.find_all('td', class_='subject')
         #top_200_list = soup.find_all('li', class_='chart-list__element')
         #soup = str(soup).replace("amp;", "")
         #print(soup)
-        print('게시글 제목:',soup[0].find('a').text) # 본문
+
+        print('게시판 이름:', BOARD_NAME[idx]) # 게시판 종류
+        print('게시글 제목:',soup[0].find('a').text ) # 게시글 제목
+        
         articleTitle = soup[0].find('a').text + "\n"
         sendMessageText = articleTitle 
-        sendMessageText += articleBaseUrl 
+        sendMessageText += ARTICLE_BASE_URL 
         sendMessageText += soup[0].find('a').attrs['href'].replace("amp;", "")
         
-        print(articleBaseUrl + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
+        print(ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
         #send() # 서버 재 실행시 첫 발송 주석
-        nNxtIdx = ntotalIdx # 첫 실행시 인덱스 설정
+        nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
+        print('게시판 이름:', BOARD_NAME[idx]) # 게시판 종류
         soup = soup.find_all('td', class_='subject')
         #nIdx = int(soup.select('tbody > tr > td')[0]) # 현재 게시글 번호
-        nNewFeedCnt = ntotalIdx - nNxtIdx # 새로 올라온 게시글 개수
+        nNewFeedCnt = ntotalIdx - nNxtIdx[idx] # 새로 올라온 게시글 개수
         
         while nNewFeedCnt > 0: # 새 게시글이 올라옴
             print('새로운 게시글 수:', nNewFeedCnt)
             articleTitle = soup[nNewFeedCnt-1].find('a').text + "\n"
             sendMessageText = articleTitle 
-            sendMessageText += articleBaseUrl 
+            sendMessageText += ARTICLE_BASE_URL 
             sendMessageText += soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
             send()
             nNewFeedCnt -= 1
             print('nNewFeedCnt', nNewFeedCnt)
             if nNewFeedCnt == 0 : 
-                nNxtIdx = ntotalIdx
+                nNxtIdx[idx] = ntotalIdx
                 return
 
 
         return False
+
+
 
 # 액션 플랜 
 # 1. 10분 간격으로 게시글을 읽어옵니다.
