@@ -27,7 +27,7 @@ BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석"]
 # 텔레그램 발송 메세지 변수
 sendMessageText = ""
 # 발송한 연속키
-nNxtIdx = [0, 0, 0]
+nNxtIdx = [0, 0, 3851]
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
 
@@ -91,6 +91,11 @@ def parse(idx, TARGET_URL):
     global BOARD_CNT 
     # 게시판 이름
     global BOARD_NAME
+
+    global sendMessageText
+    global nNxtIdx
+    global nNewFeedCnt
+    global ARTICLE_BASE_URL
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -156,7 +161,7 @@ def main():
             print("send() => 게시글 정보 보내기")
             #send()
 
-        time.sleep(600)
+        time.sleep(1)
         print("게시글 재확인")
 
 
