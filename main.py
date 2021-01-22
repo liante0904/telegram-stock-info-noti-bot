@@ -10,6 +10,7 @@
 #https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
 # 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
 
+# BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
 
 import telegram
 import requests
@@ -27,6 +28,7 @@ nNewFeedCnt = 0
 def send():
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    
     bot = telegram.Bot(token = my_token_key)
 
     #생성한 텔레그램 봇 정보 출력
@@ -34,7 +36,11 @@ def send():
     #print('텔레그램 채널 정보 : ',me)
 
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
-    chat_id = bot.getUpdates()[-1].message.chat.id
+    #chat_id = bot.getUpdates()[-1].message.chat.id
+
+    chat_id = '-1001431056975'
+    
+
     #print('user id : ', chat_id)
 
     bot.sendMessage(chat_id=chat_id, text = sendMessageText)
@@ -54,6 +60,8 @@ def checkNewArticle():
     global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
+
+    requests.packages.urllib3.disable_warnings()
 
     articleBaseUrl = 'https://www.ebestsec.co.kr/EtwFrontBoard/'
     # 이베스트 기업분석 게시판
@@ -81,7 +89,7 @@ def checkNewArticle():
         sendMessageText += soup[0].find('a').attrs['href'].replace("amp;", "")
         
         print(articleBaseUrl + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
-        send()
+        #send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
@@ -106,7 +114,7 @@ def checkNewArticle():
         return False
 
 # 액션 플랜 
-# 1. 3분 간격으로 게시글을 읽어옵니다.
+# 1. 10분 간격으로 게시글을 읽어옵니다.
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
     # 메세지로 게시글 정보르 보냅니다
     # 아닌 경우 다시 1번을 반복합니다.
@@ -117,7 +125,7 @@ def main():
             print("send() => 게시글 정보 보내기")
             #send()
 
-        time.sleep(100)
+        time.sleep(600)
         print("게시글 재확인")
 
 
