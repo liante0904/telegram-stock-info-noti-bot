@@ -86,6 +86,7 @@ def checkNewArticle():
     # URL GET
     for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         parse(idx, TARGET_URL)
+        time.sleep(5)
         
 
 def parse(idx, TARGET_URL):
