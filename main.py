@@ -32,6 +32,9 @@ nNxtIdx = [0, 0, 3851]
 nNewFeedCnt = 0
 
 def send():
+
+    global sendMessageText
+    
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     
