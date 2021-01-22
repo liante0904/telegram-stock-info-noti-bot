@@ -164,7 +164,7 @@ def main():
             print("send() => 게시글 정보 보내기")
             #send()
 
-        time.sleep(1)
+        time.sleep(600)
         print("게시글 재확인")
 
 
