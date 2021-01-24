@@ -11,11 +11,12 @@
 # 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
 
 # BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
-
+import os
 import telegram
 import requests
 import time
 from bs4 import BeautifulSoup
+from requests import get  # to make GET request
 
 # 기본 URL
 ARTICLE_BASE_URL = ""
@@ -36,7 +37,6 @@ fire = u'\U0001F525'
 pick = u'\U0001F449'
 
 def checkNewArticle():
-
     # 게시글 url의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/EtwFrontBoard/" 를 추가
     # 2. amp; 를 삭제처리를 해야함
@@ -44,7 +44,6 @@ def checkNewArticle():
     # 게시글 내 첨부파일의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType=" 를 추가
     # 2. 링크에서 알맹이를 붙이면 됨 -> javascript:download("08573D2F59307A57F4FC67A81B8C333A4C884E6D2951A32F4A48B73EF4E6EC22A0E62B351A025A54E20CB47DEF8A0A801BF2F7B5E3E640975E88D7BACE3B4A49F83020ED90019B489B3C036CF8AB930DCF4795CE87DE76454465F0CF7316F47BF3A0BC08364132247378E3AABC8D0981627BD8F94134BF00D27B03D8F04AC8C04369354956052B75415A9585589694B5F63378DFA40C6BA6435302B96D780C3B3EB2BF0C866966D4CE651747574C8B25208B848CBEBB1BE0222821FC75DCE016")
-
     global ARTICLE_BASE_URL
 
     requests.packages.urllib3.disable_warnings()
@@ -83,7 +82,7 @@ def parse(idx, TARGET_URL):
         print('###첫실행구간###')
         # 게시글 제목
         soup = soup.find_all('td', class_='subject')
-
+        ARTICLE_URL = ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         print('게시판 이름:', BOARD_NAME[idx]) # 게시판 종류
         print('게시글 제목:',soup[0].find('a').text ) # 게시글 제목
         print('게시글URL:',ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
@@ -93,10 +92,11 @@ def parse(idx, TARGET_URL):
         articleTitle += fire+ BOARD_NAME[idx] + fire + "\n"
         articleTitle += soup[0].find('a').text + "\n"
         sendMessageText = articleTitle 
-        sendMessageText += pick + ARTICLE_BASE_URL 
-        sendMessageText += soup[0].find('a').attrs['href'].replace("amp;", "")
+        sendMessageText += pick + ARTICLE_URL 
         
-        #send() # 서버 재 실행시 첫 발송 주석
+        # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
+        downloadFile(ARTICLE_URL)
+        send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
@@ -122,10 +122,27 @@ def parse(idx, TARGET_URL):
 
         return False
 
-def send():
 
-    global sendMessageText
+def downloadFile(ARTICLE_URL):
+    global ATTACH_FILE_NAME
+    ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
+
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
+    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '')
+    print('첨부파일 URL : ',ATTACH_URL)
+    # 첨부파일 이름
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
+    print('첨부파일이름 : ',ATTACH_FILE_NAME)
+
+    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+        response = get(ATTACH_URL, verify=False)               # get request
+        file.write(response.content)      # write to file
     
+
+def send():
+    global ATTACH_FILE_NAME
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
@@ -141,10 +158,10 @@ def send():
     #chat_id = '-1001474652718' # 테스트 채널
 
     bot.sendMessage(chat_id = chat_id, text = sendMessageText)
+    bot.sendDocument(chat_id = chat_id, document = open(ATTACH_FILE_NAME, 'rb') )
+    os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
        
-
-
 # 액션 플랜 
 # 1. 10분 간격으로 게시글을 읽어옵니다.
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
