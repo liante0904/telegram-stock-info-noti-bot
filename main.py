@@ -7,6 +7,7 @@
 #https://steemit.com/kr-dev/@maanya/30
 #https://medium.com/@jesamkim/%EC%BD%94%EB%A1%9C%EB%82%9819-%EA%B5%AD%EB%82%B4-%EB%B0%9C%EC%83%9D-%ED%98%84%ED%99%A9-%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8-%EC%95%8C%EB%A6%BC%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-792022cec710
 #pip install python-telegram-bot
+#pip freeze > requirements.txt
 #https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
 # 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
 
@@ -15,8 +16,11 @@ import os
 import telegram
 import requests
 import time
+import ssl
 from bs4 import BeautifulSoup
 from requests import get  # to make GET request
+import urllib.request
+from clint.textui import progress
 
 # 기본 URL
 ARTICLE_BASE_URL = ""
@@ -96,7 +100,7 @@ def parse(idx, TARGET_URL):
         
         # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         downloadFile(ARTICLE_URL)
-        #send() # 서버 재 실행시 첫 발송 주석
+        send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
@@ -140,9 +144,9 @@ def downloadFile(ARTICLE_URL):
         response = get(ATTACH_URL, verify=False)               # get request
         file.write(response.content)      # write to file
     
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def send():
-    global ATTACH_FILE_NAME
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
@@ -158,6 +162,7 @@ def send():
     #chat_id = '-1001474652718' # 테스트 채널
 
     bot.sendMessage(chat_id = chat_id, text = sendMessageText)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     bot.sendDocument(chat_id = chat_id, document = open(ATTACH_FILE_NAME, 'rb') )
     os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
