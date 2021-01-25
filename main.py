@@ -100,7 +100,7 @@ def parse(idx, TARGET_URL):
         
         # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         downloadFile(ARTICLE_URL)
-        send() # 서버 재 실행시 첫 발송 주석
+        #send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
