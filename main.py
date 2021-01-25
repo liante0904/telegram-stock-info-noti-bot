@@ -6,8 +6,8 @@
 #https://besixdouze.net/24
 #https://steemit.com/kr-dev/@maanya/30
 #https://medium.com/@jesamkim/%EC%BD%94%EB%A1%9C%EB%82%9819-%EA%B5%AD%EB%82%B4-%EB%B0%9C%EC%83%9D-%ED%98%84%ED%99%A9-%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8-%EC%95%8C%EB%A6%BC%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-792022cec710
-#pip install python-telegram-bot
-#pip freeze > requirements.txt
+#pip3 install python-telegram-bot
+#pip3 freeze > requirements.txt
 #https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
 # 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
 
@@ -19,8 +19,7 @@ import time
 import ssl
 from bs4 import BeautifulSoup
 from requests import get  # to make GET request
-import urllib.request
-from clint.textui import progress
+
 
 # 기본 URL
 ARTICLE_BASE_URL = ""
@@ -100,7 +99,7 @@ def parse(idx, TARGET_URL):
         
         # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         downloadFile(ARTICLE_URL)
-        #send() # 서버 재 실행시 첫 발송 주석
+        send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
