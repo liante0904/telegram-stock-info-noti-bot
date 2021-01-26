@@ -100,8 +100,8 @@ def EBEST_parse(idx, TARGET_URL):
         sendMessageText += pick + ARTICLE_URL 
         
         # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
-        EBEST_downloadFile(ARTICLE_URL)
-        send() # 서버 재 실행시 첫 발송 주석
+        #EBEST_downloadFile(ARTICLE_URL)
+        #send() # 서버 재 실행시 첫 발송 주석
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
@@ -117,6 +117,7 @@ def EBEST_parse(idx, TARGET_URL):
             sendMessageText = articleTitle 
             sendMessageText += ARTICLE_BASE_URL 
             sendMessageText += soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
+            EBEST_downloadFile(ARTICLE_URL)
             send()
             nNewFeedCnt -= 1
             print('nNewFeedCnt', nNewFeedCnt)
