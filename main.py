@@ -87,15 +87,16 @@ def EBEST_parse(idx, TARGET_URL):
         print('###첫실행구간###')
         # 게시글 제목
         soup = soup.find_all('td', class_='subject')
-        ARTICLE_URL = ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
+
         print('게시판 이름:', BOARD_NAME[idx]) # 게시판 종류
         print('게시글 제목:',soup[0].find('a').text ) # 게시글 제목
         print('게시글URL:',ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
         print('############')
 
+        ARTICLE_URL = ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         articleTitle = ''
-        articleTitle += fire+ BOARD_NAME[idx] + fire + "\n"
-        articleTitle += soup[0].find('a').text + "\n"
+        articleTitle += fire+ BOARD_NAME[idx] + fire + "\n" # 게시판 이름
+        articleTitle += soup[0].find('a').text + "\n" # 링크
         sendMessageText = articleTitle 
         sendMessageText += pick + ARTICLE_URL 
         
@@ -113,10 +114,14 @@ def EBEST_parse(idx, TARGET_URL):
         print('### 새로운 게시글 개수:', nNewFeedCnt,' ###')
         while nNewFeedCnt > 0: # 새 게시글이 올라옴
             print('현재 게시판 :',BOARD_NAME[idx],' 새로운 게시글 수:', nNewFeedCnt)
-            articleTitle = soup[nNewFeedCnt-1].find('a').text + "\n"
+            ARTICLE_URL = ARTICLE_BASE_URL + soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
+            articleTitle = ''
+            articleTitle += fire+ BOARD_NAME[idx] + fire + "\n" # 게시판 이름
+            articleTitle += soup[nNewFeedCnt-1].find('a').text + "\n" # 링크
+
             sendMessageText = articleTitle 
             sendMessageText += ARTICLE_BASE_URL 
-            sendMessageText += soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
+            sendMessageText += pick + ARTICLE_URL 
             EBEST_downloadFile(ARTICLE_URL)
             send()
             nNewFeedCnt -= 1
