@@ -1,2 +1,2 @@
-python-3.6
-pip-9.0.1
+python-3.6.9
+pip-21.0
