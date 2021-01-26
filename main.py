@@ -26,14 +26,14 @@ from requests import get  # to make GET request
 # 기본 URL
 ARTICLE_BASE_URL = ""
 # 게시판 이름
-BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석"]
+BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 # 게시글 갱신 시간
 REFRESH_TIME = 600
 # 텔레그램 발송 메세지 변수
 sendMessageText = ""
 # 발송한 연속키
 #nNxtIdx = [2279, 7617, 3848]
-nNxtIdx = [0, 0, 0]
+nNxtIdx = [0, 0, 0, 0, 0]
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
 
@@ -60,8 +60,12 @@ def EBEST_checkNewArticle():
     TARGET_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
     # 산업분석
     TARGET_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+    # 투자전략
+    TARGET_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
+    # Quant
+    TARGET_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4)
     
     # URL GET
     for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
@@ -165,8 +169,8 @@ def send():
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #chat_id = bot.getUpdates()[-1].message.chat.id
 
-    chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
-    #chat_id = '-1001474652718' # 테스트 채널
+    #chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
+    chat_id = '-1001474652718' # 테스트 채널
 
     bot.sendMessage(chat_id = chat_id, text = sendMessageText)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
