@@ -159,8 +159,8 @@ def send():
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #chat_id = bot.getUpdates()[-1].message.chat.id
 
-    #chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
-    chat_id = '-1001474652718' # 테스트 채널
+    chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
+    #chat_id = '-1001474652718' # 테스트 채널
 
     bot.sendMessage(chat_id = chat_id, text = sendMessageText)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
