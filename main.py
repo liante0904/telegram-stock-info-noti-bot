@@ -176,8 +176,8 @@ def send():
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #chat_id = bot.getUpdates()[-1].message.chat.id
 
-    chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
-    #chat_id = '-1001474652718' # 테스트 채널
+    #chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
+    chat_id = '-1001474652718' # 테스트 채널
 
     bot.sendMessage(chat_id = chat_id, text = sendMessageText)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -187,22 +187,13 @@ def send():
 
 
 def HeungKuk_checkNewArticle():
-    # 게시글 url의 경우 
-    # 1. 앞에 "https://www.ebestsec.co.kr/EtwFrontBoard/" 를 추가
-    # 2. amp; 를 삭제처리를 해야함
-
-    # 게시글 내 첨부파일의 경우 
-    # 1. 앞에 "https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType=" 를 추가
-    # 2. 링크에서 알맹이를 붙이면 됨 -> javascript:download("08573D2F59307A57F4FC67A81B8C333A4C884E6D2951A32F4A48B73EF4E6EC22A0E62B351A025A54E20CB47DEF8A0A801BF2F7B5E3E640975E88D7BACE3B4A49F83020ED90019B489B3C036CF8AB930DCF4795CE87DE76454465F0CF7316F47BF3A0BC08364132247378E3AABC8D0981627BD8F94134BF00D27B03D8F04AC8C04369354956052B75415A9585589694B5F63378DFA40C6BA6435302B96D780C3B3EB2BF0C866966D4CE651747574C8B25208B848CBEBB1BE0222821FC75DCE016")
 
     requests.packages.urllib3.disable_warnings()
 
-    # 흥국 투자전략
+    # 흥국 투자전략
     TARGET_URL_0 = 'http://www.heungkuksec.co.kr/research/industry/list.do'
     # 흥국 산업/기업 분석
     TARGET_URL_1 = 'http://www.heungkuksec.co.kr/research/company/list.do'
-
-    
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
     
@@ -228,6 +219,7 @@ def HeungKuk_parse(idx, TARGET_URL):
     if nNxtIdx[idx] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
         print('###첫실행구간###')
         # 게시글 제목
+        idx = 0
         soup = soup.select('#content > table > tbody')
         print(soup)
         ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[idx]
@@ -239,6 +231,19 @@ def HeungKuk_parse(idx, TARGET_URL):
         print('게시글URL:', ARTICLE_URL) # 주소
         print('############')
 
+        # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+
+        # key폴더 확인후 없는 경우 생성
+        os.makedirs('./key', exist_ok=True)
+
+
+        SEC_FIRM_ORDER = 1
+        ARTICLE_BOARD_ORDER = 0
+        KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key'
+        file = open( KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        file.write( ARTICLE_URL )      # 파일에 문자열 저장
+        file.close()                     # 파일 객체 닫기
+
         articleTitle = ''
         articleTitle += fire+ ARTICLE_BOARD_NAME + fire + "\n"
         articleTitle += ARTICLE_TITLE + "\n"
@@ -248,34 +253,6 @@ def HeungKuk_parse(idx, TARGET_URL):
         HeungKuk_downloadFile(ARTICLE_URL)
         send() # 서버 재 실행시 첫 발송 주석
         #nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
-
-    else: # 두번째 실행인 경우
-        print('###ELSE구간###')
-        soup = soup.find_all('td', class_='subject')
-        #nIdx = int(soup.select('tbody > tr > td')[0]) # 현재 게시글 번호
-        #nNewFeedCnt = ntotalIdx - nNxtIdx[idx] # 새로 올라온 게시글 개수
-        
-        print('### 새로운 게시글 개수:', nNewFeedCnt,' ###')
-        while nNewFeedCnt > 0: # 새 게시글이 올라옴
-            print('현재 게시판 :',EBEST_BOARD_NAME[idx],' 새로운 게시글 수:', nNewFeedCnt)
-            ARTICLE_URL = ARTICLE_BASE_URL + soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
-            articleTitle = ''
-            articleTitle += fire+ EBEST_BOARD_NAME[idx] + fire + "\n" # 게시판 이름
-            articleTitle += soup[nNewFeedCnt-1].find('a').text + "\n" # 링크
-
-            sendMessageText = articleTitle 
-            sendMessageText += ARTICLE_BASE_URL 
-            sendMessageText += pick + ARTICLE_URL 
-            HeungKuk_downloadFile(ARTICLE_URL)
-            send()
-            nNewFeedCnt -= 1
-            print('nNewFeedCnt', nNewFeedCnt)
-            if nNewFeedCnt == 0 : 
-                print('새로운 게시글 모두 전송 완료')
-                #nNxtIdx[idx] = ntotalIdx
-                return
-
-        return False
 
 
 def HeungKuk_downloadFile(ARTICLE_URL):
@@ -307,11 +284,11 @@ def main():
     print('########Program Start Run########')
     while True:
 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        #print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        #EBEST_checkNewArticle()
         
-        #print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        #HeungKuk_checkNewArticle()        
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
         time.sleep(REFRESH_TIME)
         print('######',REFRESH_TIME,'초 후 게시글 재 확인######')
 
