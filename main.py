@@ -23,8 +23,6 @@ from bs4 import BeautifulSoup
 from requests import get  # to make GET request
 
 
-# 기본 URL
-ARTICLE_BASE_URL = ""
 # 게시판 이름
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
@@ -50,11 +48,10 @@ def EBEST_checkNewArticle():
     # 게시글 내 첨부파일의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType=" 를 추가
     # 2. 링크에서 알맹이를 붙이면 됨 -> javascript:download("08573D2F59307A57F4FC67A81B8C333A4C884E6D2951A32F4A48B73EF4E6EC22A0E62B351A025A54E20CB47DEF8A0A801BF2F7B5E3E640975E88D7BACE3B4A49F83020ED90019B489B3C036CF8AB930DCF4795CE87DE76454465F0CF7316F47BF3A0BC08364132247378E3AABC8D0981627BD8F94134BF00D27B03D8F04AC8C04369354956052B75415A9585589694B5F63378DFA40C6BA6435302B96D780C3B3EB2BF0C866966D4CE651747574C8B25208B848CBEBB1BE0222821FC75DCE016")
-    global ARTICLE_BASE_URL
 
     requests.packages.urllib3.disable_warnings()
 
-    ARTICLE_BASE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/'
+
     # 이슈브리프
     TARGET_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
     # 이베스트 기업분석 게시판
@@ -93,21 +90,25 @@ def EBEST_parse(idx, TARGET_URL):
         # 게시글 제목
         soup = soup.find_all('td', class_='subject')
 
-        print('게시판 이름:', EBEST_BOARD_NAME[idx]) # 게시판 종류
-        print('게시글 제목:',soup[0].find('a').text ) # 게시글 제목
-        print('게시글URL:',ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")) # 주소
+        ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[idx]
+        ARTICLE_TITLE       = soup[idx].find('a').text
+        ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[idx].find('a').attrs['href'].replace("amp;", "")
+        print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+        print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
+        print('게시글URL:', ARTICLE_URL) # 주소
         print('############')
 
-        ARTICLE_URL = ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
-        articleTitle = ''
-        articleTitle += fire+ EBEST_BOARD_NAME[idx] + fire + "\n" # 게시판 이름
-        articleTitle += soup[0].find('a').text + "\n" # 링크
-        sendMessageText = articleTitle 
-        sendMessageText += pick + ARTICLE_URL 
+
+        sendMessageText = ''
+        sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
+        sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
+        sendMessageText += pick + ARTICLE_URL  # 게시글 URL
         
-        # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
+
+
         #EBEST_downloadFile(ARTICLE_URL)
         #send() # 서버 재 실행시 첫 발송 주석
+
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
@@ -119,14 +120,19 @@ def EBEST_parse(idx, TARGET_URL):
         print('### 새로운 게시글 개수:', nNewFeedCnt,' ###')
         while nNewFeedCnt > 0: # 새 게시글이 올라옴
             print('현재 게시판 :',EBEST_BOARD_NAME[idx],' 새로운 게시글 수:', nNewFeedCnt)
-            ARTICLE_URL = ARTICLE_BASE_URL + soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
-            articleTitle = ''
-            articleTitle += fire+ EBEST_BOARD_NAME[idx] + fire + "\n" # 게시판 이름
-            articleTitle += soup[nNewFeedCnt-1].find('a').text + "\n" # 링크
 
-            sendMessageText = articleTitle 
-            sendMessageText += ARTICLE_BASE_URL 
-            sendMessageText += pick + ARTICLE_URL 
+            ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[idx]
+            ARTICLE_TITLE       = soup[nNewFeedCnt-1].find('a').text
+            ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
+            print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+            print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
+            print('게시글URL:', ARTICLE_URL) # 주소
+
+            sendMessageText = ''
+            sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
+            sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
+            sendMessageText += pick + ARTICLE_URL  # 게시글 URL
+
             EBEST_downloadFile(ARTICLE_URL)
             send()
             nNewFeedCnt -= 1
@@ -188,11 +194,9 @@ def HeungKuk_checkNewArticle():
     # 게시글 내 첨부파일의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType=" 를 추가
     # 2. 링크에서 알맹이를 붙이면 됨 -> javascript:download("08573D2F59307A57F4FC67A81B8C333A4C884E6D2951A32F4A48B73EF4E6EC22A0E62B351A025A54E20CB47DEF8A0A801BF2F7B5E3E640975E88D7BACE3B4A49F83020ED90019B489B3C036CF8AB930DCF4795CE87DE76454465F0CF7316F47BF3A0BC08364132247378E3AABC8D0981627BD8F94134BF00D27B03D8F04AC8C04369354956052B75415A9585589694B5F63378DFA40C6BA6435302B96D780C3B3EB2BF0C866966D4CE651747574C8B25208B848CBEBB1BE0222821FC75DCE016")
-    global ARTICLE_BASE_URL
 
     requests.packages.urllib3.disable_warnings()
 
-    ARTICLE_BASE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/'
     # 흥국 투자전략
     TARGET_URL_0 = 'http://www.heungkuksec.co.kr/research/industry/list.do'
     # 흥국 산업/기업 분석
@@ -236,12 +240,11 @@ def HeungKuk_parse(idx, TARGET_URL):
         print('############')
 
         articleTitle = ''
-        articleTitle += fire+ HEUNGKUK_BOARD_NAME[idx] + fire + "\n"
-        articleTitle += soup[0].find('a').text + "\n"
+        articleTitle += fire+ ARTICLE_BOARD_NAME + fire + "\n"
+        articleTitle += ARTICLE_TITLE + "\n"
         sendMessageText = articleTitle 
         sendMessageText += pick + ARTICLE_URL 
         
-        # ARTICLE_BASE_URL + soup[0].find('a').attrs['href'].replace("amp;", "")
         HeungKuk_downloadFile(ARTICLE_URL)
         send() # 서버 재 실행시 첫 발송 주석
         #nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
