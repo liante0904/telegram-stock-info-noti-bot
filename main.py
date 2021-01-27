@@ -216,43 +216,48 @@ def HeungKuk_parse(idx, TARGET_URL):
     
 
     print('게시판 이름:', HEUNGKUK_BOARD_NAME[idx],'전체 게시글', '게시글 연속키', nNxtIdx[idx])
-    if nNxtIdx[idx] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
-        print('###첫실행구간###')
-        # 게시글 제목
-        idx = 0
-        soup = soup.select('#content > table > tbody')
-        print(soup)
-        ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[idx]
-        ARTICLE_TITLE = soup[idx].find('a').text
-        ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soup[idx].find('a')['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+    print('###첫실행구간###')
+    # 게시글 제목
+    soup = soup.select('#content > table > tbody')
+    print(soup)
+    ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[0]
+    ARTICLE_TITLE = soup[0].find('a').text
+    ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soup[idx].find('a')['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
 
-        print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-        print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
-        print('게시글URL:', ARTICLE_URL) # 주소
-        print('############')
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', ARTICLE_URL) # 주소
+    print('############')
 
-        # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
 
-        # key폴더 확인후 없는 경우 생성
-        os.makedirs('./key', exist_ok=True)
+    # key폴더 확인후 없는 경우 생성
+    os.makedirs('./key', exist_ok=True)
 
 
-        SEC_FIRM_ORDER = 1
-        ARTICLE_BOARD_ORDER = 0
-        KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key'
+    SEC_FIRM_ORDER = 1 # 증권사 순번
+    ARTICLE_BOARD_ORDER = 0 # 게시판 순번
+    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key'
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         file = open( KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
         file.write( ARTICLE_URL )      # 파일에 문자열 저장
+        file.close()                     # 파일 객체 닫기        
+    else:   # 이미 실행
+        file = open( KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        NXT_KEY = file.readline()       # 파일 내 데이터 읽기
+        print(KEY_DIR_FILE_NAME,' NXT_KEY:',NXT_KEY)
         file.close()                     # 파일 객체 닫기
 
-        articleTitle = ''
-        articleTitle += fire+ ARTICLE_BOARD_NAME + fire + "\n"
-        articleTitle += ARTICLE_TITLE + "\n"
-        sendMessageText = articleTitle 
-        sendMessageText += pick + ARTICLE_URL 
-        
-        HeungKuk_downloadFile(ARTICLE_URL)
-        send() # 서버 재 실행시 첫 발송 주석
-        #nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
+    articleTitle = ''
+    articleTitle += fire+ ARTICLE_BOARD_NAME + fire + "\n"
+    articleTitle += ARTICLE_TITLE + "\n"
+    sendMessageText = articleTitle 
+    sendMessageText += pick + ARTICLE_URL 
+    
+    HeungKuk_downloadFile(ARTICLE_URL)
+    send() # 서버 재 실행시 첫 발송 주석
+    #nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
 
 def HeungKuk_downloadFile(ARTICLE_URL):
