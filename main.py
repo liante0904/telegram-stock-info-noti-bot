@@ -35,11 +35,17 @@ nNxtIdx = [0, 0, 0, 0, 0]
 NXT_KEY = ''
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
+
+# 연속키 인덱스
+SEC_FIRM_ORDER = 0 # 증권사 순번
+ARTICLE_BOARD_ORDER = 0 # 게시판 순번
+
 # 이모지
 fire = u'\U0001F525'
 pick = u'\U0001F449'
 
 def EBEST_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
     # 게시글 url의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/EtwFrontBoard/" 를 추가
     # 2. amp; 를 삭제처리를 해야함
@@ -65,12 +71,12 @@ def EBEST_checkNewArticle():
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4)
     
     # URL GET
-    for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        EBEST_parse(idx, TARGET_URL)
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         time.sleep(5)
  
 
-def EBEST_parse(idx, TARGET_URL):
+def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
@@ -82,55 +88,47 @@ def EBEST_parse(idx, TARGET_URL):
     
     # 현재 최근 게시글 인덱스
     ntotalIdx = int( soup.select('span.info')[0].text.replace("Total", "").replace("Page 1", "").strip() )
-    #nNxtIdx[idx] = int( totalIdx[0].text.replace("Total", "").replace("Page 1", "").strip() )
-    print('게시판 이름:', EBEST_BOARD_NAME[idx],'전체 게시글', ntotalIdx, '게시글 연속키', nNxtIdx[idx])
-    if nNxtIdx[idx] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
+    #nNxtIdx[ARTICLE_BOARD_ORDER] = int( totalIdx[0].text.replace("Total", "").replace("Page 1", "").strip() )
+    print('게시판 이름:', EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER],'전체 게시글', ntotalIdx, '게시글 연속키', nNxtIdx[ARTICLE_BOARD_ORDER])
+    if nNxtIdx[ARTICLE_BOARD_ORDER] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
         print('###첫실행구간###')
         # 게시글 제목
         soup = soup.find_all('td', class_='subject')
 
-        ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[idx]
-        ARTICLE_TITLE       = soup[idx].find('a').text
-        ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[idx].find('a').attrs['href'].replace("amp;", "")
+        ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
+        ARTICLE_TITLE       = soup[ARTICLE_BOARD_ORDER].find('a').text
+        ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[ARTICLE_BOARD_ORDER].find('a').attrs['href'].replace("amp;", "")
         print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
         print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
         print('게시글URL:', ARTICLE_URL) # 주소
         print('############')
 
-
-        sendMessageText = ''
-        sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
-        sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
-        sendMessageText += pick + ARTICLE_URL  # 게시글 URL
-        
-
-
         EBEST_downloadFile(ARTICLE_URL)
         send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE , ARTICLE_URL = ARTICLE_URL) # 파일의 경우 전역변수로 처리 (downloadFile 함수) # 서버 재 실행시 첫 발송 주석
 
-        nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
+        nNxtIdx[ARTICLE_BOARD_ORDER] = ntotalIdx # 첫 실행시 인덱스 설정
 
     else: # 두번째 실행인 경우
         print('###ELSE구간###')
         soup = soup.find_all('td', class_='subject')
         #nIdx = int(soup.select('tbody > tr > td')[0]) # 현재 게시글 번호
-        nNewFeedCnt = ntotalIdx - nNxtIdx[idx] # 새로 올라온 게시글 개수
+        nNewFeedCnt = ntotalIdx - nNxtIdx[ARTICLE_BOARD_ORDER] # 새로 올라온 게시글 개수
         
         print('### 새로운 게시글 개수:', nNewFeedCnt,' ###')
         while nNewFeedCnt > 0: # 새 게시글이 올라옴
-            print('현재 게시판 :',EBEST_BOARD_NAME[idx],' 새로운 게시글 수:', nNewFeedCnt)
+            print('현재 게시판 :',EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER],' 새로운 게시글 수:', nNewFeedCnt)
 
-            ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[idx]
+            ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
             ARTICLE_TITLE       = soup[nNewFeedCnt-1].find('a').text
             ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[nNewFeedCnt-1].find('a').attrs['href'].replace("amp;", "")
             print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
             print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
             print('게시글URL:', ARTICLE_URL) # 주소
 
-            sendMessageText = ''
-            sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
-            sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
-            sendMessageText += pick + ARTICLE_URL  # 게시글 URL
+            # sendMessageText = ''
+            # sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
+            # sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
+            # sendMessageText += pick + ARTICLE_URL  # 게시글 URL
 
             EBEST_downloadFile(ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME , ARTICLE_TITLE = ARTICLE_TITLE , ARTICLE_URL = ARTICLE_URL) # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -138,7 +136,7 @@ def EBEST_parse(idx, TARGET_URL):
             print('nNewFeedCnt', nNewFeedCnt)
             if nNewFeedCnt == 0 : 
                 print('새로운 게시글 모두 전송 완료')
-                nNxtIdx[idx] = ntotalIdx
+                nNxtIdx[ARTICLE_BOARD_ORDER] = ntotalIdx
                 return
 
         return False
@@ -214,7 +212,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HeungKuk_checkNewArticle():
-
+    global ARTICLE_BOARD_ORDER
     requests.packages.urllib3.disable_warnings()
 
     # 흥국 투자전략
@@ -225,11 +223,11 @@ def HeungKuk_checkNewArticle():
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
     
     # URL GET
-    for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        HeungKuk_parse(idx, TARGET_URL)
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         time.sleep(5)
  
-def HeungKuk_parse(idx, TARGET_URL):
+def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
@@ -243,17 +241,17 @@ def HeungKuk_parse(idx, TARGET_URL):
     print('###첫실행구간###')
     soupList = soup.select('#content > table > tbody > tr > td.left > a')
 
-    ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[0]
+    ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[ARTICLE_BOARD_ORDER]
     ARTICLE_TITLE = soupList[0].text
     ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[0]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+    
     # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
-    SEC_FIRM_ORDER = 1 # 증권사 순번
-    ARTICLE_BOARD_ORDER = 0 # 게시판 순번
     KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
     
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 
+        print('처음 조회된 게시판으로 게시물을 보내지 않습니다.')
         return Set_nxtKey(KEY_DIR_FILE_NAME, ARTICLE_URL)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -302,6 +300,8 @@ def HeungKuk_downloadFile(ARTICLE_URL):
 def Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
     file = open( KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
     file.write( NXT_KEY )      # 파일에 문자열 저장
+    print('Set_nxtKey')
+    print('NXT_KEY:',NXT_KEY, '연속키 파일 경로 :',KEY_DIR_FILE_NAME)
     file.close()                     # 파일 객체 닫기
 
 # param
@@ -312,6 +312,7 @@ def Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
 def Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
     file = open( KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
     NXT_KEY = file.readline()       # 파일 내 데이터 읽기
+    print('Get_nxtKey')
     print('NXT_KEY:',NXT_KEY, '연속키 파일 경로 :',KEY_DIR_FILE_NAME)
     file.close()                     # 파일 객체 닫기
     return NXT_KEY
@@ -322,20 +323,23 @@ def Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
     # 메세지로 게시글 정보르 보냅니다
     # 아닌 경우 다시 1번을 반복합니다.
 def main():
+    global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
 
+    # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-
+        SEC_FIRM_ORDER = 0 
         print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
         EBEST_checkNewArticle()
         
+        SEC_FIRM_ORDER = 1
         print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
         HeungKuk_checkNewArticle()        
-        time.sleep(REFRESH_TIME)
-        print('######',REFRESH_TIME,'초 후 게시글 재 확인######')
 
+        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
+        time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
