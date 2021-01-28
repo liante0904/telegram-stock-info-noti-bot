@@ -12,8 +12,6 @@
 
 # BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
 
-
-
 import os
 import telegram
 import requests
@@ -107,8 +105,8 @@ def EBEST_parse(idx, TARGET_URL):
         
 
 
-        #EBEST_downloadFile(ARTICLE_URL)
-        #send() # 서버 재 실행시 첫 발송 주석
+        EBEST_downloadFile(ARTICLE_URL)
+        send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE , ARTICLE_URL = ARTICLE_URL) # 파일의 경우 전역변수로 처리 (downloadFile 함수) # 서버 재 실행시 첫 발송 주석
 
         nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
 
@@ -135,7 +133,7 @@ def EBEST_parse(idx, TARGET_URL):
             sendMessageText += pick + ARTICLE_URL  # 게시글 URL
 
             EBEST_downloadFile(ARTICLE_URL)
-            send()
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME , ARTICLE_TITLE = ARTICLE_TITLE , ARTICLE_URL = ARTICLE_URL) # 파일의 경우 전역변수로 처리 (downloadFile 함수)
             nNewFeedCnt -= 1
             print('nNewFeedCnt', nNewFeedCnt)
             if nNewFeedCnt == 0 : 
@@ -144,7 +142,6 @@ def EBEST_parse(idx, TARGET_URL):
                 return
 
         return False
-
 
 def EBEST_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
@@ -165,7 +162,7 @@ def EBEST_downloadFile(ARTICLE_URL):
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def send():
+def send1(): # 기존 함수
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
@@ -187,8 +184,8 @@ def send():
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
-def new_send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('new_send()')
+def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    print('send()')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n"
@@ -232,7 +229,6 @@ def HeungKuk_checkNewArticle():
         HeungKuk_parse(idx, TARGET_URL)
         time.sleep(5)
  
- 
 def HeungKuk_parse(idx, TARGET_URL):
     global sendMessageText
     global nNxtIdx
@@ -272,7 +268,7 @@ def HeungKuk_parse(idx, TARGET_URL):
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
-            new_send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
@@ -298,8 +294,6 @@ def HeungKuk_downloadFile(ARTICLE_URL):
         file.write(response.content)      # write to file
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-
 
 # param
 # KEY_DIR_FILE_NAME : 연속키 파일 경로
@@ -334,8 +328,8 @@ def main():
 
     while True:
 
-        #print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        #EBEST_checkNewArticle()
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
         print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
         HeungKuk_checkNewArticle()        
