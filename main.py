@@ -33,9 +33,10 @@ sendMessageText = ""
 # 발송한 연속키
 #nNxtIdx = [2279, 7617, 3848]
 nNxtIdx = [0, 0, 0, 0, 0]
+# 연속키URL
+NXT_KEY = ''
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
-
 # 이모지
 fire = u'\U0001F525'
 pick = u'\U0001F449'
@@ -186,6 +187,35 @@ def send():
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
+def new_send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    print('new_send()')
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    sendMessageText += pick + ARTICLE_URL 
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    #생성한 텔레그램 봇 정보 출력
+    #me = bot.getMe()
+    #print('텔레그램 채널 정보 : ',me)
+
+    #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
+    #chat_id = bot.getUpdates()[-1].message.chat.id
+
+    # 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
+    #chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
+    chat_id = '-1001474652718' # 테스트 채널
+
+    bot.sendMessage(chat_id = chat_id, text = sendMessageText)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    bot.sendDocument(chat_id = chat_id, document = open(ATTACH_FILE_NAME, 'rb') )
+    os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 def HeungKuk_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
@@ -207,62 +237,51 @@ def HeungKuk_parse(idx, TARGET_URL):
     global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
+    global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-    
-    
 
-    print('게시판 이름:', HEUNGKUK_BOARD_NAME[idx],'전체 게시글', '게시글 연속키', nNxtIdx[idx])
     print('###첫실행구간###')
-    # 게시글 제목
-    soup = soup.select('#content > table > tbody')
-    print(soup)
+    soupList = soup.select('#content > table > tbody > tr > td.left > a')
+
     ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[0]
-    ARTICLE_TITLE = soup[0].find('a').text
-    ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soup[idx].find('a')['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+    ARTICLE_TITLE = soupList[0].text
+    ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[0]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    SEC_FIRM_ORDER = 1 # 증권사 순번
+    ARTICLE_BOARD_ORDER = 0 # 게시판 순번
+    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
+    
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 
+        return Set_nxtKey(KEY_DIR_FILE_NAME, ARTICLE_URL)
+    else:   # 이미 실행
+        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
     print('############')
 
-    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
-
-    # key폴더 확인후 없는 경우 생성
-    os.makedirs('./key', exist_ok=True)
-
-
-    SEC_FIRM_ORDER = 1 # 증권사 순번
-    ARTICLE_BOARD_ORDER = 0 # 게시판 순번
-    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key'
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        file = open( KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        file.write( ARTICLE_URL )      # 파일에 문자열 저장
-        file.close()                     # 파일 객체 닫기        
-    else:   # 이미 실행
-        file = open( KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        NXT_KEY = file.readline()       # 파일 내 데이터 읽기
-        print(KEY_DIR_FILE_NAME,' NXT_KEY:',NXT_KEY)
-        file.close()                     # 파일 객체 닫기
-
-    articleTitle = ''
-    articleTitle += fire+ ARTICLE_BOARD_NAME + fire + "\n"
-    articleTitle += ARTICLE_TITLE + "\n"
-    sendMessageText = articleTitle 
-    sendMessageText += pick + ARTICLE_URL 
-    
-    HeungKuk_downloadFile(ARTICLE_URL)
-    send() # 서버 재 실행시 첫 발송 주석
-    #nNxtIdx[idx] = ntotalIdx # 첫 실행시 인덱스 설정
-
+    for list in soupList:
+        LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
+            HeungKuk_downloadFile(LIST_ARTICLE_URL)
+            new_send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            NXT_KEY = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[0]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+            Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+            return True
 
 def HeungKuk_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
-    ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
 
     webpage = requests.get(ARTICLE_URL, verify=False)    
     
@@ -280,6 +299,29 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+
+
+# param
+# KEY_DIR_FILE_NAME : 연속키 파일 경로
+# NXT_KEY : 연속키 게시물 URL
+# KEY_DIR_FILE_NAME 경로에 NXT_KEY 저장
+def Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
+    file = open( KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+    file.write( NXT_KEY )      # 파일에 문자열 저장
+    file.close()                     # 파일 객체 닫기
+
+# param
+# KEY_DIR_FILE_NAME : 연속키 파일 경로
+# NXT_KEY : 연속키 게시물 URL
+# KEY_DIR_FILE_NAME 경로에 NXT_KEY 읽기
+# return : NXT_KEY
+def Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
+    file = open( KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+    NXT_KEY = file.readline()       # 파일 내 데이터 읽기
+    print('NXT_KEY:',NXT_KEY, '연속키 파일 경로 :',KEY_DIR_FILE_NAME)
+    file.close()                     # 파일 객체 닫기
+    return NXT_KEY
+
 # 액션 플랜 
 # 1. 10분 간격으로 게시글을 읽어옵니다.
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
@@ -287,6 +329,9 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     # 아닌 경우 다시 1번을 반복합니다.
 def main():
     print('########Program Start Run########')
+    print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
+    os.makedirs('./key', exist_ok=True)
+
     while True:
 
         #print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
