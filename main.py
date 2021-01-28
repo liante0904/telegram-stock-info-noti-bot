@@ -24,6 +24,7 @@ from requests import get  # to make GET request
 # 게시판 이름
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
+SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 # 게시글 갱신 시간
 REFRESH_TIME = 600
 # 텔레그램 발송 메세지 변수
@@ -293,6 +294,90 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+def SangSangIn_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    requests.packages.urllib3.disable_warnings()
+
+    # 흥국 투자전략
+    TARGET_URL_0 =  'http://www.sangsanginib.com/noticeList.fn?sgrp=S01&siteCmsCd=CM0001&topCmsCd=CM0004&cmsCd=CM0338&pnum=2&cnum=3'
+    # 흥국 산업/기업 분석
+    TARGET_URL_1 =  'http://www.sangsanginib.com/stocksList.fn?sgrp=S01&siteCmsCd=CM0001&topCmsCd=CM0004&cmsCd=CM0079&pnum=3&cnum=4'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global sendMessageText
+    global nNxtIdx
+    global nNewFeedCnt
+    global NXT_KEY
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    print('###첫실행구간###')
+    soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
+    
+    print(soupList)    
+    ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_TITLE = soupList[0].text
+    ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[0]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
+    
+    print(ARTICLE_URL)
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
+    
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 
+        print('처음 조회된 게시판으로 게시물을 보내지 않습니다.')
+        return Set_nxtKey(KEY_DIR_FILE_NAME, ARTICLE_URL)
+    else:   # 이미 실행
+        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']#.replace("nav.go('view', '", "").replace("');", "").strip()
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
+            SangSangIn_downloadFile(LIST_ARTICLE_URL)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            NXT_KEY = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[0]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+            Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+            return True
+
+def SangSangIn_downloadFile(ARTICLE_URL):
+    global ATTACH_FILE_NAME
+
+    webpage = requests.get(ARTICLE_URL, verify=False)    
+    
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a')['href']
+    ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
+    print('첨부파일 URL : ',ATTACH_URL)
+    # 첨부파일 이름
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
+    print('첨부파일이름 : ',ATTACH_FILE_NAME)
+
+    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+        response = get(ATTACH_URL, verify=False)               # get request
+        file.write(response.content)      # write to file
+    
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 # param
 # KEY_DIR_FILE_NAME : 연속키 파일 경로
 # NXT_KEY : 연속키 게시물 URL
@@ -331,12 +416,16 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        #print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        #EBEST_checkNewArticle()
         
         SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        HeungKuk_checkNewArticle()        
+        #print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        #HeungKuk_checkNewArticle()        
+
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()        
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
         time.sleep(REFRESH_TIME)
