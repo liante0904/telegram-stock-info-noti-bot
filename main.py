@@ -10,8 +10,11 @@
 #https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
 # 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
 
+# 작업 내용을 삭제하고 origin/master로 덮어쓰기 => git fetch --all && git reset --hard origin/master
 # BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
+# https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getMe
 
+# mac vscode shortcut: https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
 import os
 import telegram
 import requests
@@ -21,29 +24,35 @@ from bs4 import BeautifulSoup
 from requests import get  # to make GET request
 
 
+############이베스트 전용 상수############
+
+# 발송한 연속키
+nNxtIdx = [0, 0, 0, 0, 0] 
+# 새로 올라온 게시글 개수
+nNewFeedCnt = 0
+
+############공용 상수############
+# 게시글 갱신 시간
+REFRESH_TIME = 600
+
 # 게시판 이름
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
-# 게시글 갱신 시간
-REFRESH_TIME = 600
-# 텔레그램 발송 메세지 변수
-sendMessageText = ""
-# 발송한 연속키
-#nNxtIdx = [2279, 7617, 3848]
-nNxtIdx = [0, 0, 0, 0, 0]
+
 # 연속키URL
 NXT_KEY = ''
-# 새로 올라온 게시글 개수
-nNewFeedCnt = 0
 
-# 연속키 인덱스
+# LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 # 이모지
-fire = u'\U0001F525'
-pick = u'\U0001F449'
+EMOJI_FIRE = u'\U0001F525'
+EMOJI_PICK = u'\U0001F449'
+
+# 연속키용 상수
+FIRST_ARTICLE_INDEX = 0
 
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -57,10 +66,9 @@ def EBEST_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-
     # 이슈브리프
     TARGET_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
-    # 이베스트 기업분석 게시판
+    # 기업분석 게시판
     TARGET_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
     # 산업분석
     TARGET_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
@@ -78,7 +86,6 @@ def EBEST_checkNewArticle():
  
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
 
@@ -89,7 +96,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     # 현재 최근 게시글 인덱스
     ntotalIdx = int( soup.select('span.info')[0].text.replace("Total", "").replace("Page 1", "").strip() )
-    #nNxtIdx[ARTICLE_BOARD_ORDER] = int( totalIdx[0].text.replace("Total", "").replace("Page 1", "").strip() )
     print('게시판 이름:', EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER],'전체 게시글', ntotalIdx, '게시글 연속키', nNxtIdx[ARTICLE_BOARD_ORDER])
     if nNxtIdx[ARTICLE_BOARD_ORDER] == 0: # 첫 실행인 경우 임의로 가장 마지막 게시글을 발송
         print('###첫실행구간###')
@@ -97,8 +103,8 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         soup = soup.find_all('td', class_='subject')
 
         ARTICLE_BOARD_NAME  = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
-        ARTICLE_TITLE       = soup[ARTICLE_BOARD_ORDER].find('a').text
-        ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[ARTICLE_BOARD_ORDER].find('a').attrs['href'].replace("amp;", "")
+        ARTICLE_TITLE       = soup[FIRST_ARTICLE_INDEX].find('a').text
+        ARTICLE_URL         = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soup[FIRST_ARTICLE_INDEX].find('a').attrs['href'].replace("amp;", "")
         print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
         print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
         print('게시글URL:', ARTICLE_URL) # 주소
@@ -126,11 +132,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
             print('게시글URL:', ARTICLE_URL) # 주소
 
-            # sendMessageText = ''
-            # sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n" # 게시판 이름
-            # sendMessageText += ARTICLE_TITLE + "\n" # 게시글 제목
-            # sendMessageText += pick + ARTICLE_URL  # 게시글 URL
-
             EBEST_downloadFile(ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME , ARTICLE_TITLE = ARTICLE_TITLE , ARTICLE_URL = ARTICLE_URL) # 파일의 경우 전역변수로 처리 (downloadFile 함수)
             nNewFeedCnt -= 1
@@ -138,9 +139,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewFeedCnt == 0 : 
                 print('새로운 게시글 모두 전송 완료')
                 nNxtIdx[ARTICLE_BOARD_ORDER] = ntotalIdx
+
+                print('ARTICLE_BOARD_ORDER',ARTICLE_BOARD_ORDER)
+                print('ARTICLE_BOARD_ORDER',nNxtIdx[ARTICLE_BOARD_ORDER])
                 return
 
-        return False
+
 
 def EBEST_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
@@ -154,7 +158,6 @@ def EBEST_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-
     with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
         response = get(ATTACH_URL, verify=False)               # get request
         file.write(response.content)      # write to file
@@ -162,6 +165,7 @@ def EBEST_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def send1(): # 기존 함수
+    sendMessageText = ''
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
@@ -185,11 +189,23 @@ def send1(): # 기존 함수
 
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
+    if SEC_FIRM_ORDER == 0:
+        FIRM_NAME = "이베스트 투자증권"
+    elif SEC_FIRM_ORDER == 1:
+        FIRM_NAME = "흥국증권"
+    elif SEC_FIRM_ORDER == 2:
+        FIRM_NAME = "상상인증권"
+    else:
+        FIRM_NAME = ''
+
+    if FIRM_NAME != '': FIRM_NAME += " - "
+        
+
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += fire+ ARTICLE_BOARD_NAME + fire + "\n"
+    sendMessageText += EMOJI_FIRE + FIRM_NAME + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += pick + ARTICLE_URL 
+    sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
@@ -203,10 +219,10 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #chat_id = bot.getUpdates()[-1].message.chat.id
 
     # 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
-    #chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
-    chat_id = '-1001474652718' # 테스트 채널
+    chat_id = '-1001431056975' # 이베스트 게시물 알림 채널
+    #chat_id = '-1001474652718' # 테스트 채널
 
-    bot.sendMessage(chat_id = chat_id, text = sendMessageText)
+    bot.sendMessage(chat_id = chat_id, text = sendMessageText, disable_web_page_preview=True)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     bot.sendDocument(chat_id = chat_id, document = open(ATTACH_FILE_NAME, 'rb') )
     os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
@@ -229,7 +245,6 @@ def HeungKuk_checkNewArticle():
         time.sleep(5)
  
 def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
     global NXT_KEY
@@ -265,6 +280,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+        ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + list[0]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
@@ -311,7 +327,6 @@ def SangSangIn_checkNewArticle():
         time.sleep(5)
  
 def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global sendMessageText
     global nNxtIdx
     global nNewFeedCnt
     global NXT_KEY
@@ -324,7 +339,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('###첫실행구간###')
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
     
-    print(soupList)    
+    print(soupList)
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
     ARTICLE_TITLE = soupList[0].text
     ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[0]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
@@ -341,17 +356,19 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
 
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
+    #print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    #print('게시글 제목:', ARTICLE_TITLE) # 게시글 제목
+    #print('게시글URL:', ARTICLE_URL) # 주소
+    #print('연속URL:', NXT_KEY) # 주소
     print('############')
 
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']#.replace("nav.go('view', '", "").replace("');", "").strip()
+        LIST_ARTICLE_TITLE = list.text
+
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
             SangSangIn_downloadFile(LIST_ARTICLE_URL)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
@@ -369,7 +386,7 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
     print('첨부파일 URL : ',ATTACH_URL)
     # 첨부파일 이름
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
 
     with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
@@ -416,12 +433,12 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         SEC_FIRM_ORDER = 0 
-        #print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        #EBEST_checkNewArticle()
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
         SEC_FIRM_ORDER = 1
-        #print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        #HeungKuk_checkNewArticle()        
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
 
         SEC_FIRM_ORDER = 2
         print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
