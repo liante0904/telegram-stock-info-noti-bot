@@ -76,7 +76,6 @@ def SEDAILY_checkNewArticle():
     #p = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
     print('######')
 
-
     FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
     # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
     KEY_DIR_FILE_NAME = './key/'+ 'sedaily' + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
@@ -161,7 +160,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('###첫실행구간###')
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     print('######')
-    print(soupList)
     ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
@@ -371,8 +369,6 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print('###첫실행구간###')
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
-    
-    print(soupList)
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
@@ -461,7 +457,6 @@ def HMSEC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('###첫실행구간###')
     soupList = soup.select('#research_list > li.row')
     print('######')
-    print(soupList)
     ARTICLE_BOARD_NAME = HMSEC_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
