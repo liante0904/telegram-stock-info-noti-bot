@@ -404,7 +404,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, LIST_ARTICLE_TITLE)
+            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
             return True
 
 def SangSangIn_downloadFile(ARTICLE_URL):
@@ -543,7 +543,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1) > div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
     FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1) > div.con > ul > li:nth-child(5) > div > a')[FIRST_ARTICLE_INDEX].attrs['href']
 
-
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
     # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
     KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
     
@@ -572,7 +573,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, LIST_ARTICLE_TITLE)
+            print('이거>>>>',LIST_ARTICLE_TITLE)
+            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
             return True
 
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
@@ -647,7 +649,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, LIST_ARTICLE_TITLE)
+            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
             return True
 
 def YUANTA_downloadFile(ARTICLE_URL):
@@ -708,20 +710,20 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
+        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        # SEDAILY_checkNewArticle()
         
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        # SEC_FIRM_ORDER = 0 
+        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        # EBEST_checkNewArticle()
         
-        SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        HeungKuk_checkNewArticle()        
+        # SEC_FIRM_ORDER = 1
+        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        # HeungKuk_checkNewArticle()        
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        SangSangIn_checkNewArticle()
+        # SEC_FIRM_ORDER = 2
+        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        # SangSangIn_checkNewArticle()
 
         SEC_FIRM_ORDER = 3
         print("HANA_checkNewArticle() => 새 게시글 정보 확인")
