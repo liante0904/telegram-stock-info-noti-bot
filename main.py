@@ -97,8 +97,11 @@ def SEDAILY_checkNewArticle():
 
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+        print(LIST_ARTICLE_TITLE)
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
@@ -222,6 +225,9 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         FIRM_NAME = "상상인증권"
     elif SEC_FIRM_ORDER == 3:
         FIRM_NAME = "하나금융투자"
+    elif SEC_FIRM_ORDER == 'SEDAILY':
+        FIRM_NAME = "매매동향"
+        ARTICLE_BOARD_NAME = ''
     else:
         FIRM_NAME = ''
 
@@ -246,7 +252,8 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview=True)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
+    if ATTACH_FILE_NAME != '':
+        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
     os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -646,7 +653,8 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-        
+
+        SEC_FIRM_ORDER = 'SEDAILY'
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
         SEDAILY_checkNewArticle()
         
