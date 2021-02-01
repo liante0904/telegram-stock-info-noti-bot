@@ -36,7 +36,7 @@ nNewFeedCnt = 0
 # 메시지 발신처
 # 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
 CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
-#CHAT_ID = '-1001474652718' # 테스트 채널
+# CHAT_ID = '-1001474652718' # 테스트 채널
 # 게시글 갱신 시간
 REFRESH_TIME = 600
 
@@ -66,7 +66,7 @@ def SEDAILY_checkNewArticle():
     global nNewFeedCnt
     global NXT_KEY
 
-    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=detail&scOrdBy=0&catView=AL&scText=%5B%ED%91%9C%5D%EC%BD%94%EC%8A%A4%EB%8B%A5%20%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9%20-%EC%B5%9C%EC%A2%85%EC%B9%98&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1611913902476'
+    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
                  
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -508,9 +508,9 @@ def YUANTA_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # 흥국 투자전략
-    TARGET_URL_0 =  'https://www.myasset.com/myasset/research/rs_list/rs_list.cmd?cd006=&cd007=RE01&cd008='
+    TARGET_URL_0 =  'https://www.myasset.com/myasset/research/rs_list/rs_view.cmd?cd006=&cd007=RE02&cd008=&searchKeyGubun=&keyword=&jongMok_keyword=&keyword_in=&startCalendar=&endCalendar=&pgCnt=&page=&SEQ=167479'
     # 흥국 산업/기업 분석
-    TARGET_URL_1 =  'http://www.sangsanginib.com/stocksList.fn?sgrp=S01&siteCmsCd=CM0001&topCmsCd=CM0004&cmsCd=CM0079&pnum=3&cnum=4'
+    TARGET_URL_1 =  'https://www.myasset.com/myasset/research/rs_list/rs_list.cmd?cd006=&cd007=RE02&cd008='
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
     
@@ -529,8 +529,30 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
+    #해당 세션을 기반으로 요청
+    session = requests.session()
+    
+    #params = { 'm_id':'id', 'm_passwd':'passwod'}
+    
+    #url에 data를 넣어 요청
+    res = session.post(TARGET_URL)
+    
+    # HTTP error code가 200이 아니면 다음으로 진행되지 않음.\
+    if res.status_code == 200:
+        res.raise_for_status()
+    
+    #헤더 확인
+    #print(res.headers)
+
+    #저장된 세션 확인
+    print(session.cookies.get_dict())
+ 
+    #해당 세션을 이용하여 url을 호출
+    res = session.get(TARGET_URL)
+    soup = BeautifulSoup(res.content,'html.parser')
+
     print('###첫실행구간###')
-    print(soup)
+    return print(soup)
     soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
 
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
@@ -648,8 +670,8 @@ def main():
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
         # YUANTA_checkNewArticle()
 
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
-        time.sleep(REFRESH_TIME)
+        # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
+        # time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
