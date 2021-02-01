@@ -426,91 +426,6 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def HMSEC_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 투자전략
-    TARGET_URL_0 = 'https://m.hmsec.com/research/research_list_ajax.do?Menu_category=8'
-    # Report & Note
-    TARGET_URL_1 = 'https://m.hmsec.com/research/research_list_ajax.do?Menu_category=8'
-    # 해외주식
-    TARGET_URL_2 = 'https://m.hmsec.com/research/research_list_ajax.do?Menu_category=8'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
-    
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        HMSEC_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
-
-def HMSEC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
-    global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    oJson = json.loads(soup.text)
-    numProducts = len(oJson)
-    print(oJson)
-
-    print('###첫실행구간###')
-    soupList = soup.select('#research_list > li.row')
-    print('######')
-    ARTICLE_BOARD_NAME = HMSEC_BOARD_NAME[ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
-    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
-    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
-    
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
-        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-    else:   # 이미 실행
-        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
-
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
-            HMSEC_downloadFile(LIST_ARTICLE_URL)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-            return True
-
-def HMSEC_downloadFile(ARTICLE_URL):
-    global ATTACH_FILE_NAME
-    ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
-
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
-    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '')
-    print('첨부파일 URL : ',ATTACH_URL)
-    # 첨부파일 이름
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
-    print('첨부파일이름 : ',ATTACH_FILE_NAME)
-    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(ATTACH_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
-    
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     requests.packages.urllib3.disable_warnings()
@@ -730,11 +645,6 @@ def main():
         HANA_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
-        # print("HMSEC_checkNewArticle() => 새 게시글 정보 확인")
-        # HMSEC_checkNewArticle()
-
-
-        # SEC_FIRM_ORDER = 5
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
         # YUANTA_checkNewArticle()
 
