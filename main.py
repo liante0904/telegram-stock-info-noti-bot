@@ -115,8 +115,8 @@ def SEDAILY_checkNewArticle():
         print(LIST_ARTICLE_TITLE)
 
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
+            SEDAILY_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
-            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
