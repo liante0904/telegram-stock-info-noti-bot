@@ -34,8 +34,8 @@ nNewFeedCnt = 0
 ############공용 상수############
 # 메시지 발신처
 # 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
-# CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
-CHAT_ID = '-1001474652718' # 테스트 채널
+CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
+# CHAT_ID = '-1001474652718' # 테스트 채널
 
 # 게시글 갱신 시간
 REFRESH_TIME = 600
@@ -650,25 +650,25 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
               
-        # SEC_FIRM_ORDER = 0 
-        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        # EBEST_checkNewArticle()
+        SEC_FIRM_ORDER = 0 
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
         SEC_FIRM_ORDER = 1
         print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
         HeungKuk_checkNewArticle()        
 
-        # SEC_FIRM_ORDER = 2
-        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        # SangSangIn_checkNewArticle()
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 3
-        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        # HANA_checkNewArticle()
+        SEC_FIRM_ORDER = 3
+        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        HANA_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 4
-        # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
-        # YUANTA_checkNewArticle()
+        SEC_FIRM_ORDER = 4
+        print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
+        YUANTA_checkNewArticle()
 
         SEC_FIRM_ORDER = 'SEDAILY'
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
