@@ -16,31 +16,46 @@
 
 # mac vscode shortcut: https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
 import os
-from typing import List
 import telegram
 import requests
 import datetime
 import time
 import ssl
 import json
+import re
+from typing import List
 from bs4 import BeautifulSoup
 from requests import get  # to make GET request
 
 ############이베스트 전용 상수############
-# 발송한 연속키
-nNxtIdx = [0, 0, 0, 0, 0] 
 
 # 새로 올라온 게시글 개수
 nNewFeedCnt = 0
 ############공용 상수############
 # 메시지 발신처
 # 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
-CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
-# CHAT_ID = '-1001474652718' # 테스트 채널
+# CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
+CHAT_ID = '-1001474652718' # 테스트 채널
+
 # 게시글 갱신 시간
 REFRESH_TIME = 600
 
+# 회사이름
+FIRM_NAME = (
+    "이베스트 투자증권",    # 0
+    "흥국증권",             # 1
+    "상상인증권",           # 2
+    "하나금융투자"          # 3
+)
+
 # 게시판 이름
+BOARD_NAME = (
+    ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"],
+    ["투자전략", "산업/기업분석"],
+    ["산업리포트", "기업리포트"],
+    ["산업분석", "기업분석"],
+    ["투자전략", "Report & Note", "해외주식"],
+)
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
@@ -62,8 +77,6 @@ EMOJI_PICK = u'\U0001F449'
 FIRST_ARTICLE_INDEX = 0
 
 def SEDAILY_checkNewArticle():
-    global nNxtIdx
-    global nNewFeedCnt
     global NXT_KEY
 
     TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
@@ -75,7 +88,6 @@ def SEDAILY_checkNewArticle():
 
     print('###첫실행구간###')
     soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
-    #p = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
     print('######')
 
     FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
@@ -102,7 +114,7 @@ def SEDAILY_checkNewArticle():
 
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
-            SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
@@ -115,12 +127,8 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
     print(attachFileCode)
     ATTACH_URL = attachFileCode.attrs['src']
-    #PHOTO_URL = ATTACH_URL
-    sendPhoto(ATTACH_URL)
-
-    
+    sendPhoto(ATTACH_URL)    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -153,8 +161,6 @@ def EBEST_checkNewArticle():
         time.sleep(5)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
     global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
@@ -217,6 +223,8 @@ def EBEST_downloadFile(ARTICLE_URL):
 
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
+    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
+
     if SEC_FIRM_ORDER == 0:
         FIRM_NAME = "이베스트 투자증권"
     elif SEC_FIRM_ORDER == 1:
@@ -228,10 +236,11 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     elif SEC_FIRM_ORDER == 'SEDAILY':
         FIRM_NAME = "매매동향"
         ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE: return # 장마감 최종치는 발송 안함
     else:
         FIRM_NAME = ''
 
-    if FIRM_NAME != '': FIRM_NAME += " - "
+    if FIRM_NAME != "매매동향" : FIRM_NAME += " - " # 증권사 메시지인 경우에만 처리 
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
@@ -250,25 +259,28 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #CHAT_ID = bot.getUpdates()[-1].message.chat.id
 
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview=True)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    if ATTACH_FILE_NAME != '':
+    if SEC_FIRM_ORDER == 'SEDAILY': # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+        DISABLE_WEB_PAGE_PREVIEW = False
+    
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+    
+
+    if ATTACH_FILE_NAME != '': # 첨부파일이 있는 경우 
+        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
         bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
-    os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
-
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
 
     bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
-    # time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    # bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
-    # os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HeungKuk_checkNewArticle():
@@ -288,8 +300,7 @@ def HeungKuk_checkNewArticle():
         time.sleep(5)
  
 def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
+    
     global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
@@ -346,9 +357,10 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
 
-    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(ATTACH_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+    #     response = get(ATTACH_URL, verify=False)               # get request
+    #     file.write(response.content)      # write to file
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -369,8 +381,6 @@ def SangSangIn_checkNewArticle():
         time.sleep(5)
  
 def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
     global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
@@ -450,8 +460,7 @@ def HANA_checkNewArticle():
         time.sleep(5)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
+    
     global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
@@ -527,36 +536,12 @@ def YUANTA_checkNewArticle():
         time.sleep(5)
  
 def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global nNxtIdx
-    global nNewFeedCnt
     global NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-
-    #해당 세션을 기반으로 요청
-    session = requests.session()
-    
-    #params = { 'm_id':'id', 'm_passwd':'passwod'}
-    
-    #url에 data를 넣어 요청
-    res = session.post(TARGET_URL)
-    
-    # HTTP error code가 200이 아니면 다음으로 진행되지 않음.\
-    if res.status_code == 200:
-        res.raise_for_status()
-    
-    #헤더 확인
-    #print(res.headers)
-
-    #저장된 세션 확인
-    print(session.cookies.get_dict())
- 
-    #해당 세션을 이용하여 url을 호출
-    res = session.get(TARGET_URL)
-    soup = BeautifulSoup(res.content,'html.parser')
 
     print('###첫실행구간###')
     return print(soup)
@@ -609,6 +594,7 @@ def YUANTA_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
 
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
         response = get(ATTACH_URL, verify=False)               # get request
         file.write(response.content)      # write to file
@@ -640,6 +626,16 @@ def Set_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY):
     file.close()                     # 파일 객체 닫기
     return NXT_KEY
 
+def DownloadFile(URL, FILE_NAME):
+    global ATTACH_FILE_NAME
+    print("DownloadFile()")
+    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME)
+    print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
+    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+        response = get(URL, verify=False)               # get request
+        file.write(response.content)      # write to file
+        
+    return
 # 액션 플랜 
 # 1. 10분 간격으로 게시글을 읽어옵니다.
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
@@ -653,33 +649,33 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-
-        SEC_FIRM_ORDER = 'SEDAILY'
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
-        
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+              
+        # SEC_FIRM_ORDER = 0 
+        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        # EBEST_checkNewArticle()
         
         SEC_FIRM_ORDER = 1
         print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
         HeungKuk_checkNewArticle()        
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        SangSangIn_checkNewArticle()
+        # SEC_FIRM_ORDER = 2
+        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        # SangSangIn_checkNewArticle()
 
-        SEC_FIRM_ORDER = 3
-        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        HANA_checkNewArticle()
+        # SEC_FIRM_ORDER = 3
+        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        # HANA_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
         # YUANTA_checkNewArticle()
 
-        # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
-        # time.sleep(REFRESH_TIME)
+        SEC_FIRM_ORDER = 'SEDAILY'
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
+
+        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
+        time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
