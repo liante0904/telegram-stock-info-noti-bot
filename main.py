@@ -12,10 +12,12 @@
 
 # 작업 내용을 삭제하고 origin/master로 덮어쓰기 => git fetch --all && git reset --hard origin/master
 # BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
-# https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getMe
+# https://api.telegram.org/bot137261216           0:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getMe
 
 # mac vscode shortcut: https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
 import os
+import sys
+# import urlparse
 import telegram
 import requests
 import datetime
@@ -266,7 +268,8 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
     
 
-    if ATTACH_FILE_NAME != '': # 첨부파일이 있는 경우 
+
+    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
         time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
         bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
         os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
@@ -642,8 +645,46 @@ def DownloadFile(URL, FILE_NAME):
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
     # 메세지로 게시글 정보를 보냅니다
     # 아닌 경우 다시 1번을 반복합니다.
+
+def MySQL_TEST():
+
+    # Register database schemes in URLs.
+    urlparse.uses_netloc.append('mysql')
+
+    try:
+
+        # Check to make sure DATABASES is set in settings.py file.
+        # If not default to {}
+
+        if 'DATABASES' not in locals():
+            DATABASES = {}
+
+        if 'DATABASE_URL' in os.environ:
+            url = urlparse.urlparse(os.environ['DATABASE_URL'])
+
+            # Ensure default database exists.
+            DATABASES['default'] = DATABASES.get('default', {})
+
+            # Update with environment configuration.
+            DATABASES['default'].update({
+                'NAME': url.path[1:],
+                'USER': url.username,
+                'PASSWORD': url.password,
+                'HOST': url.hostname,
+                'PORT': url.port,
+            })
+
+
+            if url.scheme == 'mysql':
+                DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
+    except Exception:
+        print('Unexpected error:', sys.exc_info())
+        return
+
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
+    print('MySQL 연동 테스트')
+    #MySQL_TEST()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
