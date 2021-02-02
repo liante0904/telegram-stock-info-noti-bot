@@ -666,14 +666,15 @@ def main():
         SEC_FIRM_ORDER = 3
         print("HANA_checkNewArticle() => 새 게시글 정보 확인")
         HANA_checkNewArticle()
-
-        SEC_FIRM_ORDER = 4
-        print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
-        YUANTA_checkNewArticle()
-
+        
         SEC_FIRM_ORDER = 'SEDAILY'
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
         SEDAILY_checkNewArticle()
+
+        # SEC_FIRM_ORDER = 4
+        # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
+        # YUANTA_checkNewArticle()
+
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
         time.sleep(REFRESH_TIME)
