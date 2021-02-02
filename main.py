@@ -55,13 +55,13 @@ BOARD_NAME = (
     ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"],
     ["투자전략", "산업/기업분석"],
     ["산업리포트", "기업리포트"],
-    ["산업분석", "기업분석"],
+    ["산업분석", "기업분석", "Daily"],
     ["투자전략", "Report & Note", "해외주식"],
 )
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
-HANA_BOARD_NAME = ["산업분석", "기업분석"]
+HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 
 # 연속키URL
@@ -451,12 +451,14 @@ def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     requests.packages.urllib3.disable_warnings()
 
+    # 하나금융 Daily
+    TARGET_URL_0 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1'
     # 하나금융 산업 분석
-    TARGET_URL_0 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1'
+    TARGET_URL_1 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1'
     # 하나금융 기업 분석
-    TARGET_URL_1 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
+    TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
     
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
