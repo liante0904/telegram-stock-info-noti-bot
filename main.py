@@ -215,12 +215,12 @@ def EBEST_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(ATTACH_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
-    
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+    #     response = get(ATTACH_URL, verify=False)               # get request
+    #     file.write(response.content)      # write to file
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
+    
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
@@ -356,11 +356,11 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
     #     response = get(ATTACH_URL, verify=False)               # get request
     #     file.write(response.content)      # write to file
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -436,10 +436,11 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-
-    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(ATTACH_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+    #     response = get(ATTACH_URL, verify=False)               # get request
+    #     file.write(response.content)      # write to file
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -593,11 +594,11 @@ def YUANTA_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(ATTACH_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
+    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
+    #     response = get(ATTACH_URL, verify=False)               # get request
+    #     file.write(response.content)      # write to file
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -639,7 +640,7 @@ def DownloadFile(URL, FILE_NAME):
 # 액션 플랜 
 # 1. 10분 간격으로 게시글을 읽어옵니다.
 # 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
-    # 메세지로 게시글 정보르 보냅니다
+    # 메세지로 게시글 정보를 보냅니다
     # 아닌 경우 다시 1번을 반복합니다.
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
