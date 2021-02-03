@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-#pyenv https://www.daleseo.com/python-pyenv/
-#https://kslee7746.tistory.com/entry/텔레그램-웹페이지-게시물-업데이트-알람-봇-만들기1
-#https://besixdouze.net/24
-#https://steemit.com/kr-dev/@maanya/30
-#https://medium.com/@jesamkim/%EC%BD%94%EB%A1%9C%EB%82%9819-%EA%B5%AD%EB%82%B4-%EB%B0%9C%EC%83%9D-%ED%98%84%ED%99%A9-%ED%85%94%EB%A0%88%EA%B7%B8%EB%9E%A8-%EC%95%8C%EB%A6%BC%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-792022cec710
-# heroku : https://dashboard.heroku.com/apps
-#pip3 install python-telegram-bot
-#pip3 freeze > requirements.txt
-#https://beomi.github.io/gb-crawling/posts/2017-04-20-HowToMakeWebCrawler-Notice-with-Telegram.html
-# 텔레그램 알림 채널 만들기 : https://blex.me/@mildsalmon/%ED%95%9C%EB%9D%BC%EB%8C%80%ED%95%99%EA%B5%90-%EA%B3%B5%EC%A7%80-%EC%95%8C%EB%A6%BC-%EB%B4%87-%EC%A0%9C%EC%9E%91%EA%B8%B0-3-%EC%BD%94%EB%93%9C%EB%B6%84%EC%84%9D-telegrambot
-
-# 작업 내용을 삭제하고 origin/master로 덮어쓰기 => git fetch --all && git reset --hard origin/master
-# BOT_INFO_URL = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
-# https://api.telegram.org/bot137261216           0:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getMe
-
-# mac vscode shortcut: https://code.visualstudio.com/shortcuts/keyboard-shortcuts-macos.pdf
 import os
 import sys
 # import urlparse
@@ -29,14 +12,21 @@ from typing import List
 from bs4 import BeautifulSoup
 from requests import get  # to make GET request
 
-############이베스트 전용 상수############
-
-# 새로 올라온 게시글 개수
-nNewFeedCnt = 0
+'''
+## 로직 설명 ##
+1. Main() -> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
+    - checkNewArticle -> parse -> downloadFile -> Send 
+2. 연속키의 경우 현재 .key로 저장
+    - 추후 heroku db로 처리 예정(MySQL)
+    - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
+3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
+4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
+    - 어떻게 구분지을지 생각해봐야함
+5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
+'''
 ############공용 상수############
-# 메시지 발신처
-# 사용자에게 직접 보내지 않고, 채널에 초대하여 채널에 메시지 보내기 방식으로 변경
-CHAT_ID = '-1001431056975' # 이베스트 게시물 알림 채널
+# 메시지 발송 ID
+CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 # CHAT_ID = '-1001474652718' # 테스트 채널
 
 # 게시글 갱신 시간
@@ -99,7 +89,7 @@ def SEDAILY_checkNewArticle():
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print('sedaily의 매매동향 연속키가 존재 하지 않습니다. 첫번째 게시물을 연속키로 지정하고 메시지는 발송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -156,7 +146,7 @@ def EBEST_checkNewArticle():
     TARGET_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4)
-    
+
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
@@ -182,7 +172,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -218,35 +208,41 @@ def EBEST_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-    #     response = get(ATTACH_URL, verify=False)               # get request
-    #     file.write(response.content)      # write to file
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-    if SEC_FIRM_ORDER == 0:
-        FIRM_NAME = "이베스트 투자증권"
-    elif SEC_FIRM_ORDER == 1:
-        FIRM_NAME = "흥국증권"
-    elif SEC_FIRM_ORDER == 2:
-        FIRM_NAME = "상상인증권"
-    elif SEC_FIRM_ORDER == 3:
-        FIRM_NAME = "하나금융투자"
-    elif SEC_FIRM_ORDER == 'SEDAILY':
-        FIRM_NAME = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE: return # 장마감 최종치는 발송 안함
-    else:
-        FIRM_NAME = ''
+    ARTICLE_BOARD_NAME = ''
 
-    if FIRM_NAME != "매매동향" : FIRM_NAME += " - " # 증권사 메시지인 경우에만 처리 
+    if SEC_FIRM_ORDER == 'SEDAILY':
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE: return print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+
+    # if SEC_FIRM_ORDER == 0:
+    #     msgFirmName = "이베스트 투자증권"
+    # elif SEC_FIRM_ORDER == 1:
+    #     msgFirmName = "흥국증권"
+    # elif SEC_FIRM_ORDER == 2:
+    #     msgFirmName = "상상인증권"
+    # elif SEC_FIRM_ORDER == 3:
+    #     msgFirmName = "하나금융투자"
+    # elif SEC_FIRM_ORDER == 'SEDAILY':
+    #     msgFirmName = "매매동향"
+    #     ARTICLE_BOARD_NAME = ''
+    #     if  "최종치" in ARTICLE_TITLE: return # 장마감 최종치는 발송 안함
+    # else:
+    #     msgFirmName = ''
+
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += EMOJI_FIRE + FIRM_NAME + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
@@ -324,7 +320,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -360,11 +356,6 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-    #     response = get(ATTACH_URL, verify=False)               # get request
-    #     file.write(response.content)      # write to file
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def SangSangIn_checkNewArticle():
@@ -404,7 +395,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -440,11 +431,6 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-    #     response = get(ATTACH_URL, verify=False)               # get request
-    #     file.write(response.content)      # write to file
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HANA_checkNewArticle():
@@ -459,7 +445,7 @@ def HANA_checkNewArticle():
     TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
-    
+
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
@@ -488,7 +474,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -505,8 +491,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5) > div > a').text
 
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': #  
-            # HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
-            # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
@@ -518,11 +504,7 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-
-    with open(LIST_ATTACT_FILE_NAME, "wb") as file:   # open in binary mode
-        response = get(LIST_ARTICLE_URL, verify=False)               # get request
-        file.write(response.content)      # write to file
-    
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def YUANTA_checkNewArticle():
@@ -564,7 +546,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 존재 여부 확인 후 연속키 파일 생성
     if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
         # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('처음 조회된 게시판으로 게시물을 보내지 않습니다. 첫번째 게시물을 연속키로 설정합니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
@@ -600,11 +582,6 @@ def YUANTA_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    # with open(ATTACH_FILE_NAME, "wb") as file:   # open in binary mode
-    #     response = get(ATTACH_URL, verify=False)               # get request
-    #     file.write(response.content)      # write to file
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # param
