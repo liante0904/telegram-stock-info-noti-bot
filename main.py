@@ -8,8 +8,10 @@ import time
 import ssl
 import json
 import re
+import pymysql
 from typing import List
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from requests import get  # to make GET request
 
 '''
@@ -626,9 +628,9 @@ def DownloadFile(URL, FILE_NAME):
     # 아닌 경우 다시 1번을 반복합니다.
 
 def MySQL_TEST():
-
+    print('MySQL_TEST')
     # Register database schemes in URLs.
-    urlparse.uses_netloc.append('mysql')
+    # urlparse.uses_netloc.append('mysql')
 
     try:
 
@@ -652,10 +654,23 @@ def MySQL_TEST():
                 'HOST': url.hostname,
                 'PORT': url.port,
             })
+            conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
 
+            cursor = conn.cursor() 
 
-            if url.scheme == 'mysql':
-                DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
+            sql = "SELECT * FROM NXT_KEY" 
+
+            cursor.execute(sql) 
+            res = cursor.fetchall() 
+
+            for data in res: 
+                    print(data) 
+
+            conn.commit() 
+            conn.close() 
+
+            # if url.scheme == 'mysql':
+            #     DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
     except Exception:
         print('Unexpected error:', sys.exc_info())
         return
@@ -663,7 +678,7 @@ def MySQL_TEST():
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('MySQL 연동 테스트')
-    #MySQL_TEST()
+    MySQL_TEST()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
@@ -671,25 +686,25 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
               
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        # SEC_FIRM_ORDER = 0 
+        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        # EBEST_checkNewArticle()
         
-        SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        HeungKuk_checkNewArticle()        
+        # SEC_FIRM_ORDER = 1
+        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        # HeungKuk_checkNewArticle()        
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        SangSangIn_checkNewArticle()
+        # SEC_FIRM_ORDER = 2
+        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        # SangSangIn_checkNewArticle()
 
-        SEC_FIRM_ORDER = 3
-        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        HANA_checkNewArticle()
+        # SEC_FIRM_ORDER = 3
+        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        # HANA_checkNewArticle()
         
-        SEC_FIRM_ORDER = 'SEDAILY'
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
+        # SEC_FIRM_ORDER = 'SEDAILY'
+        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        # SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
