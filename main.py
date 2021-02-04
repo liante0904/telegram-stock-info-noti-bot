@@ -635,7 +635,8 @@ def MySQL_TEST():
     # url = urlparse.urlparse(os.environ['mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'])
     url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
     print(url)
-    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
+    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path) 
+    #ParseResult(scheme='mysql', netloc='b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com', path='/heroku_31ee6b0421e7ff9', params='', query='reconnect=true', fragment='')
     cursor = conn.cursor() 
 
 
