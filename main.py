@@ -639,7 +639,7 @@ def MySQL_TEST():
 
     cursor = conn.cursor() 
 
-    sql = "SELECT * FROM NXT_KEY" 
+    sql = "SELECT * FROM `NXT_KEY`" 
 
     cursor.execute(sql) 
     res = cursor.fetchall() 
@@ -649,7 +649,7 @@ def MySQL_TEST():
 
     conn.commit() 
     conn.close() 
-    
+
     print(os.environ['CLEARDB_DATABASE_URL'])
     try:
 
