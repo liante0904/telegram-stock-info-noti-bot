@@ -640,9 +640,9 @@ def MySQL_TEST():
     cursor = conn.cursor() 
 
 
-    sql = "USE NXT_KEY" 
+    #sql = "USE NXT_KEY" 
 
-    cursor.execute(sql) 
+    #cursor.execute(sql) 
     sql = "SELECT * FROM NXT_KEY" 
 
     cursor.execute(sql) 
