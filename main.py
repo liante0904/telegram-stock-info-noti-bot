@@ -633,6 +633,23 @@ def MySQL_TEST():
     # Register database schemes in URLs.
     # urlparse.uses_netloc.append('mysql')
     # url = urlparse.urlparse(os.environ['mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'])
+    url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
+
+    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
+
+    cursor = conn.cursor() 
+
+    sql = "SELECT * FROM NXT_KEY" 
+
+    cursor.execute(sql) 
+    res = cursor.fetchall() 
+
+    for data in res: 
+        print(data) 
+
+    conn.commit() 
+    conn.close() 
+    
     print(os.environ['CLEARDB_DATABASE_URL'])
     try:
 
@@ -666,7 +683,7 @@ def MySQL_TEST():
             res = cursor.fetchall() 
 
             for data in res: 
-                    print(data) 
+                print(data) 
 
             conn.commit() 
             conn.close() 
