@@ -701,7 +701,7 @@ def MySQL_TEST():
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('MySQL 연동 테스트')
-    MySQL_TEST()
+    #MySQL_TEST()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
@@ -709,25 +709,25 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
               
-        # SEC_FIRM_ORDER = 0 
-        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        # EBEST_checkNewArticle()
+        SEC_FIRM_ORDER = 0 
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 1
-        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        # HeungKuk_checkNewArticle()        
+        SEC_FIRM_ORDER = 1
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
 
-        # SEC_FIRM_ORDER = 2
-        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        # SangSangIn_checkNewArticle()
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 3
-        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        # HANA_checkNewArticle()
+        SEC_FIRM_ORDER = 3
+        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        HANA_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 'SEDAILY'
-        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        # SEDAILY_checkNewArticle()
+        SEC_FIRM_ORDER = 'SEDAILY'
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
