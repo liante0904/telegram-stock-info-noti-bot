@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 from requests import get  # to make GET request
 
-## 로직 설명 ##
+# 로직 설명
 # 1. Main() -> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
 #     - checkNewArticle -> parse -> downloadFile -> Send 
 # 2. 연속키의 경우 현재 .key로 저장
