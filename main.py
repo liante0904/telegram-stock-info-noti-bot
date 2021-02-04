@@ -643,7 +643,7 @@ def MySQL_TEST():
     sql = "USE `NXT_KEY`" 
 
     cursor.execute(sql) 
-    sql = "SELECT * FROM `NXT_KEY`" 
+    sql = "SELECT * FROM NXT_KEY" 
 
     cursor.execute(sql) 
     res = cursor.fetchall() 
