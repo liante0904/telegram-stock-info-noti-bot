@@ -680,7 +680,7 @@ def MySQL_TEST():
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('MySQL 연동 테스트')
-    # MySQL_TEST()
+    MySQL_TEST()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
