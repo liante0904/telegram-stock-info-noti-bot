@@ -688,25 +688,25 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
               
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        # SEC_FIRM_ORDER = 0 
+        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        # EBEST_checkNewArticle()
         
-        SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        HeungKuk_checkNewArticle()        
+        # SEC_FIRM_ORDER = 1
+        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        # HeungKuk_checkNewArticle()        
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        SangSangIn_checkNewArticle()
+        # SEC_FIRM_ORDER = 2
+        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        # SangSangIn_checkNewArticle()
 
-        SEC_FIRM_ORDER = 3
-        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        HANA_checkNewArticle()
+        # SEC_FIRM_ORDER = 3
+        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        # HANA_checkNewArticle()
         
-        SEC_FIRM_ORDER = 'SEDAILY'
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
+        # SEC_FIRM_ORDER = 'SEDAILY'
+        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        # SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
