@@ -56,6 +56,9 @@ SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 
+# DB커서
+DATABASE_CURSOR = ''
+
 # 연속키URL
 NXT_KEY = ''
 
@@ -195,6 +198,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+            DB_setNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY)
             return True
 
 def EBEST_downloadFile(ARTICLE_URL):
@@ -622,30 +626,38 @@ def DownloadFile(URL, FILE_NAME):
         file.write(response.content)      # write to file
         
     return
-# 액션 플랜 
-# 1. 10분 간격으로 게시글을 읽어옵니다.
-# 2. 게시글이 마지막 게시글이 이전 게시글과 다른 경우(새로운 게시글이 올라온 경우) 
-    # 메세지로 게시글 정보를 보냅니다
-    # 아닌 경우 다시 1번을 반복합니다.
+
+
+def MySQL_Open_Connect():
+    global DATABASE_CURSOR
+    print('MySQL_Open_Connect')
+    # clearDB 
+    url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
+    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', '')) 
+
+    DATABASE_CURSOR = conn.cursor() 
+    return DATABASE_CURSOR
+
+def DB_setNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY):
+    DATABASE_CURSOR = MySQL_Open_Connect()
+    dbQuery = "SELECT * FROM NXT_KEY WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
+    dbResult = DATABASE_CURSOR.fetchone(dbQuery, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult == '1L':
+
+    return True
 
 def MySQL_TEST():
     print('MySQL_TEST')
-    # Register database schemes in URLs.
-    # urlparse.uses_netloc.append('mysql')
-    # url = urlparse.urlparse(os.environ['mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'])
+    # clearDB 
     url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    print(url)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', '')) 
-    #ParseResult(scheme='mysql', netloc='b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com', path='/heroku_31ee6b0421e7ff9', params='', query='reconnect=true', fragment='')
+
     cursor = conn.cursor() 
 
-
-    #sql = "USE NXT_KEY" 
-
-    #cursor.execute(sql) 
     sql = "SELECT * FROM `NXT_KEY`" 
 
     cursor.execute(sql) 
+    
     res = cursor.fetchall() 
 
     for data in res: 
@@ -654,54 +666,12 @@ def MySQL_TEST():
     conn.commit() 
     conn.close() 
 
-    print(os.environ['CLEARDB_DATABASE_URL'])
-    try:
-
-        # Check to make sure DATABASES is set in settings.py file.
-        # If not default to {}
-
-        if 'DATABASES' not in locals():
-            DATABASES = {}
-
-        if 'DATABASE_URL' in os.environ:
-            url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-
-            # Ensure default database exists.
-            DATABASES['default'] = DATABASES.get('default', {})
-
-            # Update with environment configuration.
-            DATABASES['default'].update({
-                'NAME': url.path[1:],
-                'USER': url.username,
-                'PASSWORD': url.password,
-                'HOST': url.hostname,
-                'PORT': url.port,
-            })
-            conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
-
-            cursor = conn.cursor() 
-
-            sql = "SELECT * FROM NXT_KEY" 
-
-            cursor.execute(sql) 
-            res = cursor.fetchall() 
-
-            for data in res: 
-                print(data) 
-
-            conn.commit() 
-            conn.close() 
-
-            # if url.scheme == 'mysql':
-            #     DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
-    except Exception:
-        print('Unexpected error:', sys.exc_info())
-        return
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('MySQL 연동 테스트')
     #MySQL_TEST()
+    # MySQL_Open_Connect()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
