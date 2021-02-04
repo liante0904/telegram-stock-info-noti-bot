@@ -634,9 +634,8 @@ def MySQL_TEST():
     # urlparse.uses_netloc.append('mysql')
     # url = urlparse.urlparse(os.environ['mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'])
     url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-
+    print(url)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
-    cursor.execute(f'CREATE DATABASE IF NOT EXISTS {DB_NAME}')
     cursor = conn.cursor() 
 
 
