@@ -11,21 +11,20 @@ import re
 import pymysql
 from typing import List
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+#from urllib.parse import urlparse
+import urllib.parse as urlparse
 from requests import get  # to make GET request
 
-'''
 ## 로직 설명 ##
-1. Main() -> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
-    - checkNewArticle -> parse -> downloadFile -> Send 
-2. 연속키의 경우 현재 .key로 저장
-    - 추후 heroku db로 처리 예정(MySQL)
-    - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
-3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
-4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
-    - 어떻게 구분지을지 생각해봐야함
-5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
-'''
+# 1. Main() -> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
+#     - checkNewArticle -> parse -> downloadFile -> Send 
+# 2. 연속키의 경우 현재 .key로 저장
+#     - 추후 heroku db로 처리 예정(MySQL)
+#     - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
+# 3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
+# 4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
+#     - 어떻게 구분지을지 생각해봐야함
+# 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 ############공용 상수############
 # 메시지 발송 ID
 CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
@@ -631,7 +630,8 @@ def MySQL_TEST():
     print('MySQL_TEST')
     # Register database schemes in URLs.
     # urlparse.uses_netloc.append('mysql')
-
+    # url = urlparse.urlparse(os.environ['mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'])
+    print(os.environ['CLEARDB_DATABASE_URL'])
     try:
 
         # Check to make sure DATABASES is set in settings.py file.
@@ -641,7 +641,7 @@ def MySQL_TEST():
             DATABASES = {}
 
         if 'DATABASE_URL' in os.environ:
-            url = urlparse.urlparse(os.environ['DATABASE_URL'])
+            url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
 
             # Ensure default database exists.
             DATABASES['default'] = DATABASES.get('default', {})
