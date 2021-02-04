@@ -636,14 +636,14 @@ def MySQL_TEST():
     url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
 
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8') 
-
+    cursor.execute(f'CREATE DATABASE IF NOT EXISTS {DB_NAME}')
     cursor = conn.cursor() 
 
 
     #sql = "USE NXT_KEY" 
 
     #cursor.execute(sql) 
-    sql = "SELECT * FROM NXT_KEY" 
+    sql = "SELECT * FROM `NXT_KEY`" 
 
     cursor.execute(sql) 
     res = cursor.fetchall() 
