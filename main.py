@@ -221,7 +221,9 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     if SEC_FIRM_ORDER == 'SEDAILY':
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE: return print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+        if  "최종치" in ARTICLE_TITLE: 
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
@@ -534,7 +536,6 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
 
     print('###첫실행구간###')
-    return print(soup)
     soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
 
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
@@ -679,7 +680,7 @@ def MySQL_TEST():
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('MySQL 연동 테스트')
-    MySQL_TEST()
+    # MySQL_TEST()
     print('########Program Start Run########')
     print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
     os.makedirs('./key', exist_ok=True)
@@ -687,25 +688,25 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
               
-        # SEC_FIRM_ORDER = 0 
-        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        # EBEST_checkNewArticle()
+        SEC_FIRM_ORDER = 0 
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 1
-        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        # HeungKuk_checkNewArticle()        
+        SEC_FIRM_ORDER = 1
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
 
-        # SEC_FIRM_ORDER = 2
-        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        # SangSangIn_checkNewArticle()
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 3
-        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        # HANA_checkNewArticle()
+        SEC_FIRM_ORDER = 3
+        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        HANA_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 'SEDAILY'
-        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        # SEDAILY_checkNewArticle()
+        SEC_FIRM_ORDER = 'SEDAILY'
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
