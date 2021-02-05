@@ -573,12 +573,15 @@ def SEDAILY_checkNewArticle():
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
         print(LIST_ARTICLE_TITLE)
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY or  "최종치" not in LIST_ARTICLE_TITLE == '': #
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            if "최종치" in LIST_ARTICLE_TITLE == '':
+                print('최종치 수급 게시물은 발송하지 않습니다.')
+            else:
+                print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             return True
@@ -710,7 +713,6 @@ def MySQL_Open_Connect():
     global conn
     global cursor
     
-    print('MySQL_Open_Connect')
     # clearDB 
     # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
     url = urlparse.urlparse('mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true')
