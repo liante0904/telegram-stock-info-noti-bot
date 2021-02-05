@@ -29,8 +29,8 @@ from requests import get  # to make GET request
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 ############공용 상수############
 # 메시지 발송 ID
-# CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
-CHAT_ID = '-1001474652718' # 테스트 채널
+CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+# CHAT_ID = '-1001474652718' # 테스트 채널
 
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
 # 게시글 갱신 시간
@@ -63,9 +63,8 @@ conn    = ''
 cursor  = ''
 # 연속키URL
 NXT_KEY = ''
-
-# 데이터베이스 연속키URL
-DB_NXT_KEY = ''
+# 첫번째URL 
+FIRST_ARTICLE_URL = ''
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -76,59 +75,6 @@ EMOJI_PICK = u'\U0001F449'
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
-
-def SEDAILY_checkNewArticle():
-    global NXT_KEY
-
-    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    print('###첫실행구간###')
-    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
-    print('######')
-
-    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
-    KEY_DIR_FILE_NAME = './key/'+ 'sedaily' + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
-    
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('sedaily의 매매동향 연속키가 존재 하지 않습니다. 첫번째 게시물을 연속키로 지정하고 메시지는 발송하지 않습니다.')
-        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-    else:   # 이미 실행
-        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-        print(LIST_ARTICLE_TITLE)
-
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
-            SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-            return True
-
-def SEDAILY_downloadFile(ARTICLE_URL):
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
-    print(attachFileCode)
-    ATTACH_URL = attachFileCode.attrs['src']
-    sendPhoto(ATTACH_URL)    
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -162,7 +108,6 @@ def EBEST_checkNewArticle():
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-    global DB_NXT_KEY
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -192,16 +137,15 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
-        print('DB연속키:',DB_NXT_KEY)
+        print('DB연속키:', NXT_KEY)
     else: # 0
         # 연속키가 존재하지 않는 경우
         # 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        DB_InsNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY)
-        print('DB연속키:',DB_NXT_KEY)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        print('DB연속키:', NXT_KEY)
 
-    # 데이터 검증을 위해 NXT_KEY에 assign   
-    DB_NXT_KEY = NXT_KEY
+
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -212,14 +156,13 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
-            #EBEST_downloadFile(LIST_ARTICLE_URL)
-            #send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            EBEST_downloadFile(LIST_ARTICLE_URL)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-            DB_UpdNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY)
-            DB_NXT_KEY = NXT_KEY
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             return True
 
 def EBEST_downloadFile(ARTICLE_URL):
@@ -243,7 +186,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     ARTICLE_BOARD_NAME = ''
 
-    if SEC_FIRM_ORDER == 'SEDAILY':
+    if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
         if  "최종치" in ARTICLE_TITLE: 
@@ -286,7 +229,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #CHAT_ID = bot.getUpdates()[-1].message.chat.id
 
-    if SEC_FIRM_ORDER == 'SEDAILY': # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+    if SEC_FIRM_ORDER == 999: # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
     
 
@@ -354,6 +297,20 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
 
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        print('DB연속키:', NXT_KEY)
+
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -370,6 +327,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             return True
 
 def HeungKuk_downloadFile(ARTICLE_URL):
@@ -429,6 +387,20 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
 
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        print('DB연속키:', NXT_KEY)
+
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -445,6 +417,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
 def SangSangIn_downloadFile(ARTICLE_URL):
@@ -508,6 +481,20 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else:   # 이미 실행
         NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
 
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        print('DB연속키:', NXT_KEY)
+
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -525,15 +512,84 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            print('이거>>>>',LIST_ARTICLE_TITLE)
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
-    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)    
+    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+def SEDAILY_checkNewArticle():
+    global NXT_KEY
+
+    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    print('###첫실행구간###')
+    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
+    print('######')
+
+    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    KEY_DIR_FILE_NAME = './key/'+ 'sedaily' + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
+    
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
+        print('sedaily의 매매동향 연속키가 존재 하지 않습니다. 첫번째 게시물을 연속키로 지정하고 메시지는 발송하지 않습니다.')
+        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+    else:   # 이미 실행
+        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = 999, ARTICLE_BOARD_ORDER = 999)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(999, 999, FIRST_ARTICLE_URL)
+        print('DB연속키:', NXT_KEY)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+        print(LIST_ARTICLE_TITLE)
+
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+            SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            return True
+
+def SEDAILY_downloadFile(ARTICLE_URL):
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
+    print(attachFileCode)
+    ATTACH_URL = attachFileCode.attrs['src']
+    sendPhoto(ATTACH_URL)    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def YUANTA_checkNewArticle():
@@ -595,6 +651,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
 def YUANTA_downloadFile(ARTICLE_URL):
@@ -662,7 +719,7 @@ def MySQL_Open_Connect():
     return cursor
 
 def DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER):
-    global DB_NXT_KEY
+    global NXT_KEY
     global conn
     global cursor
     print('DB_SelNxtKey()')
@@ -672,29 +729,28 @@ def DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_
     rows = cursor.fetchall()
     for row in rows:
         print(row['SEC_FIRM_ORDER'], row['NXT_KEY'])
-        DB_NXT_KEY = row['NXT_KEY']
+        NXT_KEY = row['NXT_KEY']
     conn.close()
     return dbResult
 
-def DB_InsNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY):
-    global DB_NXT_KEY
+def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+    global NXT_KEY
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
     dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY) VALUES ( %s, %s, %s);"
-    dbResult = cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY ) )
-    if dbResult:
-        DB_NXT_KEY = NXT_KEY
+    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ) )
+    NXT_KEY = FIRST_NXT_KEY
     conn.close()
-    return dbResult
+    return NXT_KEY
 
-def DB_UpdNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER, NXT_KEY = NXT_KEY):
-    global DB_NXT_KEY
+def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+    global NXT_KEY
     cursor = MySQL_Open_Connect()
     dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( NXT_KEY, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ) )
+    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ) )
     if dbResult:
-        DB_NXT_KEY = NXT_KEY
+        NXT_KEY = FIRST_NXT_KEY
     conn.close()
     return dbResult
 
@@ -732,21 +788,21 @@ def main():
         print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
         EBEST_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 1
-        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        # HeungKuk_checkNewArticle()        
+        SEC_FIRM_ORDER = 1
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
 
-        # SEC_FIRM_ORDER = 2
-        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        # SangSangIn_checkNewArticle()
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 3
-        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        # HANA_checkNewArticle()
+        SEC_FIRM_ORDER = 3
+        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        HANA_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 'SEDAILY'
-        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        # SEDAILY_checkNewArticle()
+        SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 999
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
