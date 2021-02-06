@@ -41,23 +41,27 @@ FIRM_NAME = (
     "이베스트 투자증권",    # 0
     "흥국증권",             # 1
     "상상인증권",           # 2
-    "하나금융투자"          # 3
+    "하나금융투자",          # 3
+    "유안타증권",           # 4
+    "삼성증권"              # 5
 )
 
 # 게시판 이름
 BOARD_NAME = (
-    ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"],
-    ["투자전략", "산업/기업분석"],
-    ["산업리포트", "기업리포트"],
-    ["산업분석", "기업분석", "Daily"],
-    ["투자전략", "Report & Note", "해외주식"],
+    ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"], # 0
+    ["투자전략", "산업/기업분석"],                            # 1
+    ["산업리포트", "기업리포트"],                             # 2
+    ["산업분석", "기업분석", "Daily"],                       # 3
+    ["투자전략", "Report & Note", "해외주식"],               # 4
+    ["국내기업분석", "국내산업분석", "해외기어분석"]               # 5
 )
+
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
-
+SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기어분석"]
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -672,6 +676,105 @@ def YUANTA_downloadFile(ARTICLE_URL):
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+def Samsung_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    requests.packages.urllib3.disable_warnings()
+
+    # 하나금융 Daily
+    TARGET_URL_0 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company1&searchField=TITLE&periodType=1&query='
+    # 하나금융 산업 분석
+    TARGET_URL_1 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=industry1&searchField=TITLE&periodType=1&query='
+    # 하나금융 기업 분석
+    TARGET_URL_2 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company2&searchField=TITLE&periodType=1&query='
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    
+    global NXT_KEY
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('#content > section.bbsLstWrap > ul > li')
+
+    print('###첫실행구간###')
+    ARTICLE_BOARD_NAME = SAMSUNG_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1) > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+    a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1) > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
+    a_href = a_href.split("'")
+    a_href = a_href[1]
+    FIRST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
+
+
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    KEY_DIR_FILE_NAME = './key/'+ str(SEC_FIRM_ORDER) + '-' + str(ARTICLE_BOARD_ORDER) + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
+    
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
+        print(FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
+    else:   # 이미 실행
+        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        print('DB연속키:', NXT_KEY)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+        a_href =soup.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
+        a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
+        a_href = a_href.split("'")
+        a_href = a_href[1]
+        LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
+        fileNameArray = a_href.split("/")
+        LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
+
+        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': #  
+            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
+
+def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
+    global ATTACH_FILE_NAME
+    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
+    print('첨부파일이름 : ',ATTACH_FILE_NAME)
+    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+
 # param
 # KEY_DIR_FILE_NAME : 연속키 파일 경로
 # NXT_KEY : 연속키 게시물 URL
@@ -809,6 +912,10 @@ def main():
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
         # YUANTA_checkNewArticle()
+
+        SEC_FIRM_ORDER = 5
+        print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
+        Samsung_checkNewArticle()
 
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
