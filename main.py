@@ -748,8 +748,8 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     for list in soupList:
-        LIST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
-        a_href =soup.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
+        LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+        a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
         a_href = a_href[1]
@@ -758,7 +758,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': #  
-            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
