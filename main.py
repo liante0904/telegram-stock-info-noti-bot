@@ -577,7 +577,7 @@ def SEDAILY_checkNewArticle():
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
         print(LIST_ARTICLE_TITLE)
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' or  "최종치" not in LIST_ARTICLE_TITLE: #  
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
             SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
