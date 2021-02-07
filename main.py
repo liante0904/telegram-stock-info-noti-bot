@@ -248,16 +248,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('sendPhoto()')
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
-    bot = telegram.Bot(token = my_token_key)
-
-    bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     requests.packages.urllib3.disable_warnings()
@@ -527,77 +517,6 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def SEDAILY_checkNewArticle():
-    global NXT_KEY
-
-    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    print('###첫실행구간###')
-    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
-    print('######')
-
-    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
-    KEY_DIR_FILE_NAME = './key/'+ 'sedaily' + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
-    
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        print('sedaily의 매매동향 연속키가 존재 하지 않습니다. 첫번째 게시물을 연속키로 지정하고 메시지는 발송하지 않습니다.')
-        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-    else:   # 이미 실행
-        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
-
-
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = 999, ARTICLE_BOARD_ORDER = 999)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
-        print('DB연속키:', NXT_KEY)
-    else: # 0
-        # 연속키가 존재하지 않는 경우
-        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(999, 999, FIRST_ARTICLE_URL)
-        print('DB연속키:', NXT_KEY)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-        print(LIST_ARTICLE_TITLE)
-
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': #  
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
-            SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            if "최종치" in LIST_ARTICLE_TITLE:
-                print('최종치 수급 게시물은 발송하지 않습니다.')
-            else:
-                print('새로운 게시물을 모두 발송하였습니다.')
-                Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)   
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
-            return True
-
-def SEDAILY_downloadFile(ARTICLE_URL):
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
-    print(attachFileCode)
-    ATTACH_URL = attachFileCode.attrs['src']
-    sendPhoto(ATTACH_URL)      
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def YUANTA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -774,6 +693,90 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+def SEDAILY_checkNewArticle():
+    global NXT_KEY
+
+    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    print('###첫실행구간###')
+    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
+    print('######')
+
+    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    # 연속키 저장 테스트 -> 테스트 후 연속키 지정 구간으로 변경
+    KEY_DIR_FILE_NAME = './key/'+ 'sedaily' + '.key' # => 파일형식 예시 : 1-0.key (앞자리: 증권사 순서, 뒷자리:게시판 순서)
+    
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
+        print('sedaily의 매매동향 연속키가 존재 하지 않습니다. 첫번째 게시물을 연속키로 지정하고 메시지는 발송하지 않습니다.')
+        NXT_KEY = Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+    else:   # 이미 실행
+        NXT_KEY = Get_nxtKey(KEY_DIR_FILE_NAME, NXT_KEY)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = 999, ARTICLE_BOARD_ORDER = 999)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+        print('DB연속키:', NXT_KEY)
+    else: # 0
+        # 연속키가 존재하지 않는 경우
+        # 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(999, 999, FIRST_ARTICLE_URL)
+        print('DB연속키:', NXT_KEY)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': # 
+            if "최종치" in LIST_ARTICLE_TITLE:
+                print('최종치 수급 게시물은 발송하지 않으며. 연속키는 갱신합니다.')
+                Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)   
+                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            else: 
+                send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+                SEDAILY_downloadFile(LIST_ARTICLE_URL)
+                print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            if "최종치" in LIST_ARTICLE_TITLE:
+                print('최종치 수급 게시물은 발송하지 않습니다.')
+            else:
+                print('새로운 게시물을 모두 발송하였습니다.')
+                Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)   
+                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            return True
+
+def SEDAILY_downloadFile(ARTICLE_URL):
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
+    print(attachFileCode)
+    ATTACH_URL = attachFileCode.attrs['src']
+    sendPhoto(ATTACH_URL)      
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    print('sendPhoto()')
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # param
 # KEY_DIR_FILE_NAME : 연속키 파일 경로
@@ -905,9 +908,6 @@ def main():
         print("HANA_checkNewArticle() => 새 게시글 정보 확인")
         HANA_checkNewArticle()
         
-        SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 999
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
@@ -917,6 +917,13 @@ def main():
         print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
         Samsung_checkNewArticle()
 
+        SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 999
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
+
+        SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 998
+        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        SEDAILY_checkNewArticle()
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
         time.sleep(REFRESH_TIME)
