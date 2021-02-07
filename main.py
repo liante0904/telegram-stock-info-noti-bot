@@ -586,8 +586,8 @@ def SEDAILY_checkNewArticle():
                 print('최종치 수급 게시물은 발송하지 않습니다.')
             else:
                 print('새로운 게시물을 모두 발송하였습니다.')
-            Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            	Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)
+            	DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             return True
 
 def SEDAILY_downloadFile(ARTICLE_URL):
