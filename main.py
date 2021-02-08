@@ -238,7 +238,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #생성한 텔레그램 봇 /start 시작 후 사용자 id 받아 오기
     #CHAT_ID = bot.getUpdates()[-1].message.chat.id
 
-    if SEC_FIRM_ORDER == 999: # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
     
 
@@ -701,6 +701,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 def SEDAILY_checkNewArticle():
     global NXT_KEY
 
+    ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
     TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
                  
     webpage = requests.get(TARGET_URL, verify=False)
@@ -775,6 +776,8 @@ def SEDAILY_downloadFile(ARTICLE_URL):
 
 def NAVERNews_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+
+    ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
@@ -812,7 +815,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
@@ -821,7 +824,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우
         # 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(999, 999, FIRST_ARTICLE_TITLE)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
         print('DB연속키:', NXT_KEY)
 
 
@@ -1035,11 +1038,6 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-
-        # SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 998
-        # print("NAVERNews_checkNewArticle() => 새 게시글 정보 확인")
-        # NAVERNews_checkNewArticle()
-
         SEC_FIRM_ORDER = 0 
         print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
         EBEST_checkNewArticle()
@@ -1065,8 +1063,13 @@ def main():
         print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
         Samsung_checkNewArticle()
 
+        # SEC_FIRM_ORDER      = 998
+        # ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER # 게시판이 여러개여서 결국 바뀜
+        # print("NAVERNews_checkNewArticle() => 새 게시글 정보 확인")
+        # NAVERNews_checkNewArticle()
+
         SEC_FIRM_ORDER      = 999
-        ARTICLE_BOARD_ORDER = 999
+        ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
         SEDAILY_checkNewArticle()
 
