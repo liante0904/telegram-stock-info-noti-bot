@@ -934,9 +934,9 @@ def main():
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
         SEDAILY_checkNewArticle()
 
-        SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 998
-        print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
-        SEDAILY_checkNewArticle()
+        # SEC_FIRM_ORDER = ARTICLE_BOARD_ORDER = 998
+        # print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
+        # SEDAILY_checkNewArticle()
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
         time.sleep(REFRESH_TIME)
