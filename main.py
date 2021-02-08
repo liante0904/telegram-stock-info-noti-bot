@@ -79,6 +79,8 @@ EMOJI_PICK = u'\U0001F449'
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
+# 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
+LIST_ARTICLE_TITLE = ''
 
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -112,6 +114,7 @@ def EBEST_checkNewArticle():
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global LIST_ARTICLE_TITLE
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -171,9 +174,19 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def EBEST_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
+    global LIST_ARTICLE_TITLE
+
     ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
 
     webpage = requests.get(ARTICLE_URL, verify=False)
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
+    table = soup.select_one('#contents > table')
+    tbody = table.select_one('tbody')
+    trs = soup.select('tr')
+    LIST_ARTICLE_TITLE = trs[0].select_one('td').text
+    
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '')
