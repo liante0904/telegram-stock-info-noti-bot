@@ -604,12 +604,12 @@ def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     requests.packages.urllib3.disable_warnings()
 
-    # 하나금융 Daily
-    TARGET_URL_0 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company1&searchField=TITLE&periodType=1&query='
-    # 하나금융 산업 분석
-    TARGET_URL_1 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=industry1&searchField=TITLE&periodType=1&query='
-    # 하나금융 기업 분석
-    TARGET_URL_2 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&startDate=2020.11.08&endDate=2021.02.06&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company2&searchField=TITLE&periodType=1&query='
+    # 삼성증권 기업 분석
+    TARGET_URL_0 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company1&searchField=TITLE&periodType=1&query='
+    # 삼성증권 산업 분석
+    TARGET_URL_1 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=industry1&searchField=TITLE&periodType=1&query='
+    # 삼성증권 해외 분석
+    TARGET_URL_2 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=30&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company2&searchField=TITLE&periodType=1&query='
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
@@ -1039,22 +1039,21 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        # SEC_FIRM_ORDER = 0 
-        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        # EBEST_checkNewArticle()
+        SEC_FIRM_ORDER = 0 
+        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        EBEST_checkNewArticle()
         
-        # SEC_FIRM_ORDER = 1
-        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        # HeungKuk_checkNewArticle()        
+        SEC_FIRM_ORDER = 1
+        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        HeungKuk_checkNewArticle()        
 
-        # SEC_FIRM_ORDER = 2
-        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        # SangSangIn_checkNewArticle()
+        SEC_FIRM_ORDER = 2
+        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        SangSangIn_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 3
-        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        # HANA_checkNewArticle()
-        
+        SEC_FIRM_ORDER = 3
+        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        HANA_checkNewArticle()
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
