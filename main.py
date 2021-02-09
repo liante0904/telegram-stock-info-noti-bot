@@ -92,6 +92,9 @@ LIST_ARTICLE_TITLE = ''
 
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+    SEC_FIRM_ORDER = 0
+
     # 게시글 url의 경우 
     # 1. 앞에 "https://www.ebestsec.co.kr/EtwFrontBoard/" 를 추가
     # 2. amp; 를 삭제처리를 해야함
@@ -243,6 +246,9 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 1
     requests.packages.urllib3.disable_warnings()
 
     # 흥국 투자전략
@@ -319,6 +325,10 @@ def HeungKuk_downloadFile(ARTICLE_URL):
 
 def SangSangIn_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 2
+
     requests.packages.urllib3.disable_warnings()
 
     # 흥국 투자전략
@@ -394,6 +404,10 @@ def SangSangIn_downloadFile(ARTICLE_URL):
 
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 3
+
     requests.packages.urllib3.disable_warnings()
 
     # 하나금융 Daily
@@ -469,6 +483,11 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 
 def YUANTA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 4
+
+    return
     requests.packages.urllib3.disable_warnings()
 
     # 흥국 투자전략
@@ -533,6 +552,10 @@ def YUANTA_downloadFile(ARTICLE_URL):
 
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 5
+
     requests.packages.urllib3.disable_warnings()
 
     # 삼성증권 기업 분석
@@ -618,6 +641,10 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 
 def SEDAILY_checkNewArticle():
     global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 999
+    ARTICLE_BOARD_ORDER = 999
 
     ARTICLE_BOARD_NAME = ''
     ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
@@ -683,8 +710,12 @@ def SEDAILY_downloadFile(ARTICLE_URL):
 
 def NAVERNews_checkNewArticle():
     global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
 
-    ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
+    SEC_FIRM_ORDER      = 998
+    ARTICLE_BOARD_ORDER = 998
+
+    return 
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
@@ -838,38 +869,28 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인")
+        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
-        SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인")
+        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
         HeungKuk_checkNewArticle()
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인")
+        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
         SangSangIn_checkNewArticle()
 
-        SEC_FIRM_ORDER = 3
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인")
+        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 4
-        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인")
-        # YUANTA_checkNewArticle()
+        print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
+        YUANTA_checkNewArticle()
 
-        SEC_FIRM_ORDER = 5
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인")
-        Samsung_checkNewArticle()
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # Samsung_checkNewArticle()
 
-        # SEC_FIRM_ORDER      = 998
-        # ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER # 게시판이 여러개여서 결국 바뀜
-        # print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인")
-        # NAVERNews_checkNewArticle()
+        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        NAVERNews_checkNewArticle()
 
-        SEC_FIRM_ORDER      = 999
-        ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
-        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인")
+        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
