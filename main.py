@@ -111,7 +111,7 @@ def EBEST_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -184,7 +184,7 @@ def EBEST_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
@@ -235,11 +235,11 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        #time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
+        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
         bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb') )
         os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     
-    #time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -255,7 +255,7 @@ def HeungKuk_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
@@ -317,7 +317,7 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def SangSangIn_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -333,7 +333,7 @@ def SangSangIn_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -393,7 +393,7 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -411,7 +411,7 @@ def HANA_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
@@ -469,7 +469,7 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
 def YUANTA_checkNewArticle():
@@ -486,7 +486,7 @@ def YUANTA_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -534,7 +534,7 @@ def YUANTA_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -552,7 +552,7 @@ def Samsung_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
@@ -620,7 +620,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def SEDAILY_checkNewArticle():
     global NXT_KEY
@@ -684,7 +684,7 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     print(attachFileCode)
     ATTACH_URL = attachFileCode.attrs['src']
     sendPhoto(ATTACH_URL)      
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def NAVERNews_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -706,7 +706,7 @@ def NAVERNews_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        #time.sleep(5)
+        time.sleep(5)
  
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
@@ -812,7 +812,7 @@ def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1) > a').text.strip()
     print('첨부파일이름 : ',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)    
-    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
@@ -822,7 +822,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     bot = telegram.Bot(token = my_token_key)
 
     bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
-    #time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
 def DownloadFile(URL, FILE_NAME):
@@ -908,8 +908,6 @@ def MySQL_TEST():
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
-    print('key폴더가 존재하지 않는 경우 무조건 생성합니다.')
-    os.makedirs('./key', exist_ok=True)
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
@@ -932,7 +930,7 @@ def main():
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
-        # YUANTA_checkNewArticle()
+        # YUANTA_checkNewArticle() 
 
         SEC_FIRM_ORDER = 5
         print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
@@ -948,9 +946,8 @@ def main():
         print("SEDAILY_checkNewArticle() => 새 게시글 정보 확인")
         SEDAILY_checkNewArticle()
 
-
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')        
-        #time.sleep(REFRESH_TIME)
+        time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
