@@ -701,6 +701,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 def SEDAILY_checkNewArticle():
     global NXT_KEY
 
+    ARTICLE_BOARD_NAME = ''
     ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
     TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
                  
@@ -753,7 +754,7 @@ def SEDAILY_checkNewArticle():
                 Set_nxtKey(KEY_DIR_FILE_NAME, FIRST_ARTICLE_URL)   
                 DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             else: 
-                send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
+                send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)        
                 SEDAILY_downloadFile(LIST_ARTICLE_URL)
                 print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
@@ -1038,30 +1039,30 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        SEC_FIRM_ORDER = 0 
-        print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
-        EBEST_checkNewArticle()
+        # SEC_FIRM_ORDER = 0 
+        # print("EBEST_checkNewArticle() => 새 게시글 정보 확인")
+        # EBEST_checkNewArticle()
         
-        SEC_FIRM_ORDER = 1
-        print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
-        HeungKuk_checkNewArticle()        
+        # SEC_FIRM_ORDER = 1
+        # print("HeungKuk_checkNewArticle() => 새 게시글 정보 확인")
+        # HeungKuk_checkNewArticle()        
 
-        SEC_FIRM_ORDER = 2
-        print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
-        SangSangIn_checkNewArticle()
+        # SEC_FIRM_ORDER = 2
+        # print("SangSangIn_checkNewArticle() => 새 게시글 정보 확인")
+        # SangSangIn_checkNewArticle()
 
-        SEC_FIRM_ORDER = 3
-        print("HANA_checkNewArticle() => 새 게시글 정보 확인")
-        HANA_checkNewArticle()
+        # SEC_FIRM_ORDER = 3
+        # print("HANA_checkNewArticle() => 새 게시글 정보 확인")
+        # HANA_checkNewArticle()
         
 
         # SEC_FIRM_ORDER = 4
         # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
         # YUANTA_checkNewArticle()
 
-        SEC_FIRM_ORDER = 5
-        print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
-        Samsung_checkNewArticle()
+        # SEC_FIRM_ORDER = 5
+        # print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
+        # Samsung_checkNewArticle()
 
         # SEC_FIRM_ORDER      = 998
         # ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER # 게시판이 여러개여서 결국 바뀜
