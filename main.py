@@ -20,13 +20,13 @@ from requests import get  # to make GET request
 
 # 로직 설명
 # 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
-   - checkNewArticle -> parse -> downloadFile -> Send 
+#   - checkNewArticle -> parse -> downloadFile -> Send 
 # 2. 연속키의 경우 현재 .key로 저장
-   - 추후 heroku db로 처리 예정(MySQL)
-   - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
+#   - 추후 heroku db로 처리 예정(MySQL)
+#   - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
 # 3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
 # 4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
-   - 어떻게 구분지을지 생각해봐야함
+#   - 어떻게 구분지을지 생각해봐야함
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
