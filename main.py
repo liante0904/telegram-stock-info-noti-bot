@@ -31,8 +31,8 @@ from requests import get  # to make GET request
 
 ############공용 상수############
 # 메시지 발송 ID
-CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
-# CHAT_ID = '-1001474652718' # 테스트 채널
+# CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+CHAT_ID = '-1001474652718' # 테스트 채널
 
 # DATABASE
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
@@ -121,7 +121,7 @@ def EBEST_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -134,7 +134,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print('###첫실행구간###')
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
-    print('######')
+    
     ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
@@ -148,7 +148,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
 
@@ -161,13 +161,13 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '':
             EBEST_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
 def EBEST_downloadFile(ARTICLE_URL):
@@ -193,7 +193,7 @@ def EBEST_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('send()')
@@ -238,11 +238,11 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
+        #time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
         bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
         os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
     
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -261,7 +261,7 @@ def HeungKuk_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -287,7 +287,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -299,13 +299,13 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '':
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
 def HeungKuk_downloadFile(ARTICLE_URL):
@@ -321,7 +321,7 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def SangSangIn_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -341,7 +341,7 @@ def SangSangIn_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -378,7 +378,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
+        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '':
             SangSangIn_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -400,7 +400,7 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -422,7 +422,7 @@ def HANA_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -478,7 +478,7 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
 def YUANTA_checkNewArticle():
@@ -500,7 +500,7 @@ def YUANTA_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -548,7 +548,7 @@ def YUANTA_downloadFile(ARTICLE_URL):
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -570,7 +570,7 @@ def Samsung_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -628,6 +628,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
 
     return True
 
@@ -636,7 +637,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 def SEDAILY_checkNewArticle():
@@ -647,7 +648,7 @@ def SEDAILY_checkNewArticle():
     ARTICLE_BOARD_ORDER = 999
 
     ARTICLE_BOARD_NAME = ''
-    ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER
+
     TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
                  
     webpage = requests.get(TARGET_URL, verify=False)
@@ -657,10 +658,10 @@ def SEDAILY_checkNewArticle():
 
     print('###첫실행구간###')
     soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
-    print('######')
 
     FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-
+    FIRST_ARTICLE_TITLE = soup.select_one('#NewsDataFrm > ul > li:nth-child(1) > a > div.text_area > h3').text.replace("[표]", "")
+    
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
@@ -670,8 +671,7 @@ def SEDAILY_checkNewArticle():
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
-
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
@@ -681,22 +681,17 @@ def SEDAILY_checkNewArticle():
         LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '': # 
-            if "최종치" in LIST_ARTICLE_TITLE:
-                print('최종치 수급 게시물은 발송하지 않으며. 연속키는 갱신합니다.')
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
-            else:
-                send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                SEDAILY_downloadFile(LIST_ARTICLE_URL)
-                print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        if (NXT_KEY != FIRST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '': # 
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
-            if "최종치" in LIST_ARTICLE_TITLE:
-                print('최종치 수급 게시물은 발송하지 않습니다.')
-            else:
-                print('새로운 게시물을 모두 발송하였습니다.')
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            print('새로운 게시물을 모두 발송하였습니다.')
+            if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
 
-    return True
+    return True    
 
 def SEDAILY_downloadFile(ARTICLE_URL):
     webpage = requests.get(ARTICLE_URL, verify=False)
@@ -705,7 +700,7 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     print(attachFileCode)
     ATTACH_URL = attachFileCode.attrs['src']
     sendPhoto(ATTACH_URL)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 def NAVERNews_checkNewArticle():
@@ -729,7 +724,7 @@ def NAVERNews_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        #time.sleep(5)
  
 # JSON API 타입
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -779,7 +774,8 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-    
+            return True
+        
     return True
 
 def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
@@ -787,7 +783,7 @@ def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
     print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -798,7 +794,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     bot = telegram.Bot(token = my_token_key)
 
     bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    #time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 
@@ -829,13 +825,14 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global NXT_KEY
     global conn
     global cursor
-    print('DB_SelNxtKey()')
+
     cursor = MySQL_Open_Connect()
     dbQuery = "SELECT * FROM NXT_KEY WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     rows = cursor.fetchall()
     for row in rows:
-        print(row['SEC_FIRM_ORDER'], row['NXT_KEY'])
+        print('####DB조회된 연속키####', end='\n')
+        print('SEC_FIRM_ORDER',row['SEC_FIRM_ORDER'], 'ARTICLE_BOARD_ORDER',row['ARTICLE_BOARD_ORDER'], 'NXT_KEY',row['NXT_KEY'])
         NXT_KEY = row['NXT_KEY']
     conn.close()
     return dbResult
@@ -884,17 +881,17 @@ def main():
         print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
         YUANTA_checkNewArticle()
 
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # Samsung_checkNewArticle()
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
 
-        # print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        # SEDAILY_checkNewArticle()
+        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
+        SEDAILY_checkNewArticle()
 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
+        #time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
