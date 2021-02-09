@@ -1055,13 +1055,13 @@ def main():
         print("HANA_checkNewArticle() => 새 게시글 정보 확인")
         HANA_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 4
-        # print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
-        # YUANTA_checkNewArticle()
+        SEC_FIRM_ORDER = 4
+        print("YUANTA_checkNewArticle() => 새 게시글 정보 확인")
+        YUANTA_checkNewArticle()
 
-        # SEC_FIRM_ORDER = 5
-        # print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
-        # Samsung_checkNewArticle()
+        SEC_FIRM_ORDER = 5
+        print("Samsung_checkNewArticle() => 새 게시글 정보 확인")
+        Samsung_checkNewArticle()
 
         # SEC_FIRM_ORDER      = 998
         # ARTICLE_BOARD_ORDER = SEC_FIRM_ORDER # 게시판이 여러개여서 결국 바뀜
