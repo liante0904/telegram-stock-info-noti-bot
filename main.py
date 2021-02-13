@@ -56,15 +56,15 @@ BOARD_NAME = (
     ["투자전략", "산업/기업분석"],                            # 1
     ["산업리포트", "기업리포트"],                             # 2
     ["산업분석", "기업분석", "Daily"],                       # 3
-    ["투자전략", "Report & Note", "해외주식"],               # 4
-    ["국내기업분석", "국내산업분석", "해외기어분석"]               # 5
+    ["투자전략", "Report & Note", "해외주식"],               # 4
+    ["국내기업분석", "국내산업분석", "해외기어분석"]           # 5
 )
 
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
-HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
+HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기어분석"]
 # pymysql 변수
 conn    = ''
@@ -150,8 +150,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-
-
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -216,7 +214,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
@@ -289,7 +286,6 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -331,9 +327,9 @@ def SangSangIn_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 흥국 투자전략
+    # 상상인 투자전략
     TARGET_URL_0 =  'http://www.sangsanginib.com/noticeList.fn?sgrp=S01&siteCmsCd=CM0001&topCmsCd=CM0004&cmsCd=CM0338&pnum=2&cnum=3'
-    # 흥국 산업/기업 분석
+    #  산업/기업 분석
     TARGET_URL_1 =  'http://www.sangsanginib.com/stocksList.fn?sgrp=S01&siteCmsCd=CM0001&topCmsCd=CM0004&cmsCd=CM0079&pnum=3&cnum=4'
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
@@ -367,7 +363,6 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -490,9 +485,9 @@ def YUANTA_checkNewArticle():
     return
     requests.packages.urllib3.disable_warnings()
 
-    # 흥국 투자전략
+    # 유안타 투자전략
     TARGET_URL_0 =  'https://www.myasset.com/myasset/research/rs_list/rs_view.cmd?cd006=&cd007=RE02&cd008=&searchKeyGubun=&keyword=&jongMok_keyword=&keyword_in=&startCalendar=&endCalendar=&pgCnt=&page=&SEQ=167479'
-    # 흥국 산업/기업 분석
+    #  산업/기업 분석
     TARGET_URL_1 =  'https://www.myasset.com/myasset/research/rs_list/rs_list.cmd?cd006=&cd007=RE02&cd008='
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
@@ -603,7 +598,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -797,7 +791,6 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
-
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile()")
@@ -808,7 +801,6 @@ def DownloadFile(URL, FILE_NAME):
         file.write(response.content) # write to file
         
     return True
-
 
 def MySQL_Open_Connect():
     global conn
@@ -858,7 +850,6 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     conn.close()
     return dbResult
 
-
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
@@ -878,14 +869,14 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
-        YUANTA_checkNewArticle()
+        #print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
+        #YUANTA_checkNewArticle()
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        NAVERNews_checkNewArticle()
+        #print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        #NAVERNews_checkNewArticle()
 
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
