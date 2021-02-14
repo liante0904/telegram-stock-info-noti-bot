@@ -158,7 +158,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != FIRST_ARTICLE_URL or NXT_KEY == '':
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
             EBEST_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -231,10 +231,10 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
 
-    # if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
-    #     CHAT_ID = '-1001474652718' # 테스트 채널
-    # else:
-    #     CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
+        CHAT_ID = '-1001474652718' # 테스트 채널
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
@@ -298,7 +298,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '':
+        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -375,7 +375,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
-        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '':
+        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
             SangSangIn_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -672,7 +672,7 @@ def SEDAILY_checkNewArticle():
         LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
 
-        if (NXT_KEY != FIRST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '': # 
+        if (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '': # 
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -757,7 +757,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         print('LIST_ARTICLE_URL:', LIST_ARTICLE_URL)
         print('LIST_ARTICLE_TITLE:', LIST_ARTICLE_TITLE)
-        if NXT_KEY != FIRST_ARTICLE_TITLE or NXT_KEY == '': # 
+        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': # 
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
