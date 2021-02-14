@@ -31,8 +31,8 @@ from requests import get  # to make GET request
 
 ############공용 상수############
 # 메시지 발송 ID
-# CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
-CHAT_ID = '-1001474652718' # 테스트 채널
+CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+# CHAT_ID = '-1001474652718' # 테스트 채널
 
 # DATABASE
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
