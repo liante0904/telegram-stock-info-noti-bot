@@ -132,7 +132,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
-    print('###첫실행구간###')
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     
     ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
@@ -186,10 +185,10 @@ def EBEST_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '')
-    print('첨부파일 URL :',ATTACH_URL)
+    #print('첨부파일 URL :',ATTACH_URL)
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
@@ -231,7 +230,12 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
-    
+
+    if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
+        CHAT_ID = '-1001474652718' # 테스트 채널
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
@@ -268,7 +272,6 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
-    print('###첫실행구간###')
     soupList = soup.select('#content > table > tbody > tr > td.left > a')
 
     ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[ARTICLE_BOARD_ORDER]
@@ -312,10 +315,10 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('div.div_01 > a')['href']
     ATTACH_URL = 'http://www.heungkuksec.co.kr/' + attachFileCode
-    print('첨부파일 URL :',ATTACH_URL)
+    #print('첨부파일 URL :',ATTACH_URL)
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -347,7 +350,6 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
-    print('###첫실행구간###')
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
@@ -390,10 +392,10 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
-    print('첨부파일 URL :',ATTACH_URL)
+    #print('첨부파일 URL :',ATTACH_URL)
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -428,7 +430,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
-    print('###첫실행구간###')
     ARTICLE_BOARD_NAME = HANA_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
     FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -446,7 +447,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -471,7 +471,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -505,7 +505,6 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
-    print('###첫실행구간###')
     soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
 
     ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
@@ -538,10 +537,10 @@ def YUANTA_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
-    print('첨부파일 URL :',ATTACH_URL)
+    #print('첨부파일 URL :',ATTACH_URL)
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -576,7 +575,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
-    print('###첫실행구간###')
     ARTICLE_BOARD_NAME = SAMSUNG_BOARD_NAME[ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
     a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -629,7 +627,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
@@ -650,7 +648,6 @@ def SEDAILY_checkNewArticle():
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
-    print('###첫실행구간###')
     soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
 
     FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
@@ -704,7 +701,6 @@ def NAVERNews_checkNewArticle():
     SEC_FIRM_ORDER      = 998
     ARTICLE_BOARD_ORDER = 998
 
-    return 
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
@@ -749,7 +745,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', '(네이버 뉴스)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-
     # NaverNews 게시판에 따른 URL 지정
     if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
     else:                      category = 'ranknews'
@@ -775,7 +770,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
@@ -869,14 +864,14 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        #print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
-        #YUANTA_checkNewArticle()
+        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
+        # YUANTA_checkNewArticle()
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        #print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        #NAVERNews_checkNewArticle()
+        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        NAVERNews_checkNewArticle()
 
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
