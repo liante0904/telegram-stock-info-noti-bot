@@ -158,6 +158,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
+
         if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
             EBEST_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -298,6 +299,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
+
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -375,6 +377,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
+
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
             SangSangIn_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -520,6 +523,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
+
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
             YUANTA_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -755,8 +759,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + news['oid'] + '&articleId=' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
-        print('LIST_ARTICLE_URL:', LIST_ARTICLE_URL)
-        print('LIST_ARTICLE_TITLE:', LIST_ARTICLE_TITLE)
         if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': # 
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
