@@ -47,7 +47,8 @@ FIRM_NAME = (
     "상상인증권",           # 2
     "하나금융투자",          # 3
     "유안타증권",           # 4
-    "삼성증권"              # 5
+    "삼성증권",              # 5
+    "교보증권"              # 6
 )
 
 # 게시판 이름
@@ -197,8 +198,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-    ARTICLE_BOARD_NAME = ''
-
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
@@ -213,10 +212,15 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
             ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else:
+            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
+    print('msgFirmName1', msgFirmName)
+    print('ARTICLE_BOARD_NAME',ARTICLE_BOARD_NAME)
     sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
@@ -637,6 +641,88 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+def KyoBo_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 6
+    ARTICLE_BOARD_ORDER = 0
+
+    TARGET_URL = 'https://www.iprovest.com/weblogic/RSReportServlet?mode=list&menuCode=1&scr_id=32'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('body > div > table > tbody > tr')
+
+    FIRST_ARTICLE_TITLE = soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].text.strip()
+    FIRST_ARTICLE_URL =  'https://www.iprovest.com' + soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
+    FIRST_ARTICLE_BOARD_NAME = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(4) > i')[FIRST_ARTICLE_INDEX].text.strip()
+
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+    print('FIRST_ARTICLE_BOARD_NAME:',FIRST_ARTICLE_BOARD_NAME)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER], '게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print(FIRM_NAME[SEC_FIRM_ORDER], '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        ## 연속키는 게시글 URL 사용##
+
+        LIST_ARTICLE_TITLE = list.select_one('body > div > table > tbody > tr > td.tLeft > div > a').text.strip()
+        LIST_ARTICLE_URL =  'https://www.iprovest.com' + list.select_one('body > div > table > tbody > tr > td.tLeft > div > a').attrs['href'].strip()
+        SEND_LIST_ARTICLE_URL = LIST_ARTICLE_URL
+        # 통합 게시판 이므로 게시글의 분류된 게시판 이름을 사용
+        LIST_ARTICLE_BOARD_NAME =  list.select_one('body > div > table > tbody > tr > td:nth-child(4) > i').text.strip()
+        ARTICLE_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
+        
+        # 게시글 리스트에서 첨부파일 URL 획득
+        LIST_ATTACT_FILE_URL = list.select_one('body > div > table > tbody > tr > td:nth-child(7) > a').attrs['href'].strip()
+        LIST_ATTACT_FILE_URL = LIST_ATTACT_FILE_URL.split("'")
+        # 게시글의 URL에서 파일이름 분리1
+        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_URL[1].strip()
+        LIST_ATTACT_FILE_URL = 'https://www.iprovest.com' + LIST_ATTACT_FILE_URL[1].strip()
+
+        # 게시글의 URL에서 파일이름 분리2
+        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME.split("/")
+        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME[7]
+        
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+            LIST_ARTICLE_URL = LIST_ATTACT_FILE_URL # 첨부파일 URL
+            KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            LIST_ARTICLE_URL = SEND_LIST_ARTICLE_URL
+            send(ARTICLE_BOARD_NAME, LIST_ARTICLE_TITLE, LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            return True
+
+    return True
+
+def KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
+    global ATTACH_FILE_NAME
+    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME
+    print('첨부파일이름 :',ATTACH_FILE_NAME)
+    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    return True
+
+
 def SEDAILY_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -687,7 +773,7 @@ def SEDAILY_checkNewArticle():
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
-    return True    
+    return True
 
 def SEDAILY_downloadFile(ARTICLE_URL):
     webpage = requests.get(ARTICLE_URL, verify=False)
@@ -873,6 +959,9 @@ def main():
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
+
+        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        KyoBo_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
