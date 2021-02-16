@@ -33,6 +33,8 @@ from requests import get  # to make GET request
 # 메시지 발송 ID
 CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 # CHAT_ID = '-1001474652718' # 테스트 채널
+# CHAT_ID = '-1001436418974' # 네이버 뉴스 채널
+
 
 # DATABASE
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
@@ -58,7 +60,8 @@ BOARD_NAME = (
     ["산업리포트", "기업리포트"],                             # 2
     ["산업분석", "기업분석", "Daily"],                       # 3
     ["투자전략", "Report & Note", "해외주식"],               # 4
-    ["국내기업분석", "국내산업분석", "해외기어분석"]           # 5
+    ["국내기업분석", "국내산업분석", "해외기어분석"],              # 6
+    ["국내기업분석", "국내산업분석", "해외기어분석"]               # 5
 )
 
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
@@ -66,7 +69,7 @@ HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
-SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기어분석"]
+SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -237,7 +240,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         DISABLE_WEB_PAGE_PREVIEW = False
 
     if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
-        CHAT_ID = '-1001474652718' # 테스트 채널
+        CHAT_ID = '-1001436418974' # 테스트 채널
     else:
         CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
