@@ -240,7 +240,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         DISABLE_WEB_PAGE_PREVIEW = False
 
     if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
-        CHAT_ID = '-1001436418974' # 테스트 채널
+        CHAT_ID = '-1001436418974' # 네이버 뉴스채널
     else:
         CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
