@@ -33,7 +33,9 @@ from requests import get  # to make GET request
 # 메시지 발송 ID
 CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 # CHAT_ID = '-1001474652718' # 테스트 채널
-# CHAT_ID = '-1001436418974' # 네이버 뉴스 채널
+# CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+# CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+# CHAT_ID = '-1001472616534' # 아이투자
 
 
 # DATABASE
@@ -237,10 +239,16 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
 
-    if SEC_FIRM_ORDER == 998 : # 네이버 뉴스는 내 채널에만
-        CHAT_ID = '-1001436418974' # 네이버 뉴스채널
+
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+        else:
+            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
     else:
         CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
+    
 
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
@@ -825,7 +833,6 @@ def NAVERNews_checkNewArticle():
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-    #webpage = requests.get(TARGET_URL, verify=False)
     request = urllib.request.Request(TARGET_URL)
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -956,9 +963,6 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        KyoBo_checkNewArticle()
-
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
@@ -976,6 +980,9 @@ def main():
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
+
+        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        KyoBo_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
