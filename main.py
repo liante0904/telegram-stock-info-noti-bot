@@ -644,6 +644,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+# 교보증권의 경우 연속키를 첨부파일 URL을 사용합니다.
 def KyoBo_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -663,23 +664,30 @@ def KyoBo_checkNewArticle():
     FIRST_ARTICLE_URL =  'https://www.iprovest.com' + soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
     FIRST_ARTICLE_BOARD_NAME = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(4) > i')[FIRST_ARTICLE_INDEX].text.strip()
 
+    FIRST_ATTACT_FILE_URL = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(7) > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
+    FIRST_ATTACT_FILE_URL = FIRST_ATTACT_FILE_URL.split("'")
+    FIRST_ATTACT_FILE_URL = 'https://www.iprovest.com' + FIRST_ATTACT_FILE_URL[1].strip()
+
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
     print('FIRST_ARTICLE_BOARD_NAME:',FIRST_ARTICLE_BOARD_NAME)
-
+    print('FIRST_ATTACT_FILE_URL:',FIRST_ATTACT_FILE_URL)
+    
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER])
+        print(FIRM_NAME[SEC_FIRM_ORDER], '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
+        print('교보증권은 첨부파일 URL을 연속키로 사용합니다.')
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER], '게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         print(FIRM_NAME[SEC_FIRM_ORDER], '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
 
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('첫번째 게시글URL:', FIRST_ATTACT_FILE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
@@ -704,7 +712,12 @@ def KyoBo_checkNewArticle():
         LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME.split("/")
         LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME[7]
         
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        print('### 확인 구간###')
+        print('NXT_KEY', NXT_KEY)
+        print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
+        print('LIST_ATTACT_FILE_URL', LIST_ATTACT_FILE_URL)
+        
+        if NXT_KEY != LIST_ATTACT_FILE_URL or NXT_KEY == '':
             LIST_ARTICLE_URL = LIST_ATTACT_FILE_URL # 첨부파일 URL
             KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
             LIST_ARTICLE_URL = SEND_LIST_ARTICLE_URL
@@ -712,7 +725,7 @@ def KyoBo_checkNewArticle():
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
             return True
 
     return True
@@ -945,6 +958,9 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        KyoBo_checkNewArticle()
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
@@ -963,8 +979,7 @@ def main():
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
+
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
