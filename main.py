@@ -1142,12 +1142,6 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
-
-        print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        HANYANG_checkNewArticle()
-
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
