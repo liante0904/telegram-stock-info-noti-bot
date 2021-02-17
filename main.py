@@ -50,26 +50,29 @@ FIRM_NAME = (
     "흥국증권",             # 1
     "상상인증권",           # 2
     "하나금융투자",          # 3
-    "유안타증권",           # 4
+    "한양증권",              # 4
     "삼성증권",              # 5
     "교보증권"              # 6
+    # "유안타증권",           # 4
 )
 
 # 게시판 이름
 BOARD_NAME = (
-    ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"], # 0
-    ["투자전략", "산업/기업분석"],                            # 1
-    ["산업리포트", "기업리포트"],                             # 2
-    ["산업분석", "기업분석", "Daily"],                       # 3
-    ["투자전략", "Report & Note", "해외주식"],               # 4
-    ["국내기업분석", "국내산업분석", "해외기어분석"],              # 6
-    ["국내기업분석", "국내산업분석", "해외기어분석"]               # 5
+    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant" ], # 0
+    [ "투자전략", "산업/기업분석" ],                            # 1
+    [ "산업리포트", "기업리포트" ],                             # 2
+    [ "산업분석", "기업분석", "Daily" ],                       # 3
+    [ "기업분석", "산업분석" ],                                # 4
+    [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
+    [ " " ]                                                 # 6 (교보는 게시판 내 게시판 분류 사용)
+    # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
+HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
 # pymysql 변수
@@ -415,6 +418,89 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+def HANYANG_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 4
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 한양증권 기업분석
+    TARGET_URL_0 =  'http://www.hygood.co.kr/board/researchAnalyzeCompany/list'
+    # 한양증권 산업분석
+    TARGET_URL_1 =  'http://www.hygood.co.kr/board/researchAnalyzeIssue/list'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('#content > div.content_area > table > tbody > tr')
+
+    ARTICLE_BOARD_NAME = HANYANG_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    FIRST_ARTICLE_TITLE = soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].text.strip()
+    FIRST_ARTICLE_URL =  'http://www.hygood.co.kr' + soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    FIRST_ARTICLE_URL_f = FIRST_ARTICLE_URL.split(";")[0]
+    FIRST_ARTICLE_URL_b = FIRST_ARTICLE_URL.split("?")[1]
+    FIRST_ARTICLE_URL = FIRST_ARTICLE_URL_f + "?" + FIRST_ARTICLE_URL_b
+    
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_TITLE = list.select_one('td.tx_left > a').text.strip()
+        LIST_ARTICLE_URL   =  'http://www.hygood.co.kr' + list.select_one('td.tx_left > a').attrs['href']
+        LIST_ARTICLE_URL_f = LIST_ARTICLE_URL.split(";")[0]
+        LIST_ARTICLE_URL_b = LIST_ARTICLE_URL.split("?")[1]
+        LIST_ARTICLE_URL = LIST_ARTICLE_URL_f + "?" + LIST_ARTICLE_URL_b
+
+        LIST_ATTACT_FILE_URL = list.select_one('td:nth-child(4) > a').attrs['href']
+        LIST_ATTACT_FILE_NAME = LIST_ARTICLE_TITLE.split(":")[0].strip() + ".pdf"
+
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+            HANYANG_downloadFile(LIST_ATTACT_FILE_URL, LIST_ATTACT_FILE_NAME)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            return True
+
+
+def HANYANG_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
+    global ATTACH_FILE_NAME
+    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
+    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -491,7 +577,7 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-
+####
 def YUANTA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -963,6 +1049,9 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+        print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        HANYANG_checkNewArticle()
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
@@ -975,8 +1064,8 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
-        # YUANTA_checkNewArticle()
+        print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        HANYANG_checkNewArticle()
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
@@ -990,6 +1079,8 @@ def main():
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
 
+        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
+        # YUANTA_checkNewArticle()
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
         time.sleep(REFRESH_TIME)
 
