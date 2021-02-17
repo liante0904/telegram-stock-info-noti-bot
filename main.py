@@ -974,8 +974,8 @@ def main():
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실
         # YUANTA_checkNewArticle()
 
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # Samsung_checkNewArticle()
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
