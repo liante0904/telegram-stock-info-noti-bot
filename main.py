@@ -203,6 +203,8 @@ def EBEST_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
@@ -218,6 +220,8 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
             ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
         else:
             ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER != 6: 
@@ -239,7 +243,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #me = bot.getMe()
     #print('텔레그램 채널 정보 :',me)
 
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
 
 
@@ -248,6 +252,8 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
             CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
         else:
             CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            CHAT_ID = '-1001472616534' # 아이투자
     else:
         CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
@@ -893,6 +899,93 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+###
+
+def Itooza_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 997
+    ARTICLE_BOARD_ORDER = 997
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 아이투자랭킹스탁
+    TARGET_URL_0 =  'http://www.itooza.com/stock/stock_sub.htm?ss=16'
+    # 아이투자 종목정보
+    TARGET_URL_1 =  'http://www.itooza.com/stock/stock_sub.htm?ss=10'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    if ARTICLE_BOARD_ORDER == 1 : return 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('#article-list > div.list-body > table > tbody > tr')
+
+    ARTICLE_BOARD_NAME = "랭킹스탁"
+    FIRST_ARTICLE_TITLE = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].text.strip()
+    FIRST_ARTICLE_URL   = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','아이투자','의 ', ARTICLE_BOARD_NAME)
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ','아이투자','의 ', ARTICLE_BOARD_NAME,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_TITLE = list.select_one('td.t > a').text.strip()
+        LIST_ARTICLE_URL   = list.select_one('td.t > a').attrs['href']
+        # LIST_ATTACT_FILE_URL = list.select_one('td:nth-child(4) > a').attrs['href']
+        # LIST_ATTACT_FILE_NAME = LIST_ARTICLE_TITLE.split(":")[0].strip() + ".pdf"
+
+        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            Itooza_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            return True
+
+
+def Itooza_downloadFile(ARTICLE_URL):
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('img.bodyaddimage')
+    print(attachFileCode)
+    print(len(attachFileCode.text))
+    
+    if attachFileCode is None or attachFileCode == 'None': return print("아이투자 게시글에 이미지가 존재 하지 않습니다. ")
+    ATTACH_URL = attachFileCode.attrs['src']
+    sendPhoto(ATTACH_URL)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    return True
+
+###
+
 def NAVERNews_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1049,6 +1142,9 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        Itooza_checkNewArticle()
+
         print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
         HANYANG_checkNewArticle()
 
@@ -1072,6 +1168,9 @@ def main():
 
         print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
         KyoBo_checkNewArticle()
+
+        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        Itooza_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
