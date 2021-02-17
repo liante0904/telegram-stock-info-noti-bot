@@ -222,8 +222,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    print('msgFirmName1', msgFirmName)
-    print('ARTICLE_BOARD_NAME',ARTICLE_BOARD_NAME)
     sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
