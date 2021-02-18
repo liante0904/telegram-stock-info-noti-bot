@@ -1160,8 +1160,8 @@ def main():
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        KyoBo_checkNewArticle()
+        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # KyoBo_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
