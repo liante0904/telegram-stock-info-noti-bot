@@ -808,11 +808,11 @@ def KyoBo_checkNewArticle():
         # 게시글의 URL에서 파일이름 분리1
         LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_URL[1].strip()
         LIST_ATTACT_FILE_URL = 'https://www.iprovest.com' + LIST_ATTACT_FILE_URL[1].strip()
-
         # 게시글의 URL에서 파일이름 분리2
         LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME.split("/")
-        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME[8]
-        
+        for r in LIST_ATTACT_FILE_NAME:
+            if ".pdf" in r : LIST_ATTACT_FILE_NAME = r
+        print(LIST_ATTACT_FILE_NAME)
         print('### 확인 구간###')
         print('NXT_KEY', NXT_KEY)
         print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
@@ -1079,12 +1079,30 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+# URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile()")
-    CONVERT_ATTACH_FILE_NAME = urlparse.quote_plus(FILE_NAME)
-    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME)
-    URL = URL.replace(FILE_NAME, CONVERT_ATTACH_FILE_NAME)
+
+    if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
+        # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
+        CONVERT_URL = URL 
+        for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
+            # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
+            # 1. 주소에서 한글 문자를 판별
+            # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
+            print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
+            if ord('가') <= ord(c) <= ord('힣'): 
+                c_encode = c.encode('euc-kr')
+                CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
+                print(CONVERT_URL)
+
+        if URL != CONVERT_URL: 
+            print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
+            print("CONVERT_URL", CONVERT_URL)
+            URL = CONVERT_URL
+
+    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
     print('convert URL:',URL)
     print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
     with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
@@ -1148,10 +1166,6 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-
-        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
-
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
@@ -1170,6 +1184,8 @@ def main():
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
+        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        KyoBo_checkNewArticle()
 
         # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         # Itooza_checkNewArticle()
