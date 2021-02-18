@@ -83,7 +83,8 @@ cursor  = ''
 
 # 연속키URL
 NXT_KEY = ''
-
+# 텔레그램 채널 발송 여부
+SEND_YN = ''
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
 
@@ -105,14 +106,6 @@ def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
     SEC_FIRM_ORDER = 0
-
-    # 게시글 url의 경우 
-    # 1. 앞에 "https://www.ebestsec.co.kr/EtwFrontBoard/" 를 추가
-    # 2. amp; 를 삭제처리를 해야함
-
-    # 게시글 내 첨부파일의 경우 
-    # 1. 앞에 "https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType=" 를 추가
-    # 2. 링크에서 알맹이를 붙이면 됨 -> javascript:download("08573D2F59307A57F4FC67A81B8C333A4C884E6D2951A32F4A48B73EF4E6EC22A0E62B351A025A54E20CB47DEF8A0A801BF2F7B5E3E640975E88D7BACE3B4A49F83020ED90019B489B3C036CF8AB930DCF4795CE87DE76454465F0CF7316F47BF3A0BC08364132247378E3AABC8D0981627BD8F94134BF00D27B03D8F04AC8C04369354956052B75415A9585589694B5F63378DFA40C6BA6435302B96D780C3B3EB2BF0C866966D4CE651747574C8B25208B848CBEBB1BE0222821FC75DCE016")
 
     requests.packages.urllib3.disable_warnings()
 
@@ -170,10 +163,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             EBEST_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
@@ -197,79 +192,10 @@ def EBEST_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '')
-    #print('첨부파일 URL :',ATTACH_URL)
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    
-def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('send()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
-        else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
-    else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-        else:
-            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
-    bot = telegram.Bot(token = my_token_key)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
-        DISABLE_WEB_PAGE_PREVIEW = False
-
-
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
-        else:
-            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            CHAT_ID = '-1001472616534' # 아이투자
-    else:
-        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
-
-    
-
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
-
-    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
-        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
-    
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -325,10 +251,12 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
 
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             HeungKuk_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
@@ -342,10 +270,10 @@ def HeungKuk_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('div.div_01 > a')['href']
     ATTACH_URL = 'http://www.heungkuksec.co.kr/' + attachFileCode
-    #print('첨부파일 URL :',ATTACH_URL)
+    
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -403,10 +331,12 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
 
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             SangSangIn_downloadFile(LIST_ARTICLE_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
@@ -420,11 +350,89 @@ def SangSangIn_downloadFile(ARTICLE_URL):
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
-    #print('첨부파일 URL :',ATTACH_URL)
+    
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+def HANA_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 3
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 하나금융 Daily
+    TARGET_URL_0 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1'
+    # 하나금융 산업 분석
+    TARGET_URL_1 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1'
+    # 하나금융 기업 분석
+    TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
+
+    ARTICLE_BOARD_NAME = HANA_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
+    FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
+
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
+        LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
+        LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
+
+def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
+    global ATTACH_FILE_NAME
+    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
+    
+    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def HANYANG_checkNewArticle():
@@ -493,10 +501,12 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ATTACT_FILE_URL = list.select_one('td:nth-child(4) > a').attrs['href']
         LIST_ATTACT_FILE_NAME = LIST_ARTICLE_TITLE.split(":")[0].strip() + ".pdf"
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             HANYANG_downloadFile(LIST_ATTACT_FILE_URL, LIST_ATTACT_FILE_NAME)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
@@ -506,154 +516,8 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def HANYANG_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-def HANA_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 3
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 하나금융 Daily
-    TARGET_URL_0 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1'
-    # 하나금융 산업 분석
-    TARGET_URL_1 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1'
-    # 하나금융 기업 분석
-    TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
-
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
- 
-def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
-
-    ARTICLE_BOARD_NAME = HANA_BOARD_NAME[ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
-    FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
-
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
-        LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-        LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
-
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
-            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-            return True
-
-def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
-    global ATTACH_FILE_NAME
-    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
-    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-####
-def YUANTA_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 4
-
-    return
-    requests.packages.urllib3.disable_warnings()
-
-    # 유안타 투자전략
-    TARGET_URL_0 =  'https://www.myasset.com/myasset/research/rs_list/rs_view.cmd?cd006=&cd007=RE02&cd008=&searchKeyGubun=&keyword=&jongMok_keyword=&keyword_in=&startCalendar=&endCalendar=&pgCnt=&page=&SEQ=167479'
-    #  산업/기업 분석
-    TARGET_URL_1 =  'https://www.myasset.com/myasset/research/rs_list/rs_list.cmd?cd006=&cd007=RE02&cd008='
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
-    
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
- 
-def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
-
-    ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
-    
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
-        LIST_ARTICLE_TITLE = list.text
-
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
-            YUANTA_downloadFile(LIST_ARTICLE_URL)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-            return True
-
-def YUANTA_downloadFile(ARTICLE_URL):
-    global ATTACH_FILE_NAME
-
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
-    ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
-    #print('첨부파일 URL :',ATTACH_URL)
-    # 첨부파일 이름
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
-    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def Samsung_checkNewArticle():
@@ -725,10 +589,12 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         fileNameArray = a_href.split("/")
         LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
@@ -740,7 +606,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
@@ -818,12 +684,14 @@ def KyoBo_checkNewArticle():
         print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
         print('LIST_ATTACT_FILE_URL', LIST_ATTACT_FILE_URL)
         
-        if NXT_KEY != LIST_ATTACT_FILE_URL or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ATTACT_FILE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             LIST_ARTICLE_URL = LIST_ATTACT_FILE_URL # 첨부파일 URL
             KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
             LIST_ARTICLE_URL = SEND_LIST_ARTICLE_URL
             send(ARTICLE_BOARD_NAME, LIST_ARTICLE_TITLE, LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
@@ -838,71 +706,6 @@ def KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
-
-
-def SEDAILY_checkNewArticle():
-    global NXT_KEY
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER      = 999
-    ARTICLE_BOARD_ORDER = 999
-
-    ARTICLE_BOARD_NAME = ''
-
-    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
-
-    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    FIRST_ARTICLE_TITLE = soup.select_one('#NewsDataFrm > ul > li:nth-child(1) > a > div.text_area > h3').text.replace("[표]", "")
-    
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-
-        if (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '': # 
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        else:
-            print('새로운 게시물을 모두 발송하였습니다.')
-            if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-            return True
-
-    return True
-
-def SEDAILY_downloadFile(ARTICLE_URL):
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
-    print(attachFileCode)
-    ATTACH_URL = attachFileCode.attrs['src']
-    sendPhoto(ATTACH_URL)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    return True
-
-###
 
 def Itooza_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -964,10 +767,12 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # LIST_ATTACT_FILE_URL = list.select_one('td:nth-child(4) > a').attrs['href']
         # LIST_ATTACT_FILE_NAME = LIST_ARTICLE_TITLE.split(":")[0].strip() + ".pdf"
 
-        if NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '':
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             Itooza_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
@@ -1049,9 +854,11 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + news['oid'] + '&articleId=' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
-        if NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '': # 
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
@@ -1063,10 +870,211 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    #print('첨부파일이름 :',ATTACH_FILE_NAME)
+    
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
+
+
+def SEDAILY_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 999
+    ARTICLE_BOARD_ORDER = 999
+
+    ARTICLE_BOARD_NAME = ''
+
+    TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
+
+    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    FIRST_ARTICLE_TITLE = soup.select_one('#NewsDataFrm > ul > li:nth-child(1) > a > div.text_area > h3').text.replace("[표]", "")
+    
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+
+        if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
+
+    return True
+
+def SEDAILY_downloadFile(ARTICLE_URL):
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
+    print(attachFileCode)
+    ATTACH_URL = attachFileCode.attrs['src']
+    sendPhoto(ATTACH_URL)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    return True
+
+def YUANTA_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 4
+
+    return
+    requests.packages.urllib3.disable_warnings()
+
+    # 유안타 투자전략
+    TARGET_URL_0 =  'https://www.myasset.com/myasset/research/rs_list/rs_view.cmd?cd006=&cd007=RE02&cd008=&searchKeyGubun=&keyword=&jongMok_keyword=&keyword_in=&startCalendar=&endCalendar=&pgCnt=&page=&SEQ=167479'
+    #  산업/기업 분석
+    TARGET_URL_1 =  'https://www.myasset.com/myasset/research/rs_list/rs_list.cmd?cd006=&cd007=RE02&cd008='
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
+
+    ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
+    
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    for list in soupList:
+        LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
+        LIST_ARTICLE_TITLE = list.text
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            YUANTA_downloadFile(LIST_ARTICLE_URL)
+            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('새로운 게시물을 모두 발송하였습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            return True
+
+def YUANTA_downloadFile(ARTICLE_URL):
+    global ATTACH_FILE_NAME
+
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
+    ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
+    
+    # 첨부파일 이름
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
+    
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+
+    print('send()')
+    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
+
+    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE:
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 :
+            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
+        else:
+            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else:
+            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    sendMessageText += EMOJI_PICK + ARTICLE_URL 
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    #생성한 텔레그램 봇 정보 출력
+    #me = bot.getMe()
+    #print('텔레그램 채널 정보 :',me)
+
+    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+        DISABLE_WEB_PAGE_PREVIEW = False
+
+
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+        else:
+            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            CHAT_ID = '-1001472616534' # 아이투자
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+
+    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
+        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
+        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
+        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
@@ -1111,6 +1119,73 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
+def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+
+    print('send()')
+    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
+
+    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE:
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 :
+            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
+        else:
+            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else:
+            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    sendMessageText += EMOJI_PICK + ARTICLE_URL 
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    #생성한 텔레그램 봇 정보 출력
+    #me = bot.getMe()
+    #print('텔레그램 채널 정보 :',me)
+
+    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+        DISABLE_WEB_PAGE_PREVIEW = False
+
+
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+        else:
+            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            CHAT_ID = '-1001472616534' # 아이투자
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
+    
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+
+    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
+        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
+        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
+        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 def MySQL_Open_Connect():
     global conn
     global cursor
@@ -1124,6 +1199,7 @@ def MySQL_Open_Connect():
 
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global NXT_KEY
+    global SEND_YN
     global conn
     global cursor
 
@@ -1135,6 +1211,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
         print('####DB조회된 연속키####', end='\n')
         print('SEC_FIRM_ORDER',row['SEC_FIRM_ORDER'], 'ARTICLE_BOARD_ORDER',row['ARTICLE_BOARD_ORDER'], 'NXT_KEY',row['NXT_KEY'])
         NXT_KEY = row['NXT_KEY']
+        SEND_YN = row['SEND_YN']
     conn.close()
     return dbResult
 
