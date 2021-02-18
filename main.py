@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 #from urllib.parse import urlparse
 import urllib.parse as urlparse
 import urllib.request
+
+
 from requests import get  # to make GET request
 
 # 로직 설명
@@ -208,6 +210,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
+    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
@@ -808,7 +811,7 @@ def KyoBo_checkNewArticle():
 
         # 게시글의 URL에서 파일이름 분리2
         LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME.split("/")
-        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME[7]
+        LIST_ATTACT_FILE_NAME = LIST_ATTACT_FILE_NAME[8]
         
         print('### 확인 구간###')
         print('NXT_KEY', NXT_KEY)
@@ -1079,7 +1082,10 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile()")
+    CONVERT_ATTACH_FILE_NAME = urlparse.quote_plus(FILE_NAME)
     ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME)
+    URL = URL.replace(FILE_NAME, CONVERT_ATTACH_FILE_NAME)
+    print('convert URL:',URL)
     print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
     with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
         response = get(URL, verify=False)     # get request
@@ -1142,6 +1148,10 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+
+        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # KyoBo_checkNewArticle()
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
@@ -1160,11 +1170,9 @@ def main():
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
 
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
+        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        # Itooza_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
