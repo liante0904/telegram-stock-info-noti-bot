@@ -1253,8 +1253,8 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        HANYANG_checkNewArticle()
+        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        # HANYANG_checkNewArticle()
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
