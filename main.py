@@ -855,7 +855,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            sendURL(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
@@ -1011,13 +1011,14 @@ def YUANTA_downloadFile(ARTICLE_URL):
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+# 최초 send함수
+# URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
 
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
@@ -1073,6 +1074,61 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
         bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
         os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+# URL 발신용 전용 함수 :
+def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+
+    print('sendURL()')
+
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE:
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 :
+            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
+        else:
+            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else:
+            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    sendMessageText += EMOJI_PICK + ARTICLE_URL 
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    #생성한 텔레그램 봇 정보 출력
+    #me = bot.getMe()
+    #print('텔레그램 채널 정보 :',me)
+
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+        else:
+            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            CHAT_ID = '-1001472616534' # 아이투자
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText)
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1119,72 +1175,7 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
-def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
 
-    print('send()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    print('ATTACH_FILE_NAME null인지 확인:',ATTACH_FILE_NAME)
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
-        else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
-    else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-        else:
-            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
-    bot = telegram.Bot(token = my_token_key)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
-        DISABLE_WEB_PAGE_PREVIEW = False
-
-
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
-        else:
-            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            CHAT_ID = '-1001472616534' # 아이투자
-    else:
-        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
-
-    
-
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
-
-    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
-        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
-    
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def MySQL_Open_Connect():
     global conn
