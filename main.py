@@ -265,17 +265,21 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def HeungKuk_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
 
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('div.div_01 > a')['href']
-    ATTACH_URL = 'http://www.heungkuksec.co.kr/' + attachFileCode
-    
-    # 첨부파일 이름
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
-    
-    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+        
+        # 첨부파일 URL
+        attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('div.div_01 > a')['href']
+        ATTACH_URL = 'http://www.heungkuksec.co.kr/' + attachFileCode
+        # 첨부파일 이름
+        ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('td.col_b669ad.left').text.strip()+ ".pdf"
+    except:
+        print('크롤링오류 혹은 첨부파일 없음')
+        return
+    else:
+        
+        DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+        time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def SangSangIn_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1070,10 +1074,13 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
-    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-        bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
-        os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+    if DISABLE_WEB_PAGE_PREVIEW or ATTACH_FILE_NAME != '': # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
+        try:
+            time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
+            bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
+            os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+        except:
+            return
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1234,11 +1241,12 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        HeungKuk_checkNewArticle()
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
-        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # HeungKuk_checkNewArticle()
 
         print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
         SangSangIn_checkNewArticle()
