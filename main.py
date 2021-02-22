@@ -742,9 +742,13 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#article-list > div.list-body > table > tbody > tr')
 
     ARTICLE_BOARD_NAME = "랭킹스탁"
-    FIRST_ARTICLE_TITLE = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].text.strip()
-    FIRST_ARTICLE_URL   = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    
+    try:
+        FIRST_ARTICLE_TITLE = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_URL   = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    except:
+        FIRST_ARTICLE_TITLE = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > b > a')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_URL   = soup.select('#article-list > div.list-body > table > tbody > tr:nth-child(1) > td.t > b > a')[FIRST_ARTICLE_INDEX].attrs['href']
+        
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
@@ -766,10 +770,12 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     for list in soupList:
-        LIST_ARTICLE_TITLE = list.select_one('td.t > a').text.strip()
-        LIST_ARTICLE_URL   = list.select_one('td.t > a').attrs['href']
-        # LIST_ATTACT_FILE_URL = list.select_one('td:nth-child(4) > a').attrs['href']
-        # LIST_ATTACT_FILE_NAME = LIST_ARTICLE_TITLE.split(":")[0].strip() + ".pdf"
+        try:
+            LIST_ARTICLE_TITLE = list.select_one('td.t > a').text.strip()
+            LIST_ARTICLE_URL   = list.select_one('td.t > a').attrs['href']
+        except:
+            LIST_ARTICLE_TITLE = list.select_one('td.t > b > a').text.strip()
+            LIST_ARTICLE_URL   = list.select_one('td.t > b > a').attrs['href']
 
         if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -781,7 +787,6 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
             return True
-
 
 def Itooza_downloadFile(ARTICLE_URL):
     webpage = requests.get(ARTICLE_URL, verify=False)
@@ -1240,6 +1245,9 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+
+        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        Itooza_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
