@@ -866,7 +866,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 추가
-            sendMessageText += SetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            sendMessageText += GetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print("nNewArticleCnt:",nNewArticleCnt,"sendMessageText 확인:",sendMessageText)
             #sendURL(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             #print('메세지 전송 URL:', LIST_ARTICLE_URL)
@@ -1176,9 +1176,9 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
-def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
+def GetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
-    print('SetSendMessageText')
+    print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 메세지 타이틀
