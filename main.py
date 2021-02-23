@@ -882,7 +882,14 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
-            sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                print(len(sendMessageText))
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -1194,12 +1201,11 @@ def DownloadFile(URL, FILE_NAME):
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
-    print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
     if INDEX == 1:
-        sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+        sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
     # 게시글 제목(굵게)
     sendMessageText += "**" + ARTICLE_TITLE + "**" + "\n"
     # 원문 링크
@@ -1210,7 +1216,6 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
 def GetSendMessageTitle(ARTICLE_TITLE):
 
-    print('GetSendMessageTitle')
     SendMessageTitle = ''
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
@@ -1237,8 +1242,6 @@ def GetSendMessageTitle(ARTICLE_TITLE):
 
 
 def GetSendChatId():
-
-    print('GetSendChatId')
     SendMessageChatId = 0
     if SEC_FIRM_ORDER == 998:
         if  ARTICLE_BOARD_ORDER == 0 : 
@@ -1309,6 +1312,8 @@ def main():
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
+        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        NAVERNews_checkNewArticle()
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
