@@ -873,10 +873,10 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            if nNewArticleCnt > 0:
-                sendText(sendMessageText)
-            else:
+            if nNewArticleCnt == 0:
                 print('새로운 게시물을 모두 발송하였습니다.')
+            else:
+                sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
@@ -1182,7 +1182,8 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     else:
         CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText)
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1245,9 +1246,11 @@ def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파�
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
+    # 발신처
     sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
+    # 원문 링크
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
 
     print('SetSendMessageText')
@@ -1309,12 +1312,6 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        NAVERNews_checkNewArticle()
-
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
