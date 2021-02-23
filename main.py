@@ -1192,13 +1192,13 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
-def GetSendMessageText(nNewArticleCnt, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
+def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
-    if nNewArticleCnt == 1:
+    if INDEX == 1:
         sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
     # 게시글 제목(굵게)
     sendMessageText += "**" + ARTICLE_TITLE + "**" + "\n"
