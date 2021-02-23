@@ -1036,30 +1036,9 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     print('send()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
-        else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
-    else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-        else:
-            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
-
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
@@ -1075,22 +1054,22 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         DISABLE_WEB_PAGE_PREVIEW = False
 
 
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
-        else:
-            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            CHAT_ID = '-1001472616534' # 아이투자
-    else:
-        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    # if SEC_FIRM_ORDER == 998:
+    #     if  ARTICLE_BOARD_ORDER == 0 : 
+    #         CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+    #     else:
+    #         CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    # elif SEC_FIRM_ORDER == 997:
+    #         CHAT_ID = '-1001472616534' # 아이투자
+    # else:
+    #     CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
         try:
             time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-            bot.sendDocument(chat_id = CHAT_ID, document = open(ATTACH_FILE_NAME, 'rb'))
+            bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
             os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
         except:
             return
@@ -1103,30 +1082,9 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
 
     print('sendURL()')
 
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
-        else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
-    else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-        else:
-            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
-
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
@@ -1138,17 +1096,17 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     #me = bot.getMe()
     #print('텔레그램 채널 정보 :',me)
 
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
-        else:
-            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            CHAT_ID = '-1001472616534' # 아이투자
-    else:
-        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    # if SEC_FIRM_ORDER == 998:
+    #     if  ARTICLE_BOARD_ORDER == 0 : 
+    #         CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+    #     else:
+    #         CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    # elif SEC_FIRM_ORDER == 997:
+    #         CHAT_ID = '-1001472616534' # 아이투자
+    # else:
+    #     CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText)
+    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1159,7 +1117,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
 
-    bot.sendPhoto(chat_id = CHAT_ID, photo = ARTICLE_URL)
+    bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
@@ -1172,18 +1130,17 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
 
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
-        else:
-            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            CHAT_ID = '-1001472616534' # 아이투자
-    else:
-        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    # if SEC_FIRM_ORDER == 998:
+    #     if  ARTICLE_BOARD_ORDER == 0 : 
+    #         CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+    #     else:
+    #         CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    # elif SEC_FIRM_ORDER == 997:
+    #         CHAT_ID = '-1001472616534' # 아이투자
+    # else:
+    #     CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
 
-
-    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1219,9 +1176,25 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
+def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
-def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    print('SetSendMessageText')
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    # 발신 메세지 타이틀
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+#    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    # 원문 링크
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
+    sendMessageText += "\n" + "\n"
 
+    return sendMessageText
+
+def GetSendMessageTitle(ARTICLE_TITLE):
+
+    print('GetSendMessageTitle')
+    SendMessageTitle = ''
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
@@ -1240,21 +1213,38 @@ def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파�
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER != 6: 
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+
+    SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    
+    return SendMessageTitle
+
+
+def GetSendChatId(ARTICLE_TITLE):
+
+    print('GetSendChatId')
+    SendMessageChatId = ''
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE:
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 :
+            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
         else:
-            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
+            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
 
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # 발신처
-    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
-    sendMessageText += ARTICLE_TITLE + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
-    sendMessageText += "\n" + "\n"
-
-    print('SetSendMessageText')
-    return sendMessageText
+    SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    
+    return SendMessageChatId
 
 def MySQL_Open_Connect():
     global conn
