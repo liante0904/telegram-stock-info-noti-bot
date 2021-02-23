@@ -1222,27 +1222,16 @@ def GetSendMessageTitle(ARTICLE_TITLE):
 def GetSendChatId(ARTICLE_TITLE):
 
     print('GetSendChatId')
-    SendMessageChatId = ''
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
+    SendMessageChatId = 0
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            SendMessageChatId = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
         else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+            SendMessageChatId = '-1001150510299' # 네이버 많이본 뉴스 채널
     elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
+            SendMessageChatId = '-1001472616534' # 아이투자
     else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-
-    SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+        SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
     return SendMessageChatId
 
