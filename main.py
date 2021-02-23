@@ -1219,7 +1219,7 @@ def GetSendMessageTitle(ARTICLE_TITLE):
     return SendMessageTitle
 
 
-def GetSendChatId(ARTICLE_TITLE):
+def GetSendChatId():
 
     print('GetSendChatId')
     SendMessageChatId = 0
