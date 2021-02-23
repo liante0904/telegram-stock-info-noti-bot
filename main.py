@@ -159,6 +159,8 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
@@ -247,6 +249,8 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
@@ -331,6 +335,8 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
@@ -416,6 +422,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
@@ -495,6 +503,8 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('td.tx_left > a').text.strip()
         LIST_ARTICLE_URL   =  'http://www.hygood.co.kr' + list.select_one('td.tx_left > a').attrs['href']
@@ -583,6 +593,8 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
         a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -662,6 +674,8 @@ def KyoBo_checkNewArticle():
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         ## 연속키는 게시글 URL 사용##
 
@@ -769,6 +783,8 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         try:
             LIST_ARTICLE_TITLE = list.select_one('td.t > a').text.strip()
@@ -865,11 +881,8 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 추가
-            sendMessageText += GetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print("nNewArticleCnt:",nNewArticleCnt,"sendMessageText 확인:",sendMessageText)
-            #sendURL(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            #print('메세지 전송 URL:', LIST_ARTICLE_URL)
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -891,7 +904,6 @@ def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
-
 
 def SEDAILY_checkNewArticle():
     global NXT_KEY
@@ -929,6 +941,8 @@ def SEDAILY_checkNewArticle():
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
@@ -998,6 +1012,8 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
@@ -1176,15 +1192,16 @@ def DownloadFile(URL, FILE_NAME):
         
     return True
 
-def GetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
+def GetSendMessageText(nNewArticleCnt, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    # 발신 메세지 타이틀
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
-#    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
-    sendMessageText += ARTICLE_TITLE + "\n"
+    # 발신 게시판 종류
+    if nNewArticleCnt == 1:
+        sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    # 게시글 제목(굵게)
+    sendMessageText += "**" + ARTICLE_TITLE + "**" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
