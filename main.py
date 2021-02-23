@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*- 
 import os
 import sys
+import datetime
+from pytz import timezone
 # import urlparse
 import telegram
 import requests
@@ -1308,12 +1310,16 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
+    time_now = datetime.datetime.now(timezone('Asia/Seoul'))
+    print(time_now)
+
+    time_now_str = str(time_now)
+    print(time_now_str[:19])
+    print(time_now_str[1:3])
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
 
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        NAVERNews_checkNewArticle()
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
