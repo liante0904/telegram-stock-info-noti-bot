@@ -857,19 +857,27 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
     else:                      category = 'ranknews'
 
+    nNewArticleCnt = 0
+    sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
-            
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + news['oid'] + '&articleId=' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            sendURL(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+            nNewArticleCnt += 1 # 새로운 게시글 추가
+            sendMessageText += SetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            print("nNewArticleCnt:",nNewArticleCnt,"sendMessageText 확인:",sendMessageText)
+            #sendURL(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            #print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            if nNewArticleCnt > 0:
+                sendText(sendMessageText)
+            else:
+                print('새로운 게시물을 모두 발송하였습니다.')
+
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1155,6 +1163,29 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
+    global CHAT_ID
+
+    print('sendText()')
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
+        else:
+            CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            CHAT_ID = '-1001472616534' # 아이투자
+    else:
+        CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
+
+    bot.sendMessage(chat_id = CHAT_ID, text = sendMessageText)
+    
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
@@ -1188,6 +1219,39 @@ def DownloadFile(URL, FILE_NAME):
     return True
 
 
+def SetSendMessageText(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+        ARTICLE_BOARD_NAME = ''
+        if  "최종치" in ARTICLE_TITLE:
+            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+            return 
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 :
+            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
+        else:
+            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997:
+        msgFirmName = "아이투자 - "
+    else:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        if SEC_FIRM_ORDER != 6: 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else:
+            print('여기탔나 테스트:',ARTICLE_BOARD_NAME)
+
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    sendMessageText += ARTICLE_TITLE + "\n"
+    sendMessageText += EMOJI_PICK + ARTICLE_URL 
+    sendMessageText += "\n" + "\n"
+
+    print('SetSendMessageText')
+    return sendMessageText
 
 def MySQL_Open_Connect():
     global conn
@@ -1245,6 +1309,9 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+
+        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        NAVERNews_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
