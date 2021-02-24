@@ -79,6 +79,7 @@ HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
+KYOBO_BOARD_NAME = ''
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -633,6 +634,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 def KyoBo_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
+    global KYOBO_BOARD_NAME # 교보증권 전용 변수
 
     SEC_FIRM_ORDER      = 6
     ARTICLE_BOARD_ORDER = 0
@@ -687,7 +689,7 @@ def KyoBo_checkNewArticle():
         # 통합 게시판 이므로 게시글의 분류된 게시판 이름을 사용
         LIST_ARTICLE_BOARD_NAME =  list.select_one('body > div > table > tbody > tr > td:nth-child(4) > i').text.strip()
         ARTICLE_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
-        
+        KYOBO_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
         # 게시글 리스트에서 첨부파일 URL 획득
         LIST_ATTACT_FILE_URL = list.select_one('body > div > table > tbody > tr > td:nth-child(7) > a').attrs['href'].strip()
         LIST_ATTACT_FILE_URL = LIST_ATTACT_FILE_URL.split("'")
@@ -1237,6 +1239,9 @@ def GetSendMessageTitle(ARTICLE_TITLE):
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER != 6: 
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        else: # 교보증권 예외처리 반영
+            ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
+
 
     SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     
