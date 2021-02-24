@@ -1330,16 +1330,20 @@ def GetCurrentTime(*args):
         TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
     elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
         TIME = TIME
+    elif pattern == 'HHMM' or pattern == 'hhmm':
+        TIME = TIME_SPLIT[0] + TIME_SPLIT[1]
+    elif pattern == 'HHMMSS' or pattern == 'hhmmss':
+        TIME = TIME.replace(":", "")
     else:
         TIME = time_now[11:].strip()
-
+    print(TIME)
     return TIME
 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentDate(*args):
     pattern = ''
     for pattern in args:
-        print(pattern)
+        print('pattern 입력값',pattern)
     
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
@@ -1370,10 +1374,28 @@ def GetCurrentDate(*args):
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
-    print(GetCurrentDate() , GetCurrentTime())
-
+    #print(GetCurrentDate() , GetCurrentTime())
+    TimeHourMin = int(GetCurrentTime('HHMM'))
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+        if TimeHourMin < 0 : 
+            print("GetCurrentTime() Error => 시간 논리 에러")
+            return 
+        elif TimeHourMin in range(0, 500) and TimeHourMin in range(2200, 2400): # 22~다음날 05시까지 유휴
+            print('######',"현재시간:", GetCurrentTime() ,REFRESH_TIME,'초 스케줄을 실행합니다.######')
+            time.sleep(REFRESH_TIME)
+        elif TimeHourMin in range(600, 830):  # 06~ 08:30분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            time.sleep(REFRESH_TIME * 3)
+        elif TimeHourMin in range(830, 1100):  # 08:30~ 11:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            time.sleep(REFRESH_TIME * 3)
+        elif TimeHourMin in range(1100, 1600):  # 11:00~ 16:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            time.sleep(REFRESH_TIME * 3)
+        elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            time.sleep(REFRESH_TIME * 3)
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
