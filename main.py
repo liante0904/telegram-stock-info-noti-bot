@@ -1187,7 +1187,6 @@ def DownloadFile(URL, FILE_NAME):
             if ord('가') <= ord(c) <= ord('힣'): 
                 c_encode = c.encode('euc-kr')
                 CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-                print(CONVERT_URL)
 
         if URL != CONVERT_URL: 
             print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
@@ -1285,7 +1284,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
-        print('SEC_FIRM_ORDER',row['SEC_FIRM_ORDER'], 'ARTICLE_BOARD_ORDER',row['ARTICLE_BOARD_ORDER'], 'NXT_KEY',row['NXT_KEY'])
+        print(row)
         NXT_KEY = row['NXT_KEY']
         SEND_YN = row['SEND_YN']
     conn.close()
@@ -1324,6 +1323,10 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+
+
+        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        KyoBo_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
