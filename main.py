@@ -1307,15 +1307,70 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     conn.close()
     return dbResult
 
+# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
+def GetCurrentTime(*args):
+    pattern = ''
+    for pattern in args:
+        print(pattern)
+    
+    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
+
+    TIME = time_now[11:].strip()
+    TIME_SPLIT = TIME.split(":")
+
+    if pattern == '':
+        TIME = time_now[11:].strip()
+    elif pattern == 'HH' or pattern == 'hh':
+        TIME = TIME_SPLIT[0]
+    elif pattern == 'MM' or pattern == 'mm':
+        TIME = TIME_SPLIT[1]
+    elif pattern == 'SS' or pattern == 'ss':
+        TIME = TIME_SPLIT[2]
+    elif pattern == 'HH:MM' or pattern == 'hh:mm':
+        TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
+    elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
+        TIME = TIME
+    else:
+        TIME = time_now[11:].strip()
+
+    return TIME
+
+# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
+def GetCurrentDate(*args):
+    pattern = ''
+    for pattern in args:
+        print(pattern)
+    
+    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
+
+    DATE = time_now[:10].strip()
+    DATE_SPLIT = DATE.split("-")
+
+    if pattern == '':
+        DATE = time_now[:10].strip()
+    elif pattern == 'YY' or pattern == 'yy':
+        DATE = DATE_SPLIT[0][2:]
+    elif pattern == 'YYYY' or pattern == 'yyyy':
+        DATE = DATE_SPLIT[0]
+    elif pattern == 'MM' or pattern == 'mm':
+        DATE = DATE_SPLIT[1]
+    elif pattern == 'DD' or pattern == 'dd':
+        DATE = DATE_SPLIT[2]
+    elif pattern == 'YYYY/HH/MM' or pattern == 'yyyy/hh/mm':
+        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
+    elif pattern == 'YYYY-HH-MM' or pattern == 'yyyy-hh-mm':
+        DATE = time_now[:10].strip()
+    elif pattern == 'YY-HH-MM' or pattern == 'yy-hh-mm':
+        DATE = time_now[2:10].strip()
+    else:
+        DATE = time_now[:10].strip()
+
+    return DATE
+    
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
-    time_now = datetime.datetime.now(timezone('Asia/Seoul'))
-    print(time_now)
-
-    time_now_str = str(time_now)
-    print(time_now_str[:19])
-    print(time_now_str[1:3])
+    print(GetCurrentDate() , GetCurrentTime())
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
