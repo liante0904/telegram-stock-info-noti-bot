@@ -1236,10 +1236,13 @@ def GetSendMessageTitle(ARTICLE_TITLE):
         msgFirmName = "아이투자 - "
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
+        if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-        else: # 교보증권 예외처리 반영
             ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
+        elif SEC_FIRM_ORDER == 997: # 아이투자 예외처리 반영
+            ARTICLE_BOARD_NAME = "랭킹스탁"
+        else: # 나머지 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
 
 
     SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
