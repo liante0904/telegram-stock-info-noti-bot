@@ -1234,13 +1234,12 @@ def GetSendMessageTitle(ARTICLE_TITLE):
             ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
     elif SEC_FIRM_ORDER == 997:
         msgFirmName = "아이투자 - "
+        ARTICLE_BOARD_NAME = "랭킹스탁"
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
             ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
-        elif SEC_FIRM_ORDER == 997: # 아이투자 예외처리 반영
-            ARTICLE_BOARD_NAME = "랭킹스탁"
         else: # 나머지 
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
 
@@ -1326,10 +1325,6 @@ def main():
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-
-
-        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        KyoBo_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
