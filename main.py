@@ -79,6 +79,7 @@ HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
 HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
+KYOBO_BOARD_NAME = ''
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -633,6 +634,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 def KyoBo_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
+    global KYOBO_BOARD_NAME # 교보증권 전용 변수
 
     SEC_FIRM_ORDER      = 6
     ARTICLE_BOARD_ORDER = 0
@@ -687,7 +689,7 @@ def KyoBo_checkNewArticle():
         # 통합 게시판 이므로 게시글의 분류된 게시판 이름을 사용
         LIST_ARTICLE_BOARD_NAME =  list.select_one('body > div > table > tbody > tr > td:nth-child(4) > i').text.strip()
         ARTICLE_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
-        
+        KYOBO_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
         # 게시글 리스트에서 첨부파일 URL 획득
         LIST_ATTACT_FILE_URL = list.select_one('body > div > table > tbody > tr > td:nth-child(7) > a').attrs['href'].strip()
         LIST_ATTACT_FILE_URL = LIST_ATTACT_FILE_URL.split("'")
@@ -886,7 +888,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(len(sendMessageText))
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
@@ -1185,7 +1186,6 @@ def DownloadFile(URL, FILE_NAME):
             if ord('가') <= ord(c) <= ord('힣'): 
                 c_encode = c.encode('euc-kr')
                 CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-                print(CONVERT_URL)
 
         if URL != CONVERT_URL: 
             print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
@@ -1233,10 +1233,15 @@ def GetSendMessageTitle(ARTICLE_TITLE):
             ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
     elif SEC_FIRM_ORDER == 997:
         msgFirmName = "아이투자 - "
+        ARTICLE_BOARD_NAME = "랭킹스탁"
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
+        if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+            ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
+        else: # 나머지 
+            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+
 
     SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     
@@ -1280,7 +1285,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
-        print('SEC_FIRM_ORDER',row['SEC_FIRM_ORDER'], 'ARTICLE_BOARD_ORDER',row['ARTICLE_BOARD_ORDER'], 'NXT_KEY',row['NXT_KEY'])
+        print(row)
         NXT_KEY = row['NXT_KEY']
         SEND_YN = row['SEND_YN']
     conn.close()
