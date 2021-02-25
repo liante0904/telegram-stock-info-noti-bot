@@ -609,13 +609,22 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            if nNewArticleCnt == 0:
+                print('새로운 게시물을 모두 발송하였습니다.')
+            else:
+                sendText(sendMessageText)
+
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1202,7 +1211,7 @@ def DownloadFile(URL, FILE_NAME):
     return True
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
-
+    print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
@@ -1250,6 +1259,7 @@ def GetSendMessageTitle(ARTICLE_TITLE):
 
 def GetSendChatId():
     SendMessageChatId = 0
+    TEST = '-1001474652718' # 테스트 채널
     if SEC_FIRM_ORDER == 998:
         if  ARTICLE_BOARD_ORDER == 0 : 
             SendMessageChatId = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
@@ -1260,6 +1270,7 @@ def GetSendChatId():
     else:
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
+    SendMessageChatId = TEST
     return SendMessageChatId
 
 def MySQL_Open_Connect():
@@ -1406,6 +1417,10 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
             # time.sleep(REFRESH_TIME * 3)
+
+
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
