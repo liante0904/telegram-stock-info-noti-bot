@@ -1311,7 +1311,7 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
         NXT_KEY = FIRST_NXT_KEY
     conn.close()
     return dbResult
-
+ 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentTime(*args):
     pattern = ''
