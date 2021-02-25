@@ -176,7 +176,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
 def EBEST_downloadFile(ARTICLE_URL):
@@ -266,7 +266,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
 def HeungKuk_downloadFile(ARTICLE_URL):
@@ -352,7 +352,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
 def SangSangIn_downloadFile(ARTICLE_URL):
@@ -440,7 +440,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
@@ -526,7 +526,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
 
@@ -616,10 +616,10 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return True
 
 def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
@@ -716,7 +716,7 @@ def KyoBo_checkNewArticle():
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL, FIRST_ARTICLE_TITLE)
             return True
 
     return True
@@ -805,7 +805,7 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
 def Itooza_downloadFile(ARTICLE_URL):
@@ -901,10 +901,10 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 sendText(sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
 def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
@@ -966,7 +966,7 @@ def SEDAILY_checkNewArticle():
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
     return True
@@ -1036,7 +1036,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
 def YUANTA_downloadFile(ARTICLE_URL):
@@ -1302,11 +1302,11 @@ def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     conn.close()
     return NXT_KEY
 
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
     global NXT_KEY
     cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
+    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
+    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
     if dbResult:
         NXT_KEY = FIRST_NXT_KEY
     conn.close()
@@ -1388,19 +1388,24 @@ def main():
             return 
         elif TimeHourMin in range(0, 500) and TimeHourMin in range(2200, 2400): # 22~다음날 05시까지 유휴
             print('######',"현재시간:", GetCurrentTime() ,REFRESH_TIME,'초 스케줄을 실행합니다.######')
-            time.sleep(REFRESH_TIME)
+            print('CASE1')
+            # time.sleep(REFRESH_TIME)
         elif TimeHourMin in range(600, 830):  # 06~ 08:30분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
-            time.sleep(REFRESH_TIME * 3)
+            print('CASE2')
+            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(830, 1100):  # 08:30~ 11:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
-            time.sleep(REFRESH_TIME * 3)
+            print('CASE3')
+            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(1100, 1600):  # 11:00~ 16:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
-            time.sleep(REFRESH_TIME * 3)
+            print('CASE4')
+            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
-            time.sleep(REFRESH_TIME * 3)
+            print('CASE5')
+            # time.sleep(REFRESH_TIME * 3)
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
