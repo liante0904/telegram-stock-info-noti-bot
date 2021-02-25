@@ -433,13 +433,25 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
-            send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+            # HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
+            # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            # print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            if nNewArticleCnt == 0:
+                print('새로운 게시물을 모두 발송하였습니다.')
+            else:
+                sendText(sendMessageText)
+
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1213,7 +1225,6 @@ def GetSendMessageTitle(ARTICLE_TITLE):
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
             ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
         else: # 나머지 
             ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
