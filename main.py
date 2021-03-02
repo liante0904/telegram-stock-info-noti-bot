@@ -75,7 +75,7 @@ BOARD_NAME = (
 EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
-HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
+HANA_BOARD_NAME = ["Daily", "산업분석", "기업분석"]
 HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
 HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
 SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
@@ -168,8 +168,9 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
-            EBEST_downloadFile(LIST_ARTICLE_URL)
+        if ( NXT_KEY == LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
+            ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
+            # sendMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
@@ -200,7 +201,27 @@ def EBEST_downloadFile(ARTICLE_URL):
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    
+    # EBEST 모바일 페이지 PDF 링크 생성(파일명 2번 인코딩하여 조립)
+    r = urlparse.quote(ATTACH_FILE_NAME)
+    r = urlparse.quote(r)
+    if ARTICLE_BOARD_ORDER == 0 : # 이슈브리프
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
+    elif ARTICLE_BOARD_ORDER == 1: # 기업분석
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    elif ARTICLE_BOARD_ORDER == 2: # 산업분석
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
+    elif ARTICLE_BOARD_ORDER == 3: # 투자전략
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    elif ARTICLE_BOARD_ORDER == 3: # QUANT
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    else:
+        ATTACH_URL = "https://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+
+    ATTACH_URL += r
+    print(ATTACH_URL)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    return ATTACH_URL
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1149,6 +1170,27 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
 
 def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     global CHAT_ID
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    bot = telegram.Bot(token = my_token_key)
+
+    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    
+    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+
+    print('send()')
+    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    sendMessageText += ARTICLE_TITLE + "\n"
+    # 원문 링크 , 레포트 링크
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
