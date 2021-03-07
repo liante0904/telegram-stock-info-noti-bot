@@ -1,8 +1,10 @@
 # -*- coding:utf-8 -*- 
+from _typeshed import NoneType
 import os
 import sys
 import datetime
 import math
+from openpyxl import Workbook # 엑셀
 from pytz import timezone
 # import urlparse
 import telegram
@@ -832,7 +834,7 @@ def NAVERNews_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
-    TARGET_URL_0 = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210304&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
+    TARGET_URL_0 = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
     
     # 네이버 많이 본 뉴스
     TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
@@ -845,9 +847,10 @@ def NAVERNews_checkNewArticle():
         time.sleep(5)
  
 # JSON API 타입
-def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def NAVERNews_parse():
     global NXT_KEY
 
+    TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
     request = urllib.request.Request(TARGET_URL)
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -884,6 +887,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         for r in jres:
             print(NAVER_URL + r['CMP_CD'],'종목명:', r['CMP_NM_KOR'])
+            fnguide_parse(r['CMP_CD'])
         
         TARGET_URL = TARGET_URL.replace('currentPage='+ str(idx), 'currentPage='+ str(idx+1)  )
         
@@ -1339,14 +1343,96 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     conn.close()
     return dbResult
 
+
+def fnguide_parse(*args):
+    global NXT_KEY
+    global LIST_ARTICLE_TITLE
+
+    pattern = ''
+    CODE = ''
+    for pattern in args:
+        if len(pattern) > 0 :
+            CODE =  pattern
+
+    TARGET_URL = 'http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?MenuYn=Y&gicode=A'
+    TARGET_URL += CODE
+    # 005930
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    data_cmp_nm = soup.select_one('#giName').text
+    data_cmp_code = soup.select_one('#compBody > div.section.ul_corpinfo > div.corp_group1 > h2').text
+    data_Per = soup.select_one('#corp_group2 > dl:nth-child(1) > dd').text
+    data_fwdPer = soup.select_one('#corp_group2 > dl:nth-child(2) > dd').text
+    data_dividendYield = soup.select_one('#corp_group2 > dl:nth-child(5) > dd').text
+    #data_ROE = soup.select_one('#svdMainGrid10D > table > tbody > tr:nth-child(7) > td:nth-child(2)')#.text
+    print('==============================================================')
+    print('종목명:', data_cmp_nm)
+    print('종목코드:', data_cmp_code)
+    print('per:', data_Per)
+    print('12m fwd per:', data_fwdPer)
+    print('시가배당 수익률', data_dividendYield)
+    print('==============================================================')
+    #print('ROE', data_ROE)
+    
+    
+    return
+
+def excel_write_title(*args):
+    global write_wb
+    global write_ws
+    
+    pattern = ''
+    CODE = ''
+    for pattern in args:
+        if len(pattern) ==  0 or pattern ==  NoneType :
+                # 엑셀파일 쓰기
+                write_wb = Workbook()
+                # Sheet1에다 입력
+                write_ws = write_wb.active
+                # 타이틀
+                write_ws.cell(1, 1, '링크')
+                write_ws.cell(1, 2, '종목명')
+                write_ws.cell(1, 3, '종목코드')
+                write_ws.cell(1, 4, 'PER')
+                write_ws.cell(1, 5, 'fwd-PER')
+                write_ws.cell(1, 6, '시가배당')
+
+
+
+
+    # 엑셀파일 쓰기
+    # write_wb = Workbook()
+
+    # 이름이 있는 시트를 생성
+    # write_ws = write_wb.create_sheet('생성시트')
+
+    # # Sheet1에다 입력
+    # write_ws = write_wb.active
+    # # 타이틀
+    # write_ws['A1'] = '숫자'
+    # write_ws['B1'] = '종목명'
+
+    #행 단위로 추가
+    write_ws.append([1,2,3])
+
+    #셀 단위로 추가
+    write_ws.cell(5, 5, '5행5열')
+    write_wb.save("숫자.xlsx")
+
+    # 출처 https://myjamong.tistory.com/51
+
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
 
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
-
-        NAVERNews_checkNewArticle()
+        
+        # fnguide_parse('005930')
+        excel_write()
+        NAVERNews_parse()
         return
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
