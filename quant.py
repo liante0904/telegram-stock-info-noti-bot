@@ -851,7 +851,7 @@ def NAVERNews_parse():
 
     # TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
     # TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=3&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%22100000.00%22%2C%22MAX_VAL%22%3A%22500000.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2230.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%225.00%22%2C%22MAX_VAL%22%3A%2250.00%22%2C%22Ogb%22%3A%221%22%7D%5D'
-    TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210310&termCount=1&currentPage=1&orderKey=V5&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%225%22%2C%22MIN_VAL%22%3A%22-11%22%2C%22MAX_VAL%22%3A%220.50%22%2C%22Ogb%22%3A%223%22%7D%5D'
+    TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210311&termCount=2&currentPage=1&orderKey=V3&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%22100000.00%22%2C%22MAX_VAL%22%3A%22500000.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2210.00%22%2C%22Ogb%22%3A%221%22%7D%5D'
 
     request = urllib.request.Request(TARGET_URL)
     #검색 요청 및 처리
@@ -889,9 +889,10 @@ def NAVERNews_parse():
         jres = json.loads(response.read().decode('utf-8'))
         jres = jres['resultList']
         # print(idx)
-        write = ''
+        
         for r in jres:
-            write += NAVER_URL + r['CMP_CD'] + '종목명:' + r['CMP_NM_KOR'] + '\n'
+            write = ''
+            write += NAVER_URL + r['CMP_CD'] + '\t' +'종목명:' + r['CMP_NM_KOR'] + '\n'
             write += fnguide_parse(r['CMP_CD']) + '\n'
             print(write)
             file.write(write)      # 파일에 문자열 저장
@@ -1373,17 +1374,23 @@ def fnguide_parse(*args):
     soup = BeautifulSoup(webpage.content, "html.parser")
     data_cmp_nm = soup.select_one('#giName').text
     data_cmp_code = soup.select_one('#compBody > div.section.ul_corpinfo > div.corp_group1 > h2').text
+    data_stxt1 = soup.select_one('#compBody > div.section.ul_corpinfo > div.corp_group1 > p > span.stxt.stxt1').text
+    data_stxt2 = soup.select_one('#strMarketTxt').text
     data_Per = soup.select_one('#corp_group2 > dl:nth-child(1) > dd').text
     data_fwdPer = soup.select_one('#corp_group2 > dl:nth-child(2) > dd').text
     data_dividendYield = soup.select_one('#corp_group2 > dl:nth-child(5) > dd').text
+    data_cmp_info = soup.select_one('#bizSummaryContent').text
     #data_ROE = soup.select_one('#svdMainGrid10D > table > tbody > tr:nth-child(7) > td:nth-child(2)')#.text
     r = ''
+    r += TARGET_URL + '\n'
     r += '==============================================================' + '\n'
     r += '종목명: ' + data_cmp_nm                                + '\n'
     r += '종목코드: ' + data_cmp_code                            + '\n'
-    r += 'per: ' + data_Per                                      + '\n'
+    r += '업종: ' + data_stxt1                                      + '\t' + data_stxt2 + '\n'
+    r += 'per(FY0): ' + data_Per                                      + '\n'
     r += '12m fwd per: ' + data_fwdPer                           + '\n'
     r += '시가배당 수익률 '  + data_dividendYield                + '\n'
+    r += '기업개요:' + data_cmp_info                 + '\n'
     r += '==============================================================' + '\n'
     #print('ROE', data_ROE)
     
@@ -1444,36 +1451,36 @@ def main():
         # fnguide_parse('005930')
         # excel_write()
         NAVERNews_parse()
-        return
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        EBEST_checkNewArticle()
+        # return
+        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # EBEST_checkNewArticle()
         
-        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        HeungKuk_checkNewArticle()
+        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # HeungKuk_checkNewArticle()
 
-        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        SangSangIn_checkNewArticle()
+        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        # SangSangIn_checkNewArticle()
 
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        HANA_checkNewArticle()
+        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        # HANA_checkNewArticle()
 
         # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
         # HANYANG_checkNewArticle()
 
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        Samsung_checkNewArticle()
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # Samsung_checkNewArticle()
 
-        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        KyoBo_checkNewArticle()
+        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # KyoBo_checkNewArticle()
 
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
+        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        # Itooza_checkNewArticle()
 
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        NAVERNews_checkNewArticle()
+        # print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
+        # NAVERNews_checkNewArticle()
 
-        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        SEDAILY_checkNewArticle()
+        # print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
+        # SEDAILY_checkNewArticle()
 
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
