@@ -1439,7 +1439,7 @@ def main():
             # time.sleep(REFRESH_TIME * 3)
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        EBEST_checkNewArticle()
+        # EBEST_checkNewArticle()
         
         print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
         HeungKuk_checkNewArticle()
