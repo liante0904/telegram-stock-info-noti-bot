@@ -617,6 +617,10 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        if "(수정)"  in FIRST_ARTICLE_TITLE and NXT_KEY == FIRST_ARTICLE_TITLE.replace("(수정)", ""):  # 첫번째 게시글이 수정된 경우 무한발송 방지  
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+
+
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
@@ -652,6 +656,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 nNewArticleCnt = 0
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
+        
         else:
             if nNewArticleCnt == 0:
                 print('새로운 게시물을 모두 발송하였습니다.')
