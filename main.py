@@ -173,7 +173,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # sendMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        elif SEND_YN == 'Y':
+        elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
@@ -1439,7 +1439,7 @@ def main():
             # time.sleep(REFRESH_TIME * 3)
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # EBEST_checkNewArticle()
+        EBEST_checkNewArticle()
         
         print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
         HeungKuk_checkNewArticle()
