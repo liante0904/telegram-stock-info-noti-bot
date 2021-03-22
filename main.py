@@ -1441,8 +1441,8 @@ def main():
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
-        print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        HeungKuk_checkNewArticle()
+        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # HeungKuk_checkNewArticle()
 
         print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
         SangSangIn_checkNewArticle()
