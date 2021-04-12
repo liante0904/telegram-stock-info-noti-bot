@@ -20,9 +20,21 @@ from bs4 import BeautifulSoup
 #from urllib.parse import urlparse
 import urllib.parse as urlparse
 import urllib.request
-
+import telepot
 
 from requests import get  # to make GET request
+
+# 텔레그램 봇
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CallbackQueryHandler, CommandHandler
+
+
+# 참고 문서
+# https://heodolf.tistory.com/75
+# https://heodolf.tistory.com/76
+# https://heodolf.tistory.com/77
+# https://api.telegram.org/bot1609851580:AAHziXYwvVJqANZhDtg682whClHeaElndZM/getUpdates
+# https://minmong.tistory.com/312
 
 # 로직 설명
 # 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
@@ -43,6 +55,8 @@ CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 
 # CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
 # CHAT_ID = '-1001472616534' # 아이투자
 
+# BOT_API
+BOT_API = "1609851580:AAHziXYwvVJqANZhDtg682whClHeaElndZM"
 
 # DATABASE
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
@@ -50,37 +64,6 @@ CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.
 # 게시글 갱신 시간
 REFRESH_TIME = 600
 
-# 회사이름
-FIRM_NAME = (
-    "이베스트 투자증권",    # 0
-    "흥국증권",             # 1
-    "상상인증권",           # 2
-    "하나금융투자",          # 3
-    "한양증권",              # 4
-    "삼성증권",              # 5
-    "교보증권"              # 6
-    # "유안타증권",           # 4
-)
-
-# 게시판 이름
-BOARD_NAME = (
-    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant" ], # 0
-    [ "투자전략", "산업/기업분석" ],                            # 1
-    [ "산업리포트", "기업리포트" ],                             # 2
-    [ "산업분석", "기업분석", "Daily" ],                       # 3
-    [ "기업분석", "산업 및 이슈분석" ],                          # 4
-    [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
-    [ " " ]                                                 # 6 (교보는 게시판 내 게시판 분류 사용)
-    # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
-)
-
-EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
-HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
-SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
-HANA_BOARD_NAME = ["산업분석", "기업분석", "Daily"]
-HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
-HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
-SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -106,40 +89,15 @@ FIRST_ARTICLE_INDEX = 0
 # 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
 LIST_ARTICLE_TITLE = ''
 
-
-
-
-
-
-def NAVERNews_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER      = 998
-    ARTICLE_BOARD_ORDER = 998
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 네이버 실시간 속보
-    TARGET_URL_0 = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
-    
-    # 네이버 많이 본 뉴스
-    TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
-
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
- 
 # JSON API 타입
 def NAVERNews_parse():
     global NXT_KEY
 
     # http://wise.thewm.co.kr/ASP/Screener/Screener1.asp?ud=#tabPaging
+
     # TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=4&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%226096%22%2C%22MAX_VAL%22%3A%22200000%22%2C%22Ogb%22%3A%223%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%2210.00%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%223%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2241.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22S%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%22-1635%22%2C%22MAX_VAL%22%3A%22100.00%22%2C%22Ogb%22%3A%223%22%7D%5D'
     # TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210305&termCount=3&currentPage=1&orderKey=P1&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22I%22%2C%22SEQ%22%3A%222%22%2C%22MIN_VAL%22%3A%22100000.00%22%2C%22MAX_VAL%22%3A%22500000.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2230.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%225.00%22%2C%22MAX_VAL%22%3A%2250.00%22%2C%22Ogb%22%3A%221%22%7D%5D'
+    
     TARGET_URL = 'http://wise.thewm.co.kr/ASP/Screener/data/Screener_Termtabledata.asp?market=0&industry=G0&size=0&workDT=20210405&termCount=3&currentPage=1&orderKey=V33&orderDirect=D&jsonParam=%5B%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%224.00%22%2C%22MAX_VAL%22%3A%2220.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22P%22%2C%22SEQ%22%3A%221%22%2C%22MIN_VAL%22%3A%228.00%22%2C%22MAX_VAL%22%3A%2235.00%22%2C%22Ogb%22%3A%221%22%7D%2C%7B%22Group%22%3A%22V%22%2C%22SEQ%22%3A%2233%22%2C%22MIN_VAL%22%3A%221.00%22%2C%22MAX_VAL%22%3A%2210%22%2C%22Ogb%22%3A%222%22%7D%5D'
 
     request = urllib.request.Request(TARGET_URL)
@@ -352,6 +310,8 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    #생성한 텔레그램 봇 정보 assign (@ssh_stock_info_noti_bot)
+    my_token_key = '1609851580:AAHziXYwvVJqANZhDtg682whClHeaElndZM'
     bot = telegram.Bot(token = my_token_key)
 
     # if SEC_FIRM_ORDER == 998:
@@ -433,9 +393,10 @@ def GetSendMessageTitle(ARTICLE_TITLE):
     elif SEC_FIRM_ORDER == 997:
         msgFirmName = "아이투자 - "
     else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER != 6: 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        msgFirmName = " "
+        # msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
+        # if SEC_FIRM_ORDER != 6: 
+        #     ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
 
     SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
     
@@ -570,8 +531,6 @@ def excel_write_title(*args):
                 write_ws.cell(1, 6, '시가배당')
 
 
-
-
     # 엑셀파일 쓰기
     # write_wb = Workbook()
 
@@ -597,47 +556,98 @@ def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     print('########Program Start Run########')
 
-    # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+        BOT_TOKEN='672768316:AAHXpYmnMzGp_eH0i-juikUFU6q9y78CBhA'
+        BOT_TOKEN= "1609851580:AAHziXYwvVJqANZhDtg682whClHeaElndZM"
         
+        bot = telegram.Bot( token=BOT_TOKEN )
+        try:
+            chat_id = bot.getUpdates()[-1].message.chat.id
+            print(chat_id)
+        except IndexError:
+            chat_id = '183792411'
+        
+        bot.sendMessage(chat_id=chat_id, text='/start 를 눌러 시작해보세요 ')
+
+        updater = Updater( token=BOT_TOKEN, use_context=True )
+        dispatcher = updater.dispatcher
+
+        def cmd_task_buttons(update, context):
+            task_buttons = [[
+                InlineKeyboardButton( '1.네이버 뉴스', callback_data=1 )
+                , InlineKeyboardButton( '2.직방 매물', callback_data=2 )
+            ], 
+            [
+                InlineKeyboardButton( '3.취소', callback_data=3 )
+            ]]
+            
+            reply_markup = InlineKeyboardMarkup( task_buttons )
+            
+            context.bot.send_message(
+                chat_id=update.message.chat_id
+                , text='작업을 선택해주세요.'
+                , reply_markup=reply_markup
+            )
+
+
+        def start(update, context):
+            task_buttons = [[
+                InlineKeyboardButton( '1.네이버 뉴스', callback_data=1 )
+                , InlineKeyboardButton( '2.직방 매물', callback_data=2 )
+            ], 
+            [
+                InlineKeyboardButton( '3.취소', callback_data=3 )
+            ]]
+            
+            reply_markup = InlineKeyboardMarkup( task_buttons )
+            
+            context.bot.send_message(
+                chat_id=update.message.chat_id
+                , text='작업을 선택해주세요.'
+                , reply_markup=reply_markup
+            )
+        
+        def stop(update, context):
+            context.bot.send_message(chat_id=update.effective_chat.id, text="작업을 중단합니다.")
+        
+        def zigbang(update, context):
+            # context.bot.send_message(chat_id=update.effective_chat.id, text="[{}] 주변 매물을 수집합니다.".format( context.args[0] ))
+            context.bot.send_message(chat_id=update.effective_chat.id, text=" 주변 매물을 수집합니다.")
+        
+        start_handler = CommandHandler('start', start)
+        stop_handler = CommandHandler('stop', stop)
+        zigbang_handler = CommandHandler('zigbang', zigbang)
+        task_buttons_handler = CommandHandler( 'tasks', cmd_task_buttons )  
+        
+        
+        dispatcher.add_handler(start_handler)
+        dispatcher.add_handler(stop_handler)
+        dispatcher.add_handler(zigbang_handler)
+        dispatcher.add_handler( task_buttons_handler )
+
+        
+
+
+        def callback_get(update, context):
+            print("callback")
+            data_selected = update.callback_query.data
+            print(data_selected)
+            context.bot.edit_message_text(text="{}이(가) 선택되었습니다".format(update.callback_query.data),
+                                        chat_id=update.callback_query.message.chat_id,
+                                        message_id=update.callback_query.message.message_id)
+
+        updater.dispatcher.add_handler(CallbackQueryHandler(callback_get))
+        updater.start_polling()
+        updater.idle()
+
+
+        # NAVERNews_parse()
+
         # fnguide_parse('005930')
         # excel_write()
-        NAVERNews_parse()
-        # return
-        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # EBEST_checkNewArticle()
-        
-        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # HeungKuk_checkNewArticle()
 
-        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        # SangSangIn_checkNewArticle()
-
-        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        # HANA_checkNewArticle()
-
-        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        # HANYANG_checkNewArticle()
-
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # Samsung_checkNewArticle()
-
-        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
-
-        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        # Itooza_checkNewArticle()
-
-        # print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        # NAVERNews_checkNewArticle()
-
-        # print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        # SEDAILY_checkNewArticle()
-
-        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
-        # YUANTA_checkNewArticle()
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
+        # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+        # time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
