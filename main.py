@@ -168,13 +168,16 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
             ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
             # sendMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
             send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
+        elif 'test' in FIRST_ARTICLE_TITLE:
+            print("test 게시물은 연속키 처리를 제외합니다.")
+            return True
         else:
             print('새로운 게시물을 모두 발송하였습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
@@ -619,8 +622,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
-        if "(수정)"  in FIRST_ARTICLE_TITLE and NXT_KEY == FIRST_ARTICLE_TITLE.replace("(수정)", ""):  # 첫번째 게시글이 수정된 경우 무한발송 방지  
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
@@ -644,7 +646,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         fileNameArray = a_href.split("/")
         LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y' and '(수정)' not in LIST_ARTICLE_TITLE:
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -655,7 +657,9 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 nNewArticleCnt = 0
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
-        
+        elif '(수정)' in LIST_ARTICLE_TITLE:
+            print("수정 게시물은 연속키 갱신을 제외합니다.")
+            return 
         else:
             if nNewArticleCnt == 0:
                 print('새로운 게시물을 모두 발송하였습니다.')
