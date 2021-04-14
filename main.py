@@ -1178,7 +1178,6 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
-
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -1243,7 +1242,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     if INDEX == 1:
         sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
     # 게시글 제목(굵게)
-    sendMessageText += "**" + ARTICLE_TITLE + "**" + "\n"
+    sendMessageText += "**" + ARTICLE_TITLE.replace("_", " ") + "**" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
@@ -1443,6 +1442,7 @@ def main():
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
+        # 미사용
         # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
         # HeungKuk_checkNewArticle()
 
@@ -1452,6 +1452,7 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
+        # 미사용
         # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
         # HANYANG_checkNewArticle()
 
