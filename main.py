@@ -459,7 +459,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
@@ -472,8 +471,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             if nNewArticleCnt == 0:
                 print('최신 게시글이 모두 채널에 발송 되어 있습니다.')
-            else:
-                sendText(sendMessageText)
+
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -648,7 +646,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
@@ -659,8 +656,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             if nNewArticleCnt == 0:
                 print('최신 게시글이 모두 채널에 발송 되어 있습니다.')
-            else:
-                sendText(sendMessageText)
+
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -936,7 +932,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                sendText(sendMessageText)
                 nNewArticleCnt = 0
 
         elif SEND_YN == 'N':
@@ -944,8 +939,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             if nNewArticleCnt == 0:
                 print('최신 게시글이 모두 채널에 발송 되어 있습니다.')
-            else:
-                sendText(sendMessageText)
+
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
