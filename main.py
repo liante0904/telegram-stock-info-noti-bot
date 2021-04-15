@@ -176,7 +176,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -286,7 +286,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -372,7 +372,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -471,7 +471,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -560,7 +560,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -653,12 +653,13 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -761,7 +762,7 @@ def KyoBo_checkNewArticle():
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -850,7 +851,7 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -943,7 +944,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -1010,7 +1011,7 @@ def SEDAILY_checkNewArticle():
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1081,7 +1082,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
