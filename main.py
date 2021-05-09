@@ -142,7 +142,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     
     ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    try:
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    except IndexError:
+        return
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
 
     # 연속키 데이터 저장 여부 확인 구간
