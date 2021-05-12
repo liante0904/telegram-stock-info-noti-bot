@@ -192,7 +192,11 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print("test 게시물은 연속키 처리를 제외합니다.")
             return True
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -302,7 +306,11 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -388,7 +396,11 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -486,11 +498,15 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             if nNewArticleCnt == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -576,7 +592,11 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -659,16 +679,27 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         fileNameArray = a_href.split("/")
         LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
+<<<<<<< HEAD
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y' and '(수정)' not in LIST_ARTICLE_TITLE:
             nNewArticleCnt += 1 # 새로운 게시글 수
             strNewtArticleText = GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             if  nNewArticleCnt == 1 or len(sendMessageText) + len(strNewtArticleText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+=======
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                print(sendMessageText)
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+<<<<<<< HEAD
                 sendMessageText = ''
+=======
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         elif '(수정)' in LIST_ARTICLE_TITLE:
@@ -676,7 +707,11 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return 
         else:
             if nNewArticleCnt == 0:
+<<<<<<< HEAD
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+                print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             else:
                 sendText(sendMessageText)
 
@@ -779,7 +814,11 @@ def KyoBo_checkNewArticle():
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -868,7 +907,11 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1099,7 +1142,11 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+<<<<<<< HEAD
             print('최신 게시글이 채널에 발송 되어 있습니다.')
+=======
+            print('새로운 게시물을 모두 발송하였습니다.')
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1255,7 +1302,7 @@ def DownloadFile(URL, FILE_NAME):
     return True
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
-
+    print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
@@ -1302,6 +1349,7 @@ def GetSendMessageTitle(ARTICLE_TITLE):
 
 def GetSendChatId():
     SendMessageChatId = 0
+    TEST = '-1001474652718' # 테스트 채널
     if SEC_FIRM_ORDER == 998:
         if  ARTICLE_BOARD_ORDER == 0 : 
             SendMessageChatId = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
@@ -1312,6 +1360,7 @@ def GetSendChatId():
     else:
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
+    SendMessageChatId = TEST
     return SendMessageChatId
 
 def MySQL_Open_Connect():
@@ -1458,6 +1507,13 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
             # time.sleep(REFRESH_TIME * 3)
+<<<<<<< HEAD
+=======
+
+
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
+>>>>>>> 40e2d96f694fd516d3cb22ac058b7c972aa616f9
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
