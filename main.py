@@ -142,7 +142,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     
     ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    try:
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    except IndexError:
+        return
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
 
     # 연속키 데이터 저장 여부 확인 구간
@@ -179,7 +182,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print("test 게시물은 연속키 처리를 제외합니다.")
             return True
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -289,7 +292,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -375,7 +378,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -474,7 +477,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -563,7 +566,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -648,13 +651,14 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y' and '(수정)' not in LIST_ARTICLE_TITLE:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
+            strNewtArticleText = GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            if  nNewArticleCnt == 1 or len(sendMessageText) + len(strNewtArticleText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         elif '(수정)' in LIST_ARTICLE_TITLE:
@@ -662,7 +666,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return 
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -765,7 +769,7 @@ def KyoBo_checkNewArticle():
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -854,7 +858,7 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -947,7 +951,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         else:
             if nNewArticleCnt == 0:
-                print('새로운 게시물을 모두 발송하였습니다.')
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
 
@@ -1014,7 +1018,7 @@ def SEDAILY_checkNewArticle():
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1085,7 +1089,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            print('새로운 게시물을 모두 발송하였습니다.')
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
@@ -1182,7 +1186,6 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
     bot = telegram.Bot(token = my_token_key)
-
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -1247,7 +1250,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     if INDEX == 1:
         sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
     # 게시글 제목(굵게)
-    sendMessageText += "**" + ARTICLE_TITLE + "**" + "\n"
+    sendMessageText += "**" + ARTICLE_TITLE.replace("_", " ") + "**" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
@@ -1447,6 +1450,7 @@ def main():
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
         
+        # 미사용
         # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
         # HeungKuk_checkNewArticle()
 
@@ -1456,6 +1460,7 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
+        # 미사용
         # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
         # HANYANG_checkNewArticle()
 
