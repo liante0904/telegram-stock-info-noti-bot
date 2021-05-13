@@ -1220,7 +1220,7 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
     # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     print('GetSendMessageTextEBEST:',sendMessageText)
     return sendMessageText
-    
+
 def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
 
@@ -1332,7 +1332,7 @@ def GetSendChatId():
     else:
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
-    SendMessageChatId = TEST
+    # SendMessageChatId = TEST
     return SendMessageChatId
 
 def MySQL_Open_Connect():
