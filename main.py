@@ -186,7 +186,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
             # GetSendMessageText(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
             # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+            # print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         elif 'test' in FIRST_ARTICLE_TITLE:
@@ -1210,7 +1210,7 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
 def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
 
-    print('send()')
+    print('GetSendMessageTextEBEST()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
     # 실제 전송할 메시지 작성
@@ -1232,7 +1232,7 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
 def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
 
-    print('send()')
+    print('sendMarkdown()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
     # 실제 전송할 메시지 작성
