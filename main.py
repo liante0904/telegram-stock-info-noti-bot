@@ -176,11 +176,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
                 sendMessageText += GetSendMessageTextEBEST(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
             # 하단은 기존로직     
             # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
             # GetSendMessageText(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
@@ -477,15 +478,17 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
             # HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
             # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             # print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            if nNewArticleCnt == 0:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 print('####발송구간####')
@@ -665,21 +668,24 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         
         else:
-            if nNewArticleCnt == 0:
+            if nNewArticleCnt == 0 or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
+                # 현재 리스트 확인하여 발송후 초기화 
                 sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            nNewArticleCnt = 0
             return True
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
@@ -953,13 +959,15 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
+                sendMessageText = ''
 
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            if nNewArticleCnt == 0:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 sendText(sendMessageText)
@@ -1219,7 +1227,6 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
     # bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    print('GetSendMessageTextEBEST:',sendMessageText)
     return sendMessageText
 
 def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -1275,14 +1282,13 @@ def DownloadFile(URL, FILE_NAME):
     return True
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
-    print('GetSendMessageText')
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
     if INDEX == 1:
         sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
     # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ") + "*" + "\n"
+    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
@@ -1334,7 +1340,6 @@ def GetSendChatId():
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
     # SendMessageChatId = TEST
-    print(SendMessageChatId)
     return SendMessageChatId
 
 def MySQL_Open_Connect():
@@ -1503,7 +1508,7 @@ def main():
         Samsung_checkNewArticle()
 
         print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        KyoBo_checkNewArticle()
+        # KyoBo_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
