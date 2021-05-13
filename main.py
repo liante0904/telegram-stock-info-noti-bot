@@ -475,7 +475,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 sendText(sendMessageText)
@@ -489,6 +488,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
+                print('####발송구간####')
+                print(sendMessageText)
                 sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
@@ -1281,7 +1282,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     if INDEX == 1:
         sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
     # 게시글 제목(굵게)
-    sendMessageText += "**" + ARTICLE_TITLE.replace("_", " ") + "**" + "\n"
+    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     sendMessageText += "\n" + "\n"
@@ -1333,6 +1334,7 @@ def GetSendChatId():
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
     # SendMessageChatId = TEST
+    print(SendMessageChatId)
     return SendMessageChatId
 
 def MySQL_Open_Connect():
