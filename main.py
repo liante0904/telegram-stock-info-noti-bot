@@ -1218,7 +1218,7 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
     sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
     sendMessageText += ARTICLE_TITLE + "\n"
     # 원문 링크 , 레포트 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     # my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
