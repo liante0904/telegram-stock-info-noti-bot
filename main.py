@@ -1038,7 +1038,7 @@ def SEDAILY_checkNewArticle():
             print('###점검중 확인요망###')
         else:
             print('최신 게시글이 채널에 발송 되어 있습니다.')
-            if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
+            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
