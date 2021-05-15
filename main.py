@@ -1028,7 +1028,9 @@ def SEDAILY_checkNewArticle():
         LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
         LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
 
-        if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
+        # 최종치 수급도 발송하도록 변경
+        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
