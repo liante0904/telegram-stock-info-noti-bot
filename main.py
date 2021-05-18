@@ -1219,7 +1219,7 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE).replace("이베스트]", "-")
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE).replace("이베스트", "-")
     sendMessageText += ARTICLE_TITLE + "\n"
     # 원문 링크 , 레포트 링크
     # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
