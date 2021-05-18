@@ -1303,9 +1303,9 @@ def GetSendMessageTitle(ARTICLE_TITLE):
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
         ARTICLE_BOARD_NAME = ''
-        if  "최종치" in ARTICLE_TITLE:
-            print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-            return 
+        # if  "최종치" in ARTICLE_TITLE:
+        #     print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
+        #     return 
     elif SEC_FIRM_ORDER == 998:
         msgFirmName = "네이버 - "
         if  ARTICLE_BOARD_ORDER == 0 :
