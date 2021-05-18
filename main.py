@@ -1519,7 +1519,7 @@ def main():
         NAVERNews_checkNewArticle()
 
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        SEDAILY_checkNewArticle()
+        # SEDAILY_checkNewArticle()
 
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
