@@ -193,7 +193,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print("test 게시물은 연속키 처리를 제외합니다.")
             return True
         else:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                print('####발송구간####')
+                print(sendMessageText)
+                sendText(sendMessageText)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
@@ -482,9 +487,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 sendText(sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
-            # HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME)
-            # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            # print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -1217,10 +1219,12 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE).replace("이베스트]", "-")
     sendMessageText += ARTICLE_TITLE + "\n"
     # 원문 링크 , 레포트 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
+    # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
+    # 레포트 링크
+    sendMessageText +=  EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     # my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
