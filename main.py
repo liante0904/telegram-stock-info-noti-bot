@@ -166,7 +166,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
@@ -296,7 +295,6 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
@@ -382,7 +380,6 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
@@ -471,7 +468,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
@@ -564,7 +560,6 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('td.tx_left > a').text.strip()
         LIST_ARTICLE_URL   =  'http://www.hygood.co.kr' + list.select_one('td.tx_left > a').attrs['href']
@@ -655,7 +650,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
         a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -750,7 +744,6 @@ def KyoBo_checkNewArticle():
     print('############')
 
     nNewArticleCnt = 0
-    sendMessageText = ''
     for list in soupList:
         ## 연속키는 게시글 URL 사용##
 
