@@ -33,6 +33,27 @@ from requests import get  # to make GET request
 #   - 어떻게 구분지을지 생각해봐야함
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
+############접속지 URL 상수############
+
+# 이슈브리프
+EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
+# 기업분석 게시판
+EBEST_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
+# 산업분석
+EBEST_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
+# 투자전략
+EBEST_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
+# Quant
+EBEST_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
+# Macro
+EBEST_URL_5 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=39&left_menu_no=211&front_menu_no=215&parent_menu_no=211'
+# FI/ Credit
+EBEST_URL_6 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=183&left_menu_no=211&front_menu_no=1344&parent_menu_no=211'
+# Commodity
+EBEST_URL_7 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=145&left_menu_no=211&front_menu_no=1009&parent_menu_no=211'
+
+EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
+
 ############공용 상수############
 # 메시지 발송 ID
 CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
@@ -62,7 +83,7 @@ FIRM_NAME = (
 
 # 게시판 이름
 BOARD_NAME = (
-    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant" ], # 0
+    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
     [ "투자전략", "산업/기업분석" ],                            # 1
     [ "산업리포트", "기업리포트" ],                             # 2
     [ "Daily", "산업분석", "기업분석", "주식전략" ],            # 3
@@ -72,7 +93,6 @@ BOARD_NAME = (
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
-EBEST_BOARD_NAME  = ["이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant"]
 HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
 SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
 HANA_BOARD_NAME = ["Daily", "산업분석", "기업분석"]
@@ -112,27 +132,23 @@ def EBEST_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 이슈브리프
-    TARGET_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
-    # 기업분석 게시판
-    TARGET_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
-    # 산업분석
-    TARGET_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
-    # 투자전략
-    TARGET_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
-    # Quant
-    TARGET_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4)
-
+    ## EBEST만 로직 변경 테스트
+    sendMessageText = ''
     # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(EBEST_URL_TUPLE):
+        sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(1)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global LIST_ARTICLE_TITLE
+    sendMessageText = ''
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -141,11 +157,11 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     
-    ARTICLE_BOARD_NAME = EBEST_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     except IndexError:
-        return
+        return sendMessageText
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
 
     # 연속키 데이터 저장 여부 확인 구간
@@ -166,6 +182,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
@@ -175,31 +192,23 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
                 sendMessageText += GetSendMessageTextEBEST(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-            # 하단은 기존로직     
-            # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
-            # GetSendMessageText(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-            # send(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            # print('메세지 전송 URL:', LIST_ARTICLE_URL)
+
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         elif 'test' in FIRST_ARTICLE_TITLE:
             print("test 게시물은 연속키 처리를 제외합니다.")
-            return True
+            # return True
         else:
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                print('####발송구간####')
-                print(sendMessageText)
-                sendText(sendMessageText)
+            # else:
+            #     print('####발송구간####')
+            #     print(sendMessageText)
+            #     sendText(sendMessageText)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-            return True
+            return sendMessageText
+    print(sendMessageText)
+    return sendMessageText
 
 def EBEST_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
@@ -241,7 +250,7 @@ def EBEST_downloadFile(ARTICLE_URL):
 
     # ATTACH_URL += r
     # print(ATTACH_URL)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    # time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return ATTACH_URL
 
 def HeungKuk_checkNewArticle():
@@ -295,6 +304,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?'+list['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
         LIST_ARTICLE_TITLE = list.text
@@ -380,6 +390,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'http://www.sangsanginib.com' +list['href']
         LIST_ARTICLE_TITLE = list.text
@@ -468,6 +479,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
@@ -560,6 +572,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('td.tx_left > a').text.strip()
         LIST_ARTICLE_URL   =  'http://www.hygood.co.kr' + list.select_one('td.tx_left > a').attrs['href']
@@ -650,6 +663,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
         a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -744,6 +758,7 @@ def KyoBo_checkNewArticle():
     print('############')
 
     nNewArticleCnt = 0
+    sendMessageText = ''
     for list in soupList:
         ## 연속키는 게시글 URL 사용##
 
@@ -1132,7 +1147,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    sendMessageText += GetSendMessageTitle()
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
@@ -1167,7 +1182,7 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    # sendMessageText += GetSendMessageTitle()
     sendMessageText += ARTICLE_TITLE + "\n"
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
@@ -1206,14 +1221,15 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
 
 def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
-
     print('GetSendMessageTextEBEST()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
-    sendMessageText += ARTICLE_TITLE.replace("이베스트", "-") + "\n"
+    # sendMessageText += GetSendMessageTitle()
+    if BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER] == "기업분석": ARTICLE_TITLE = ARTICLE_TITLE.replace("이베스트", "-")
+    sendMessageText += ARTICLE_TITLE + "\n"
+    
     # 원문 링크 , 레포트 링크
     # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
     # 레포트 링크
@@ -1226,6 +1242,7 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
     # bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    # print(sendMessageText)
     return sendMessageText
 
 def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -1236,7 +1253,7 @@ def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): 
 
     # 실제 전송할 메시지 작성
     sendMessageText = ''
-    sendMessageText += GetSendMessageTitle(ARTICLE_TITLE)
+    sendMessageText += GetSendMessageTitle()
     sendMessageText += ARTICLE_TITLE + "\n"
     # 원문 링크 , 레포트 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
@@ -1285,7 +1302,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     sendMessageText = ''
     # 발신 게시판 종류
     if INDEX == 1:
-        sendMessageText += GetSendMessageTitle(ARTICLE_TITLE) + "\n"
+        sendMessageText += GetSendMessageTitle() + "\n"
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
@@ -1294,8 +1311,9 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     return sendMessageText
 
-def GetSendMessageTitle(ARTICLE_TITLE):
+def GetSendMessageTitle():
 
+    ARTICLE_BOARD_NAME = ''
     SendMessageTitle = ''
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
@@ -1312,6 +1330,8 @@ def GetSendMessageTitle(ARTICLE_TITLE):
     elif SEC_FIRM_ORDER == 997:
         msgFirmName = "아이투자 - "
         ARTICLE_BOARD_NAME = "랭킹스탁"
+    elif SEC_FIRM_ORDER == 0:
+        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
     else:
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
         if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
