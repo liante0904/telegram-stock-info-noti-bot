@@ -86,7 +86,7 @@ BOARD_NAME = (
     [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
     [ "투자전략", "산업/기업분석" ],                            # 1
     [ "산업리포트", "기업리포트" ],                             # 2
-    [ "Daily", "산업분석", "기업분석", "주식전략" ],            # 3
+    [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
     [ "기업분석", "산업 및 이슈분석" ],                          # 4
     [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
     [ " " ]                                                 # 6 (교보는 게시판 내 게시판 분류 사용)
@@ -437,8 +437,18 @@ def HANA_checkNewArticle():
     TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
     # 하나금융 주식 전략
     TARGET_URL_3 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=1'
+    # 하나금융 Small Cap
+    TARGET_URL_4 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=3'
+    # 하나금융 기업 메모
+    TARGET_URL_5 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=4'
+    # 하나금융 Quant
+    TARGET_URL_6 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=2'
+    # 하나금융 포트폴리오
+    TARGET_URL_7 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=3'
+    # 하나금융 투자정보
+    TARGET_URL_8 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=4'
 
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3)
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
