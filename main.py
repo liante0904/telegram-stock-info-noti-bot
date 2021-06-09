@@ -77,7 +77,8 @@ FIRM_NAME = (
     "하나금융투자",          # 3
     "한양증권",              # 4
     "삼성증권",              # 5
-    "교보증권"              # 6
+    "교보증권",              # 6
+    "DS투자증권"             # 7
     # "유안타증권",           # 4
 )
 
@@ -89,7 +90,8 @@ BOARD_NAME = (
     [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
     [ "기업분석", "산업 및 이슈분석" ],                          # 4
     [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
-    [ " " ]                                                 # 6 (교보는 게시판 내 게시판 분류 사용)
+    [ " " ],                                                # 6 (교보는 게시판 내 게시판 분류 사용)
+    [ "기업분석", "투자전략/경제분석"]                          # 7 
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
@@ -818,6 +820,118 @@ def KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+# DS투자증권
+def DS_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 7
+
+
+    # 이슈브리프
+    DS_URL_0 = 'http://www.ds-sec.co.kr/bbs/board.php?bo_table=sub03_02'
+    # 기업분석 게시판
+    DS_URL_1 = 'http://www.ds-sec.co.kr/bbs/board.php?bo_table=sub03_03'
+    
+    DS_URL_TUPLE = (DS_URL_0, DS_URL_1)
+
+    requests.packages.urllib3.disable_warnings()
+
+    ## EBEST만 로직 변경 테스트
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(DS_URL_TUPLE):
+        sendMessageText += DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(1)
+
+def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global LIST_ARTICLE_TITLE
+    sendMessageText = ''
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    # print(soup)
+    soupList = soup.select('#fboardlist > div > table > tbody > tr > td.td_subject > div > a')
+    
+    print(soupList)
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    try:
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text.strip()
+    except IndexError:
+        return sendMessageText
+    FIRST_ARTICLE_URL = soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    # 연속키 데이터 저장 여부 확인 구간
+    print("SEC_FIRM_ORDER", SEC_FIRM_ORDER, "ARTICLE_BOARD_ORDER",ARTICLE_BOARD_ORDER)
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_URL =  list.attrs['href'].replace("amp;", "")
+        LIST_ARTICLE_TITLE = list.text.strip().replace("]", " - ")
+
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                ATTACH_URL = DS_downloadFile(LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageTextEBEST(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        elif 'test' in FIRST_ARTICLE_TITLE:
+            print("test 게시물은 연속키 처리를 제외합니다.")
+            # return True
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            # else:
+            #     print('####발송구간####')
+            #     print(sendMessageText)
+            #     sendText(sendMessageText)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
+            return sendMessageText
+    print(sendMessageText)
+    return sendMessageText
+
+def DS_downloadFile(ARTICLE_URL):
+    global ATTACH_FILE_NAME
+    global LIST_ARTICLE_TITLE
+
+    webpage = requests.get(ARTICLE_URL, verify=False)
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # 첨부파일 URL
+    ATTACH_URL = soup.select_one('#bo_v_con > a')['href']
+    # 첨부파일 이름
+    ATTACH_FILE_NAME = soup.select_one('#bo_v_file > ul > li > a > strong').text.strip()
+    
+    return ATTACH_URL
+
 def Itooza_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1538,6 +1652,9 @@ def main():
 
         print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
         # KyoBo_checkNewArticle()
+
+        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        DS_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
