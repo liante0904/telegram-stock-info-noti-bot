@@ -893,7 +893,7 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL =  list.attrs['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list.text.strip().replace("]", " - ")
+        LIST_ARTICLE_TITLE = list.text.strip().replace("]", ":")
 
         if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
             nNewArticleCnt += 1 # 새로운 게시글 수
