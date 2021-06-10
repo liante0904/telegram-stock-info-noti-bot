@@ -110,8 +110,10 @@ LIST_ARTICLE_TITLE = ''
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+
     SEC_FIRM_ORDER = 0
 
+    requests.packages.urllib3.disable_warnings()
 
     # 이슈브리프
     EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
@@ -132,7 +134,6 @@ def EBEST_checkNewArticle():
 
     EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
 
-    requests.packages.urllib3.disable_warnings()
 
     ## EBEST만 로직 변경 테스트
     sendMessageText = ''
@@ -150,7 +151,7 @@ def EBEST_checkNewArticle():
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global LIST_ARTICLE_TITLE
-    sendMessageText = ''
+
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -452,13 +453,21 @@ def HANA_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
+    sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(1)
+        sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(1)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -495,18 +504,18 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in soupList:
         LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-        LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+        # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+            # else:
+            #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            #     print(sendMessageText)
+            #     sendText(sendMessageText)
+            #     nNewArticleCnt = 0
+            #     sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
