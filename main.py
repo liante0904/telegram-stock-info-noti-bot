@@ -455,7 +455,7 @@ def HANA_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        time.sleep(1)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -1632,10 +1632,6 @@ def main():
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
-        
-        # 미사용
-        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # HeungKuk_checkNewArticle()
 
         print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
         SangSangIn_checkNewArticle()
@@ -1643,15 +1639,8 @@ def main():
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
-        # 미사용
-        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        # HANYANG_checkNewArticle()
-
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
-
-        print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
 
         print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
         DS_checkNewArticle()
@@ -1664,6 +1653,17 @@ def main():
 
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
+
+        # 미사용
+        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # HeungKuk_checkNewArticle()
+        
+        # 미사용
+        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        # HANYANG_checkNewArticle()
+
+        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # KyoBo_checkNewArticle()
 
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
