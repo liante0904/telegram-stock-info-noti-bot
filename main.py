@@ -35,24 +35,6 @@ from requests import get  # to make GET request
 
 ############접속지 URL 상수############
 
-# 이슈브리프
-EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
-# 기업분석 게시판
-EBEST_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
-# 산업분석
-EBEST_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
-# 투자전략
-EBEST_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
-# Quant
-EBEST_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
-# Macro
-EBEST_URL_5 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=39&left_menu_no=211&front_menu_no=215&parent_menu_no=211'
-# FI/ Credit
-EBEST_URL_6 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=183&left_menu_no=211&front_menu_no=1344&parent_menu_no=211'
-# Commodity
-EBEST_URL_7 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=145&left_menu_no=211&front_menu_no=1009&parent_menu_no=211'
-
-EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
 
 ############공용 상수############
 # 메시지 발송 ID
@@ -95,12 +77,10 @@ BOARD_NAME = (
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
-HEUNGKUK_BOARD_NAME = ["투자전략", "산업/기업분석"]
-SANGSANGIN_BOARD_NAME = ["산업리포트", "기업리포트"]
-HANA_BOARD_NAME = ["Daily", "산업분석", "기업분석"]
-HANYANG_BOARD_NAME = ["기업분석", "산업분석"]
-HMSEC_BOARD_NAME = ["투자전략", "Report & Note", "해외주식"]
-SAMSUNG_BOARD_NAME  = ["국내기업분석", "국내산업분석", "해외기업분석"]
+# BOARD_NAME[SEC_FIRM_ORDER] = ["산업리포트", "기업리포트"]
+# BOARD_NAME[SEC_FIRM_ORDER] = ["Daily", "산업분석", "기업분석"]
+# BOARD_NAME[SEC_FIRM_ORDER] = ["기업분석", "산업분석"]
+# BOARD_NAME[SEC_FIRM_ORDER] = ["투자전략", "Report & Note", "해외주식"]
 KYOBO_BOARD_NAME = ''
 # pymysql 변수
 conn    = ''
@@ -131,6 +111,26 @@ def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
     SEC_FIRM_ORDER = 0
+
+
+    # 이슈브리프
+    EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
+    # 기업분석 게시판
+    EBEST_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
+    # 산업분석
+    EBEST_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
+    # 투자전략
+    EBEST_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
+    # Quant
+    EBEST_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
+    # Macro
+    EBEST_URL_5 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=39&left_menu_no=211&front_menu_no=215&parent_menu_no=211'
+    # FI/ Credit
+    EBEST_URL_6 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=183&left_menu_no=211&front_menu_no=1344&parent_menu_no=211'
+    # Commodity
+    EBEST_URL_7 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=145&left_menu_no=211&front_menu_no=1009&parent_menu_no=211'
+
+    EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
 
     requests.packages.urllib3.disable_warnings()
 
@@ -284,7 +284,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#content > table > tbody > tr > td.left > a')
 
-    ARTICLE_BOARD_NAME = HEUNGKUK_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[FIRST_ARTICLE_INDEX]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
     
@@ -370,7 +370,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
 
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
-    ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
     
@@ -556,7 +556,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#content > div.content_area > table > tbody > tr')
 
-    ARTICLE_BOARD_NAME = HANYANG_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].text.strip()
     FIRST_ARTICLE_URL =  'http://www.hygood.co.kr' + soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].attrs['href']
     FIRST_ARTICLE_URL_f = FIRST_ARTICLE_URL.split(";")[0]
@@ -645,7 +645,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
-    ARTICLE_BOARD_NAME = SAMSUNG_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
     a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
     a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
@@ -1024,8 +1024,6 @@ def Itooza_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
-###
-
 def NAVERNews_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1219,7 +1217,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
 
-    ARTICLE_BOARD_NAME = SANGSANGIN_BOARD_NAME[ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
     
@@ -1343,32 +1341,6 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-    print('GetSendMessageTextEBEST()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # sendMessageText += GetSendMessageTitle()
-    if BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER] == "기업분석": ARTICLE_TITLE = ARTICLE_TITLE.replace("이베스트", "-")
-    sendMessageText += ARTICLE_TITLE + "\n"
-    
-    # 원문 링크 , 레포트 링크
-    # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
-    # 레포트 링크
-    sendMessageText +=  EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    # my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
-    # bot = telegram.Bot(token = my_token_key)
-
-    # bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    
-    # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    # print(sendMessageText)
-    return sendMessageText
-
 def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
 
@@ -1435,6 +1407,32 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     return sendMessageText
 
+def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+    global CHAT_ID
+    print('GetSendMessageTextEBEST()')
+    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
+
+    # 실제 전송할 메시지 작성
+    sendMessageText = ''
+    # sendMessageText += GetSendMessageTitle()
+    if BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER] == "기업분석": ARTICLE_TITLE = ARTICLE_TITLE.replace("이베스트", "-")
+    sendMessageText += ARTICLE_TITLE + "\n"
+    
+    # 원문 링크 , 레포트 링크
+    # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
+    # 레포트 링크
+    sendMessageText +=  EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
+
+    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+    # my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    # bot = telegram.Bot(token = my_token_key)
+
+    # bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    
+    # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    # print(sendMessageText)
+    return sendMessageText
+    
 def GetSendMessageTitle():
 
     ARTICLE_BOARD_NAME = ''
