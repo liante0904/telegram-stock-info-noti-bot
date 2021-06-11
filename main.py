@@ -134,7 +134,6 @@ def EBEST_checkNewArticle():
 
     EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
 
-
     ## EBEST만 로직 변경 테스트
     sendMessageText = ''
     # URL GET
@@ -151,7 +150,6 @@ def EBEST_checkNewArticle():
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global LIST_ARTICLE_TITLE
-
 
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -643,10 +641,17 @@ def Samsung_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
+    sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        sendMessageText += Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(1)
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -696,34 +701,33 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         a_href = a_href[1]
         LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
         fileNameArray = a_href.split("/")
-        LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
+        # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+                # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
+            # else:
+            #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            #     print(sendMessageText)
+            #     sendText(sendMessageText)
+            #     nNewArticleCnt = 0
+            #     sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
-        
         else:
             if nNewArticleCnt == 0 or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                # 현재 리스트 확인하여 발송후 초기화 
-                sendText(sendMessageText)
+            # else:
+            #     # 현재 리스트 확인하여 발송후 초기화 
+            #     sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            nNewArticleCnt = 0
-            return True
-
+            return sendMessageText
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return True
+    print(sendMessageText)
+    return sendMessageText
 
 def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
@@ -1433,32 +1437,6 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ARTICLE_URL):
     sendMessageText += "\n" + "\n"
 
     return sendMessageText
-
-def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-    print('GetSendMessageTextEBEST()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # sendMessageText += GetSendMessageTitle()
-    if BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER] == "기업분석": ARTICLE_TITLE = ARTICLE_TITLE.replace("이베스트", "-")
-    sendMessageText += ARTICLE_TITLE + "\n"
-    
-    # 원문 링크 , 레포트 링크
-    # sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
-    # 레포트 링크
-    sendMessageText +=  EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"+ "\n"
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    # my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
-    # bot = telegram.Bot(token = my_token_key)
-
-    # bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    
-    # time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    # print(sendMessageText)
-    return sendMessageText
     
 # 타이틀 생성 
 # : 게시판 이름 삭제
@@ -1478,7 +1456,7 @@ def GetSendMessageTitle():
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
 
-    SendMessageTitle += "\n"+ "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n"
+    SendMessageTitle += "\n"+ "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
     
     return SendMessageTitle
 
@@ -1644,6 +1622,8 @@ def main():
             print('CASE5')
             # time.sleep(REFRESH_TIME * 3)
 
+        Samsung_checkNewArticle()
+        return 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
 
