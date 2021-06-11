@@ -194,7 +194,8 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
-                sendMessageText += GetSendMessageTextEBEST(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
+                # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
 
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
@@ -468,7 +469,6 @@ def HANA_checkNewArticle():
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-
     webpage = requests.get(TARGET_URL, verify=False)
 
     # HTML parse
@@ -509,7 +509,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             # else:
             #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             #     print(sendMessageText)
@@ -521,13 +521,16 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                print('####발송구간####')
-                print(sendMessageText)
-                sendText(sendMessageText)
+            # else:
+            #     print('####발송구간####')
+            #     print(sendMessageText)
+            #     sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
+            return sendMessageText
+    print(sendMessageText)
+    return sendMessageText
+
 
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
@@ -1416,6 +1419,20 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     return sendMessageText
 
+# 실제 전송할 메시지 작성 
+# 유형 : Markdown
+def GetSendMessageTextMarkdown(ARTICLE_TITLE , ARTICLE_URL):
+    
+    sendMessageText = ''
+
+    # 게시글 제목(굵게)
+    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+    # 원문 링크
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
+    sendMessageText += "\n" + "\n"
+
+    return sendMessageText
+
 def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
     print('GetSendMessageTextEBEST()')
@@ -1442,36 +1459,25 @@ def GetSendMessageTextEBEST(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, AT
     # print(sendMessageText)
     return sendMessageText
     
+# 타이틀 생성 
+# : 게시판 이름 삭제
 def GetSendMessageTitle():
 
-    ARTICLE_BOARD_NAME = ''
-    SendMessageTitle = ''
+    SendMessageTitle = ""
+    msgFirmName = ""
+    
     if SEC_FIRM_ORDER == 999:
         msgFirmName = "매매동향"
-        ARTICLE_BOARD_NAME = ''
-        # if  "최종치" in ARTICLE_TITLE:
-        #     print('sedaily의 매매동향 최종치 집계 데이터는 메시지 발송을 하지 않습니다.') # 장마감 최종치는 발송 안함
-        #     return 
     elif SEC_FIRM_ORDER == 998:
         msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 :
-            ARTICLE_BOARD_NAME = "실시간 뉴스 속보"
-        else:
-            ARTICLE_BOARD_NAME = "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997:
-        msgFirmName = "아이투자 - "
-        ARTICLE_BOARD_NAME = "랭킹스탁"
-    elif SEC_FIRM_ORDER == 0:
+        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
+        else: msgFirmName += "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
+    else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
-    else:
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER] + " - "
-        if SEC_FIRM_ORDER == 6:  # 교보증권 예외처리 반영
-            ARTICLE_BOARD_NAME = KYOBO_BOARD_NAME
-        else: # 나머지 
-            ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
 
 
-    SendMessageTitle += EMOJI_FIRE + msgFirmName + ARTICLE_BOARD_NAME + EMOJI_FIRE + "\n"
+    SendMessageTitle += "\n"+ "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n"
     
     return SendMessageTitle
 
