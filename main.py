@@ -1622,8 +1622,6 @@ def main():
             print('CASE5')
             # time.sleep(REFRESH_TIME * 3)
 
-        Samsung_checkNewArticle()
-        return 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
 
