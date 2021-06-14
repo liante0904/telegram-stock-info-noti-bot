@@ -193,7 +193,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
                 # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
@@ -507,7 +507,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                ATTACH_URL = LIST_ARTICLE_URL
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
             # else:
             #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             #     print(sendMessageText)
@@ -706,8 +707,9 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
+                ATTACH_URL = LIST_ARTICLE_URL
                 # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
             # else:
             #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             #     print(sendMessageText)
@@ -916,7 +918,7 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = DS_downloadFile(LIST_ARTICLE_URL)
                 # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
@@ -1425,15 +1427,16 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     return sendMessageText
 
 # 실제 전송할 메시지 작성 
-# 유형 : Markdown
-def GetSendMessageTextMarkdown(ARTICLE_TITLE , ARTICLE_URL):
+# 유형   : Markdown
+# Paran  : ARTICLE_TITLE -> 레포트 제목  , ATTACH_URL -> 레포트 URL(PDF)
+def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     
     sendMessageText = ''
 
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ATTACH_URL + ")"
     sendMessageText += "\n" + "\n"
 
     return sendMessageText
