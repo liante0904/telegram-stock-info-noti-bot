@@ -1032,13 +1032,13 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def Itooza_downloadFile(ARTICLE_URL):
     webpage = requests.get(ARTICLE_URL, verify=False)
-    # 첨부파일 URL
+    # 첨부파일 URL처리
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('img.bodyaddimage')
-    print(attachFileCode)
-    print(len(attachFileCode.text))
-    
-    if attachFileCode is None or attachFileCode == 'None': return print("아이투자 게시글에 이미지가 존재 하지 않습니다. ")
-    ATTACH_URL = attachFileCode.attrs['src']
+    try:
+        ATTACH_URL = attachFileCode.attrs['src']    
+    except:
+        print("아이투자 게시글에 이미지가 존재 하지 않습니다. ")
+        return
     sendPhoto(ATTACH_URL)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
