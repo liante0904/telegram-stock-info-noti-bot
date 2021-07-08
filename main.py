@@ -49,7 +49,7 @@ CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
 
 # 게시글 갱신 시간
-REFRESH_TIME = 600
+REFRESH_TIME = 600 * 2 # 20분
 
 # 회사이름
 FIRM_NAME = (
@@ -1304,7 +1304,7 @@ def SEDAILY_checkNewArticle():
         #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
             print('메세지 전송 URL:', LIST_ARTICLE_URL)
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
