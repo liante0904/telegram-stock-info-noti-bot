@@ -1072,6 +1072,69 @@ def SMIC_downloadFile(ARTICLE_URL):
     return ATTACH_URL
 
 
+def EINFOMAXshort_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 996
+    ARTICLE_BOARD_ORDER = 996
+
+    ARTICLE_BOARD_NAME = ''
+
+    TARGET_URL = 'http://news.einfomax.co.kr/news/articleList.html?sc_area=A&view_type=sm&sc_word=%EA%B3%B5%EB%A7%A4%EB%8F%84+%EC%9E%94%EA%B3%A0+%EC%83%81%EC%9C%84+50%EC%A2%85%EB%AA%A9'
+
+    requests.packages.urllib3.disable_warnings()                 
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    soupList = soup.select('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div > div.list-titles > a')
+
+    print(soupList)
+    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    FIRST_ARTICLE_TITLE = soup.select_one('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div:nth-child(1) > div.list-titles > a').text.strip()
+    
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','연합인포맥스','의 ', '공매도 잔고')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '연합인포맥스','의 ', '공매도 잔고' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_URL = 'news.einfomax.co.kr' + list.attrs['href'].strip()
+        LIST_ARTICLE_TITLE = list.text.replace('[표] ','').strip()
+
+        # 최종치 수급도 발송하도록 변경
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            sendMarkdown(nNewArticleCnt, ARTICLE_BOARD_NAME , LIST_ARTICLE_TITLE , LIST_ARTICLE_URL, LIST_ARTICLE_URL)
+            nNewArticleCnt += 1
+            # send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            # EINFOMAXshort_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    return True
+
+
 def Itooza_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1481,18 +1544,28 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
+def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
+    global sendMessageText
 
     print('sendMarkdown()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
+
+    # 첫 인덱스 타이틀
+    if INDEX == 0:
+        sendMessageText = ''
+        sendMessageText += GetSendMessageTitle()
+
+    sendMessageText += ARTICLE_TITLE + "\n" 
+
     # 원문 링크 , 레포트 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
+    if SEC_FIRM_ORDER == 996:
+        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "\n" + "\n"
+    else:
+        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"
+
+    if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
@@ -1500,7 +1573,7 @@ def sendMarkdown(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): 
 
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(4) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
@@ -1576,6 +1649,7 @@ def GetSendMessageTitle():
         if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
         else: msgFirmName += "가장 많이 본 뉴스"
     elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
+    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
@@ -1728,23 +1802,20 @@ def main():
         elif TimeHourMin in range(0, 500) and TimeHourMin in range(2200, 2400): # 22~다음날 05시까지 유휴
             print('######',"현재시간:", GetCurrentTime() ,REFRESH_TIME,'초 스케줄을 실행합니다.######')
             print('CASE1')
-            # time.sleep(REFRESH_TIME)
         elif TimeHourMin in range(600, 830):  # 06~ 08:30분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE2')
-            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(830, 1100):  # 08:30~ 11:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE3')
-            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(1100, 1600):  # 11:00~ 16:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE4')
-            # time.sleep(REFRESH_TIME * 3)
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
-            # time.sleep(REFRESH_TIME * 3)
+
+
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
@@ -1763,6 +1834,10 @@ def main():
 
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 6
         SMIC_checkNewArticle()
+
+        if TimeHourMin in range(800, 900):  # 08~ 09:90분만 조회
+            print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
+            EINFOMAXshort_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
