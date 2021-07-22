@@ -1093,8 +1093,8 @@ def EINFOMAXshort_checkNewArticle():
 
     soupList = soup.select('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div > div.list-titles > a')
 
-    print(soupList)
-    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    # print(soupList)
+    FIRST_ARTICLE_URL = 'news.einfomax.co.kr'+soupList[FIRST_ARTICLE_INDEX].attrs['href'].strip()
     FIRST_ARTICLE_TITLE = soup.select_one('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div:nth-child(1) > div.list-titles > a').text.strip()
     
     # 연속키 데이터 저장 여부 확인 구간
@@ -1106,7 +1106,7 @@ def EINFOMAXshort_checkNewArticle():
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '연합인포맥스','의 ', '공매도 잔고' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
@@ -1119,7 +1119,7 @@ def EINFOMAXshort_checkNewArticle():
         LIST_ARTICLE_TITLE = list.text.replace('[표] ','').strip()
 
         # 최종치 수급도 발송하도록 변경
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             sendMarkdown(nNewArticleCnt, ARTICLE_BOARD_NAME , LIST_ARTICLE_TITLE , LIST_ARTICLE_URL, LIST_ARTICLE_URL)
             nNewArticleCnt += 1
             # send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -1129,7 +1129,7 @@ def EINFOMAXshort_checkNewArticle():
             print('###점검중 확인요망###')
         else:
             print('최신 게시글이 채널에 발송 되어 있습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
     return True
@@ -1814,7 +1814,6 @@ def main():
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
-
 
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
