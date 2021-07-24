@@ -49,7 +49,7 @@ CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
 
 # 게시글 갱신 시간
-REFRESH_TIME = 600 * 2 # 20분
+REFRESH_TIME = 60 * 20 # 20분
 
 # 회사이름
 FIRM_NAME = (
@@ -80,10 +80,7 @@ BOARD_NAME = (
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
-# BOARD_NAME[SEC_FIRM_ORDER] = ["산업리포트", "기업리포트"]
-# BOARD_NAME[SEC_FIRM_ORDER] = ["Daily", "산업분석", "기업분석"]
-# BOARD_NAME[SEC_FIRM_ORDER] = ["기업분석", "산업분석"]
-# BOARD_NAME[SEC_FIRM_ORDER] = ["투자전략", "Report & Note", "해외주식"]
+
 KYOBO_BOARD_NAME = ''
 # pymysql 변수
 conn    = ''
@@ -165,7 +162,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     except IndexError:
-        return sendMessageText
+        return 
     FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
 
     # 연속키 데이터 저장 여부 확인 구간
@@ -206,12 +203,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # else:
-            #     print('####발송구간####')
-            #     print(sendMessageText)
-            #     sendText(sendMessageText)
+
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return sendMessageText
+
     print(sendMessageText)
     return sendMessageText
 
@@ -1757,7 +1752,7 @@ def GetCurrentTime(*args):
     print(TIME)
     return TIME
 
-# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
+# 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
     pattern = ''
     for pattern in args:
@@ -1789,13 +1784,33 @@ def GetCurrentDate(*args):
 
     return DATE
     
+# 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
+def GetCurrentDay(*args):
+    daylist = ['월', '화', '수', '목', '금', '토', '일']
+    
+    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
+
+    DATE = time_now[:10].strip()
+    DATE_SPLIT = DATE.split("-")
+    
+    return daylist[datetime.date(DATE_SPLIT[0],DATE_SPLIT[1],DATE_SPLIT[2]).weekday()]
+    
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
+    global REFRESH_TIME # 새로고침 주기
+
     print('########Program Start Run########')
+
+    if GetCurrentDay == '토' or GetCurrentDay == '일':
+        REFRESH_TIME = 60 * 60 * 2 # 2시간
+    else:
+        REFRESH_TIME = 60 * 20 # 20분
+
     #print(GetCurrentDate() , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+        print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
         if TimeHourMin < 0 : 
             print("GetCurrentTime() Error => 시간 논리 에러")
             return 
