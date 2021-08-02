@@ -43,7 +43,7 @@ CHAT_ID = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 
 # CHAT_ID = '-1001436418974' # 네이버 실시간 속보 뉴스 채널
 # CHAT_ID = '-1001150510299' # 네이버 많이본 뉴스 채널
 # CHAT_ID = '-1001472616534' # 아이투자
-
+# CHAT_ID = '-1001228335963' # 조선비즈 C-bot
 
 # DATABASE
 CLEARDB_DATABASE_URL = 'mysql://b0464b22432146:290edeca@us-cdbr-east-03.cleardb.com/heroku_31ee6b0421e7ff9?reconnect=true'
@@ -1067,6 +1067,90 @@ def SMIC_downloadFile(ARTICLE_URL):
     return ATTACH_URL
 
 
+def ChosunBizBot_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 995
+    ARTICLE_BOARD_ORDER = 995
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 네이버 실시간 속보
+    TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
+    
+    ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+
+    # URL GET
+    # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    #     NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    #     time.sleep(5)
+ 
+# JSON API 타입
+def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    BASE_URL = 'biz.chosun.com'
+    request = urllib.request.Request(TARGET_URL)
+    #검색 요청 및 처리
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if rescode != 200 :return print("ChosunBizBot_parse 접속이 원활하지 않습니다 ")
+
+    jres = json.loads(response.read().decode('utf-8'))
+
+    jres = jres['content_elements']
+    # print(jres)
+
+    FIRST_ARTICLE_URL = BASE_URL + jres[0]['canonical_url'].strip()
+    FIRST_ARTICLE_TITLE = jres[0]['headlines']['basic'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_parse)')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '(ChosunBizBot_parse)')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for chosun in jres:
+        # print(chosun)
+        LIST_ARTICLE_URL = BASE_URL + chosun['canonical_url'].strip()
+        LIST_ARTICLE_TITLE = chosun['headlines']['basic'].strip()
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                sendText(sendMessageText)
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    return True
+
+
 def EINFOMAXshort_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -1645,6 +1729,7 @@ def GetSendMessageTitle():
         else: msgFirmName += "가장 많이 본 뉴스"
     elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
     elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
+    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
@@ -1664,6 +1749,8 @@ def GetSendChatId():
             SendMessageChatId = '-1001150510299' # 네이버 많이본 뉴스 채널
     elif SEC_FIRM_ORDER == 997:
             SendMessageChatId = '-1001472616534' # 아이투자
+    elif SEC_FIRM_ORDER == 995:
+            SendMessageChatId = '-1001228335963' # 조선비즈 C-bot
     else:
         SendMessageChatId = '-1001431056975' # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
@@ -1848,10 +1935,13 @@ def main():
 
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 6
         SMIC_checkNewArticle()
+        
+        print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
+        ChosunBizBot_checkNewArticle()
 
-        if TimeHourMin in range(800, 900):  # 08~ 09:90분만 조회
-            print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
-            EINFOMAXshort_checkNewArticle()
+        # if TimeHourMin in range(800, 900):  # 08~ 09:90분만 조회
+        #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
+        #     EINFOMAXshort_checkNewArticle()
 
         print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         Itooza_checkNewArticle()
