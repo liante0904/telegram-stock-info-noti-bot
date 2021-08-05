@@ -507,21 +507,21 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-            # else:
-            #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            #     print(sendMessageText)
-            #     sendText(sendMessageText)
-            #     nNewArticleCnt = 0
-            #     sendMessageText = ''
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # else:
-            #     print('####발송구간####')
-            #     print(sendMessageText)
-            #     sendText(sendMessageText)
+            else:
+                print('####발송구간####')
+                print(sendMessageText)
+                sendText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return sendMessageText
