@@ -117,6 +117,7 @@ def EBEST_checkNewArticle():
 
     # 이슈브리프
     EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
+    
     # 기업분석 게시판
     EBEST_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
     # 산업분석
@@ -1066,7 +1067,6 @@ def SMIC_downloadFile(ARTICLE_URL):
     
     return ATTACH_URL
 
-
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1076,25 +1076,36 @@ def ChosunBizBot_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 네이버 실시간 속보
-    TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
+    # 조선Biz Cbot API
+    # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
+    TARGET_URL = 'https://stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
     
-    ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    # 조선Biz 웹 크롤링 변경
+    # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
+    
+    
+    # 조선Biz Cbot API JSON 크롤링
+    # ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL)
 
-    # URL GET
+
+    # 조선Biz Cbot API JSON 크롤링
+    ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL)
+
+    # ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    # 조선Biz Cbot 웹 크롤링
     # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-    #     NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    #     ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
     #     time.sleep(5)
  
 # JSON API 타입
-def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     BASE_URL = 'biz.chosun.com'
     request = urllib.request.Request(TARGET_URL)
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
-    if rescode != 200 :return print("ChosunBizBot_parse 접속이 원활하지 않습니다 ")
+    if rescode != 200 :return print("ChosunBizBot_JSONparse 접속이 원활하지 않습니다 ")
 
     jres = json.loads(response.read().decode('utf-8'))
 
@@ -1110,11 +1121,11 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_parse)')
+        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(ChosunBizBot_parse)')
+        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     nNewArticleCnt = 0
@@ -1150,6 +1161,134 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
+# 웹크롤링 타입
+def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global LIST_ARTICLE_TITLE
+
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    soupList = soup.select('#main > div.flex-chain-wrapper.sm.\|.box--margin-top-md.width--100.box--pad-top-md.box--pad-bottom-md.box--bg-undefined.box--border.box--border-black.box--border-xs.box--border-horizontal.box--border-horizontal-top.box--hidden-lg.box--hidden-md > section > div > div > div > div:nth-child(1) > div > div > div > div.story-card.story-card--art-left.\|.flex.flex--wrap > div.story-card-block.story-card-right.\|.grid__col--sm-9.grid__col--md-9.grid__col--lg-9 > div.story-card-component.story-card__headline-container.\|.text--overflow-ellipsis.text--left > a')
+    print(soupList)
+    # ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    try:
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+    except IndexError:
+        return 
+    FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
+        LIST_ARTICLE_TITLE = list.text
+
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
+                # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        elif 'test' in FIRST_ARTICLE_TITLE:
+            print("test 게시물은 연속키 처리를 제외합니다.")
+            # return True
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
+            return sendMessageText
+
+    print(sendMessageText)
+    return sendMessageText
+
+
+# 증권플러스 뉴스 JSON API 타입
+def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    request = urllib.request.Request(TARGET_URL)
+    #검색 요청 및 처리
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
+
+    jres = json.loads(response.read().decode('utf-8'))
+
+    jres = jres['newsItems']
+    print(jres)
+
+    FIRST_ARTICLE_URL = jres[0]['url'].strip()
+    FIRST_ARTICLE_TITLE = jres[0]['title'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for stockPlus in jres:
+        LIST_ARTICLE_URL = stockPlus['url'].strip()
+        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
+                # print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                print(sendMessageText)
+                sendText(sendMessageText)
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    return True
 
 def EINFOMAXshort_checkNewArticle():
     global NXT_KEY
@@ -1212,7 +1351,6 @@ def EINFOMAXshort_checkNewArticle():
             return True
 
     return True
-
 
 def Itooza_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1738,7 +1876,6 @@ def GetSendMessageTitle():
     
     return SendMessageTitle
 
-
 def GetSendChatId():
     SendMessageChatId = 0
     TEST = '-1001474652718' # 테스트 채널
@@ -1918,23 +2055,23 @@ def main():
             print('CASE5')
 
 
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        EBEST_checkNewArticle()
+        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # EBEST_checkNewArticle()
 
-        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        SangSangIn_checkNewArticle()
+        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        # SangSangIn_checkNewArticle()
 
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        HANA_checkNewArticle()
+        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        # HANA_checkNewArticle()
 
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        Samsung_checkNewArticle()
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # Samsung_checkNewArticle()
 
-        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        DS_checkNewArticle()
+        # print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # DS_checkNewArticle()
 
-        print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        SMIC_checkNewArticle()
+        # print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # SMIC_checkNewArticle()
         
         print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
         ChosunBizBot_checkNewArticle()
