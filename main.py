@@ -2055,23 +2055,23 @@ def main():
             print('CASE5')
 
 
-        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # EBEST_checkNewArticle()
+        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        EBEST_checkNewArticle()
 
-        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        # SangSangIn_checkNewArticle()
+        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        SangSangIn_checkNewArticle()
 
-        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        # HANA_checkNewArticle()
+        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        HANA_checkNewArticle()
 
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # Samsung_checkNewArticle()
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
 
-        # print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # DS_checkNewArticle()
+        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        DS_checkNewArticle()
 
-        # print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # SMIC_checkNewArticle()
+        print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        SMIC_checkNewArticle()
         
         print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
         ChosunBizBot_checkNewArticle()
