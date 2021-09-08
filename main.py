@@ -1132,13 +1132,11 @@ def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     TODAY = GetCurrentDate('YYYY/HH/DD')
     print('NXT_KEY', NXT_KEY)
     print('TODAY', TODAY)
-    print( NXT_KEY == TODAY )
     if NXT_KEY != TODAY:
         sendText(GetSendMessageTitle() + sendMessageText)
+        NXT_KEY = TODAY
 
-
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, GetCurrentDate('YYYY/HH/DD'))
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, GetCurrentDate('YYYY/HH/DD'))
 
 ########
 
