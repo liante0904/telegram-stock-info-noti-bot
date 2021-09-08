@@ -1064,6 +1064,84 @@ def SMIC_downloadFile(ARTICLE_URL):
     
     return ATTACH_URL
 
+###
+
+def mkStock_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 994
+    ARTICLE_BOARD_ORDER = 994
+
+    requests.packages.urllib3.disable_warnings()
+
+    # MK증권
+    TARGET_URL = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+
+    # MK증권 웹 크롤링
+    mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+
+# 웹크롤링 타입
+def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global LIST_ARTICLE_TITLE
+
+    # webpage = requests.get(TARGET_URL, verify=False)
+
+    # # HTML parse
+    # soup = BeautifulSoup(webpage.content, "html.parser")
+    # refrashTime = soup.select_one('body > div:nth-child(10) > div > table > tbody > tr > td:nth-child(1) > table:nth-child(2) > tbody > tr > td:nth-child(1) > span')
+    # # refrashTime = refrashTime.strip()
+    # print(refrashTime)
+
+    # try:
+    #     FIRST_ARTICLE_TITLE = refrashTime
+    #     refrashTime = refrashTime.split(" ")
+    #     DATE = refrashTime[0]
+    #     TIME = refrashTime[1]
+    #     TIMEsplit = TIME.split(":")
+    #     HH = int(TIMEsplit[0])
+    #     MM = int(TIMEsplit[1])
+    # except IndexError:
+    #     return 
+
+
+    FIRST_ARTICLE_URL = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+    
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    print(dbResult)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        # print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        # print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 연속키가 존재합니다. ')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, GetCurrentDate('YYYY/HH/DD'))
+
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+
+    sendMessageText = FIRST_ARTICLE_URL
+    TODAY = GetCurrentDate('YYYY/HH/DD')
+    print('NXT_KEY', NXT_KEY)
+    print('TODAY', TODAY)
+    print( NXT_KEY == TODAY )
+    if NXT_KEY == TODAY:
+        sendText(GetSendMessageTitle() + sendMessageText)
+
+
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, GetCurrentDate('YYYY/HH/DD'))
+
+########
+
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1221,7 +1299,6 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print(sendMessageText)
     return sendMessageText
-
 
 # 증권플러스 뉴스 JSON API 타입
 def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1865,6 +1942,7 @@ def GetSendMessageTitle():
     elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
     elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
     elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
+    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
@@ -1984,6 +2062,7 @@ def GetCurrentDate(*args):
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
 
+    print("버그찾기",DATE)
     if pattern == '':
         DATE = time_now[:10].strip()
     elif pattern == 'YY' or pattern == 'yy':
@@ -1994,15 +2073,17 @@ def GetCurrentDate(*args):
         DATE = DATE_SPLIT[1]
     elif pattern == 'DD' or pattern == 'dd':
         DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYY/HH/MM' or pattern == 'yyyy/hh/mm':
+    elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
+        print('여기는')
         DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-HH-MM' or pattern == 'yyyy-hh-mm':
+    elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
         DATE = time_now[:10].strip()
-    elif pattern == 'YY-HH-MM' or pattern == 'yy-hh-mm':
+    elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
         DATE = time_now[2:10].strip()
     else:
         DATE = time_now[:10].strip()
 
+    print('최종',DATE)
     return DATE
     
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
@@ -2021,14 +2102,15 @@ def main():
     global REFRESH_TIME # 새로고침 주기
 
     print('########Program Start Run########')
-
+    
     if GetCurrentDay == '토' or GetCurrentDay == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
     else:
         REFRESH_TIME = 60 * 20 # 20분
 
-    #print(GetCurrentDate() , GetCurrentTime())
+    #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
+    TimeHour = int(GetCurrentTime('HH'))
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
@@ -2069,7 +2151,11 @@ def main():
 
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         SMIC_checkNewArticle()
-        
+
+        if TimeHour == 16: # 장마감 16시에만 한번 발송
+            print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
+            mkStock_checkNewArticle()
+
         print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
         ChosunBizBot_checkNewArticle()
 
