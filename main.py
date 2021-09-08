@@ -1133,7 +1133,7 @@ def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('NXT_KEY', NXT_KEY)
     print('TODAY', TODAY)
     print( NXT_KEY == TODAY )
-    if NXT_KEY == TODAY:
+    if NXT_KEY != TODAY:
         sendText(GetSendMessageTitle() + sendMessageText)
 
 
