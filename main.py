@@ -2109,6 +2109,7 @@ def main():
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
+    
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
@@ -2151,8 +2152,10 @@ def main():
         SMIC_checkNewArticle()
 
         if TimeHour == 16: # 장마감 16시에만 한번 발송
-            print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
-            mkStock_checkNewArticle()
+            sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+            sendText(GetSendMessageTitle() + sendMessageText)
+            # print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
+            # mkStock_checkNewArticle()
 
         print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
         ChosunBizBot_checkNewArticle()
