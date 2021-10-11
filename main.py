@@ -2152,9 +2152,9 @@ def main():
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         SMIC_checkNewArticle()
 
-        if TimeHour == 16: # 장마감 16시에만 한번 발송
-            sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
-            sendText(GetSendMessageTitle() + sendMessageText)
+       # if TimeHour == 16: # 장마감 16시에만 한번 발송
+        #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+         #   sendText(GetSendMessageTitle() + sendMessageText)
             # print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
             # mkStock_checkNewArticle()
 
