@@ -17,8 +17,12 @@ from typing import List
 from bs4 import BeautifulSoup
 #from urllib.parse import urlparse
 import urllib.parse as urlparse
-import urllib.request
+#import urllib.request
+#import urllib3.parse as urlparse
+#import urllib3.request
 
+
+#urllib3.disable_warnings()
 
 from requests import get  # to make GET request
 
@@ -34,7 +38,7 @@ from requests import get  # to make GET request
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############접속지 URL 상수############
-
+# TELEGRAM_BOT_INFO = https://api.telegram.org/bot1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w/getUpdates
 
 ############공용 상수############
 # 메시지 발송 ID
@@ -1676,6 +1680,77 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+
+def trevari_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 777
+    ARTICLE_BOARD_ORDER = 777
+
+    requests.packages.urllib3.disable_warnings()
+
+    TARGET_URL = 'https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    #soupList = soup.select('#__next > div > div.jsx-2858481047.body > div > div.jsx-1664952319.floating-button > div > div > div')
+
+    #FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.jsx-1261196552.club-info > div > div.jsx-1261196552.pc > div > div.jsx-1664952319.floating-button > div > div > div > button').text
+    
+    if "마감" not in strBtn:
+        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+        my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+        bot = telegram.Bot(token = my_token_key)
+        chat_id = 183792411 # 나의 텔레그램 아이디
+        sendMessageText  = "*파운더의 사고방식-탐탐* 의 공석이 발생하였습니다! \n"
+        sendMessageText += "https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub" + "\n" 
+        sendMessageText += "[링크]"+"(https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub)"
+        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
+    return 
+    
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+
+        # 최종치 수급도 발송하도록 변경
+        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    return True
+
 def YUANTA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -2131,6 +2206,9 @@ def main():
             print('CASE5')
 
 
+        print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        trevari_checkNewArticle()
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
 
@@ -2170,6 +2248,9 @@ def main():
 
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
+
+        print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        trevari_checkNewArticle()
 
         # 미사용
         # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
