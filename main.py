@@ -1430,7 +1430,7 @@ def EINFOMAXshort_checkNewArticle():
     return True
 
 def Itooza_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
+    global ARTICLE_BOARD_ORDER 
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 997
