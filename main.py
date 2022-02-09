@@ -527,7 +527,10 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return sendMessageText
+
+    
     print(sendMessageText)
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 
@@ -1266,7 +1269,7 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
@@ -2227,9 +2230,9 @@ def main():
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         SMIC_checkNewArticle()
 
-        if TimeHour == 16: # 장마감 16시에만 한번 발송
-            sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
-            sendText(GetSendMessageTitle() + sendMessageText)
+       # if TimeHour == 16: # 장마감 16시에만 한번 발송
+        #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+         #   sendText(GetSendMessageTitle() + sendMessageText)
             # print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
             # mkStock_checkNewArticle()
 
