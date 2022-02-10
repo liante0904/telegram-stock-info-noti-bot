@@ -17,7 +17,7 @@ from typing import List
 from bs4 import BeautifulSoup
 #from urllib.parse import urlparse
 import urllib.parse as urlparse
-#import urllib.request
+import urllib.request
 #import urllib3.parse as urlparse
 #import urllib3.request
 
