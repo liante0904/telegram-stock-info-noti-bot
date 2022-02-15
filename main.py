@@ -2252,8 +2252,8 @@ def main():
         print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         SEDAILY_checkNewArticle()
 
-        print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
-        trevari_checkNewArticle()
+        # print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        # trevari_checkNewArticle()
 
         # 미사용
         # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
