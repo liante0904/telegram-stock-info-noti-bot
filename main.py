@@ -116,7 +116,7 @@ LIST_ARTICLE_TITLE = ''
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global SEND_TIME_TERM 
+     
     
     SEC_FIRM_ORDER = 0
 
@@ -154,7 +154,8 @@ def EBEST_checkNewArticle():
 
     # 발송전 연속키 재 조회후 중복발송 필터링
     DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendText(GetSendMessageTitle() + sendMessageText)
+    print("SEND_TIME_TERM", SEND_TIME_TERM)
+    if len(sendMessageText) > 0 and SEND_TIME_TERM < 1200 : sendText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -2062,6 +2063,7 @@ def MySQL_Open_Connect():
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global NXT_KEY
     global SEND_YN
+    global SEND_TIME_TERM
     global conn
     global cursor
 
