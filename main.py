@@ -94,6 +94,8 @@ cursor  = ''
 NXT_KEY = ''
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
+# 텔레그램 마지막 메세지 발송시간(단위 초)
+SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
 
@@ -114,7 +116,8 @@ LIST_ARTICLE_TITLE = ''
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-
+    global SEND_TIME_TERM 
+    
     SEC_FIRM_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -149,7 +152,9 @@ def EBEST_checkNewArticle():
             sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    # 발송전 연속키 재 조회후 중복발송 필터링
+    DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -2069,6 +2074,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
         print(row)
         NXT_KEY = row['NXT_KEY']
         SEND_YN = row['SEND_YN']
+        SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
     conn.close()
     return dbResult
 
