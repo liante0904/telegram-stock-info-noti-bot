@@ -155,7 +155,7 @@ def EBEST_checkNewArticle():
     # 발송전 연속키 재 조회후 중복발송 필터링
     DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     print("SEND_TIME_TERM", SEND_TIME_TERM)
-    if len(sendMessageText) > 0 and SEND_TIME_TERM < 1200 : sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
