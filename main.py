@@ -1185,7 +1185,7 @@ def ChosunBizBot_checkNewArticle():
 def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     BASE_URL = 'biz.chosun.com'
-    request = urllib.request.Request(TARGET_URL)
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
@@ -1312,7 +1312,7 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 # 증권플러스 뉴스 JSON API 타입
 def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-    request = urllib.request.Request(TARGET_URL)
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
@@ -1553,7 +1553,7 @@ def NAVERNews_checkNewArticle():
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-    request = urllib.request.Request(TARGET_URL)
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
@@ -2251,8 +2251,8 @@ def main():
         #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
         #     EINFOMAXshort_checkNewArticle()
 
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
+        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        # Itooza_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
