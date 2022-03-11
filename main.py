@@ -2251,8 +2251,8 @@ def main():
         #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
         #     EINFOMAXshort_checkNewArticle()
 
-        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        # Itooza_checkNewArticle()
+        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        Itooza_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
