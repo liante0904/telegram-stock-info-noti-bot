@@ -172,7 +172,11 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     except IndexError:
         return 
-    FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    try:
+        FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+    except:
+        FIRST_ARTICLE_URL = ''
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -291,10 +295,14 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#content > table > tbody > tr > td.left > a')
 
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    FIRST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[FIRST_ARTICLE_INDEX]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
-    
+    try:
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+        FIRST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[FIRST_ARTICLE_INDEX]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
@@ -377,10 +385,14 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
 
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
-    
+    try:
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+        FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
@@ -480,9 +492,13 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
-    FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    try:
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
@@ -574,13 +590,17 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#content > div.content_area > table > tbody > tr')
 
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].text.strip()
-    FIRST_ARTICLE_URL =  'http://www.hygood.co.kr' + soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    FIRST_ARTICLE_URL_f = FIRST_ARTICLE_URL.split(";")[0]
-    FIRST_ARTICLE_URL_b = FIRST_ARTICLE_URL.split("?")[1]
-    FIRST_ARTICLE_URL = FIRST_ARTICLE_URL_f + "?" + FIRST_ARTICLE_URL_b
-    
+    try:
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        FIRST_ARTICLE_TITLE = soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_URL =  'http://www.hygood.co.kr' + soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].attrs['href']
+        FIRST_ARTICLE_URL_f = FIRST_ARTICLE_URL.split(";")[0]
+        FIRST_ARTICLE_URL_b = FIRST_ARTICLE_URL.split("?")[1]
+        FIRST_ARTICLE_URL = FIRST_ARTICLE_URL_f + "?" + FIRST_ARTICLE_URL_b
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
@@ -670,13 +690,17 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
-    a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
-    a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
-    a_href = a_href.split("'")
-    a_href = a_href[1]
-    FIRST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
+    try:
+        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+        a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
+        a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
+        a_href = a_href.split("'")
+        a_href = a_href[1]
+        FIRST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
@@ -763,13 +787,17 @@ def KyoBo_checkNewArticle():
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('body > div > table > tbody > tr')
 
-    FIRST_ARTICLE_TITLE = soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].text.strip()
-    FIRST_ARTICLE_URL =  'https://www.iprovest.com' + soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
-    FIRST_ARTICLE_BOARD_NAME = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(4) > i')[FIRST_ARTICLE_INDEX].text.strip()
+    try:
+        FIRST_ARTICLE_TITLE = soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_URL =  'https://www.iprovest.com' + soup.select('body > div > table > tbody > tr:nth-child(1) > td.tLeft > div > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
+        FIRST_ARTICLE_BOARD_NAME = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(4) > i')[FIRST_ARTICLE_INDEX].text.strip()
 
-    FIRST_ATTACT_FILE_URL = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(7) > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
-    FIRST_ATTACT_FILE_URL = FIRST_ATTACT_FILE_URL.split("'")
-    FIRST_ATTACT_FILE_URL = 'https://www.iprovest.com' + FIRST_ATTACT_FILE_URL[1].strip()
+        FIRST_ATTACT_FILE_URL = soup.select('body > div > table > tbody > tr:nth-child(1) > td:nth-child(7) > a')[FIRST_ARTICLE_INDEX].attrs['href'].strip()
+        FIRST_ATTACT_FILE_URL = FIRST_ATTACT_FILE_URL.split("'")
+        FIRST_ATTACT_FILE_URL = 'https://www.iprovest.com' + FIRST_ATTACT_FILE_URL[1].strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
@@ -894,7 +922,12 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text.strip()
     except IndexError:
         return sendMessageText
-    FIRST_ARTICLE_URL = soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    try:
+        FIRST_ARTICLE_URL = soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     # 연속키 데이터 저장 여부 확인 구간
     print("SEC_FIRM_ORDER", SEC_FIRM_ORDER, "ARTICLE_BOARD_ORDER",ARTICLE_BOARD_ORDER)
@@ -1011,7 +1044,12 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text.strip()
     except IndexError:
         return sendMessageText
-    FIRST_ARTICLE_URL = soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    try:
+        FIRST_ARTICLE_URL = soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     # 연속키 데이터 저장 여부 확인 구간
     print("SEC_FIRM_ORDER", SEC_FIRM_ORDER, "ARTICLE_BOARD_ORDER",ARTICLE_BOARD_ORDER)
@@ -1194,8 +1232,13 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     jres = jres['content_elements']
     # print(jres)
 
-    FIRST_ARTICLE_URL = BASE_URL + jres[0]['canonical_url'].strip()
-    FIRST_ARTICLE_TITLE = jres[0]['headlines']['basic'].strip()
+    try:
+        FIRST_ARTICLE_URL = BASE_URL + jres[0]['canonical_url'].strip()
+        FIRST_ARTICLE_TITLE = jres[0]['headlines']['basic'].strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     
     # 연속키 데이터베이스화 작업
@@ -1260,7 +1303,12 @@ def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     except IndexError:
         return 
-    FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+
+    try:
+        FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1321,8 +1369,13 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     jres = jres['newsItems']
     print(jres)
 
-    FIRST_ARTICLE_URL = jres[0]['url'].strip()
-    FIRST_ARTICLE_TITLE = jres[0]['title'].strip()
+    try:
+        FIRST_ARTICLE_URL = jres[0]['url'].strip()
+        FIRST_ARTICLE_TITLE = jres[0]['title'].strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+            
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     
     # 연속키 데이터베이스화 작업
@@ -1393,9 +1446,13 @@ def EINFOMAXshort_checkNewArticle():
     soupList = soup.select('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div > div.list-titles > a')
 
     # print(soupList)
-    FIRST_ARTICLE_URL = 'news.einfomax.co.kr'+soupList[FIRST_ARTICLE_INDEX].attrs['href'].strip()
-    FIRST_ARTICLE_TITLE = soup.select_one('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div:nth-child(1) > div.list-titles > a').text.strip()
-    
+    try:
+        FIRST_ARTICLE_URL = 'news.einfomax.co.kr'+soupList[FIRST_ARTICLE_INDEX].attrs['href'].strip()
+        FIRST_ARTICLE_TITLE = soup.select_one('#user-container > div.float-center.max-width-1080 > div.user-content.list-wrap > section > article > div.article-list > section > div:nth-child(1) > div.list-titles > a').text.strip()
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
@@ -1637,9 +1694,14 @@ def SEDAILY_checkNewArticle():
 
     soupList = soup.select('#NewsDataFrm > ul > li > a[href]')
 
-    FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    FIRST_ARTICLE_TITLE = soup.select_one('#NewsDataFrm > ul > li:nth-child(1) > a > div.text_area > h3').text.replace("[표]", "")
-    
+    try:
+        FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
+        FIRST_ARTICLE_TITLE = soup.select_one('#NewsDataFrm > ul > li:nth-child(1) > a > div.text_area > h3').text.replace("[표]", "")
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+        
+
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
