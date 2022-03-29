@@ -1858,7 +1858,7 @@ def personalNoti_checkNewArticle():
     # strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.jsx-1261196552.club-info > div > div.jsx-1261196552.pc > div > div.jsx-1664952319.floating-button > div > div > div > button').text
     strBtn = str(soup)
     print(strBtn)
-    if "판매중인 상품이 아닙니다." not in strBtn:
+    if "판매중인 상품이 아닙니다." not in strBtn or "새로워진 올댓으로 이용해주세요" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
         my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
         bot = telegram.Bot(token = my_token_key)
