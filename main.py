@@ -1788,7 +1788,7 @@ def trevari_checkNewArticle():
     
     if "마감" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-        my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+        my_token_key = ' '
         bot = telegram.Bot(token = my_token_key)
         chat_id = 183792411 # 나의 텔레그램 아이디
         sendMessageText  = "*파운더의 사고방식-탐탐* 의 공석이 발생하였습니다! \n"
@@ -1861,7 +1861,7 @@ def personalNoti_checkNewArticle():
     print("더 나은 서비스를 위해"  in strBtn)
     if "판매중인 상품이 아닙니다." not in strBtn and "더 나은 서비스를 위해" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-        my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+        my_token_key = ' '
         bot = telegram.Bot(token = my_token_key)
         chat_id = 183792411 # 나의 텔레그램 아이디
         sendMessageText  = "*신한 터치월렛 2세대* 재 판매 게시 \n"
@@ -1997,7 +1997,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    my_token_key = ' '
     bot = telegram.Bot(token = my_token_key)
 
     #생성한 텔레그램 봇 정보 출력
@@ -2032,7 +2032,7 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    my_token_key = ' '
     bot = telegram.Bot(token = my_token_key)
 
     #생성한 텔레그램 봇 정보 출력
@@ -2047,7 +2047,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     print('sendPhoto()')
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    my_token_key = ' '
     bot = telegram.Bot(token = my_token_key)
 
     bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
@@ -2058,7 +2058,7 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     global CHAT_ID
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    my_token_key = ' '
     bot = telegram.Bot(token = my_token_key)
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
@@ -2088,7 +2088,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    my_token_key = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w'
+    my_token_key = ' '
     bot = telegram.Bot(token = my_token_key)
 
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
