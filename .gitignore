@@ -4,6 +4,7 @@
 ### My custom ###
 *.key
 *.pdf
+secrets.json
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
