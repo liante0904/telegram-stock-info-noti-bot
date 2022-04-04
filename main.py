@@ -2176,17 +2176,17 @@ def GetSendChatId():
     SendMessageChatId = 0
     if SEC_FIRM_ORDER == 998:
         if  ARTICLE_BOARD_ORDER == 0 : 
-            SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS') # 네이버 실시간 속보 뉴스 채널
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
         else:
-            SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS') # 네이버 많이본 뉴스 채널
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
     elif SEC_FIRM_ORDER == 997:
-            SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_ITOOZA') # 아이투자
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
     elif SEC_FIRM_ORDER == 995:
-            SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT') # 조선비즈 C-bot
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
     else:
-        SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_REPORT_ALARM') # 운영 채널(증권사 신규 레포트 게시물 알림방)
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
-    # SendMessageChatId = SECRETS('TELEGRAM_CHANNEL_ID_TEST')
+    # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
     return SendMessageChatId
 
 def MySQL_Open_Connect():
@@ -2358,7 +2358,6 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
 
-    return SECRETS
 
 
 def main():
@@ -2368,7 +2367,7 @@ def main():
 
     print('########Program Start Run########')
     
-    SECRETS = GetSecretKey()
+    GetSecretKey()
     
      
     if GetCurrentDay == '토' or GetCurrentDay == '일':
