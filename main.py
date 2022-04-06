@@ -1833,6 +1833,100 @@ def trevari_checkNewArticle():
 
     return True
 
+def fnguideTodayReport_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 123
+    ARTICLE_BOARD_ORDER = 123
+
+    requests.packages.urllib3.disable_warnings()
+
+    TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
+                 
+    webpage = requests.get(TARGET_URL, verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+
+    # 종목 정보(레포트 수) 
+    soupList1 = soup.select('tr > td.sub_mgl10')
+    
+    # 애널리스트 정보
+    soupList2 = soup.select('tr > td:nth-child(5)')
+
+    for listIsu, listAnalyst in zip(soupList1, soupList2):
+        print('######################')
+        listIsu = listIsu.text
+        listIsu = listIsu.split("|")
+        strIsuNm = listIsu[0].strip()
+        listIsu = listIsu[1].split("-  ")
+        strReportTitle = listIsu[0].strip()
+        strInvestOpinion_1 = listIsu[1].strip()
+        strInvestOpinion_2 = listIsu[2].strip()
+        strHead  = strIsuNm + ' - ' + strReportTitle
+        strBody  = '- '  + strInvestOpinion_1.strip() + '\n'
+        strBody += '- '  + strInvestOpinion_2.strip()
+
+        strTail = listAnalyst.get_text(' - ', strip=True)
+        print(strHead)
+        print(strBody)
+        print(strTail)
+
+
+    return     
+    strBtn = str(soup)
+    print(strBtn)
+    print("더 나은 서비스를 위해"  in strBtn)
+    if "판매중인 상품이 아닙니다." not in strBtn and "더 나은 서비스를 위해" not in strBtn:
+        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
+        sendMessageText  = "*신한 터치월렛 2세대* 재 판매 게시 \n"
+        sendMessageText += "https://newmallthat.shinhancard.com/alhsec/ALHFM109N/ALHFM109R01.shc?althMllId=10001&althPdId=106901368&althGnbMllId=10001" + "\n" 
+        sendMessageText += "[링크]"+"(https://newmallthat.shinhancard.com/alhsec/ALHFM109N/ALHFM109R01.shc?althMllId=10001&althPdId=106901368&althGnbMllId=10001)"
+        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    else:
+        print('판매중단')
+    return 
+    
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
+
+        # 최종치 수급도 발송하도록 변경
+        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
+            print('메세지 전송 URL:', LIST_ARTICLE_URL)
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    return True
+
 def personalNoti_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -2358,8 +2452,6 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
 
-
-
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
@@ -2369,7 +2461,6 @@ def main():
     
     GetSecretKey()
     
-     
     if GetCurrentDay == '토' or GetCurrentDay == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
     else:
@@ -2404,6 +2495,10 @@ def main():
 
         # print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # trevari_checkNewArticle()
+        # https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all
+
+        # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+        # fnguideTodayReport_checkNewArticle()
 
         print("personalNoti_checkNewArticle()=> 새 게시글 정보 확인") # 777
         personalNoti_checkNewArticle()
