@@ -2385,8 +2385,7 @@ def GetCurrentDay(*args):
 
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
-    
-    return daylist[datetime.date(DATE_SPLIT[0],DATE_SPLIT[1],DATE_SPLIT[2]).weekday()]
+    return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL
@@ -2435,7 +2434,7 @@ def main():
     print('########Program Start Run########')
     
     GetSecretKey()
-    
+    print(GetCurrentDay())
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
     else:
