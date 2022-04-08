@@ -93,6 +93,7 @@ cursor  = ''
 NXT_KEY = ''
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
+TODAY_SEND_YN = ''
 # 텔레그램 마지막 메세지 발송시간(단위 초)
 SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 # 첫번째URL 
@@ -1840,6 +1841,28 @@ def fnguideTodayReport_checkNewArticle():
     SEC_FIRM_ORDER      = 123
     ARTICLE_BOARD_ORDER = 123
 
+
+    # 유효 발송 시간에만 로직 실행
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','fnguideTodayReport_checkNewArticle')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
+        return True
+
+    if int(GetCurrentTime('HH')) == 9 and TODAY_SEND_YN == 'N': 
+        pass # 로직 발송 조건 (9시에 오늘 발송이 아닐 경우)
+    else:
+        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
+        return True
+
+
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
@@ -1855,75 +1878,51 @@ def fnguideTodayReport_checkNewArticle():
     # 애널리스트 정보
     soupList2 = soup.select('tr > td:nth-child(5)')
 
+    sendMessageText = GetSendMessageTitle()
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
-        listIsu = listIsu.text
+        try:
+            listIsu = listIsu.text
+        except:
+            continue
+
         listIsu = listIsu.split("|")
         strIsuNm = listIsu[0].strip()
+        strIsuNo = strIsuNm.split("(A")
+        strIsuNo = strIsuNo[1].replace(")","")
+        strIsuUrl = "[종목링크]" + "(" + "https://finance.naver.com/item/main.naver?code=" + strIsuNo + ")"
         listIsu = listIsu[1].split("-  ")
         strReportTitle = listIsu[0].strip()
-        strInvestOpinion_1 = listIsu[1].strip()
-        strInvestOpinion_2 = listIsu[2].strip()
-        strHead  = strIsuNm + ' - ' + strReportTitle
+
+        try:
+            strInvestOpinion_1 = listIsu[1].strip()
+        except:
+            strInvestOpinion_1 = ''
+
+        try:    
+            strInvestOpinion_2 = listIsu[2].strip()
+        except:
+            strInvestOpinion_2 = ''
+
+        strHead  = '*' + strIsuNm + ' - ' +strReportTitle + '*' + " | " +  strIsuUrl
         strBody  = '- '  + strInvestOpinion_1.strip() + '\n'
         strBody += '- '  + strInvestOpinion_2.strip()
 
         strTail = listAnalyst.get_text(' - ', strip=True)
+
         print(strHead)
         print(strBody)
         print(strTail)
+        sendMessageText += strHead + "\n"
+        sendMessageText += strBody + "\n" 
+        sendMessageText += strTail + "\n" + "\n" 
+        if len(sendMessageText) > 3500 : # 중간 발송
+            sendText(sendMessageText)
+            sendMessageText = ''
 
-
-    return     
-    strBtn = str(soup)
-    print(strBtn)
-    print("더 나은 서비스를 위해"  in strBtn)
-    if "판매중인 상품이 아닙니다." not in strBtn and "더 나은 서비스를 위해" not in strBtn:
-        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
-        sendMessageText  = "*신한 터치월렛 2세대* 재 판매 게시 \n"
-        sendMessageText += "https://newmallthat.shinhancard.com/alhsec/ALHFM109N/ALHFM109R01.shc?althMllId=10001&althPdId=106901368&althGnbMllId=10001" + "\n" 
-        sendMessageText += "[링크]"+"(https://newmallthat.shinhancard.com/alhsec/ALHFM109N/ALHFM109R01.shc?althMllId=10001&althPdId=106901368&althGnbMllId=10001)"
-        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    else:
-        print('판매중단')
-    return 
-    
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-
-        # 최종치 수급도 발송하도록 변경
-        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
+    # 나머지 최종 발송
+    sendText(sendMessageText)
+    dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
     return True
 
@@ -1961,43 +1960,6 @@ def personalNoti_checkNewArticle():
         bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     else:
         print('판매중단')
-    return 
-    
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-
-        # 최종치 수급도 발송하도록 변경
-        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
     return True
 
 def YUANTA_checkNewArticle():
@@ -2258,6 +2220,7 @@ def GetSendMessageTitle():
     elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
     elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
     elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
+    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
@@ -2298,11 +2261,12 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global NXT_KEY
     global SEND_YN
     global SEND_TIME_TERM
+    global TODAY_SEND_YN
     global conn
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, 		TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
+    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     rows = cursor.fetchall()
     for row in rows:
@@ -2311,6 +2275,8 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
         NXT_KEY = row['NXT_KEY']
         SEND_YN = row['SEND_YN']
         SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
+        TODAY_SEND_YN = row['TODAY_SEND_YN']
+
     conn.close()
     return dbResult
 
@@ -2333,6 +2299,14 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
     if dbResult:
         NXT_KEY = FIRST_NXT_KEY
+    conn.close()
+    return dbResult
+
+def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
+    global NXT_KEY
+    cursor = MySQL_Open_Connect()
+    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s , TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
+    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     conn.close()
     return dbResult
  
