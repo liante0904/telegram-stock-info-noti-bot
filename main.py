@@ -1855,7 +1855,7 @@ def fnguideTodayReport_checkNewArticle():
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
         return True
-
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
     if int(GetCurrentTime('HH')) == 9 and TODAY_SEND_YN == 'N': 
         pass # 로직 발송 조건 (9시에 오늘 발송이 아닐 경우)
     else:
@@ -2436,7 +2436,7 @@ def main():
     
     GetSecretKey()
     
-    if GetCurrentDay == '토' or GetCurrentDay == '일':
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
     else:
         REFRESH_TIME = 60 * 20 # 20분
