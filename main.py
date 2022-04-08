@@ -2496,10 +2496,9 @@ def main():
 
         # print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # trevari_checkNewArticle()
-        # https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all
 
-        # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-        # fnguideTodayReport_checkNewArticle()
+        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+        fnguideTodayReport_checkNewArticle()
 
         print("personalNoti_checkNewArticle()=> 새 게시글 정보 확인") # 777
         personalNoti_checkNewArticle()
