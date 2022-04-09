@@ -2536,8 +2536,8 @@ def main():
         #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
         #     EINFOMAXshort_checkNewArticle()
 
-        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        # Itooza_checkNewArticle()
+        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        Itooza_checkNewArticle()
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
         NAVERNews_checkNewArticle()
@@ -2558,6 +2558,7 @@ def main():
 
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
+
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
         time.sleep(REFRESH_TIME)
 
