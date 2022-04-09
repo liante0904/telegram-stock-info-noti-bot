@@ -57,7 +57,7 @@ REFRESH_TIME = 60 * 20 # 20분
 # 회사이름
 FIRM_NAME = (
     "이베스트 투자증권",    # 0
-    "흥국증권",             # 1
+    "신한금융투자",             # 1
     "상상인증권",           # 2
     "하나금융투자",          # 3
     "한양증권",              # 4
@@ -71,7 +71,7 @@ FIRM_NAME = (
 # 게시판 이름
 BOARD_NAME = (
     [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
-    [ "투자전략", "산업/기업분석" ],                            # 1
+    [ "산업분석", "기업분석" ],                            # 1
     [ "산업리포트", "기업리포트" ],                             # 2
     [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
     [ "기업분석", "산업 및 이슈분석" ],                          # 4
@@ -265,6 +265,109 @@ def EBEST_downloadFile(ARTICLE_URL):
     # print(ATTACH_URL)
     # time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return ATTACH_URL
+
+
+
+def ShinHanInvest_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 1
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 신한금융투자 산업분석
+    TARGET_URL_0 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+    
+    # 신한금융투자 기업분석
+    TARGET_URL_1 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        time.sleep(5)
+ 
+# JSON API 타입
+def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    #검색 요청 및 처리
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+
+    jres = json.loads(response.read().decode('utf-8'))
+    # print(jres)
+    # strbbsTitle = jres['BBS_Title']
+    # print(strbbsTitle)
+
+    # strTitle = jres['title']
+    # print(strTitle)
+
+    strList = jres['list']
+    print(strList[0])
+    print(strList[0]['f0'],strList[0]['f1'])
+    # print(l[0]['f0'])
+    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+    FIRST_ARTICLE_TITLE = jres['list'][0]['f1'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # # NaverNews 게시판에 따른 URL 지정
+    # if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
+    # else:                      category = 'ranknews'
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in jres['list']:
+        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+        print(list)
+
+        LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
+        LIST_ARTICLE_TITLE = list['f1'].strip()
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                sendText(sendMessageText)
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    return True
+
+
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1286,74 +1389,6 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
-# 웹크롤링 타입
-def ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global LIST_ARTICLE_TITLE
-
-    webpage = requests.get(TARGET_URL, verify=False)
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    soupList = soup.select('#main > div.flex-chain-wrapper.sm.\|.box--margin-top-md.width--100.box--pad-top-md.box--pad-bottom-md.box--bg-undefined.box--border.box--border-black.box--border-xs.box--border-horizontal.box--border-horizontal-top.box--hidden-lg.box--hidden-md > section > div > div > div > div:nth-child(1) > div > div > div > div.story-card.story-card--art-left.\|.flex.flex--wrap > div.story-card-block.story-card-right.\|.grid__col--sm-9.grid__col--md-9.grid__col--lg-9 > div.story-card-component.story-card__headline-container.\|.text--overflow-ellipsis.text--left > a')
-    print(soupList)
-    # ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    try:
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    except IndexError:
-        return 
-
-    try:
-        FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
-
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
-
-    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list.text
-
-        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
-                # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        elif 'test' in FIRST_ARTICLE_TITLE:
-            print("test 게시물은 연속키 처리를 제외합니다.")
-            # return True
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-
-    print(sendMessageText)
-    return sendMessageText
 
 # 증권플러스 뉴스 JSON API 타입
 def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1640,8 +1675,8 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
-        LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + news['oid'] + '&articleId=' + news['aid']
-        LIST_ARTICLE_TITLE = news['tit'].strip()
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + list['oid'] + '&articleId=' + list['aid']
+        LIST_ARTICLE_TITLE = list['tit'].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
@@ -1666,14 +1701,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return True
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
-
-def NAVERNews_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
-    global ATTACH_FILE_NAME
-    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
-    
-    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 def SEDAILY_checkNewArticle():
@@ -2466,7 +2493,6 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
-
         # print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # trevari_checkNewArticle()
 
@@ -2478,6 +2504,9 @@ def main():
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
+
+        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        ShinHanInvest_checkNewArticle()
 
         print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
         SangSangIn_checkNewArticle()
