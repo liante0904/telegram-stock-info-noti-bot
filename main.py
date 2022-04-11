@@ -36,7 +36,6 @@ from requests import get  # to make GET request
 #   - 어떻게 구분지을지 생각해봐야함
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
-
 ############공용 상수############
 # secrets 
 CLEARDB_DATABASE_URL                                = ""
@@ -83,8 +82,6 @@ BOARD_NAME = (
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
 
-
-KYOBO_BOARD_NAME = ''
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -266,8 +263,6 @@ def EBEST_downloadFile(ARTICLE_URL):
     # time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return ATTACH_URL
 
-
-
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -301,12 +296,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
     jres = json.loads(response.read().decode('utf-8'))
-    # print(jres)
-    # strbbsTitle = jres['BBS_Title']
-    # print(strbbsTitle)
-
-    # strTitle = jres['title']
-    # print(strTitle)
 
     strList = jres['list']
     print(strList[0])
@@ -366,8 +355,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
-
-
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -647,15 +634,12 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
 
-
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return sendMessageText
 
-    
     print(sendMessageText)
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
 
 def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
@@ -746,7 +730,6 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('최신 게시글이 채널에 발송 되어 있습니다.')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
-
 
 def HANYANG_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
@@ -877,7 +860,7 @@ def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
 def KyoBo_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
-    global KYOBO_BOARD_NAME # 교보증권 전용 변수
+    # global KYOBO_BOARD_NAME # 교보증권 전용 변수
 
     SEC_FIRM_ORDER      = 6
     ARTICLE_BOARD_ORDER = 0
@@ -936,7 +919,6 @@ def KyoBo_checkNewArticle():
         # 통합 게시판 이므로 게시글의 분류된 게시판 이름을 사용
         LIST_ARTICLE_BOARD_NAME =  list.select_one('body > div > table > tbody > tr > td:nth-child(4) > i').text.strip()
         ARTICLE_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
-        KYOBO_BOARD_NAME = LIST_ARTICLE_BOARD_NAME
         # 게시글 리스트에서 첨부파일 URL 획득
         LIST_ATTACT_FILE_URL = list.select_one('body > div > table > tbody > tr > td:nth-child(7) > a').attrs['href'].strip()
         LIST_ATTACT_FILE_URL = LIST_ATTACT_FILE_URL.split("'")
@@ -982,7 +964,6 @@ def DS_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 7
-
 
     # 이슈브리프
     DS_URL_0 = 'http://www.ds-sec.co.kr/bbs/board.php?bo_table=sub03_02'
@@ -1067,7 +1048,6 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print('###점검중 확인요망###')
         elif 'test' in FIRST_ARTICLE_TITLE:
             print("test 게시물은 연속키 처리를 제외합니다.")
-            # return True
         else:
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
@@ -1094,14 +1074,12 @@ def DS_downloadFile(ARTICLE_URL):
     
     return ATTACH_URL
 
-
 # SMIC(SNU Midas Investment Club)
 def SMIC_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 8
-
 
     # 이슈브리프
     SMIC_URL_0 = 'http://snusmic.com/research/'
@@ -1216,8 +1194,6 @@ def SMIC_downloadFile(ARTICLE_URL):
     
     return ATTACH_URL
 
-###
-
 def mkStock_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1237,26 +1213,6 @@ def mkStock_checkNewArticle():
 def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global LIST_ARTICLE_TITLE
-
-    # webpage = requests.get(TARGET_URL, verify=False)
-
-    # # HTML parse
-    # soup = BeautifulSoup(webpage.content, "html.parser")
-    # refrashTime = soup.select_one('body > div:nth-child(10) > div > table > tbody > tr > td:nth-child(1) > table:nth-child(2) > tbody > tr > td:nth-child(1) > span')
-    # # refrashTime = refrashTime.strip()
-    # print(refrashTime)
-
-    # try:
-    #     FIRST_ARTICLE_TITLE = refrashTime
-    #     refrashTime = refrashTime.split(" ")
-    #     DATE = refrashTime[0]
-    #     TIME = refrashTime[1]
-    #     TIMEsplit = TIME.split(":")
-    #     HH = int(TIMEsplit[0])
-    #     MM = int(TIMEsplit[1])
-    # except IndexError:
-    #     return 
-
 
     FIRST_ARTICLE_URL = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
     
@@ -1278,7 +1234,6 @@ def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('연속URL:', NXT_KEY) # 주소
     print('############')
-
 
     sendMessageText = FIRST_ARTICLE_URL
     TODAY = GetCurrentDate('YYYY/HH/DD')
@@ -1791,7 +1746,6 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
-
 def trevari_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -1821,44 +1775,7 @@ def trevari_checkNewArticle():
         sendMessageText += "https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub" + "\n" 
         sendMessageText += "[링크]"+"(https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub)"
         bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-    return 
-    
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','sedaily','의 ', '매매동향')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.sedaily.com'+list.attrs['href']
-        LIST_ARTICLE_TITLE = list.select_one('div.text_area > h3').text.replace("[표]", "")
-
-        # 최종치 수급도 발송하도록 변경
-        #if ( (NXT_KEY != LIST_ARTICLE_TITLE and "최종치" not in LIST_ARTICLE_TITLE) or NXT_KEY == '' ) and SEND_YN == 'Y':
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            send(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            # SEDAILY_downloadFile(LIST_ARTICLE_URL)
-            print('메세지 전송 URL:', LIST_ARTICLE_URL)
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # if "최종치" in LIST_ARTICLE_TITLE : print('매매 동향 최종치 게시물은 보내지 않습니다.')
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
+ 
     return True
 
 def fnguideTodayReport_checkNewArticle():
@@ -1867,7 +1784,6 @@ def fnguideTodayReport_checkNewArticle():
 
     SEC_FIRM_ORDER      = 123
     ARTICLE_BOARD_ORDER = 123
-
 
     # 유효 발송 시간에만 로직 실행
 
@@ -1888,7 +1804,6 @@ def fnguideTodayReport_checkNewArticle():
     else:
         dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
         return True
-
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1948,7 +1863,7 @@ def fnguideTodayReport_checkNewArticle():
             sendMessageText = ''
 
     # 나머지 최종 발송
-    sendText(sendMessageText)
+    sendText("\n" + sendMessageText)
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
     return True
@@ -1969,7 +1884,6 @@ def personalNoti_checkNewArticle():
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     
-
     #soupList = soup.select('#__next > div > div.jsx-2858481047.body > div > div.jsx-1664952319.floating-button > div > div > div')
 
     #FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
@@ -2147,7 +2061,6 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     print('sendMarkdown()')
     DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
 
-
     # 첫 인덱스 타이틀
     if INDEX == 0:
         sendMessageText = ''
@@ -2251,7 +2164,6 @@ def GetSendMessageTitle():
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
-
     SendMessageTitle += "\n"+ "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
     
     return SendMessageTitle
@@ -2306,7 +2218,6 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
 
     conn.close()
     return dbResult
-
 
 def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
@@ -2380,7 +2291,6 @@ def GetCurrentDate(*args):
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
 
-    print("버그찾기",DATE)
     if pattern == '':
         DATE = time_now[:10].strip()
     elif pattern == 'YY' or pattern == 'yy':
