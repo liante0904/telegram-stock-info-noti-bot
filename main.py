@@ -1802,7 +1802,7 @@ def fnguideTodayReport_checkNewArticle():
     if int(GetCurrentTime('HH')) == 9 and TODAY_SEND_YN == 'N': 
         pass # 로직 발송 조건 (9시에 오늘 발송이 아닐 경우)
     else:
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
+        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
         return True
 
     requests.packages.urllib3.disable_warnings()
