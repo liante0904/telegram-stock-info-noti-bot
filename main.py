@@ -1798,12 +1798,10 @@ def fnguideTodayReport_checkNewArticle():
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
         return True
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
-    if int(GetCurrentTime('HH')) == 9 and TODAY_SEND_YN == 'N': 
-        pass # 로직 발송 조건 (9시에 오늘 발송이 아닐 경우)
-    else:
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
-        return True
+    if int(GetCurrentTime('HH')) == 0: 
+        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
+        return True        
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일' or int(GetCurrentTime('HH')) != 9 or TODAY_SEND_YN == 'Y': return True
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1848,7 +1846,8 @@ def fnguideTodayReport_checkNewArticle():
 
         strHead  = '*' + strIsuNm + ' - ' +strReportTitle + '*' + " | " +  strIsuUrl
         strBody  = '- '  + strInvestOpinion_1.strip() + '\n'
-        strBody += '- '  + strInvestOpinion_2.strip()
+        if len(strInvestOpinion_2) > 0:
+            strBody += '- '  + strInvestOpinion_2.strip()
 
         strTail = listAnalyst.get_text(' - ', strip=True)
 
@@ -1864,6 +1863,7 @@ def fnguideTodayReport_checkNewArticle():
 
     # 나머지 최종 발송
     sendText("\n" + sendMessageText)
+    # 발송 처리
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
     return True
