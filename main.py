@@ -1758,6 +1758,7 @@ def trevari_checkNewArticle():
 
     # DB에서 타겟 URL을 가져옴
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if SEND_YN == 'N': return True
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','trevari_checkNewArticle')
