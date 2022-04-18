@@ -1755,7 +1755,21 @@ def trevari_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL = 'https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub'
+
+    # DB에서 타겟 URL을 가져옴
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','trevari_checkNewArticle')
+        print(NXT_KEY) 
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
+        return True
+
+    TARGET_URL = NXT_KEY
                  
     webpage = requests.get(TARGET_URL, verify=False)
 
@@ -1765,15 +1779,20 @@ def trevari_checkNewArticle():
     #soupList = soup.select('#__next > div > div.jsx-2858481047.body > div > div.jsx-1664952319.floating-button > div > div > div')
 
     #FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.jsx-1261196552.club-info > div > div.jsx-1261196552.pc > div > div.jsx-1664952319.floating-button > div > div > div > button').text
+    strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div > div > button').text
     
+    # strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
+    strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
+    
+    print(strClubNm + strBtn)
     if "마감" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
         bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
         chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
-        sendMessageText  = "*파운더의 사고방식-탐탐* 의 공석이 발생하였습니다! \n"
-        sendMessageText += "https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub" + "\n" 
-        sendMessageText += "[링크]"+"(https://trevari.co.kr/clubs/show?clubID=f62cf0f8-f9a6-4cee-af10-e904b3d9f0f0&status=FullClub)"
+        sendMessageText  = "*"+ strClubNm + "!*\n"
+        sendMessageText += TARGET_URL + "\n" 
+        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
+        print(chat_id, sendMessageText)
         bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
  
     return True
@@ -2219,7 +2238,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def     DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
     global conn
     global cursor
@@ -2403,8 +2422,8 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
-        # print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
-        # trevari_checkNewArticle()
+        print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        trevari_checkNewArticle()
 
         print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
         fnguideTodayReport_checkNewArticle()
