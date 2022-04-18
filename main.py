@@ -1776,15 +1776,15 @@ def trevari_checkNewArticle():
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-
-    #soupList = soup.select('#__next > div > div.jsx-2858481047.body > div > div.jsx-1664952319.floating-button > div > div > div')
-
-    #FIRST_ARTICLE_URL = 'https://www.sedaily.com'+soupList[FIRST_ARTICLE_INDEX].attrs['href']
-    strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
     
-    # strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
-    strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
-    
+    try:
+        strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
+        
+        strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
+    except:
+        print(strClubNm + strBtn)
+        return True
+
     print(strClubNm + strBtn)
     if "마감" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
