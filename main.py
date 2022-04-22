@@ -63,7 +63,9 @@ FIRM_NAME = (
     "삼성증권",              # 5
     "교보증권",              # 6
     "DS투자증권",             # 7
-    "SMIC(서울대 가치투자)"             # 8
+    "SMIC(서울대 가치투자)",             # 8
+    "",             # 9
+    "키움증권"             # 10
     # "유안타증권",           # 4
 )
 
@@ -77,7 +79,9 @@ BOARD_NAME = (
     [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
     [ " " ],                                                # 6 (교보는 게시판 내 게시판 분류 사용)
     [ "기업분석", "투자전략/경제분석"],                          # 7 
-    [ "기업분석"]                                                # 7 
+    [ "기업분석"],                                                # 8 
+    [ "기업분석"],                                                # 9
+    [ "기업분석", "산업분석"]                                                # 10 
     
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
 )
@@ -317,10 +321,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # # NaverNews 게시판에 따른 URL 지정
-    # if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
-    # else:                      category = 'ranknews'
-
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -338,7 +338,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -348,7 +348,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -625,7 +625,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
         elif SEND_YN == 'N':
@@ -847,14 +847,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     print(sendMessageText)
     return sendMessageText
-
-def Samsung_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
-    global ATTACH_FILE_NAME
-    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME
-    
-    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    return True
 
 # 교보증권의 경우 연속키를 첨부파일 URL을 사용합니다.
 def KyoBo_checkNewArticle():
@@ -1194,6 +1186,108 @@ def SMIC_downloadFile(ARTICLE_URL):
     
     return ATTACH_URL
 
+
+def Kiwoom_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 10
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 삼성증권 기업 분석
+    TARGET_URL_0 =  'https://bbn.kiwoom.com/research/SResearchCRListAjax'
+    # 삼성증권 산업 분석
+    TARGET_URL_1 =  'https://bbn.kiwoom.com/research/SResearchCIListAjax'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(1)
+ 
+def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    payload = {
+        "pageNo": 1,
+        "pageSize": 10,
+        "stdate": GetCurrentDate("yyyyhhdd"),
+        "eddate": GetCurrentDate("yyyyhhdd"),
+        "f_keyField": '', 
+        "f_key": '',
+        "_reqAgent": 'ajax',
+        "dummyVal": 0
+    }
+
+    webpage = requests.post(TARGET_URL,data=payload) # requests.get(TARGET_URL, verify=False)
+    # print(webpage.text)
+    jres = json.loads(webpage.text)
+    
+    if jres['totalCount'] == 0 : return ''
+    print(jres['researchList'])
+
+    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+    FIRST_ARTICLE_TITLE = jres['researchList'][0]['titl'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in jres['researchList']:
+        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+        print(list)
+        # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
+        LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
+        LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
+        LIST_ARTICLE_TITLE = list['titl'].strip()
+
+        if ( NXT_KEY == LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                pass
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+            
+    print(sendMessageText)
+    return sendMessageText
+
 def mkStock_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1326,7 +1420,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1336,7 +1430,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1395,7 +1489,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1406,7 +1500,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1640,7 +1734,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1650,7 +1744,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1878,7 +1972,7 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strBody + "\n" 
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
-            sendText(sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
     # 나머지 최종 발송
@@ -2138,8 +2232,8 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
-    if INDEX == 1:
-        sendMessageText += GetSendMessageTitle() + "\n"
+    # if INDEX == 1:
+    #     sendMessageText += GetSendMessageTitle() + "\n"
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
@@ -2184,7 +2278,7 @@ def GetSendMessageTitle():
     else: # 증권사
         msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
 
-    SendMessageTitle += "\n"+ "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
+    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
     
     return SendMessageTitle
 
@@ -2322,12 +2416,15 @@ def GetCurrentDate(*args):
     elif pattern == 'DD' or pattern == 'dd':
         DATE = DATE_SPLIT[2]
     elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
-        print('여기는')
         DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
     elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
         DATE = time_now[:10].strip()
     elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
         DATE = time_now[2:10].strip()
+    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
+        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
+    elif pattern == 'YYYY.HH.DD' or pattern == 'yyyy.hh.dd':
+        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
     else:
         DATE = time_now[:10].strip()
 
@@ -2423,6 +2520,11 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
+
+        
+        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Kiwoom_checkNewArticle()
+        return 
         print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         trevari_checkNewArticle()
 
@@ -2452,6 +2554,11 @@ def main():
 
         print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         SMIC_checkNewArticle()
+
+        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Kiwoom_checkNewArticle()
+
+        # https://www1.kiwoom.com/m/invest/research/VAnalCRView
 
        # if TimeHour == 16: # 장마감 16시에만 한번 발송
         #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
