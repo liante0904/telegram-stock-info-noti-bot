@@ -1262,7 +1262,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
         LIST_ARTICLE_TITLE = list['titl'].strip()
 
-        if ( NXT_KEY == LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
