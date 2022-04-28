@@ -2643,8 +2643,8 @@ def main():
             print('CASE5')
 
 
-        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        Shinyoung_checkNewArticle()
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # Shinyoung_checkNewArticle()
 
         print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         trevari_checkNewArticle()
