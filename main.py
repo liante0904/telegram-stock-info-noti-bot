@@ -2679,8 +2679,8 @@ def main():
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
 
-        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        Shinyoung_checkNewArticle()
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # Shinyoung_checkNewArticle()
 
        # if TimeHour == 16: # 장마감 16시에만 한번 발송
         #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
