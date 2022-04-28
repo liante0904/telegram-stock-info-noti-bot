@@ -2093,7 +2093,8 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strBody + "\n" 
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
-            sendText(GetSendMessageTitle() + sendMessageText)
+            # sendText(GetSendMessageTitle() + sendMessageText)
+            sendText(sendMessageText)
             sendMessageText = ''
 
     # 나머지 최종 발송
