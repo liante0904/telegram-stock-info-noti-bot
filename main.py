@@ -2053,7 +2053,8 @@ def fnguideTodayReport_checkNewArticle():
     # 애널리스트 정보
     soupList2 = soup.select('tr > td:nth-child(5)')
 
-    sendMessageText = GetSendMessageTitle()
+    # sendMessageText = GetSendMessageTitle()
+    sendMessageText = ''
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
         try:
@@ -2094,11 +2095,12 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
             # sendText(GetSendMessageTitle() + sendMessageText)
-            sendText(sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
     # 나머지 최종 발송
-    sendText("\n" + sendMessageText)
+    if len(sendMessageText) > 0 : # 중간 발송
+        sendText(GetSendMessageTitle() + sendMessageText)
     # 발송 처리
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
