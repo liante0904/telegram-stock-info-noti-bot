@@ -221,6 +221,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return sendMessageText
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
 
     print(sendMessageText)
     return sendMessageText
