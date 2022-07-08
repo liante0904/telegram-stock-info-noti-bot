@@ -197,13 +197,24 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    # 무한 발송 방지
+    for list in soupList:
+        LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
+        LIST_ARTICLE_TITLE = list.text
+
+        if NXT_KEY == LIST_ARTICLE_URL: break # 연속키 발견
+        else: # 연속키 사라짐 => 연속키 갱신
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
+            DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+            return
+
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y' and 'test' not in FIRST_ARTICLE_TITLE :
+        if ( NXT_KEY != LIST_ARTICLE_URL or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
@@ -212,17 +223,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
-        elif 'test' in FIRST_ARTICLE_TITLE:
-            print("test 게시물은 연속키 처리를 제외합니다.")
-            # return True
         else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0: print('최신 게시글이 채널에 발송 되어 있습니다.')
+            
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
     print(sendMessageText)
     return sendMessageText
 
