@@ -1544,7 +1544,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1554,7 +1554,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1613,7 +1613,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1624,7 +1624,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1858,7 +1858,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1868,7 +1868,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -2097,13 +2097,13 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strBody + "\n" 
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
-            # sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            # sendText(GetSendMessageTitle() + sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
     # 나머지 최종 발송
     if len(sendMessageText) > 0 : # 중간 발송
-        sendAddText(GetSendMessageTitle() + sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
     # 발송 처리
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
