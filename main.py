@@ -100,7 +100,8 @@ TODAY_SEND_YN = ''
 SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
-
+# SendAddText 글로벌 변수
+SEND_ADD_MESSAGE_TEXT = ''
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -149,15 +150,16 @@ def EBEST_checkNewArticle():
         sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
     # 발송전 연속키 재 조회후 중복발송 필터링
     DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     print("SEND_TIME_TERM", SEND_TIME_TERM)
 
-    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
+    return GetSendMessageTitle() + sendMessageText
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -224,10 +226,6 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return sendMessageText
-            
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-    print(sendMessageText)
     return sendMessageText
     
 def EBEST_downloadFile(ARTICLE_URL):
@@ -344,7 +342,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -354,7 +352,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -573,10 +571,10 @@ def HANA_checkNewArticle():
         sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -631,7 +629,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
         elif SEND_YN == 'N':
@@ -767,10 +765,10 @@ def Samsung_checkNewArticle():
         sendMessageText += Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -836,7 +834,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # else:
             #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             #     print(sendMessageText)
-            #     sendText(sendMessageText)
+            #     sendAddText(sendMessageText)
             #     nNewArticleCnt = 0
             #     sendMessageText = ''
         elif SEND_YN == 'N':
@@ -846,7 +844,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             # else:
             #     # 현재 리스트 확인하여 발송후 초기화 
-            #     sendText(sendMessageText)
+            #     sendAddText(sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return sendMessageText
@@ -979,10 +977,10 @@ def DS_checkNewArticle():
         sendMessageText += DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1052,7 +1050,7 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # else:
             #     print('####발송구간####')
             #     print(sendMessageText)
-            #     sendText(sendMessageText)
+            #     sendAddText(sendMessageText)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return sendMessageText
     print(sendMessageText)
@@ -1098,10 +1096,10 @@ def SMIC_checkNewArticle():
         print(sendMessageText)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1172,7 +1170,7 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # else:
             #     print('####발송구간####')
             #     print(sendMessageText)
-            #     sendText(sendMessageText)
+            #     sendAddText(sendMessageText)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return sendMessageText
     print(sendMessageText)
@@ -1213,10 +1211,10 @@ def Kiwoom_checkNewArticle():
         sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
  
 def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1318,10 +1316,10 @@ def Shinyoung_checkNewArticle():
         sendMessageText += Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
  
 def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1460,7 +1458,7 @@ def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('NXT_KEY', NXT_KEY)
     print('TODAY', TODAY)
     if NXT_KEY != TODAY:
-        sendText(GetSendMessageTitle() + sendMessageText)
+        sendAddText(GetSendMessageTitle() + sendMessageText)
         NXT_KEY = TODAY
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, str(GetCurrentDate('YYYY/HH/DD')))
@@ -1546,7 +1544,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1556,7 +1554,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1615,7 +1613,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1626,7 +1624,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -1860,7 +1858,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
 
@@ -1870,7 +1868,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                sendText(GetSendMessageTitle() + sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
@@ -2099,13 +2097,13 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strBody + "\n" 
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
-            # sendText(GetSendMessageTitle() + sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            # sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
     # 나머지 최종 발송
     if len(sendMessageText) > 0 : # 중간 발송
-        sendText(GetSendMessageTitle() + sendMessageText)
+        sendAddText(GetSendMessageTitle() + sendMessageText)
     # 발송 처리
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
@@ -2288,7 +2286,8 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
-def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
+# 가공없이 텍스트를 발송합니다.
+def sendText(sendMessageText): 
     global CHAT_ID
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
@@ -2296,6 +2295,26 @@ def sendText(sendMessageText): # 가공없이 텍스트를 발송합니다.
     bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
+# 인자 텍스트를 더해가며 발송합니다. 
+# 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
+# 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
+# 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
+def sendAddText(sendMessageText, *args): 
+    global SEND_ADD_MESSAGE_TEXT
+
+    try:
+        sendType = args[0]
+    except : # 파라미터를 지정하지 않은 경우 텍스트를 뒤에 합침
+        sendType = 'B' 
+    
+    if sendType == 'F': SEND_ADD_MESSAGE_TEXT = sendMessageText + SEND_ADD_MESSAGE_TEXT
+    else:               SEND_ADD_MESSAGE_TEXT = SEND_ADD_MESSAGE_TEXT + sendMessageText
+
+    if len(SEND_ADD_MESSAGE_TEXT) > 3500:
+        print("sendAddText() \n", SEND_ADD_MESSAGE_TEXT)
+        sendText(SEND_ADD_MESSAGE_TEXT)
+        SEND_ADD_MESSAGE_TEXT = ''
 
 def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
@@ -2615,7 +2634,6 @@ def main():
     global SECRETS # 시크릿 키
 
     print('########Program Start Run########')
-    
     GetSecretKey()
     print(GetCurrentDay())
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
@@ -2629,6 +2647,7 @@ def main():
     
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
+        sendMessageText = ''
         print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
         if TimeHourMin < 0 : 
             print("GetCurrentTime() Error => 시간 논리 에러")
