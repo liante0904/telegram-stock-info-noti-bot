@@ -2300,6 +2300,7 @@ def sendText(sendMessageText):
 # 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
 # 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
+# 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
 def sendAddText(sendMessageText, *args): 
     global SEND_ADD_MESSAGE_TEXT
 
@@ -2311,7 +2312,7 @@ def sendAddText(sendMessageText, *args):
     if sendType == 'F': SEND_ADD_MESSAGE_TEXT = sendMessageText + SEND_ADD_MESSAGE_TEXT
     else:               SEND_ADD_MESSAGE_TEXT = SEND_ADD_MESSAGE_TEXT + sendMessageText
 
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500:
+    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or sendType == 'Y ':
         print("sendAddText() \n", SEND_ADD_MESSAGE_TEXT)
         sendText(SEND_ADD_MESSAGE_TEXT)
         SEND_ADD_MESSAGE_TEXT = ''
@@ -2744,6 +2745,7 @@ def main():
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
 
+        sendAddText('', 'Y')
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
         time.sleep(REFRESH_TIME)
 
