@@ -2301,7 +2301,7 @@ def sendAddText(sendMessageText, *args):
     if sendType == 'F': SEND_ADD_MESSAGE_TEXT = sendMessageText + SEND_ADD_MESSAGE_TEXT
     else:               SEND_ADD_MESSAGE_TEXT = SEND_ADD_MESSAGE_TEXT + sendMessageText
 
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or sendType == 'Y':
+    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
         print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
         sendText(SEND_ADD_MESSAGE_TEXT)
         SEND_ADD_MESSAGE_TEXT = ''
@@ -2659,7 +2659,6 @@ def main():
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
-
 
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
