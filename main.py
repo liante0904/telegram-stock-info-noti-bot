@@ -2293,6 +2293,8 @@ def sendText(sendMessageText):
 def sendAddText(sendMessageText, *args): 
     global SEND_ADD_MESSAGE_TEXT
 
+    sendMessageText = GetSendMessageTitle() + sendMessageText 
+    
     try:
         sendType = args[0]
     except : # 파라미터를 지정하지 않은 경우 텍스트를 뒤에 합침
