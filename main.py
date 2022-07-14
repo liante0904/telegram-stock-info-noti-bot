@@ -58,7 +58,7 @@ FIRM_NAME = (
     "이베스트 투자증권",    # 0
     "신한금융투자",             # 1
     "상상인증권",           # 2
-    "하나금융투자",          # 3
+    "하나증권",          # 3
     "한양증권",              # 4
     "삼성증권",              # 5
     "교보증권",              # 6
@@ -171,7 +171,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
     
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME =  GetBoardName() 
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     except IndexError:
@@ -186,11 +186,11 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -317,11 +317,11 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     nNewArticleCnt = 0
@@ -337,7 +337,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -390,7 +390,7 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#content > table > tbody > tr > td.left > a')
 
     try:
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        ARTICLE_BOARD_NAME =  GetBoardName() 
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
         FIRST_ARTICLE_URL = 'http://www.heungkuksec.co.kr/research/industry/view.do?' + soupList[FIRST_ARTICLE_INDEX]['onclick'].replace("nav.go('view', '", "").replace("');", "").strip()
     except:
@@ -401,11 +401,11 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -480,7 +480,7 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#contents > div > div.bbs_a_type > table > tbody > tr > td.con > a')
     try:
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        ARTICLE_BOARD_NAME =  GetBoardName() 
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
         FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
     except:
@@ -491,11 +491,11 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -587,7 +587,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
     try:
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        ARTICLE_BOARD_NAME =  GetBoardName() 
         FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text.strip()
         FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
     except:
@@ -601,11 +601,11 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -682,7 +682,7 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#content > div.content_area > table > tbody > tr')
 
     try:
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        ARTICLE_BOARD_NAME =  GetBoardName() 
         FIRST_ARTICLE_TITLE = soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].text.strip()
         FIRST_ARTICLE_URL =  'http://www.hygood.co.kr' + soup.select('#content > div.content_area > table > tbody > tr:nth-child(1) > td.tx_left > a')[FIRST_ARTICLE_INDEX].attrs['href']
         FIRST_ARTICLE_URL_f = FIRST_ARTICLE_URL.split(";")[0]
@@ -699,11 +699,11 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -781,7 +781,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
     try:
-        ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+        ARTICLE_BOARD_NAME =  GetBoardName() 
         FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
         a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
@@ -799,12 +799,12 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName(),'의 ', GetBoardName() )
         if "(수정)"  in FIRST_ARTICLE_TITLE and NXT_KEY == FIRST_ARTICLE_TITLE.replace("(수정)", ""):  # 첫번째 게시글이 수정된 경우 무한발송 방지  
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -890,14 +890,14 @@ def KyoBo_checkNewArticle():
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER])
-        print(FIRM_NAME[SEC_FIRM_ORDER], '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() )
+        print( GetFirmName() , '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
         print('교보증권은 첨부파일 URL을 연속키로 사용합니다.')
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER], '게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        print(FIRM_NAME[SEC_FIRM_ORDER], '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
+        print('데이터베이스에 ', GetFirmName() , '게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print( GetFirmName() , '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
 
     print('첫번째 게시글URL:', FIRST_ATTACT_FILE_URL) # 주소
@@ -997,7 +997,7 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#fboardlist > div > table > tbody > tr > td.td_subject > div > a')
     
     print(soupList)
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME =  GetBoardName() 
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text.strip()
     except IndexError:
@@ -1014,11 +1014,11 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -1116,7 +1116,7 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#post-8 > div > div:nth-child(4) > div:nth-child(2) > div > div.uagb-post__items.uagb-post__columns-1.is-grid.uagb-post__columns-tablet-2.uagb-post__columns-mobile-1.uagb-post__equal-height > article > div > div.uagb-post__text > h3 > a')
     
     # print(soupList)
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME =  GetBoardName() 
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text.strip()
     except IndexError:
@@ -1133,11 +1133,11 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -1247,11 +1247,11 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     nNewArticleCnt = 0
@@ -1268,7 +1268,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1348,11 +1348,11 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     nNewArticleCnt = 0
@@ -1370,7 +1370,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             Shinyoung_GetArticleUrl(url = ' ', payload= ' ')
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1439,12 +1439,12 @@ def mkStock_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(dbResult)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        # print('데이터베이스에 연속키가 존재합니다. ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER])
+        # print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
         print('데이터베이스에 연속키가 존재합니다. ')
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        # print('데이터베이스에 ',FIRM_NAME[SEC_FIRM_ORDER],'의 ',BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER],'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        # print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         print('데이터베이스에 연속키가 존재합니다. ')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, str(GetCurrentDate('YYYY/HH/DD')))
 
@@ -1995,7 +1995,9 @@ def trevari_checkNewArticle():
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-    
+    strBtn = ''
+    strClubNm = ''
+
     try:
         strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
         
@@ -2174,7 +2176,7 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     soupList = soup.select('#RS_0201001_P1_FORM > div.tblRow.txtC.mHide.noVLine.js-tblHead > table > tbody ')
 
-    ARTICLE_BOARD_NAME = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    ARTICLE_BOARD_NAME =  GetBoardName() 
     FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
     FIRST_ARTICLE_URL = 'http://www.sangsanginib.com' + soupList[FIRST_ARTICLE_INDEX]['href'] #.replace("nav.go('view', '", "").replace("');", "").strip()
     
@@ -2425,9 +2427,9 @@ def GetSendMessageTitle():
     elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
     elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
-        msgFirmName = FIRM_NAME[SEC_FIRM_ORDER]
+        msgFirmName =  GetFirmName() 
 
-    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
+    SendMessageTitle += EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
     
     return SendMessageTitle
 
@@ -2542,6 +2544,29 @@ def GetCurrentTime(*args):
         TIME = time_now[11:].strip()
     print(TIME)
     return TIME
+
+# 증권사명을 가져옵니다. 
+def GetFirmName(*args):
+    strFirmName = ''
+    try :
+        strFirmName = FIRM_NAME[SEC_FIRM_ORDER]
+    except :
+        print('GetFirmName except')
+        strFirmName = ''
+        
+    return strFirmName
+# 게시판명을 가져옵니다. 
+def GetBoardName(*args):
+    strBoardName = ''
+    try :
+        strBoardName = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
+    except :
+        print('GetBoardName except')
+        strBoardName = ''
+        
+    return strBoardName
+
+
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
