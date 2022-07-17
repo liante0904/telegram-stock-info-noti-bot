@@ -3,7 +3,6 @@ import os
 import sys
 import datetime
 from pytz import timezone
-# import urlparse
 import telegram
 import requests
 import datetime
@@ -15,13 +14,8 @@ import pymysql
 import pymysql.cursors
 from typing import List
 from bs4 import BeautifulSoup
-#from urllib.parse import urlparse
 import urllib.parse as urlparse
 import urllib.request
-#import urllib3.parse as urlparse
-#import urllib3.request
-
-#urllib3.disable_warnings()
 
 from requests import get  # to make GET request
 
@@ -73,13 +67,13 @@ FIRM_NAME = (
 # 게시판 이름
 BOARD_NAME = (
     [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
-    [ "산업분석", "기업분석" ],                            # 1
-    [ "산업리포트", "기업리포트" ],                             # 2
+    [ "산업분석", "기업분석" ],                                                                      # 1 = 신한금융투자
+    [ "산업리포트", "기업리포트" ],                                                                       # 2
     [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
-    [ "기업분석", "산업 및 이슈분석" ],                          # 4
-    [ "국내기업분석", "국내산업분석", "해외기업분석" ],              # 5
-    [ " " ],                                                # 6 (교보는 게시판 내 게시판 분류 사용)
-    [ "기업분석", "투자전략/경제분석"],                          # 7 
+    [ "기업분석", "산업 및 이슈분석" ],                                                                  # 4
+    [ "국내기업분석", "국내산업분석", "해외기업분석" ],                                                      # 5
+    [ " " ],                                                                                        # 6 (교보는 게시판 내 게시판 분류 사용)
+    [ "기업분석", "투자전략/경제분석"],                                                                  # 7 
     [ "기업분석"],                                                # 8 
     [ "기업분석"],                                                # 9
     [ "기업분석", "산업분석"],                                                # 10 
@@ -151,7 +145,6 @@ def EBEST_checkNewArticle():
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
             sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
             
     # 발송전 연속키 재 조회후 중복발송 필터링
     DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1965,6 +1958,141 @@ def SEDAILY_downloadFile(ARTICLE_URL):
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
+def themoa_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 77
+    ARTICLE_BOARD_ORDER = 77
+
+    requests.packages.urllib3.disable_warnings()
+
+    TARGET_URL = 'https://www.dogdrip.net/?_filter=search&act=&vid=&mid=stock&category=&search_target=title&search_keyword=%EB%8D%94%EB%AA%A8%EC%95%84'
+    agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}             
+    webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # print(soup)
+
+    soupList = soup.select('#main > div > div.eq.section.secontent.background-color-content > div > div.ed.board-list > div:nth-child(3) > ul > li:nth-child(2) > div.ed.flex')
+    
+    print(soupList)
+
+    sys.exit(0)
+    strBtn = ''
+    strClubNm = ''
+
+    try:
+        strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
+        
+        strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
+    except:
+        print(strClubNm + strBtn)
+        return True
+
+
+    # DB에서 타겟 URL을 가져옴
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if SEND_YN == 'N': return True
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ',current_func_name = sys._getframe().f_code.co_name)
+        print(NXT_KEY) 
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
+        return True
+
+
+    print(strClubNm + strBtn)
+    if "마감" not in strBtn:
+        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
+        sendMessageText  = "*"+ strClubNm + "!*\n"
+        sendMessageText += TARGET_URL + "\n" 
+        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
+        print(chat_id, sendMessageText)
+        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+ 
+    return True
+
+def zara_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 771
+    ARTICLE_BOARD_ORDER = 771
+
+    requests.packages.urllib3.disable_warnings()
+
+    TARGET_URL_0 = 'https://www.zara.com/kr/ko/%E1%84%85%E1%85%B5%E1%86%B8%E1%84%89%E1%85%B3%E1%84%90%E1%85%A1%E1%86%B8-%E1%84%8F%E1%85%A9%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%89%E1%85%AD%E1%84%91%E1%85%A5%E1%84%87%E1%85%A2%E1%86%A8-p13318920.html'
+
+    TARGET_URL_1 = 'https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%BA-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A2%E1%86%B8-%E1%84%8F%E1%85%B3%E1%84%85%E1%85%A9%E1%84%89%E1%85%B3%E1%84%87%E1%85%A2%E1%86%A8-p13305920.html'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    ## EBEST만 로직 변경 테스트
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        zara_parse(TARGET_URL)
+        # sendMessageText += zara_parse(TARGET_URL)
+        # if len(sendMessageText) > 3500:
+        #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+        #     sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
+
+
+    return True
+
+def zara_parse(TARGET_URL):
+    SEC_FIRM_ORDER      = 771
+    ARTICLE_BOARD_ORDER = 771
+
+    agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}             
+    webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    strBtn = ''
+
+
+    try:    
+        strBtn = soup.select_one('#main > article > div.product-detail-view__content > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info > div.product-cart-buttons.product-detail-info__cart-buttons > button').text        
+    except:
+        strBtn = ''
+
+    # DB에서 타겟 URL을 가져옴
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if SEND_YN == 'N': return True
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', sys._getframe().f_code.co_name)
+
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
+        return True
+
+    print(TARGET_URL)
+    print(strBtn)
+    if "품절" not in strBtn or strBtn == '':
+        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
+        sendMessageText  = "*"+ '자라' + "!*\n"
+        sendMessageText += TARGET_URL + "\n" 
+        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
+        print(chat_id, sendMessageText)
+        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+ 
+    return True
+
 def trevari_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
@@ -2317,7 +2445,7 @@ def sendAddText(sendMessageText, *args):
         sendText(SEND_ADD_MESSAGE_TEXT)
         SEND_ADD_MESSAGE_TEXT = ''
 
-    return GetSendMessageTitle()
+    return ''
 
 def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
@@ -2695,6 +2823,12 @@ def main():
 
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
+
+        # print("themoa_checkNewArticle()=> 새 게시글 정보 확인") # 77
+        # themoa_checkNewArticle()
+
+        print("zara_checkNewArticle()=> 새 게시글 정보 확인") # 771
+        zara_checkNewArticle()
 
         print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
         trevari_checkNewArticle()
