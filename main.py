@@ -2029,7 +2029,7 @@ def zara_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL_0 = 'https://www.zara.com/kr/ko/%E1%84%85%E1%85%B5%E1%86%B8%E1%84%89%E1%85%B3%E1%84%90%E1%85%A1%E1%86%B8-%E1%84%8F%E1%85%A9%E1%84%90%E1%85%B3%E1%86%AB-%E1%84%89%E1%85%AD%E1%84%91%E1%85%A5%E1%84%87%E1%85%A2%E1%86%A8-p13318920.html'
+    TARGET_URL_0 = 'https://www.zara.com/kr/ko/%E1%84%91%E1%85%A9%E1%84%86%E1%85%A5%E1%86%AF-%E1%84%89%E1%85%B2%E1%84%8C%E1%85%B3-p12401020.html?v1=177672652'
 
     TARGET_URL_1 = 'https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%BA-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A2%E1%86%B8-%E1%84%8F%E1%85%B3%E1%84%85%E1%85%A9%E1%84%89%E1%85%B3%E1%84%87%E1%85%A2%E1%86%A8-p13305920.html'
 
@@ -2061,7 +2061,9 @@ def zara_parse(TARGET_URL):
 
 
     try:    
-        strBtn = soup.select_one('#main > article > div.product-detail-view__content > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info > div.product-cart-buttons.product-detail-info__cart-buttons > button').text        
+        # strBtn = soup.select_one('#main > article > div.product-detail-view__content > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info > div.product-cart-buttons.product-detail-info__cart-buttons > button').text        
+        strBtn = soup.select_one('#main > article > div > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info').text
+        
     except:
         strBtn = ''
 
@@ -2079,8 +2081,8 @@ def zara_parse(TARGET_URL):
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
         return True
 
-    print(TARGET_URL)
-    print(strBtn)
+    print("TARGET_URL",TARGET_URL)
+    print("strBtn",strBtn)
     if "품절" not in strBtn or strBtn == '':
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
         bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -2091,9 +2093,11 @@ def zara_parse(TARGET_URL):
         print(chat_id, sendMessageText)
         bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
  
+    
     return True
 
 def trevari_checkNewArticle():
+    sys.exit(0)
     global NXT_KEY
     global SEC_FIRM_ORDER
 
