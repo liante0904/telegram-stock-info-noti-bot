@@ -2558,7 +2558,7 @@ def GetSendMessageTitle():
     else: # 증권사
         msgFirmName =  GetFirmName() 
 
-    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE
+    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
     
     return SendMessageTitle
 
