@@ -1978,8 +1978,7 @@ def themoa_checkNewArticle():
     soupList = soup.select('#main > div > div.eq.section.secontent.background-color-content > div > div.ed.board-list > div:nth-child(3) > ul > li:nth-child(2) > div.ed.flex')
     
     print(soupList)
-
-    sys.exit(0)
+    return 0
     strBtn = ''
     strClubNm = ''
 
@@ -2029,7 +2028,7 @@ def zara_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL_0 = 'https://www.zara.com/kr/ko/%E1%84%91%E1%85%A9%E1%84%86%E1%85%A5%E1%86%AF-%E1%84%89%E1%85%B2%E1%84%8C%E1%85%B3-p12401020.html?v1=177672652'
+    TARGET_URL_0 = ''
 
     TARGET_URL_1 = 'https://www.zara.com/kr/ko/%E1%84%8B%E1%85%A1%E1%84%8B%E1%85%B5%E1%86%AF%E1%84%85%E1%85%A6%E1%86%BA-%E1%84%89%E1%85%B3%E1%84%90%E1%85%B3%E1%84%85%E1%85%A2%E1%86%B8-%E1%84%8F%E1%85%B3%E1%84%85%E1%85%A9%E1%84%89%E1%85%B3%E1%84%87%E1%85%A2%E1%86%A8-p13305920.html'
 
@@ -2049,6 +2048,7 @@ def zara_checkNewArticle():
     return True
 
 def zara_parse(TARGET_URL):
+    if len(TARGET_URL) <= 0 : return 
     SEC_FIRM_ORDER      = 771
     ARTICLE_BOARD_ORDER = 771
 
@@ -2097,7 +2097,6 @@ def zara_parse(TARGET_URL):
     return True
 
 def trevari_checkNewArticle():
-    sys.exit(0)
     global NXT_KEY
     global SEC_FIRM_ORDER
 
@@ -2467,9 +2466,9 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
 
     # 원문 링크 , 레포트 링크
     if SEC_FIRM_ORDER == 996:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "\n" + "\n"
+        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
     else:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")" + "\n"
+        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
 
     if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
@@ -2521,7 +2520,6 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"
-    sendMessageText += "\n" + "\n"
 
     return sendMessageText
 
@@ -2536,7 +2534,6 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ATTACH_URL + ")"
-    sendMessageText += "\n" + "\n"
 
     return sendMessageText
     
@@ -2561,7 +2558,7 @@ def GetSendMessageTitle():
     else: # 증권사
         msgFirmName =  GetFirmName() 
 
-    SendMessageTitle += EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" + "\n" 
+    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE
     
     return SendMessageTitle
 
