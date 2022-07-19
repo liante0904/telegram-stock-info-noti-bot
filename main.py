@@ -2911,8 +2911,9 @@ def main():
         # YUANTA_checkNewArticle()
 
         sendAddText('', 'Y')
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
+        print('######','파이썬 sleep대신 cron을 사용합니다.','######')
+        # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+        # time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
