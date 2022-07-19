@@ -2065,7 +2065,13 @@ def zara_parse(TARGET_URL):
         strBtn = soup.select_one('#main > article > div > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info').text
         
     except:
-        strBtn = ''
+        strBtn = '에러'
+
+    if strBtn == '에러': 
+        try: 
+            strBtn = soup.select_one('#main > article > div > div.product-detail-view__main > div.product-detail-view__side-bar > div.product-detail-info').text
+        except:
+            strBtn = '에러'
 
     # DB에서 타겟 URL을 가져옴
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
@@ -2083,7 +2089,8 @@ def zara_parse(TARGET_URL):
 
     print("TARGET_URL",TARGET_URL)
     print("strBtn",strBtn)
-    if "품절" not in strBtn or strBtn == '':
+    print("품절" not in strBtn)
+    if "품절" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
         bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
         chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
