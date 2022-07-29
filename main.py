@@ -31,6 +31,10 @@ from requests import get  # to make GET request
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
+# sleep key
+SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
+INTERVAL_TIME = 3 # 10분 단위 적용
+INTERVAL_INIT_TIME = 1
 # secrets 
 CLEARDB_DATABASE_URL                                = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -42,6 +46,7 @@ TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
+IS_DEV                                              = ""
 SECRETS = ""
 
 # 게시글 갱신 시간
@@ -1056,10 +1061,18 @@ def DS_downloadFile(ARTICLE_URL):
     webpage = requests.get(ARTICLE_URL, verify=False)
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-    # 첨부파일 URL
-    ATTACH_URL = soup.select_one('#bo_v_con > a')['href']
-    # 첨부파일 이름
-    ATTACH_FILE_NAME = soup.select_one('#bo_v_file > ul > li > a > strong').text.strip()
+    try:
+        # 첨부파일 URL
+        ATTACH_URL = soup.select_one('#bo_v_con > a')['href']
+        #bo_v_file > ul > li > a
+        # 첨부파일 이름
+        ATTACH_FILE_NAME = soup.select_one('#bo_v_file > ul > li > a > strong').text.strip()
+    except:
+        # 첨부파일 URL
+        ATTACH_URL = soup.select_one('#bo_v_con > a')['href']
+        # 첨부파일 이름
+        ATTACH_FILE_NAME = soup.select_one('#bo_v_file > ul > li > a > strong').text.strip()
+        #bo_v_file > ul > li > a
     
     return ATTACH_URL
 
@@ -2620,7 +2633,50 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-def     DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def DB_SelSleepKey(*args):
+    global NXT_KEY
+    global SEND_YN
+    global SEND_TIME_TERM
+    global TODAY_SEND_YN
+    global conn
+    global cursor
+
+    nSleepCnt = 0
+    nSleepCntKey = 0
+
+    cursor = MySQL_Open_Connect()
+    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
+    dbResult = cursor.execute(dbQuery, (9999))
+    rows = cursor.fetchall()
+    for row in rows:
+        print('####DB조회된 연속키####', end='\n')
+        print(row)
+        nSleepCnt = row['ARTICLE_BOARD_ORDER']
+        nSleepCntKey = row['NXT_KEY']
+
+    conn.close()
+    SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
+    return SleepTuple
+
+def DB_DelSleepKey(*args):
+    cursor = MySQL_Open_Connect()
+    dbQuery  = " DELETE  FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
+    dbResult = cursor.execute(dbQuery)
+
+    conn.close()
+    return dbResult
+
+def DB_InsSleepKey(*args):
+    global NXT_KEY
+    global conn
+    global cursor
+    cursor = MySQL_Open_Connect()
+    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
+    cursor.execute(dbQuery)
+    conn.close()
+    return dbQuery
+
+def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
     global conn
     global cursor
@@ -2681,6 +2737,52 @@ def GetCurrentTime(*args):
     print(TIME)
     return TIME
 
+
+def SetSleepTimeKey(*args):
+    try: nSleepCntKey = args[0]
+    except: nSleepCntKey = 0
+    file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+    file.write(  str(nSleepCntKey) )      # 파일에 문자열 저장
+    print('nSleepCntKey:',nSleepCntKey, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+    file.close()                     # 파일 객체 닫기
+    
+    
+def GetSleepTimeKey(*args):
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( SLEEP_KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
+        file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        file.write(  str(INTERVAL_INIT_TIME) )      # 파일에 문자열 저장
+        print('INTERVAL_INIT_TIME:',INTERVAL_INIT_TIME, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+        file.close()                     # 파일 객체 닫기
+        return int(INTERVAL_INIT_TIME)
+    else:   # 이미 실행
+        file = open( SLEEP_KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        SLEEP_KEY = file.readline()       # 파일 내 데이터 읽기
+        print('SLEEP_KEY:', SLEEP_KEY)
+        if SLEEP_KEY:
+            print('SLEEP_KEY T')
+        else:
+            SLEEP_KEY = '0'
+            
+        print('Get_nxtKey')
+        print('SLEEP_KEY:',SLEEP_KEY, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+        file.close()                     # 파일 객체 닫기
+        return SLEEP_KEY
+
+def SetSleepTime(*args):
+
+    nSleepCntKey = GetSleepTimeKey()
+    nSleepCntKey = int(nSleepCntKey)
+    while nSleepCntKey < INTERVAL_TIME: 
+        nSleepCntKey += 1
+        SetSleepTimeKey(nSleepCntKey)
+        sys.exit(0)
+        
+    SetSleepTimeKey(0)
+    
+
+    return True
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
     strFirmName = ''
@@ -2762,6 +2864,7 @@ def GetSecretKey(*args):
     global TELEGRAM_CHANNEL_ID_REPORT_ALARM
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
+    global IS_DEV
 
     SECRETS = ''
     print(os.getcwd())
@@ -2778,6 +2881,7 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
         TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
+        IS_DEV                                      =   True
     else: # 서버 배포 환경(heroku)
         CLEARDB_DATABASE_URL                        =   os.environ.get('CLEARDB_DATABASE_URL')
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
@@ -2789,19 +2893,28 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
+        IS_DEV                                      =   False
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
     global SECRETS # 시크릿 키
+    global INTERVAL_TIME # 새로고침 주기 - 파일
 
     print('########Program Start Run########')
     GetSecretKey()
     print(GetCurrentDay())
+    
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
+        INTERVAL_TIME = 120
     else:
-        REFRESH_TIME = 60 * 20 # 20분
+        REFRESH_TIME = 60 * 30 # 30분
+        INTERVAL_TIME = 30
+    
+    # 개발 환경이 아닌 경우에만 인터벌 작동
+    if IS_DEV: pass
+    else: SetSleepTime()
 
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
