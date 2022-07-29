@@ -2771,7 +2771,6 @@ def GetSleepTimeKey(*args):
         return SLEEP_KEY
 
 def SetSleepTime(*args):
-
     nSleepCntKey = GetSleepTimeKey()
     nSleepCntKey = int(nSleepCntKey)
     while nSleepCntKey < INTERVAL_TIME: 
@@ -2781,7 +2780,6 @@ def SetSleepTime(*args):
         
     SetSleepTimeKey(0)
     
-
     return True
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
@@ -2803,8 +2801,6 @@ def GetBoardName(*args):
         strBoardName = ''
         
     return strBoardName
-
-
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
