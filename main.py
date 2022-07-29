@@ -2909,8 +2909,8 @@ def main():
         INTERVAL_TIME = 3
     
     # 개발 환경이 아닌 경우에만 인터벌 작동
-    if IS_DEV: pass
-    else: SetSleepTime()
+    # if IS_DEV: pass
+    # else: SetSleepTime()
 
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
