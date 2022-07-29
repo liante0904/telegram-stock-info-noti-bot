@@ -2907,10 +2907,10 @@ def main():
     
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
-        INTERVAL_TIME = 120
+        INTERVAL_TIME = 12
     else:
         REFRESH_TIME = 60 * 30 # 30분
-        INTERVAL_TIME = 30
+        INTERVAL_TIME = 3
     
     # 개발 환경이 아닌 경우에만 인터벌 작동
     if IS_DEV: pass
