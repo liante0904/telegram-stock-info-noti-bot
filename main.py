@@ -162,8 +162,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global LIST_ARTICLE_TITLE
 
-    webpage = requests.get(TARGET_URL, verify=False)
-
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
@@ -230,8 +232,11 @@ def EBEST_downloadFile(ARTICLE_URL):
     global LIST_ARTICLE_TITLE
 
     ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
-
-    webpage = requests.get(ARTICLE_URL, verify=False)
+    
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
@@ -300,7 +305,10 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     rescode = response.getcode()
     if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
-    jres = json.loads(response.read().decode('utf-8'))
+    try:
+        jres = json.loads(response.read().decode('utf-8'))
+    except:
+        return True
 
     strList = jres['list']
     print(strList[0])
@@ -379,8 +387,11 @@ def HeungKuk_checkNewArticle():
  
 def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
+    
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -471,8 +482,10 @@ def SangSangIn_checkNewArticle():
 def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-    webpage = requests.get(TARGET_URL, verify=False)
-
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
@@ -522,8 +535,11 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def SangSangIn_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
 
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
+
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
@@ -578,7 +594,10 @@ def HANA_checkNewArticle():
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -672,8 +691,10 @@ def HANYANG_checkNewArticle():
  
 def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -772,7 +793,10 @@ def Samsung_checkNewArticle():
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -860,8 +884,11 @@ def KyoBo_checkNewArticle():
     ARTICLE_BOARD_ORDER = 0
 
     TARGET_URL = 'https://www.iprovest.com/weblogic/RSReportServlet?mode=list&menuCode=1&scr_id=32'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
+
+    try:                 
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -986,7 +1013,10 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global LIST_ARTICLE_TITLE
     sendMessageText = ''
 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -1058,7 +1088,11 @@ def DS_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
     global LIST_ARTICLE_TITLE
 
-    webpage = requests.get(ARTICLE_URL, verify=False)
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
+
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     try:
@@ -1113,7 +1147,10 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global LIST_ARTICLE_TITLE
     sendMessageText = ''
 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -1186,7 +1223,11 @@ def SMIC_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
     global LIST_ARTICLE_TITLE
 
-    webpage = requests.get(ARTICLE_URL, verify=False)
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
+
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     # 첨부파일 URL
@@ -1237,10 +1278,13 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         "dummyVal": 0
     }
 
-    webpage = requests.post(TARGET_URL,data=payload) # requests.get(TARGET_URL, verify=False)
-    # print(webpage.text)
-    jres = json.loads(webpage.text)
-    
+    try:
+        webpage = requests.post(TARGET_URL,data=payload)
+        # print(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return True
+        
     if jres['totalCount'] == 0 : return ''
     print(jres['researchList'])
 
@@ -1337,9 +1381,13 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         "page": 1
     }
 
-    webpage = requests.post(TARGET_URL,data=payload) # requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.post(TARGET_URL,data=payload)
     # print(webpage.text)
-    jres = json.loads(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return True
+
     
     # print(jres['rows'])
     # if jres['totalCount'] == 0 : return ''
@@ -1408,10 +1456,13 @@ def Shinyoung_GetArticleUrl(url, payload):
         "BBSNO": 35
     }
 
-    webpage = requests.post(TARGET_URL,data=payload) # requests.get(TARGET_URL, verify=False)
-    # print(webpage.text)
-    jres = json.loads(webpage.text)
-    
+    try:
+        webpage = requests.post(TARGET_URL,data=payload)
+        # print(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return True
+
     print(jres)
     if jres['totalCount'] == 0 : return ''
     print(jres['researchList'])
@@ -1510,8 +1561,10 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     rescode = response.getcode()
     if rescode != 200 :return print("ChosunBizBot_JSONparse 접속이 원활하지 않습니다 ")
 
-    jres = json.loads(response.read().decode('utf-8'))
-
+    try:
+        jres = json.loads(response.read().decode('utf-8'))
+    except:
+        return True
     jres = jres['content_elements']
     # print(jres)
 
@@ -1655,8 +1708,10 @@ def EINFOMAXshort_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()                 
 
-    webpage = requests.get(TARGET_URL, verify=False)
-
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -1788,7 +1843,10 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return True
 
 def Itooza_downloadFile(ARTICLE_URL):
-    webpage = requests.get(ARTICLE_URL, verify=False)
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
     # 첨부파일 URL처리
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('img.bodyaddimage')
     try:
@@ -1832,7 +1890,10 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     rescode = response.getcode()
     if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
-    jres = json.loads(response.read().decode('utf-8'))
+    try:
+        jres = json.loads(response.read().decode('utf-8'))
+    except:
+        return True
     jres = jres['result']
 
     FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit'].strip()
@@ -1896,9 +1957,10 @@ def SEDAILY_checkNewArticle():
     ARTICLE_BOARD_NAME = ''
 
     TARGET_URL = 'https://www.sedaily.com/Search/Search/SEList?Page=1&scDetail=&scOrdBy=0&catView=AL&scText=%EA%B8%B0%EA%B4%80%C2%B7%EC%99%B8%EA%B5%AD%EC%9D%B8%C2%B7%EA%B0%9C%EC%9D%B8%20%EC%88%9C%EB%A7%A4%EC%88%98%C2%B7%EB%8F%84%20%EC%83%81%EC%9C%84%EC%A2%85%EB%AA%A9&scPeriod=1w&scArea=t&scTextIn=&scTextExt=&scPeriodS=&scPeriodE=&command=&_=1612164364267'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
-
+    try:             
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
@@ -1965,7 +2027,12 @@ def SEDAILY_checkNewArticle():
     return True
 
 def SEDAILY_downloadFile(ARTICLE_URL):
-    webpage = requests.get(ARTICLE_URL, verify=False)
+
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
+
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#v-left-scroll-in > div.article_con > div.con_left > div.article_view > figure > p > img')
     print(attachFileCode)
@@ -1985,7 +2052,10 @@ def themoa_checkNewArticle():
 
     TARGET_URL = 'https://www.dogdrip.net/?_filter=search&act=&vid=&mid=stock&category=&search_target=title&search_keyword=%EB%8D%94%EB%AA%A8%EC%95%84'
     agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}             
-    webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2069,7 +2139,10 @@ def zara_parse(TARGET_URL):
     ARTICLE_BOARD_ORDER = 771
 
     agent = {"User-Agent":'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36'}             
-    webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, headers=agent,verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2144,8 +2217,10 @@ def trevari_checkNewArticle():
         return True
 
     TARGET_URL = NXT_KEY
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2201,8 +2276,11 @@ def fnguideTodayReport_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
+
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2274,8 +2352,10 @@ def personalNoti_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://newmallthat.shinhancard.com/alhsec/ALHFM109N/ALHFM109R01.shc?althMllId=10001&althPdId=106901368&althGnbMllId=10001'
-                 
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:   
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2322,8 +2402,10 @@ def YUANTA_checkNewArticle():
  
 def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-
-    webpage = requests.get(TARGET_URL, verify=False)
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -2359,9 +2441,11 @@ def YUANTA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def YUANTA_downloadFile(ARTICLE_URL):
     global ATTACH_FILE_NAME
+    try:
+        webpage = requests.get(ARTICLE_URL, verify=False)
+    except:
+        return True
 
-    webpage = requests.get(ARTICLE_URL, verify=False)
-    
     # 첨부파일 URL
     attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a')['href']
     ATTACH_URL = 'http://www.sangsanginib.com' + attachFileCode
