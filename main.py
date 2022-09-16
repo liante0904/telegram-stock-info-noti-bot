@@ -3108,6 +3108,8 @@ def main():
 
         sendAddText('', 'Y')
         print('######','파이썬 sleep대신 cron을 사용합니다.','######')
+        
+        return True
         # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
         # time.sleep(REFRESH_TIME)
 
