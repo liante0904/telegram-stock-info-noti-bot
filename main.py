@@ -2087,7 +2087,7 @@ def themoa_checkNewArticle():
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
         return True
 
@@ -2172,7 +2172,7 @@ def zara_parse(TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
         return True
 
@@ -2192,7 +2192,7 @@ def zara_parse(TARGET_URL):
     
     return True
 
-def trevari_checkNewArticle():
+def trevariBook_checkNewArticle():
     global NXT_KEY
     global SEC_FIRM_ORDER
 
@@ -2207,12 +2207,12 @@ def trevari_checkNewArticle():
     if SEND_YN == 'N': return True
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','trevari_checkNewArticle')
+        print('데이터베이스에 연속키가 존재합니다. ','trevariBook_checkNewArticle')
         print(NXT_KEY) 
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' trevari_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
         # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
         return True
 
@@ -2241,6 +2241,75 @@ def trevari_checkNewArticle():
         bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
         chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
         sendMessageText  = "*"+ strClubNm + "!*\n"
+        sendMessageText += TARGET_URL + "\n" 
+        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
+        print(chat_id, sendMessageText)
+        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+ 
+    return True
+
+def trevariEvent_checkNewArticle():
+    global NXT_KEY
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 778
+    ARTICLE_BOARD_ORDER = 778
+
+    requests.packages.urllib3.disable_warnings()
+
+
+    # DB에서 타겟 URL을 가져옴
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if SEND_YN == 'N': return True
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','trevariEvent_checkNewArticle')
+        print(NXT_KEY) 
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', ' trevariEvent_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+        # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
+        return True
+    # NXT_KEY = "https://trevari.co.kr/events/show?eventID=33f18537-1c87-4bd4-9ae3-8a94ba644c63"
+    TARGET_URL = NXT_KEY
+    try:
+        webpage = requests.get(TARGET_URL, verify=False)
+    except:
+        return True
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    strBtn = ''
+    strClubNm = ''
+ 
+    strSoup = soup.select_one('#__NEXT_DATA__')
+    strSoup = str(strSoup)
+    strSoup = strSoup.replace("</script>","")
+    strSoup = strSoup.replace('<script id="__NEXT_DATA__" type="application/json">',"")
+  
+    jsonSoup = json.loads(strSoup)
+    # print(jsonSoup)
+    print(type(jsonSoup))
+
+
+    strClubNm = jsonSoup['props']['pageProps']['metaTag']['title']
+    # print(jsonSoup)
+
+    jsonSoup  = jsonSoup['props']['pageProps']['event']
+
+    maxMemberCount = int(jsonSoup['maxMemberCount'])
+    memberCount  = int(jsonSoup['memberCount'])
+    print('클럽명',strClubNm, '정원', maxMemberCount, '신청원수',  memberCount)
+
+
+    # print(strClubNm + strBtn)
+    if maxMemberCount > memberCount:
+        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
+        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
+        sendMessageText = '공석알림!\n' 
+        sendMessageText += "*"+ strClubNm + "!*\n"
         sendMessageText += TARGET_URL + "\n" 
         sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
         print(chat_id, sendMessageText)
@@ -3034,8 +3103,11 @@ def main():
         print("zara_checkNewArticle()=> 새 게시글 정보 확인") # 771
         zara_checkNewArticle()
 
-        print("trevari_checkNewArticle()=> 새 게시글 정보 확인") # 777
-        trevari_checkNewArticle()
+        print("trevariBook_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        trevariBook_checkNewArticle()
+
+        print("trevariEvent_checkNewArticle()=> 새 게시글 정보 확인") # 778
+        trevariEvent_checkNewArticle()
 
         print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
         fnguideTodayReport_checkNewArticle()
