@@ -3133,8 +3133,8 @@ def main():
         print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
         DS_checkNewArticle()
 
-        print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        SMIC_checkNewArticle()
+        #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        #SMIC_checkNewArticle()
 
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
@@ -3179,11 +3179,11 @@ def main():
         # YUANTA_checkNewArticle()
 
         sendAddText('', 'Y')
-        print('######','파이썬 sleep대신 cron을 사용합니다.','######')
+        # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
         
-        return True
-        # print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        # time.sleep(REFRESH_TIME)
+        # return True
+        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+        time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
