@@ -2065,45 +2065,6 @@ def themoa_checkNewArticle():
     
     print(soupList)
     return 0
-    strBtn = ''
-    strClubNm = ''
-
-    try:
-        strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
-        
-        strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
-    except:
-        print(strClubNm + strBtn)
-        return True
-
-
-    # DB에서 타겟 URL을 가져옴
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if SEND_YN == 'N': return True
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ',current_func_name = sys._getframe().f_code.co_name)
-        print(NXT_KEY) 
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
-        return True
-
-
-    print(strClubNm + strBtn)
-    if "마감" not in strBtn:
-        #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
-        sendMessageText  = "*"+ strClubNm + "!*\n"
-        sendMessageText += TARGET_URL + "\n" 
-        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
-        print(chat_id, sendMessageText)
-        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
- 
-    return True
 
 def zara_checkNewArticle():
     global NXT_KEY
@@ -2189,7 +2150,6 @@ def zara_parse(TARGET_URL):
         print(chat_id, sendMessageText)
         bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
  
-    
     return True
 
 def trevariBook_checkNewArticle():
@@ -2215,7 +2175,7 @@ def trevariBook_checkNewArticle():
         print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
         # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
         return True
-
+    # NXT_KEY = "https://trevari.co.kr/clubs/show?clubID=57aca096-6e0e-435a-8086-44a5ba4bd06e"
     TARGET_URL = NXT_KEY
     try:
         webpage = requests.get(TARGET_URL, verify=False)
@@ -2228,14 +2188,14 @@ def trevariBook_checkNewArticle():
     strClubNm = ''
 
     try:
-        strBtn = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div.css-1w9xkod > div > button:nth-child(2)').text
+        strBtn = soup.select_one('#__next > div > div.jsx-4251498172.body > div.jsx-1545969327.club-show-page-container > div.css-17wd3p0 > div > div > div.css-jffjvo > div > button.css-13iudca').text
         
-        strClubNm = soup.select_one('#__next > div > div.jsx-2858481047.body > div > div.css-1cla9uj > div > div.css-r995xt > div > div:nth-child(1) > div.css-1cegvju > div.css-0 > span').text
+        strClubNm = soup.select_one('#__next > div > div.jsx-4251498172.body > div.jsx-1545969327.club-show-page-container > div.css-17wd3p0 > div > div > div:nth-child(1) > div.css-zuv4o7 > div.css-0 > span').text
     except:
         print(strClubNm + strBtn)
         return True
 
-    print(strClubNm + strBtn)
+    print('********',strClubNm ,' - ', strBtn, '*********')
     if "마감" not in strBtn:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
         bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -3100,14 +3060,14 @@ def main():
         # print("themoa_checkNewArticle()=> 새 게시글 정보 확인") # 77
         # themoa_checkNewArticle()
 
-        print("zara_checkNewArticle()=> 새 게시글 정보 확인") # 771
-        zara_checkNewArticle()
+        # print("zara_checkNewArticle()=> 새 게시글 정보 확인") # 771
+        # zara_checkNewArticle()
 
         print("trevariBook_checkNewArticle()=> 새 게시글 정보 확인") # 777
         trevariBook_checkNewArticle()
 
-        print("trevariEvent_checkNewArticle()=> 새 게시글 정보 확인") # 778
-        trevariEvent_checkNewArticle()
+        # print("trevariEvent_checkNewArticle()=> 새 게시글 정보 확인") # 778
+        # trevariEvent_checkNewArticle()
 
         print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
         fnguideTodayReport_checkNewArticle()
