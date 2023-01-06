@@ -63,7 +63,7 @@ FIRM_NAME = (
     "교보증권",              # 6
     "DS투자증권",             # 7
     "SMIC(서울대 가치투자)",             # 8
-    "",             # 9
+    "현대차증권",             # 9
     "키움증권",             # 10
     "신영증권"
     # "유안타증권",           # 4
@@ -80,7 +80,7 @@ BOARD_NAME = (
     [ " " ],                                                                                        # 6 (교보는 게시판 내 게시판 분류 사용)
     [ "기업분석", "투자전략/경제분석"],                                                                  # 7 
     [ "기업분석"],                                                # 8 
-    [ "기업분석"],                                                # 9
+    [ "Daily"],                                                # 9
     [ "기업분석", "산업분석"],                                                # 10 
     [ "기업분석", "산업분석", "탐방노트", "해외주식"]                                                # 11 
     # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
@@ -1337,6 +1337,127 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+            
+    print(sendMessageText)
+    return sendMessageText
+
+
+def Hmsec_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 9
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 현대차증권 기업 분석
+    TARGET_URL =  'https://m.hmsec.com/research/research_list_ajax.do?Menu_category=6'
+    # 현대차증권 산업 분석
+    TARGET_URL_1 =  ' ' 
+    
+    sendMessageText = ''
+    # URL GET 
+    sendMessageText += Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+ 
+    if len(sendMessageText) > 0: sendText(GetSendMessageTitle() + sendMessageText)
+    sendMessageText = ''
+    time.sleep(1)
+ 
+def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    payload = {
+        "Menu_category": 6,
+    }
+    jres = ''
+    try:
+        webpage = requests.post(TARGET_URL,data=payload)
+        print(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return False
+        
+    print(jres['data_list'])
+
+    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+    FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    
+    REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+    print('REG_DATE:',REG_DATE)
+    
+    
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in jres['data_list']:
+        print(list)
+        # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
+        LIST_ATTACHMENT_URL = 'https://www.hmsec.com/documents/research/{}' 
+        LIST_ATTACHMENT_URL = LIST_ATTACHMENT_URL.format(list['UPLOAD_FILE1'])
+
+        # https://docs.hmsec.com/SynapDocViewServer/job?fid=#&sync=true&fileType=URL&filePath=#
+        LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}' 
+        LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(LIST_ATTACHMENT_URL, LIST_ATTACHMENT_URL)
+
+        LIST_ARTICLE_TITLE = list['SUBJECT'].strip().replace('현대차증권 리서치센터',GetCurrentDate('YYYY/HH/MM'))
+
+        REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+        print('REG_DATE:',REG_DATE)
+        print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
+        if ( NXT_KEY != REG_DATE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # GET Content
+                # payload = {
+                #     "Menu_category": 6,
+                #     "queryType": "",
+                #     "serialNo": 30132,
+                #     "curPage": 1
+                # }
+                # jres = ''
+                # try:
+                #     webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
+                #     print(webpage.text)
+                # except:
+                #     return False
+
+                # # HTML parse
+                # soup = BeautifulSoup(webpage.content, "html.parser")
+                # soupList = soup.select('body > div > table > tbody > tr')
+                # return ""
+                print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                pass
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE)
+            return sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             
     print(sendMessageText)
     return sendMessageText
@@ -2609,15 +2730,13 @@ def sendText(sendMessageText):
 # 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
 # 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
-def sendAddText(sendMessageText, *args): 
+def sendAddText(sendMessageText, sendType): 
     global SEND_ADD_MESSAGE_TEXT
 
-    try:
-        sendType = args[0]
-    except : # 파라미터를 지정하지 않은 경우 텍스트를 뒤에 합침
-        sendType = '' 
-
     SEND_ADD_MESSAGE_TEXT += sendMessageText
+    print('sendType ', sendType)
+    print('sendMessageText ',sendMessageText)
+    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
 
     if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
         print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
@@ -3094,6 +3213,10 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
+
+        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Hmsec_checkNewArticle() 
+
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
 
@@ -3139,6 +3262,9 @@ def main():
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
 
+        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Hmsec_checkNewArticle()
+
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
 
@@ -3178,8 +3304,11 @@ def main():
         # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
         # YUANTA_checkNewArticle()
 
-        sendAddText('', 'Y')
+        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
+        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Hmsec_checkNewArticle()
+        sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
         
         # return True
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
