@@ -1421,6 +1421,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += Hmsec_MessageText()
                 # GET Content
                 # payload = {
                 #     "Menu_category": 6,
@@ -1439,7 +1440,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # soup = BeautifulSoup(webpage.content, "html.parser")
                 # soupList = soup.select('body > div > table > tbody > tr')
                 # return ""
-                print(sendMessageText)
+                # print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1460,6 +1461,55 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             
     print(sendMessageText)
+    return sendMessageText
+
+def Hmsec_MessageText():
+    sendMessageText = ''
+    # GET Content
+    payload = {
+        "Menu_category": 6,
+        "queryType": "",
+        "serialNo": 30132,
+        "curPage": 1
+    }
+    
+    try:
+        webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
+        # print(webpage.text)
+    except:
+        return False
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # soupList = soup.select('body > div > table > tbody > tr')
+    soupList = soup.select('#content > div.view_con')
+    
+    # print(soupList)
+    for list in soupList:
+        r = str(list.text).strip()
+        r = r.replace("  \n"," \n")
+        r = r.replace(" \n","\n")
+        r = r.replace("\n","\n-")
+        r = r.replace("\n\n\n","\n")
+        r = r.replace("-\n","-")
+        r = r.replace("-\n ","-")
+        # r = r.replace("\n-What's Inside","*What's Inside*")
+        # r = r.replace("\n-New Issue","*New Issue*")
+        # r = r.replace("\n-New Publication","*New Publication*")
+        print(r)
+        # filter = ["What's Inside","New Issue","New Publication"]
+        # print(r in filter)
+        # if r in filter:
+        #     r = "*"+ r + "*"
+        # else:
+        #     r = "- " + r
+        # sendMessageText = r
+        
+
+    # print(sendMessageText)
+
+    # sendText(GetSendMessageTitle() + sendMessageText)
+    time.sleep(10)
     return sendMessageText
 
 def Shinyoung_checkNewArticle():
@@ -2468,8 +2518,9 @@ def fnguideTodayReport_checkNewArticle():
             strInvestOpinion_2 = ''
 
         strHead  = '*' + strIsuNm + ' - ' +strReportTitle + '*' + " | " +  strIsuUrl
-        strBody  = '- '  + strInvestOpinion_1.strip() + '\n'
+        strBody  = '- '  + strInvestOpinion_1.strip()
         if len(strInvestOpinion_2) > 0:
+            strBody += '\n'
             strBody += '- '  + strInvestOpinion_2.strip()
 
         strTail = listAnalyst.get_text(' - ', strip=True)
@@ -3173,6 +3224,7 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
+        Hmsec_MessageText()
 
         print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Hmsec_checkNewArticle() 
