@@ -1138,8 +1138,8 @@ def SMIC_checkNewArticle():
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
             sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
-
-    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
+    
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText, 'Y')
     time.sleep(1)
 
 def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1216,6 +1216,8 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             #     sendAddText(GetSendMessageTitle() + sendMessageText)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
     print(sendMessageText)
     return sendMessageText
 
@@ -1386,7 +1388,9 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
     print('REG_DATE:',REG_DATE)
     
-    
+    FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
+    print('FILE_NAME:',FILE_NAME)
+
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1417,11 +1421,12 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
         print('REG_DATE:',REG_DATE)
         print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
+
         if ( NXT_KEY != REG_DATE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 sendMessageText += Hmsec_MessageText()
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # GET Content
                 # payload = {
                 #     "Menu_category": 6,
@@ -1464,39 +1469,50 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Hmsec_MessageText():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 9
+
     sendMessageText = ''
     # GET Content
     payload = {
         "Menu_category": 6,
         "queryType": "",
-        "serialNo": 30132,
+        "serialNo": 30229,
         "curPage": 1
     }
     
+    webpage = ''
     try:
         webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
         # print(webpage.text)
     except:
-        return False
+        print(webpage)
+        return webpage
 
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     # soupList = soup.select('body > div > table > tbody > tr')
     soupList = soup.select('#content > div.view_con')
-    
+
+    r = ''
     # print(soupList)
     for list in soupList:
         r = str(list.text).strip()
-        r = r.replace("  \n"," \n")
-        r = r.replace(" \n","\n")
-        r = r.replace("\n","\n-")
-        r = r.replace("\n\n\n","\n")
-        r = r.replace("-\n","-")
-        r = r.replace("-\n ","-")
-        # r = r.replace("\n-What's Inside","*What's Inside*")
-        # r = r.replace("\n-New Issue","*New Issue*")
-        # r = r.replace("\n-New Publication","*New Publication*")
-        print(r)
+        r = r.replace("What's Inside","* ▶ What's Inside*")
+        r = r.replace("New Issue","* ▶ New Issue*")
+        r = r.replace("New Publication","* ▶ New Publication*")
+        r = r.replace("\n","\n -")
+        r = r.replace(" -* ▶ New Issue*","* ▶ New Issue*")
+        r = r.replace(" -* ▶ New Publication*","* ▶ New Publication*")
+
+        r = r.replace("\n -\n*","\n \n*")
+        # r = r.replace("-\n","-")
+        # r = r.replace("-\n ","-")
+
+
+        # print(r)
         # filter = ["What's Inside","New Issue","New Publication"]
         # print(r in filter)
         # if r in filter:
@@ -1505,11 +1521,9 @@ def Hmsec_MessageText():
         #     r = "- " + r
         # sendMessageText = r
         
-
-    # print(sendMessageText)
-
-    # sendText(GetSendMessageTitle() + sendMessageText)
-    time.sleep(10)
+    sendMessageText = r
+    # sendText(GetSendMessageTitle() + r)
+    # time.sleep(10)
     return sendMessageText
 
 def Shinyoung_checkNewArticle():
@@ -2741,7 +2755,7 @@ def sendText(sendMessageText):
 # 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
 # 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
-def sendAddText(sendMessageText, sendType): 
+def sendAddText(sendMessageText, sendType='N'): 
     global SEND_ADD_MESSAGE_TEXT
 
     SEND_ADD_MESSAGE_TEXT += sendMessageText
@@ -2979,6 +2993,8 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
     dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
     if dbResult:
+        print('####DB업데이트 된 연속키####', end='\n')
+        print(dbResult)
         NXT_KEY = FIRST_NXT_KEY
     conn.close()
     return dbResult
@@ -3224,10 +3240,8 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
-        Hmsec_MessageText()
-
-        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        Hmsec_checkNewArticle() 
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+        # Hmsec_checkNewArticle() 
 
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
@@ -3238,17 +3252,17 @@ def main():
         # print("zara_checkNewArticle()=> 새 게시글 정보 확인") # 771
         # zara_checkNewArticle()
 
-        print("trevariBook_checkNewArticle()=> 새 게시글 정보 확인") # 777
-        trevariBook_checkNewArticle()
+        # print("trevariBook_checkNewArticle()=> 새 게시글 정보 확인") # 777
+        # trevariBook_checkNewArticle()
 
         # print("trevariEvent_checkNewArticle()=> 새 게시글 정보 확인") # 778
         # trevariEvent_checkNewArticle()
 
-        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-        fnguideTodayReport_checkNewArticle()
-
         # print("personalNoti_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # personalNoti_checkNewArticle()
+
+        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+        fnguideTodayReport_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         EBEST_checkNewArticle()
@@ -3271,11 +3285,11 @@ def main():
         #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         #SMIC_checkNewArticle()
 
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+        # Hmsec_checkNewArticle()
+
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
-
-        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        Hmsec_checkNewArticle()
 
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
