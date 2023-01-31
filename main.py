@@ -3336,7 +3336,7 @@ def main():
         Hmsec_checkNewArticle()
         sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
         
-        # return True
+        return 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
         time.sleep(REFRESH_TIME)
 
