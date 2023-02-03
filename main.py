@@ -1380,8 +1380,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return False
         
     print(jres['data_list'])
-
-    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+    
     FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT'].strip()
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     
@@ -1419,13 +1418,16 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = list['SUBJECT'].strip().replace('현대차증권 리서치센터',GetCurrentDate('YYYY/HH/MM'))
 
         REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+        print(jres['data_list'])
+        SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
         print('REG_DATE:',REG_DATE)
         print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
+        print('SERIAL_NO:',SERIAL_NO)
 
         if ( NXT_KEY != REG_DATE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += Hmsec_MessageText()
+                sendMessageText += Hmsec_MessageText(SERIAL_NO = SERIAL_NO)
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # GET Content
                 # payload = {
@@ -1445,7 +1447,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # soup = BeautifulSoup(webpage.content, "html.parser")
                 # soupList = soup.select('body > div > table > tbody > tr')
                 # return ""
-                # print(sendMessageText)
+                print(sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1458,17 +1460,17 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
             else:
-                pass
+                return 
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE)
+            # DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE)
             return sendMessageText
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    # DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             
     print(sendMessageText)
     return sendMessageText
 
-def Hmsec_MessageText():
+def Hmsec_MessageText(SERIAL_NO):
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -1479,7 +1481,7 @@ def Hmsec_MessageText():
     payload = {
         "Menu_category": 6,
         "queryType": "",
-        "serialNo": 30229,
+        "serialNo": SERIAL_NO,
         "curPage": 1
     }
     
@@ -3285,9 +3287,6 @@ def main():
         #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
         #SMIC_checkNewArticle()
 
-        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-        # Hmsec_checkNewArticle()
-
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
 
@@ -3332,9 +3331,9 @@ def main():
 
         sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
-        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        Hmsec_checkNewArticle()
-        sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # Hmsec_checkNewArticle()
+        # sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
         
         return 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
