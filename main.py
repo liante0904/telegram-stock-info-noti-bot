@@ -3245,6 +3245,85 @@ def main():
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # Hmsec_checkNewArticle() 
 
+
+        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998
+        NAVERNews_checkNewArticle()
+
+        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+        fnguideTodayReport_checkNewArticle()
+
+        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        EBEST_checkNewArticle()
+
+        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        ShinHanInvest_checkNewArticle()
+
+        # 리뉴얼 작업 필요 
+        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        # SangSangIn_checkNewArticle()
+
+        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        HANA_checkNewArticle()
+
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        Samsung_checkNewArticle()
+
+        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        DS_checkNewArticle()
+
+        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        Kiwoom_checkNewArticle()
+
+        print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
+        ChosunBizBot_checkNewArticle()
+
+        # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
+        # Itooza_checkNewArticle()
+
+
+        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
+        SEDAILY_checkNewArticle()
+ 
+        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # Hmsec_checkNewArticle()
+        # sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
+        
+        return 
+        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+        time.sleep(REFRESH_TIME)
+
+        # 미사용
+        #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        #SMIC_checkNewArticle()
+
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # Shinyoung_checkNewArticle()
+
+       # if TimeHour == 16: # 장마감 16시에만 한번 발송
+        #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
+         #   sendText(GetSendMessageTitle() + sendMessageText)
+            # print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
+            # mkStock_checkNewArticle()
+
+        # if TimeHourMin in range(800, 900):  # 08~ 09:90분만 조회
+        #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
+        #     EINFOMAXshort_checkNewArticle()
+
+        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # HeungKuk_checkNewArticle()
+        
+        # 미사용
+        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        # HANYANG_checkNewArticle()
+
+        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # KyoBo_checkNewArticle()
+
+        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
+        # YUANTA_checkNewArticle()
+
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
 
@@ -3263,81 +3342,6 @@ def main():
         # print("personalNoti_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # personalNoti_checkNewArticle()
 
-        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-        fnguideTodayReport_checkNewArticle()
-
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        EBEST_checkNewArticle()
-
-        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        ShinHanInvest_checkNewArticle()
-
-        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        SangSangIn_checkNewArticle()
-
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        HANA_checkNewArticle()
-
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        Samsung_checkNewArticle()
-
-        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        DS_checkNewArticle()
-
-        #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        #SMIC_checkNewArticle()
-
-        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        Kiwoom_checkNewArticle()
-
-        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # Shinyoung_checkNewArticle()
-
-       # if TimeHour == 16: # 장마감 16시에만 한번 발송
-        #    sendMessageText = 'http://vip.mk.co.kr/newSt/rate/monhigh.php'
-         #   sendText(GetSendMessageTitle() + sendMessageText)
-            # print("mkStock_checkNewArticle()=> 새 게시글 정보 확인") # 994
-            # mkStock_checkNewArticle()
-
-        print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
-        ChosunBizBot_checkNewArticle()
-
-        # if TimeHourMin in range(800, 900):  # 08~ 09:90분만 조회
-        #     print("EINFOMAXshort_checkNewArticle()=> 새 게시글 정보 확인") # 996
-        #     EINFOMAXshort_checkNewArticle()
-
-        print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
-        Itooza_checkNewArticle()
-
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998 미활성
-        NAVERNews_checkNewArticle()
-
-        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        SEDAILY_checkNewArticle()
- 
-        # 미사용
-        # print("HeungKuk_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # HeungKuk_checkNewArticle()
-        
-        # 미사용
-        # print("HANYANG_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        # HANYANG_checkNewArticle()
-
-        # print("KyoBo_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # KyoBo_checkNewArticle()
-
-        # print("YUANTA_checkNewArticle()=> 새 게시글 정보 확인") # 4 가능여부 불확실 => 보류
-        # YUANTA_checkNewArticle()
-
-        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
-        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        # Hmsec_checkNewArticle()
-        # sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
-        
-        return 
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
 
 if __name__ == "__main__":
 	main()
