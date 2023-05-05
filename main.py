@@ -2106,7 +2106,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
-        LIST_ARTICLE_URL = 'https://m.stock.naver.com/news/read.nhn?category='+ category + '&officeId=' + news['oid'] + '&articleId=' + news['aid']
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
