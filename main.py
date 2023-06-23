@@ -45,7 +45,6 @@ TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
 TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
 TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
-TELEGRAM_CHANNEL_ID_TODAY_REPORT                    = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
@@ -2675,8 +2674,6 @@ def YUANTA_downloadFile(ARTICLE_URL):
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -2686,7 +2683,6 @@ async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-
 
 # 최초 send함수
 # URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
@@ -2819,6 +2815,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(4) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
@@ -2913,9 +2910,7 @@ def GetSendChatId():
             SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
     elif SEC_FIRM_ORDER == 995:
             SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    elif SEC_FIRM_ORDER == 123: 
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    elif SEC_FIRM_ORDER == 123: pass
     else:
         SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
@@ -3219,7 +3214,6 @@ def GetSecretKey(*args):
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
 
-
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
@@ -3269,7 +3263,6 @@ def main():
 
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # Hmsec_checkNewArticle() 
-
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998
         NAVERNews_checkNewArticle()
@@ -3366,7 +3359,6 @@ def main():
 
         # print("personalNoti_checkNewArticle()=> 새 게시글 정보 확인") # 777
         # personalNoti_checkNewArticle()
-
 
 if __name__ == "__main__":
 	main()
