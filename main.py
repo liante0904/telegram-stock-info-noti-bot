@@ -10,6 +10,7 @@ import time
 import ssl
 import json
 import re
+import asyncio
 import pymysql
 import pymysql.cursors
 from typing import List
@@ -44,6 +45,7 @@ TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
 TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
 TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
+TELEGRAM_CHANNEL_ID_TODAY_REPORT                    = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
@@ -2673,6 +2675,19 @@ def YUANTA_downloadFile(ARTICLE_URL):
     DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
+
+
+async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
+async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
+
+
 # 최초 send함수
 # URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -2697,17 +2712,20 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
 
-    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
+    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
         try:
             time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-            bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
+            #bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
+            asyncio.run(sendDocument(ATTACH_FILE_NAME)) #봇 실행하는 코드
             os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
         except:
             return
     
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+
 
 # URL 발신용 전용 함수 : ex) 네이버 뉴스
 def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -2728,8 +2746,8 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     #me = bot.getMe()
     #print('텔레그램 채널 정보 :',me)
 
-    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
-    
+    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
+    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -2748,8 +2766,8 @@ def sendText(sendMessageText):
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    
+    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 인자 텍스트를 더해가며 발송합니다. 
@@ -2797,8 +2815,8 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
-    bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    
+    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(4) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
@@ -2895,6 +2913,9 @@ def GetSendChatId():
             SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
     elif SEC_FIRM_ORDER == 995:
             SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
+    elif SEC_FIRM_ORDER == 123: 
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     else:
         SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
@@ -3162,6 +3183,7 @@ def GetSecretKey(*args):
     global TELEGRAM_CHANNEL_ID_ITOOZA
     global TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT
     global TELEGRAM_CHANNEL_ID_REPORT_ALARM
+    global TELEGRAM_CHANNEL_ID_TODAY_REPORT
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
     global IS_DEV
@@ -3179,6 +3201,7 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_ITOOZA                  =   SECRETS['TELEGRAM_CHANNEL_ID_ITOOZA']
         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   SECRETS['TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT']
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
+        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
         TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
         IS_DEV                                      =   True
@@ -3191,9 +3214,11 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_ITOOZA                  =   os.environ.get('TELEGRAM_CHANNEL_ID_ITOOZA')
         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
+        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
+
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
