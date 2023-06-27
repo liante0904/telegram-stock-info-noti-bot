@@ -212,7 +212,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
-                # sendMessageText += GetSendMessageTextMarkdown(ARTICLE_BOARD_NAME = ARTICLE_BOARD_NAME, ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL, ATTACH_URL = ATTACH_URL)
+                if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
+                    LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+                    LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
+
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
         elif SEND_YN == 'N':
@@ -852,14 +855,16 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
-                # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)].strip()
+                # print(LIST_ARTICLE_TITLE)
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
-            # else:
-            #     print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            #     print(sendMessageText)
-            #     sendAddText(GetSendMessageTitle() + sendMessageText)
-            #     nNewArticleCnt = 0
-            #     sendMessageText = ''
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
