@@ -2199,8 +2199,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(research)
         LIST_ARTICLE_URL = research['endUrl'] 
         LIST_ARTICLE_TITLE = research['title']
-        arrSendBrokerName = ['키움증권', '하나증권', '삼성증권', '신한투자증권']
-        if arrSendBrokerName in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        if '키움증권' or '하나증권' or '삼성증권' or '신한투자증권' in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         '''
         {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
         'itemName': '아모레퍼시픽', 'researchId': 65663, 'title': '기다림은 길어지지만 방향성은 분명', 
@@ -2995,8 +2994,7 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     
 # 타이틀 생성 
 # : 게시판 이름 삭제
-def GetSendMessageTitle():
-    print('GetSendMessageTitle')
+def GetSendMessageTitle(): 
     SendMessageTitle = ""
     msgFirmName = ""
     
@@ -3020,7 +3018,6 @@ def GetSendMessageTitle():
         msgFirmName =  GetFirmName() 
 
     SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    print(SendMessageTitle)
     return SendMessageTitle
 
 def GetSendChatId():
