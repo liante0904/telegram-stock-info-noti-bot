@@ -3387,16 +3387,13 @@ def main():
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # Hmsec_checkNewArticle()  
 
-        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 998
-        NAVER_Report_checkNewArticle()
-
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998
         NAVERNews_checkNewArticle()
 
         print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
         fnguideTodayReport_checkNewArticle()
 
-        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 998
+        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         NAVER_Report_checkNewArticle()
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
