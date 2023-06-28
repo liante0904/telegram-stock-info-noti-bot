@@ -2204,7 +2204,12 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(research)
         LIST_ARTICLE_URL = research['endUrl'] 
         LIST_ARTICLE_TITLE = research['title']
-        if '키움증권' or '하나증권' or '삼성증권' or '신한투자증권' in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        
+        if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        if '신한투자증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        
         '''
         {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
         'itemName': '아모레퍼시픽', 'researchId': 65663, 'title': '기다림은 길어지지만 방향성은 분명', 
@@ -2215,6 +2220,8 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         'title': '한화 항공/방위산업 Weekly', 'brokerName': '한화투자증권', 'writeDate': '2023-06-23', 
         'readCount': '288', 'endUrl': 'https://m.stock.naver.com/research/industry/33786'}
         '''
+        print('NXT_KEY ' , NXT_KEY)
+        print('LIST_ARTICLE_TITLE ', LIST_ARTICLE_TITLE)
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3000:
@@ -2223,7 +2230,6 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 sendMessageText += research['title'] + "\n"
                 sendMessageText += research['brokerName'] + "\n"
                 sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
-
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -2238,6 +2244,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
     
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
@@ -2608,6 +2615,7 @@ def fnguideTodayReport_checkNewArticle():
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
         return True
+    
     if int(GetCurrentTime('HH')) == 0: 
         dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
         return True        
@@ -3036,7 +3044,8 @@ def GetSendChatId():
             SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
     elif SEC_FIRM_ORDER == 995:
             SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    elif SEC_FIRM_ORDER == 123: pass
+    elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     else:
         SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
