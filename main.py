@@ -2192,6 +2192,13 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    if NXT_KEY == FIRST_ARTICLE_TITLE: 
+        print('최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물')
+        return True
+    else :
+        print("****************************")
+        print("NXT_KEY ", NXT_KEY ,'FIRST_ARTICLE_TITLE ', FIRST_ARTICLE_TITLE )
+        print(NXT_KEY == FIRST_ARTICLE_TITLE)
     # NaverNews 게시판에 따른 URL 지정
     if ARTICLE_BOARD_ORDER == 0:category = 'company'
     else:                      category = 'industry'
@@ -2204,7 +2211,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(research)
         LIST_ARTICLE_URL = research['endUrl'] 
         LIST_ARTICLE_TITLE = research['title']
-        
+
         # if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         # if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         # if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
@@ -2243,6 +2250,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
+            return True
     
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -3397,8 +3405,6 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
 
-        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-        # Hmsec_checkNewArticle()  
 
         print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998
         NAVERNews_checkNewArticle()
@@ -3421,16 +3427,22 @@ def main():
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
 
-        print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        DS_checkNewArticle()
 
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
 
+        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
-        # 리뉴얼 작업 필요 
-        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        SangSangIn_checkNewArticle()
+        # 리뉴얼 혹은 제공중단 제공 불가 리스트 
+
+        # print("DS_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # DS_checkNewArticle()
+
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+        # Hmsec_checkNewArticle()  
+
+        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        # SangSangIn_checkNewArticle()
 
         # print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
         # ChosunBizBot_checkNewArticle()
@@ -3442,15 +3454,12 @@ def main():
         # print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
         # SEDAILY_checkNewArticle()
  
-        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+
         # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 10
         # Hmsec_checkNewArticle()
         # sendAddText('', 'Y') # 현대차 증권의 경우 단건 발송 (쌓인 메세지를 무조건 보냅니다.)
         
-        return 
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
 
         # 미사용
         #print("SMIC_checkNewArticle()=> 새 게시글 정보 확인") # 7
@@ -3485,6 +3494,10 @@ def main():
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 11
         # Shinyoung_checkNewArticle()
 
+
+        return 
+        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+        time.sleep(REFRESH_TIME)
         # print("themoa_checkNewArticle()=> 새 게시글 정보 확인") # 77
         # themoa_checkNewArticle()
 
