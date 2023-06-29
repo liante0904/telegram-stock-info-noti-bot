@@ -194,6 +194,13 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -334,6 +341,13 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -421,6 +435,13 @@ def HeungKuk_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -512,6 +533,14 @@ def SangSangIn_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -629,6 +658,13 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return '' 
+    
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -728,6 +764,14 @@ def HANYANG_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -833,6 +877,14 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -930,6 +982,14 @@ def KyoBo_checkNewArticle():
         print('데이터베이스에 ', GetFirmName() , '게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         print( GetFirmName() , '증권사의 경우 게시판 연속키를 통합하여 사용합니다 ARTICLE_BOARD_ORDER = 0')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ATTACT_FILE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+
 
     print('첫번째 게시글URL:', FIRST_ATTACT_FILE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
@@ -1054,6 +1114,14 @@ def DS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -1189,6 +1257,14 @@ def SMIC_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
 
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -1312,6 +1388,14 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -1408,6 +1492,14 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, REG_DATE)
 
+
+    # 연속키 체크
+    r = isNxtKey(REG_DATE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -1602,6 +1694,14 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -1782,6 +1882,15 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -1853,6 +1962,15 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1929,6 +2047,15 @@ def EINFOMAXshort_checkNewArticle():
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '연합인포맥스','의 ', '공매도 잔고' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
 
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
@@ -2007,6 +2134,15 @@ def Itooza_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ','아이투자','의 ', ARTICLE_BOARD_NAME,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_URL)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -2104,6 +2240,15 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', '(네이버 뉴스)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
     # NaverNews 게시판에 따른 URL 지정
     if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
     else:                      category = 'ranknews'
@@ -2192,13 +2337,13 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    if NXT_KEY == FIRST_ARTICLE_TITLE: 
-        print('최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물')
-        return True
-    else :
-        print("****************************")
-        print("NXT_KEY ", NXT_KEY ,'FIRST_ARTICLE_TITLE ', FIRST_ARTICLE_TITLE )
-        print(NXT_KEY == FIRST_ARTICLE_TITLE)
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+
     # NaverNews 게시판에 따른 URL 지정
     if ARTICLE_BOARD_ORDER == 0:category = 'company'
     else:                      category = 'industry'
@@ -2312,6 +2457,13 @@ def SEDAILY_checkNewArticle():
         print('데이터베이스에 ', 'sedaily','의 ', '매매동향' ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
     print('############')
@@ -3357,6 +3509,17 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
+
+def isNxtKey(*args):
+    global NXT_KEY
+    global SEND_YN
+    global SEND_TIME_TERM
+    global TODAY_SEND_YN
+    global conn
+    global cursor
+
+    if SEND_YN == 'N' or args[0] in NXT_KEY: return True
+    
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
