@@ -2205,10 +2205,10 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = research['endUrl'] 
         LIST_ARTICLE_TITLE = research['title']
         
-        if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        if '신한투자증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        # if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        # if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        # if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        # if '신한투자증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         
         '''
         {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
@@ -2240,6 +2240,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
     
@@ -3414,10 +3415,6 @@ def main():
         print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
         ShinHanInvest_checkNewArticle()
 
-        # 리뉴얼 작업 필요 
-        # print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        # SangSangIn_checkNewArticle()
-
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         HANA_checkNewArticle()
 
@@ -3430,15 +3427,20 @@ def main():
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
 
-        print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
-        ChosunBizBot_checkNewArticle()
+
+        # 리뉴얼 작업 필요 
+        print("SangSangIn_checkNewArticle()=> 새 게시글 정보 확인") # 2
+        SangSangIn_checkNewArticle()
+
+        # print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
+        # ChosunBizBot_checkNewArticle()
 
         # print("Itooza_checkNewArticle()=> 새 게시글 정보 확인") # 997 미활성
         # Itooza_checkNewArticle()
 
 
-        print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
-        SEDAILY_checkNewArticle()
+        # print("SEDAILY_checkNewArticle()=> 새 게시글 정보 확인") # 999
+        # SEDAILY_checkNewArticle()
  
         sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # print('######','파이썬 sleep대신 cron을 사용합니다.','######')
