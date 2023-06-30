@@ -228,14 +228,19 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0: print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                pass
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
     
 def EBEST_downloadFile(ARTICLE_URL):
@@ -372,17 +377,20 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
 
 def HeungKuk_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -692,13 +700,18 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-
-    print(sendMessageText)
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
@@ -920,16 +933,19 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            if nNewArticleCnt == 0 or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-            # else:
-            #     # 현재 리스트 확인하여 발송후 초기화 
-            #     sendAddText(GetSendMessageTitle() + sendMessageText)
-
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return sendMessageText
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
+
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    print(sendMessageText)
     return sendMessageText
 
 # 교보증권의 경우 연속키를 첨부파일 URL을 사용합니다.
@@ -1035,7 +1051,7 @@ def KyoBo_checkNewArticle():
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ATTACT_FILE_URL, FIRST_ARTICLE_TITLE)
             return True
 
-    return True
+    return sendMessageText
 
 def KyoBo_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     global ATTACH_FILE_NAME
@@ -1420,17 +1436,19 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                pass
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-            
-    print(sendMessageText)
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 
@@ -2081,7 +2099,7 @@ def EINFOMAXshort_checkNewArticle():
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL, FIRST_ARTICLE_TITLE)
             return True
 
-    return True
+    return sendMessageText
 
 def Itooza_checkNewArticle():
     global ARTICLE_BOARD_ORDER 
@@ -2274,16 +2292,20 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                sendText(GetSendMessageTitle() + sendMessageText)
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
 
 
 def NAVER_Report_checkNewArticle():
@@ -2392,18 +2414,20 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
                 
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} sendMessageText{sendMessageText}' )
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
 
 
 def NAVER_Report_parseURL(LIST_ARTICLE_URL):
@@ -2504,7 +2528,7 @@ def SEDAILY_checkNewArticle():
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
-    return True
+    return sendMessageText
 
 def SEDAILY_downloadFile(ARTICLE_URL):
 
@@ -2572,7 +2596,7 @@ def zara_checkNewArticle():
         #     sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
 
 
-    return True
+    return sendMessageText
 
 def zara_parse(TARGET_URL):
     if len(TARGET_URL) <= 0 : return 
@@ -3590,7 +3614,6 @@ def main():
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
         Samsung_checkNewArticle()
-
 
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         Kiwoom_checkNewArticle()
