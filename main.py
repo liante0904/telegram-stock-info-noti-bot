@@ -2395,8 +2395,9 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return True
-    
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} sendMessageText{sendMessageText}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
