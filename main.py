@@ -147,7 +147,11 @@ def EBEST_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(EBEST_URL_TUPLE):
-        sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        try:
+            sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            sendMessageText = ''
+            
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
             sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
