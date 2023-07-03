@@ -192,11 +192,11 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_URL)
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_URL)
-
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    print('이베스트 ====>', r)
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -3543,7 +3543,11 @@ def isNxtKey(*args):
     global conn
     global cursor
 
+    print('isNxtKey')
+
+    print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
     if SEND_YN == 'N' or args[0] in NXT_KEY: return True
+    else: return False
     
 
 def main():
