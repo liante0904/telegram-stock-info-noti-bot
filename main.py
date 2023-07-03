@@ -141,26 +141,22 @@ def EBEST_checkNewArticle():
     # Commodity
     EBEST_URL_7 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=145&left_menu_no=211&front_menu_no=1009&parent_menu_no=211'
 
-    EBEST_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
+    TARGET_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
 
     ## EBEST만 로직 변경 테스트
     sendMessageText = ''
     # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(EBEST_URL_TUPLE):
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         try:
             sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
             sendMessageText = ''
-            
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
-            
-    # 발송전 연속키 재 조회후 중복발송 필터링
-    DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    print("SEND_TIME_TERM", SEND_TIME_TERM)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
 
-    if len(sendMessageText) > 0 and SEND_TIME_TERM > 1200 : sendMessageText = sendAddText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -228,7 +224,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
 
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -627,7 +628,10 @@ def HANA_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        try:
+            sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            sendMessageText = ''
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
             sendAddText(GetSendMessageTitle() + sendMessageText)
