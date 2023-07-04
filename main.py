@@ -93,6 +93,8 @@ cursor  = ''
 
 # 연속키URL
 NXT_KEY = ''
+# 게시판 URL
+BOARD_URL = ''
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
 TODAY_SEND_YN = ''
@@ -1228,7 +1230,7 @@ def fnguideTodayReport_checkNewArticle():
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
         return True
-    
+
     if int(GetCurrentTime('HH')) == 0: 
         dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
         return True        
@@ -1240,9 +1242,16 @@ def fnguideTodayReport_checkNewArticle():
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
-    except:
+    except: #print('여기????????')
         return True
-
+    
+    print(BOARD_URL)
+    print(NXT_KEY)
+    sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
+    sendMessageText += '확인하려면 링크를 클릭하세요. \n'
+    sendMessageText += BOARD_URL + NXT_KEY
+    asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
+    
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
 
@@ -1253,6 +1262,7 @@ def fnguideTodayReport_checkNewArticle():
     soupList2 = soup.select('tr > td:nth-child(5)')
 
     sendMessageText = ''
+    pageCnt = 0
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
         try:
@@ -1295,14 +1305,26 @@ def fnguideTodayReport_checkNewArticle():
         if len(sendMessageText) > 3500 : # 중간 발송
             sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
+            pageCnt += 1
 
     # 나머지 최종 발송
     if len(sendMessageText) > 0 : # 중간 발송
         sendText(GetSendMessageTitle() + sendMessageText)
+        sendMessageText = ''
+        pageCnt += 1
     # 발송 처리
     dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
+    NXT_KEY = int(NXT_KEY) + int(pageCnt)
+    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY)
 
     return True
+
+
+async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
+
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -1543,7 +1565,7 @@ def GetSendChatId():
     elif SEC_FIRM_ORDER == 995:
             SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
     elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
     else:
         SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
@@ -1562,6 +1584,7 @@ def MySQL_Open_Connect():
     return cursor
 
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+    global BOARD_URL
     global NXT_KEY
     global SEND_YN
     global SEND_TIME_TERM
@@ -1570,12 +1593,13 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
+    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
         print(row)
+        BOARD_URL = row['BOARD_URL']
         NXT_KEY = row['NXT_KEY']
         SEND_YN = row['SEND_YN']
         SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
