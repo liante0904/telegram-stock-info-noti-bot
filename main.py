@@ -17,6 +17,7 @@ from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
+import gd
 
 from requests import get  # to make GET request
 
@@ -93,6 +94,7 @@ cursor  = ''
 
 # 연속키URL
 NXT_KEY = ''
+NXT_KEY_ARTICLE_TITLE = ''
 # 게시판 URL
 BOARD_URL = ''
 # 텔레그램 채널 발송 여부
@@ -1228,13 +1230,15 @@ def fnguideTodayReport_checkNewArticle():
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "오늘의레포트")
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "0")
         return True
 
     if int(GetCurrentTime('HH')) == 0: 
         dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
-        return True        
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일' or int(GetCurrentTime('HH')) != 9 or TODAY_SEND_YN == 'Y': return True
+        return True
+    # 오늘의 레포트 발송조건
+    # 평일, 09시, 17시 (주말이거나 9시, 17시가 아닌 경우 호출하지 않음)
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일' or int(GetCurrentTime('HH')) != 9 or int(GetCurrentTime('HH')) != 17 or TODAY_SEND_YN == 'Y': return True
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1242,7 +1246,7 @@ def fnguideTodayReport_checkNewArticle():
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
-    except: #print('여기????????')
+    except: 
         return True
     
     print(BOARD_URL)
@@ -1263,8 +1267,10 @@ def fnguideTodayReport_checkNewArticle():
 
     sendMessageText = ''
     pageCnt = 0
+    articleCnt = 0
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
+        articleCnt += 1
         try:
             listIsu = listIsu.text
         except:
@@ -1277,6 +1283,9 @@ def fnguideTodayReport_checkNewArticle():
         strIsuUrl = "[종목링크]" + "(" + "https://finance.naver.com/item/main.naver?code=" + strIsuNo + ")"
         listIsu = listIsu[1].split("-  ")
         strReportTitle = listIsu[0].strip()
+
+        # 17시 발송건일때 이미 전송된 인덱스는 제외처리
+        if articleCnt <= int(NXT_KEY_ARTICLE_TITLE) and int(GetCurrentTime('HH')) == 17 : continue   
 
         try:
             strInvestOpinion_1 = listIsu[1].strip()
@@ -1312,10 +1321,15 @@ def fnguideTodayReport_checkNewArticle():
         sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
         pageCnt += 1
-    # 발송 처리
-    dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
+
+    # 연속키 갱신
     NXT_KEY = int(NXT_KEY) + int(pageCnt)
-    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY)
+    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, articleCnt)
+
+    # 9시, 17시 두차례 발송을 위해 17시 발송후 발송여부 갱신
+    if int(GetCurrentTime('HH')) == 17 :
+        # 발송 처리
+        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
 
     return True
 
@@ -1586,6 +1600,7 @@ def MySQL_Open_Connect():
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global BOARD_URL
     global NXT_KEY
+    global NXT_KEY_ARTICLE_TITLE
     global SEND_YN
     global SEND_TIME_TERM
     global TODAY_SEND_YN
@@ -1601,6 +1616,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
         print(row)
         BOARD_URL = row['BOARD_URL']
         NXT_KEY = row['NXT_KEY']
+        NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
         SEND_YN = row['SEND_YN']
         SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
         TODAY_SEND_YN = row['TODAY_SEND_YN']
@@ -1889,7 +1905,6 @@ def main():
     global SECRETS # 시크릿 키
     global INTERVAL_TIME # 새로고침 주기 - 파일
 
-    print('########Program Start Run########')
     GetSecretKey()
     print(GetCurrentDay())
     
