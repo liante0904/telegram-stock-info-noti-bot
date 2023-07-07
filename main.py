@@ -17,7 +17,7 @@ from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
-import gd
+#import gd
 
 from requests import get  # to make GET request
 
@@ -1238,8 +1238,11 @@ def fnguideTodayReport_checkNewArticle():
         return True
     # 오늘의 레포트 발송조건
     # 평일, 09시, 17시 (주말이거나 9시, 17시가 아닌 경우 호출하지 않음)
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일' or int(GetCurrentTime('HH')) != 9 or int(GetCurrentTime('HH')) != 17 or TODAY_SEND_YN == 'Y': return True
-
+    
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
+    if TODAY_SEND_YN == 'Y' : return True
+    if int(GetCurrentTime('HH')) == 9 or int(GetCurrentTime('HH')) == 17  : pass
+    else: return True
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
