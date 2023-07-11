@@ -17,7 +17,7 @@ from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
-#import gd
+import gd
 
 from requests import get  # to make GET request
 
@@ -1909,8 +1909,18 @@ def main():
     global INTERVAL_TIME # 새로고침 주기 - 파일
 
     GetSecretKey()
+
     print(GetCurrentDay())
     
+    try: strArgs = sys.argv[1]
+    except: strArgs = ''
+
+    if strArgs: 
+        gd.gd(str(strArgs))
+        print('test')
+        return 
+
+
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
         INTERVAL_TIME = 12
