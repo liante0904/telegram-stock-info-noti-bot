@@ -2675,50 +2675,48 @@ def trevariBook_checkNewArticle():
 
 
     # DB에서 타겟 URL을 가져옴
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if SEND_YN == 'N': return True
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','trevariBook_checkNewArticle')
-        print(NXT_KEY) 
+    # dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    # if SEND_YN == 'N': return True
+    # if dbResult: # 1
+    #     # 연속키가 존재하는 경우
+    #     print('데이터베이스에 연속키가 존재합니다. ','trevariBook_checkNewArticle')
+    #     print(NXT_KEY) 
 
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
-        # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
-        return True
-    # NXT_KEY = "https://trevari.co.kr/clubs/show?clubID=57aca096-6e0e-435a-8086-44a5ba4bd06e"
-    TARGET_URL = NXT_KEY
+    # else: # 0
+    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+    #     print('데이터베이스에 ', ' trevariBook_checkNewArticle 연속키는 존재하지 않아 스킵처리합니다.')
+    #     # NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "트레바리 노티")
+    #     return True
+    # # NXT_KEY = "https://trevari.co.kr/clubs/show?clubID=57aca096-6e0e-435a-8086-44a5ba4bd06e"
+    TARGET_URL = 'https://product.trevari.co.kr/api/v1/products/status/d8b4f592-5014-487a-85d4-51624c01bc66'
     try:
-        webpage = requests.get(TARGET_URL, verify=False)
-    except:
-        return True
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    strBtn = ''
-    strClubNm = ''
-
-    try:
-        strBtn = soup.select_one('#__next > div > div.jsx-4251498172.body > div.jsx-1545969327.club-show-page-container > div.css-17wd3p0 > div > div > div.css-jffjvo > div > button.css-13iudca').text
+        webpage = requests.get(TARGET_URL, verify=False, headers={'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Imd1ZXN0Iiwic2NvcGUiOiJndWVzdCIsImlhdCI6MTUxODI1ODAxNX0.8t38A8G4x2I5SyKyU1Ibm-pZ2GtlqjgUvIbT8OXzGek'})
         
-        strClubNm = soup.select_one('#__next > div > div.jsx-4251498172.body > div.jsx-1545969327.club-show-page-container > div.css-17wd3p0 > div > div > div:nth-child(1) > div.css-zuv4o7 > div.css-0 > span').text
     except:
-        print(strClubNm + strBtn)
         return True
-
-    print('********',strClubNm ,' - ', strBtn, '*********')
-    if "마감" not in strBtn:
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    print(soup)
+    jsonSoup = json.loads(str(soup))
+    print(jsonSoup) 
+    print(jsonSoup['status']) 
+ 
+    if "꽉 찼어요!"  in jsonSoup['status']:
         #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-        bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-        chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
-        sendMessageText  = "*"+ strClubNm + "!*\n"
-        sendMessageText += TARGET_URL + "\n" 
-        sendMessageText += "[링크]"+"(" + TARGET_URL + ")"
-        print(chat_id, sendMessageText)
-        bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+        # bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+        # chat_id = TELEGRAM_USER_ID_DEV # 나의 텔레그램 아이디
+        sendMessageText = 'https://m.trevari.co.kr/product?option=d8b4f592-5014-487a-85d4-51624c01bc66' + "\n" 
+        sendMessageText += "[링크]"+"(" + 'https://m.trevari.co.kr/product?option=d8b4f592-5014-487a-85d4-51624c01bc66' + ")"
+        print(sendMessageText)
+        asyncio.run(sendMe(sendMessageText)) 
+        # sendAddText('Y', sendMessageText)
+
+        # bot.sendMessage(chat_id=chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
  
     return True
+
+async def sendMe(sendMessageText):
+    bot = telegram.Bot(token = '1372612160:AAHVyndGDmb1N2yEgvlZ_DmUgShqk2F0d4w')
+    await bot.sendMessage(chat_id = '183792411', text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 def trevariEvent_checkNewArticle():
     global NXT_KEY
@@ -3556,8 +3554,19 @@ def isNxtKey(*args):
     print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
     if SEND_YN == 'N' or args[0] in NXT_KEY: return True
     else: return False
-    
-
+def SendTodayReport():
+    # 오늘의 레포트 발송 북마크 보내기
+    TARGET_URL = TELEGRAM_BOT_INFO
+    METHOD_TYPE = 'GET'
+    r = GetJsonData(TARGET_URL, METHOD_TYPE)
+    # r = "{'ok': True, 'result': [{'update_id': 316872171, 'channel_post': {'message_id': 110, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690249296, 'text': 'ㅇㅇ'}}, {'update_id': 316872172, 'channel_post': {'message_id': 111, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690250756, 'text': 'ㅇ'}}, {'update_id': 316872173, 'channel_post': {'message_id': 112, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690250756, 'text': 'ㅇ'}}, {'update_id': 316872174, 'channel_post': {'message_id': 113, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690250756, 'text': 'ㅇ'}}, {'update_id': 316872175, 'channel_post': {'message_id': 114, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690250756, 'text': 'ㅇ'}}, {'update_id': 316872176, 'channel_post': {'message_id': 115, 'sender_chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'chat': {'id': -1001678593071, 'title': '오늘의 레포트 채널', 'username': 'todays_reports', 'type': 'channel'}, 'date': 1690250757, 'text': 'ㅇ'}}]}"
+    print('*********************')
+    print(r['result'])
+    message_id = 0
+    for list in r['result']:
+        id = str(list['channel_post']['sender_chat']['id'])
+        if TELEGRAM_CHANNEL_ID_TODAY_REPORT == id: message_id = int(list['channel_post']['message_id'])
+    print('last message_id:', message_id)
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
@@ -3565,6 +3574,13 @@ def main():
     global INTERVAL_TIME # 새로고침 주기 - 파일
 
     print('########Program Start Run########')
+
+    try: strArgs = sys.argv[1]
+    except: strArgs = ''
+    
+    if 'trevari'in strArgs: trevariBook_checkNewArticle()
+    return
+
     GetSecretKey()
     print(GetCurrentDay())
     

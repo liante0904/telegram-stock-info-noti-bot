@@ -39,6 +39,7 @@ INTERVAL_TIME = 3 # 10분 단위 적용
 INTERVAL_INIT_TIME = 1
 # secrets 
 CLEARDB_DATABASE_URL                                = ""
+TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
 TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET             = ""
 TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS                 = ""
@@ -296,7 +297,7 @@ def EBEST_downloadFile(ARTICLE_URL):
 
     # ATTACH_URL += r
     # print(ATTACH_URL)
-    # time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    # time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return ATTACH_URL
 
 def ShinHanInvest_checkNewArticle():
@@ -319,7 +320,7 @@ def ShinHanInvest_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        time.sleep(1)
  
 # JSON API 타입
 def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -536,7 +537,7 @@ def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
     ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text.strip()
     
     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(5) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -808,7 +809,7 @@ def ChosunBizBot_checkNewArticle():
     # 조선Biz Cbot 웹 크롤링
     # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
     #     ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    #     time.sleep(5)
+    #     time.sleep(1)
  
 # JSON API 타입
 def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -992,7 +993,7 @@ def NAVERNews_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(3)
+        time.sleep(1)
  
 # JSON API 타입
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1096,7 +1097,7 @@ def NAVER_Report_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(5)
+        time.sleep(1)
  
 # JSON API 타입
 def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1140,13 +1141,16 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     nNewArticleCnt = 0
     sendMessageText = ''
+    brokerName = jres[0]['brokerName']
     # JSON To List
     for research in jres:
         # print('***************************')
         print(research)
         LIST_ARTICLE_URL = research['endUrl'] 
+        LIST_ARTICLE_URL = NAVER_Report_parseURL(LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = research['title']
-
+        if ARTICLE_BOARD_ORDER == 0 : LIST_ARTICLE_TITLE = research['itemName'] +": "+ LIST_ARTICLE_TITLE # 기업분석
+        else:                         LIST_ARTICLE_TITLE = research['category'] +": "+ LIST_ARTICLE_TITLE # 산업분석
         # if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         # if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
         # if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
@@ -1164,14 +1168,24 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         '''
         print('NXT_KEY ' , NXT_KEY)
         print('LIST_ARTICLE_TITLE ', LIST_ARTICLE_TITLE)
+        
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3000:
-                if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
-                else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                sendMessageText += research['title'] + "\n"
-                sendMessageText += research['brokerName'] + "\n"
-                sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
+                # 회사명 출력
+                if nNewArticleCnt == 1 or brokerName != research['brokerName'] : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
+                    sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
+                    brokerName = research['brokerName'] # 회사명 키 변경
+                # 종목 & 산업 출력
+                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
+                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
+                # 레포트 제목 출력
+                # sendMessageText += research['title'] + "\n"
+                # 레포트 URL 출력
+                # sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
+                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
+                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1389,7 +1403,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         except:
             return
     
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
 # URL 발신용 전용 함수 : ex) 네이버 뉴스
@@ -1413,7 +1427,7 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
     asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
@@ -1422,7 +1436,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return True
 
 # 가공없이 텍스트를 발송합니다.
@@ -1433,7 +1447,7 @@ def sendText(sendMessageText):
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(8) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 인자 텍스트를 더해가며 발송합니다. 
 # 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
@@ -1482,7 +1496,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(4) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
@@ -1588,6 +1602,79 @@ def GetSendChatId():
     
     # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
     return SendMessageChatId
+
+def GetJsonData(TARGET_URL, METHOD_TYPE):
+    global NXT_KEY
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    #검색 요청 및 처리
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
+
+    try:
+        jres = json.loads(response.read().decode('utf-8'))
+    except:
+        return True
+
+    # jres = jres['newsItems']
+    print(jres)
+    return jres
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for stockPlus in jres:
+        LIST_ARTICLE_URL = stockPlus['url'].strip()
+        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
+                # print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    return True
+
 
 def MySQL_Open_Connect():
     global conn
@@ -1845,6 +1932,7 @@ def GetCurrentDay(*args):
 
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL
+    global TELEGRAM_BOT_INFO
     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
     global TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET
     global TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS
@@ -1863,6 +1951,7 @@ def GetSecretKey(*args):
         with open("secrets.json") as f:
             SECRETS = json.loads(f.read())
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
+        TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
         TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS']
@@ -1876,6 +1965,7 @@ def GetSecretKey(*args):
         IS_DEV                                      =   True
     else: # 서버 배포 환경(heroku)
         CLEARDB_DATABASE_URL                        =   os.environ.get('CLEARDB_DATABASE_URL')
+        TELEGRAM_BOT_INFO                           =   os.environ.get('TELEGRAM_BOT_INFO')
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
         TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
@@ -1916,6 +2006,8 @@ def main():
     except: strArgs = ''
 
     if strArgs: 
+        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
+        NAVER_Report_checkNewArticle()
         gd.gd(str(strArgs))
         print('test')
         return 

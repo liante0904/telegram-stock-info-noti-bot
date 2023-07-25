@@ -1365,7 +1365,10 @@ def HanKyung_checkNewArticle():
             sendAddText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
+    if len(sendMessageText) > 0: 
+        print('****')
+        print(GetSendMessageTitle() + sendMessageText)
+        sendAddText(GetSendMessageTitle() + sendMessageText)
     time.sleep(1)
  
 def HanKyung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -1435,6 +1438,8 @@ def HanKyung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # print(soupList)
     for list in soupList:
+        nNewArticleCnt += 1
+        print(list)
         LIST_ARTICLE_TITLE          = list.select_one('#contents > div.table_style01 > table > tbody > tr > td.text_l > a').text.strip()
         LIST_ARTICLE_URL            = ''
         LIST_ARTICLE_BROKER_NAME    = ''
@@ -1450,13 +1455,14 @@ def HanKyung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(LIST_ARTICLE_URL )
         print(LIST_ARTICLE_BROKER_NAME)
 
+        print('###원인 모르게씀###')
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # sendMessageText += "●" +LIST_ARTICLE_TITLE + "\n"
                 # sendMessageText += LIST_ARTICLE_BROKER_NAME + "\n"
                 # sendMessageText += LIST_ARTICLE_URL + "\n"+ "\n"
-                # ATTACH_URL = LIST_ARTICLE_URL
+                ATTACH_URL = LIST_ARTICLE_URL
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1467,13 +1473,15 @@ def HanKyung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
+            print('###원인 모르게씀###')
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
                 return
-            else: break
+            else: pass
+        print('###########여기############')
+
                 
-    print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
