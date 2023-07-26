@@ -199,12 +199,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    print('이베스트 ====>', r)
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
+    # # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # print('이베스트 ====>', r)
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return ''
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -220,10 +220,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        # if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if  SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
+                # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
+                ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
                 if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
                     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
                     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
@@ -277,8 +279,9 @@ def EBEST_downloadFile(ARTICLE_URL):
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
     # 첨부파일 이름
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text.strip()
-    # DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    
+    r = DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    print('*********확인용**************')
+    print(r)
     # EBEST 모바일 페이지 PDF 링크 생성(파일명 2번 인코딩하여 조립)
     # r = urlparse.quote(ATTACH_FILE_NAME)
     # r = urlparse.quote(r)
@@ -298,7 +301,7 @@ def EBEST_downloadFile(ARTICLE_URL):
     # ATTACH_URL += r
     # print(ATTACH_URL)
     # time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    return ATTACH_URL
+    return r
 
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1527,7 +1530,10 @@ def DownloadFile(URL, FILE_NAME):
         response = get(URL, verify=False)     # get request
         file.write(response.content) # write to file
         
-    return True
+    r = gd.gd(str(ATTACH_FILE_NAME))
+    print('********************')
+    print(f'main URL {r}')
+    return r
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 실제 전송할 메시지 작성
@@ -2006,9 +2012,10 @@ def main():
     except: strArgs = ''
 
     if strArgs: 
-        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
-        NAVER_Report_checkNewArticle()
-        gd.gd(str(strArgs))
+        # EBEST_checkNewArticle()
+        # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
+        # NAVER_Report_checkNewArticle()
+        # gd.gd(str(strArgs))
         print('test')
         return 
 
