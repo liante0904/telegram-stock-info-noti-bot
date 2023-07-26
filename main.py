@@ -199,12 +199,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('데이터베이스에 ', GetFirmName(),'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-    # print('이베스트 ====>', r)
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return ''
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    print('이베스트 ====>', r)
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -220,8 +220,8 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        # if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-        if  SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        # if  SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
