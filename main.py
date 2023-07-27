@@ -98,6 +98,8 @@ NXT_KEY = ''
 NXT_KEY_ARTICLE_TITLE = ''
 # 게시판 URL
 BOARD_URL = ''
+# 테스트 발송여부
+TEST_SEND_YN = ''
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
 TODAY_SEND_YN = ''
@@ -166,6 +168,7 @@ def EBEST_checkNewArticle():
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
     global LIST_ARTICLE_TITLE
     
     try:
@@ -201,7 +204,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    print('이베스트 ====>', r)
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -212,7 +215,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
-
+    print('TEST_SEND_YN ', TEST_SEND_YN)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -220,7 +223,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list.text
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
         # if  SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
@@ -328,6 +331,7 @@ def ShinHanInvest_checkNewArticle():
 # JSON API 타입
 def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
@@ -362,7 +366,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -377,7 +381,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
         LIST_ARTICLE_TITLE = list['f1'].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -453,6 +457,7 @@ def HANA_checkNewArticle():
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
@@ -487,7 +492,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return '' 
@@ -505,7 +510,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
         # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
@@ -573,6 +578,7 @@ def Samsung_checkNewArticle():
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
@@ -612,7 +618,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -636,7 +642,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         fileNameArray = a_href.split("/")
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
@@ -698,6 +704,7 @@ def Kiwoom_checkNewArticle():
  
 def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     payload = {
         "pageNo": 1,
@@ -739,7 +746,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -755,7 +762,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
         LIST_ARTICLE_TITLE = list['titl'].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -817,6 +824,7 @@ def ChosunBizBot_checkNewArticle():
 # JSON API 타입
 def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
     BASE_URL = 'biz.chosun.com'
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
@@ -855,7 +863,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -869,7 +877,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = BASE_URL + chosun['canonical_url'].strip()
         LIST_ARTICLE_TITLE = chosun['headlines']['basic'].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -898,6 +906,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
 # 증권플러스 뉴스 JSON API 타입
 def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -936,7 +945,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -949,7 +958,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = stockPlus['url'].strip()
         LIST_ARTICLE_TITLE = stockPlus['title'].strip()
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
@@ -1001,6 +1010,7 @@ def NAVERNews_checkNewArticle():
 # JSON API 타입
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
@@ -1032,7 +1042,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -1049,7 +1059,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -1105,6 +1115,7 @@ def NAVER_Report_checkNewArticle():
 # JSON API 타입
 def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
+    global TEST_SEND_YN
 
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     response = urllib.request.urlopen(request)
@@ -1133,7 +1144,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -1172,7 +1183,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('NXT_KEY ' , NXT_KEY)
         print('LIST_ARTICLE_TITLE ', LIST_ARTICLE_TITLE)
         
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3000:
                 # 회사명 출력
@@ -1231,6 +1242,7 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
 
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
+    global TEST_SEND_YN
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER      = 123
@@ -1587,7 +1599,9 @@ def GetSendMessageTitle():
     else: # 증권사
         msgFirmName =  GetFirmName() 
 
-    SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
+    # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
+    SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
+    
     return SendMessageTitle
 
 def GetSendChatId():
@@ -1611,6 +1625,7 @@ def GetSendChatId():
 
 def GetJsonData(TARGET_URL, METHOD_TYPE):
     global NXT_KEY
+    global TEST_SEND_YN
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -1641,7 +1656,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -1654,7 +1669,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
         LIST_ARTICLE_URL = stockPlus['url'].strip()
         LIST_ARTICLE_TITLE = stockPlus['title'].strip()
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
@@ -1696,6 +1711,7 @@ def MySQL_Open_Connect():
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global BOARD_URL
     global NXT_KEY
+    global TEST_SEND_YN
     global NXT_KEY_ARTICLE_TITLE
     global SEND_YN
     global SEND_TIME_TERM
@@ -1722,6 +1738,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
 
 def DB_SelSleepKey(*args):
     global NXT_KEY
+    global TEST_SEND_YN
     global SEND_YN
     global SEND_TIME_TERM
     global TODAY_SEND_YN
@@ -1755,6 +1772,7 @@ def DB_DelSleepKey(*args):
 
 def DB_InsSleepKey(*args):
     global NXT_KEY
+    global TEST_SEND_YN
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
@@ -1765,6 +1783,7 @@ def DB_InsSleepKey(*args):
 
 def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
+    global TEST_SEND_YN
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
@@ -1776,6 +1795,7 @@ def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
 
 def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
     global NXT_KEY
+    global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
     dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
     dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
@@ -1788,6 +1808,7 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
 
 def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     global NXT_KEY
+    global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
     dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
     dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
@@ -1986,6 +2007,7 @@ def GetSecretKey(*args):
 
 def isNxtKey(*args):
     global NXT_KEY
+    global TEST_SEND_YN
     global SEND_YN
     global SEND_TIME_TERM
     global TODAY_SEND_YN
@@ -2003,6 +2025,7 @@ def main():
     global REFRESH_TIME # 새로고침 주기
     global SECRETS # 시크릿 키
     global INTERVAL_TIME # 새로고침 주기 - 파일
+    global TEST_SEND_YN
 
     GetSecretKey()
 
@@ -2012,7 +2035,8 @@ def main():
     except: strArgs = ''
 
     if strArgs: 
-        # EBEST_checkNewArticle()
+        TEST_SEND_YN = 'Y'
+        EBEST_checkNewArticle()
         # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         # NAVER_Report_checkNewArticle()
         # gd.gd(str(strArgs))
