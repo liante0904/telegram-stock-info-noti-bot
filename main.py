@@ -2034,9 +2034,24 @@ def main():
     try: strArgs = sys.argv[1]
     except: strArgs = ''
 
+    if 'news' in strArgs: print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle(); return
+
     if strArgs: 
         TEST_SEND_YN = 'Y'
-        EBEST_checkNewArticle()
+
+        payload = {"pageNo":1,"pageSize":12,"registdateFrom":"20220727","registdateTo":"20230727","keyword":"","templateid":"","lowTempId":"79,63,64,65,66,67,68,69,75,76,137,193,77,78,74,184,185,174,81,82,83,84,70,71,73,177,191,192,85,156,86,158,166,162,88,160,89,90,91,92,161,169,171,93,94,183,180,164,103,104,105,106,107,108,109,110,111,112,133,167,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,188","folderid":"","callGbn":"RCLIST"}
+
+        try:
+            webpage = requests.post('https://rc.kbsec.com/ajax/reNewCategoryReportList.json',data=payload , headers={'Content-Type':'application/json','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'})
+            print(webpage.text)
+            jres = json.loads(webpage.text)
+        except:
+            return True
+            
+        if jres['totalCount'] == 0 : return ''
+        print(jres['researchList'])
+
+        # EBEST_checkNewArticle()
         # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         # NAVER_Report_checkNewArticle()
         # gd.gd(str(strArgs))
@@ -2080,13 +2095,6 @@ def main():
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
-
-
-        print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인") # 995
-        ChosunBizBot_checkNewArticle()
-
-        print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인") # 998
-        NAVERNews_checkNewArticle()
 
         print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
         fnguideTodayReport_checkNewArticle()
