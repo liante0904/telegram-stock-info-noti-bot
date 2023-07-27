@@ -386,6 +386,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                if nNewArticleCnt == 2 : sendText(GetSendMessageTitle() + sendMessageText)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1145,10 +1146,18 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
+    print('********************')
+    print('SEND_YN', SEND_YN)
+    print(r)
     if SEND_YN == 'Y' : r = ''
+    print('********************')
+    print(r)
+    r = True
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
+    else:
+        print('&&&&&&&&&&&&& ', r)
 
     # NaverNews 게시판에 따른 URL 지정
     if ARTICLE_BOARD_ORDER == 0:category = 'company'
@@ -2037,7 +2046,7 @@ def main():
 
     if 'news' in strArgs: print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle(); return
 
-    if strArgs: 
+    if  strArgs : 
         TEST_SEND_YN = 'Y'
 
         # payload = {"pageNo":1,"pageSize":12,"registdateFrom":"20220727","registdateTo":"20230727","keyword":"","templateid":"","lowTempId":"79,63,64,65,66,67,68,69,75,76,137,193,77,78,74,184,185,174,81,82,83,84,70,71,73,177,191,192,85,156,86,158,166,162,88,160,89,90,91,92,161,169,171,93,94,183,180,164,103,104,105,106,107,108,109,110,111,112,133,167,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,188","folderid":"","callGbn":"RCLIST"}
@@ -2059,7 +2068,7 @@ def main():
         print('test')
         return 
 
-
+    TEST_SEND_YN = ''
     if GetCurrentDay() == '토' or GetCurrentDay() == '일':
         REFRESH_TIME = 60 * 60 * 2 # 2시간
         INTERVAL_TIME = 12
