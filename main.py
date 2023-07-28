@@ -168,7 +168,6 @@ def EBEST_checkNewArticle():
                 sendAddText(GetSendMessageTitle() + sendMessageText)
                 sendMessageText = ''
 
-    if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
     return sendMessageText
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -259,8 +258,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
+        sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -420,8 +418,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
+        sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -549,8 +546,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
+        sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -687,8 +683,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
+        sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -805,8 +800,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
+        sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
