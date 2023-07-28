@@ -123,6 +123,12 @@ FIRST_ARTICLE_INDEX = 0
 # 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
 LIST_ARTICLE_TITLE = ''
 
+
+#################### global 변수 정리 ###################################
+FIRM_NM = ''
+BOARD_NM = ''
+#################### global 변수 정리 끝###################################
+
 def EBEST_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -157,14 +163,13 @@ def EBEST_checkNewArticle():
         try:
             sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
-            sendMessageText = ''
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
 
     if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
-    time.sleep(1)
+    return sendMessageText
 
 def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -234,6 +239,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
 
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -303,7 +309,6 @@ def EBEST_downloadFile(ARTICLE_URL):
 
     # ATTACH_URL += r
     # print(ATTACH_URL)
-    # time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
     return r
 
 def ShinHanInvest_checkNewArticle():
@@ -323,10 +328,12 @@ def ShinHanInvest_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
+    sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(1)
+        sendMessageText += ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+
+    return sendMessageText
  
 # JSON API 타입
 def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -386,7 +393,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                if nNewArticleCnt == 2 : sendText(GetSendMessageTitle() + sendMessageText)
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -448,14 +455,14 @@ def HANA_checkNewArticle():
         try:
             sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
-            sendMessageText = ''
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
 
     if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
-    time.sleep(1)
+
+    return sendMessageText
  
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -517,6 +524,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -576,7 +584,8 @@ def Samsung_checkNewArticle():
             sendMessageText = ''
 
     if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
-    time.sleep(1)
+
+    return sendMessageText
  
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -652,6 +661,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)].strip()
                 # print(LIST_ARTICLE_TITLE)
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -702,7 +712,8 @@ def Kiwoom_checkNewArticle():
             sendMessageText = ''
 
     if len(sendMessageText) > 0: sendAddText(GetSendMessageTitle() + sendMessageText)
-    time.sleep(1)
+    
+    return sendMessageText
  
 def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
@@ -768,6 +779,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -1719,6 +1731,8 @@ def MySQL_Open_Connect():
     return cursor
 
 def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+    global FIRM_NM
+    global BOARD_NM
     global BOARD_URL
     global NXT_KEY
     global TEST_SEND_YN
@@ -1736,6 +1750,8 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
         print(row)
+        FIRM_NM = row['FIRM_NM']
+        BOARD_NM = row['BOARD_NM']
         BOARD_URL = row['BOARD_URL']
         NXT_KEY = row['NXT_KEY']
         NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
@@ -2048,6 +2064,25 @@ def main():
 
     if  strArgs : 
         TEST_SEND_YN = 'Y'
+        sendMessageText = ''
+
+        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # sendMessageText += EBEST_checkNewArticle()
+
+        # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # sendMessageText += ShinHanInvest_checkNewArticle()
+
+        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        # sendMessageText += HANA_checkNewArticle()
+
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # sendMessageText += Samsung_checkNewArticle()
+
+        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # sendMessageText += Kiwoom_checkNewArticle()
+
+        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
         # payload = {"pageNo":1,"pageSize":12,"registdateFrom":"20220727","registdateTo":"20230727","keyword":"","templateid":"","lowTempId":"79,63,64,65,66,67,68,69,75,76,137,193,77,78,74,184,185,174,81,82,83,84,70,71,73,177,191,192,85,156,86,158,166,162,88,160,89,90,91,92,161,169,171,93,94,183,180,164,103,104,105,106,107,108,109,110,111,112,133,167,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,188","folderid":"","callGbn":"RCLIST"}
 
@@ -2061,7 +2096,6 @@ def main():
         # if jres['totalCount'] == 0 : return ''
         # print(jres['researchList'])
 
-        ShinHanInvest_checkNewArticle()
         # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         # NAVER_Report_checkNewArticle()
         # gd.gd(str(strArgs))
@@ -2112,22 +2146,25 @@ def main():
         print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         NAVER_Report_checkNewArticle()
 
+        sendMessageText = ''
+
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        EBEST_checkNewArticle()
+        sendMessageText += EBEST_checkNewArticle()
 
         print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        ShinHanInvest_checkNewArticle()
+        sendMessageText += ShinHanInvest_checkNewArticle()
 
         print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        HANA_checkNewArticle()
+        sendMessageText += HANA_checkNewArticle()
 
         print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        Samsung_checkNewArticle()
+        sendMessageText += Samsung_checkNewArticle()
 
         print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        Kiwoom_checkNewArticle()
+        sendMessageText += Kiwoom_checkNewArticle()
 
-        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
         return 
         print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
