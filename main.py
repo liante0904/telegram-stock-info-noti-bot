@@ -328,6 +328,7 @@ def ShinHanInvest_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
+    sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         try:
@@ -454,6 +455,7 @@ def HANA_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
+    sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         try:
