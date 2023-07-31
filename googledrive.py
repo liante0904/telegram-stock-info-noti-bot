@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 
-def gd(*args):
+def upload(*args):
     print('********************')
     strFileName = ''
 
