@@ -1271,7 +1271,6 @@ def fnguideTodayReport_checkNewArticle():
     ARTICLE_BOARD_ORDER = 123
 
     # 유효 발송 시간에만 로직 실행
-
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
@@ -1305,10 +1304,6 @@ def fnguideTodayReport_checkNewArticle():
     
     print(BOARD_URL)
     print(NXT_KEY)
-    sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
-    sendMessageText += '확인하려면 링크를 클릭하세요. \n'
-    sendMessageText += BOARD_URL + NXT_KEY
-    asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
     
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -1322,6 +1317,8 @@ def fnguideTodayReport_checkNewArticle():
     sendMessageText = ''
     pageCnt = 0
     articleCnt = 0
+    NxtArticleCnt = int(NXT_KEY_ARTICLE_TITLE)
+    objMessage = ''
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
         articleCnt += 1
@@ -1339,7 +1336,7 @@ def fnguideTodayReport_checkNewArticle():
         strReportTitle = listIsu[0].strip()
 
         # 17시 발송건일때 이미 전송된 인덱스는 제외처리
-        if articleCnt <= int(NXT_KEY_ARTICLE_TITLE) and int(GetCurrentTime('HH')) == 17 : continue   
+        if articleCnt <= NxtArticleCnt and int(GetCurrentTime('HH')) == 17 : continue   
 
         try:
             strInvestOpinion_1 = listIsu[1].strip()
@@ -1366,16 +1363,23 @@ def fnguideTodayReport_checkNewArticle():
         sendMessageText += strBody + "\n" 
         sendMessageText += strTail + "\n" + "\n" 
         if len(sendMessageText) > 3500 : # 중간 발송
-            sendText(GetSendMessageTitle() + sendMessageText)
+            objMessage = sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
             pageCnt += 1
 
     # 나머지 최종 발송
     if len(sendMessageText) > 0 : # 중간 발송
-        sendText(GetSendMessageTitle() + sendMessageText)
+        objMessage =sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
         pageCnt += 1
 
+    NXT_KEY = int(objMessage.message_id)
+
+    sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
+    sendMessageText += '확인하려면 링크를 클릭하세요. \n'
+    sendMessageText += '(오늘의 제일 마지막 레포트로 이동합니다) \n'
+    sendMessageText += BOARD_URL + NXT_KEY
+    asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
     # 연속키 갱신
     NXT_KEY = int(NXT_KEY) + int(pageCnt)
     dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, articleCnt)
@@ -1391,18 +1395,18 @@ def fnguideTodayReport_checkNewArticle():
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
+    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
 
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
+    return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
 
 # 최초 send함수
 # URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
@@ -2065,7 +2069,7 @@ def main():
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
-
+        fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         # sendMessageText += EBEST_checkNewArticle()
 
