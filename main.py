@@ -992,9 +992,16 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             else:
                 print(sendMessageText)
                 sendText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
 
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
+        sendMessageText = ''
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
@@ -1097,9 +1104,8 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendText(GetSendMessageTitle() + sendMessageText)
-        # sendMessageText = ''
+        sendText(GetSendMessageTitle() + sendMessageText)
+        sendMessageText = ''
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -1165,7 +1171,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if SEND_YN == 'Y' : r = ''
     print('********************')
     print(r)
-    r = True
+
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -1244,8 +1250,8 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendText(GetSendMessageTitle() + sendMessageText)
-        # sendMessageText = ''
+        sendText(GetSendMessageTitle() + sendMessageText)
+        sendMessageText = ''
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -2075,11 +2081,14 @@ def main():
         sendMessageText = ''
         fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # sendMessageText += EBEST_checkNewArticle()
-
+        sendMessageText += EBEST_checkNewArticle()
+        print(sendMessageText)
         # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # sendMessageText += ShinHanInvest_checkNewArticle()
+        sendMessageText += ShinHanInvest_checkNewArticle()
 
+        print(sendMessageText)
+        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         # sendMessageText += HANA_checkNewArticle()
 
