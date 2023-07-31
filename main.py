@@ -1435,16 +1435,19 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
         DISABLE_WEB_PAGE_PREVIEW = False
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
-    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+    
 
     if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
         try:
             time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
             #bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-            asyncio.run(sendDocument(ATTACH_FILE_NAME)) #봇 실행하는 코드
+            r = asyncio.run(sendDocument(ATTACH_FILE_NAME)) #봇 실행하는 코드
             os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
+            return r
         except:
             return
+    else: 
+        return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드    
     
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
@@ -1469,8 +1472,8 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     #print('텔레그램 채널 정보 :',me)
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
-    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
+    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
@@ -1478,9 +1481,8 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
-    bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
+    return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-    return True
 
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
@@ -1489,7 +1491,7 @@ def sendText(sendMessageText):
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 인자 텍스트를 더해가며 발송합니다. 
@@ -1538,7 +1540,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
