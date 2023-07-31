@@ -17,7 +17,7 @@ from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
-import gd
+import googledrive
 
 from requests import get  # to make GET request
 
@@ -1572,7 +1572,7 @@ def DownloadFile(URL, FILE_NAME):
         response = get(URL, verify=False)     # get request
         file.write(response.content) # write to file
         
-    r = gd.gd(str(ATTACH_FILE_NAME))
+    r = googledrive.uploadgd(str(ATTACH_FILE_NAME))
     print('********************')
     print(f'main URL {r}')
     return r
@@ -2106,7 +2106,7 @@ def main():
 
         # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         # NAVER_Report_checkNewArticle()
-        # gd.gd(str(strArgs))
+        # googledrive.uploadgd(str(strArgs))
         print('test')
         return 
 
