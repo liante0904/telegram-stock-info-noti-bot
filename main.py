@@ -1249,7 +1249,6 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
         sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
 
