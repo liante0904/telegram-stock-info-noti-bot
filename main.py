@@ -1326,6 +1326,7 @@ def fnguideTodayReport_checkNewArticle():
     articleCnt = 0
     NxtArticleCnt = int(NXT_KEY_ARTICLE_TITLE)
     objMessage = ''
+    FIRST_MESSAGE_KEY = ''
     for listIsu, listAnalyst in zip(soupList1, soupList2):
         print('######################')
         articleCnt += 1
@@ -1333,14 +1334,18 @@ def fnguideTodayReport_checkNewArticle():
             listIsu = listIsu.text
         except:
             continue
+        print('***************오류********** == 시작')
+        print(listIsu)
+        print('***************오류********** ==> 끝')
 
+        listIsu = listIsu.replace("`","")
         listIsu = listIsu.split("|")
         strIsuNm = listIsu[0].strip()
         strIsuNo = strIsuNm.split("(A")
         strIsuNo = strIsuNo[1].replace(")","")
         strIsuUrl = "[종목링크]" + "(" + "https://finance.naver.com/item/main.naver?code=" + strIsuNo + ")"
         listIsu = listIsu[1].split("-  ")
-        strReportTitle = listIsu[0].strip()
+        strReportTitle = listIsu[0].strip().replace("1-","")
 
         # 17시 발송건일때 이미 전송된 인덱스는 제외처리
         if articleCnt <= NxtArticleCnt and int(GetCurrentTime('HH')) == 17 : continue   
@@ -1376,20 +1381,21 @@ def fnguideTodayReport_checkNewArticle():
 
     # 나머지 최종 발송
     if len(sendMessageText) > 0 : # 중간 발송
-        objMessage =sendText(GetSendMessageTitle() + sendMessageText)
+        print('=================================발송구간')
+        print(sendMessageText)
+        objMessage = sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
         pageCnt += 1
+        if pageCnt == 0 : FIRST_MESSAGE_KEY = str(objMessage.message_id)
 
-    NXT_KEY = int(objMessage.message_id)
 
     sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
     sendMessageText += '확인하려면 링크를 클릭하세요. \n'
-    sendMessageText += '(오늘의 제일 마지막 레포트로 이동합니다) \n'
-    sendMessageText += BOARD_URL + NXT_KEY
+    sendMessageText += BOARD_URL + FIRST_MESSAGE_KEY
     asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
+
     # 연속키 갱신
-    NXT_KEY = int(NXT_KEY) + int(pageCnt)
-    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, articleCnt)
+    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, int(pageCnt), articleCnt)
 
     # 9시, 17시 두차례 발송을 위해 17시 발송후 발송여부 갱신
     if int(GetCurrentTime('HH')) == 17 :
