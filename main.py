@@ -208,7 +208,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
+    if TEST_SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -228,7 +228,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = list.text
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-        # if  SEND_YN == 'Y':
+        # if  TEST_SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
@@ -377,7 +377,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
+    if TEST_SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
@@ -1165,10 +1165,10 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    print('********************')
-    print('SEND_YN', SEND_YN)
+    print('****** 네이버 디버그용 **************')
+    print('TEST_SEND_YN', TEST_SEND_YN)
     print(r)
-    if SEND_YN == 'Y' : r = ''
+    if TEST_SEND_YN == 'Y' : r = ''
     print('********************')
     print(r)
 
@@ -2089,6 +2089,7 @@ def main():
     global INTERVAL_TIME # 새로고침 주기 - 파일
     global TEST_SEND_YN
 
+    TEST_SEND_YN = ''
     GetSecretKey()
 
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
@@ -2156,7 +2157,36 @@ def main():
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
-    
+    print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+    fnguideTodayReport_checkNewArticle()
+
+    print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
+    NAVER_Report_checkNewArticle()
+
+    sendMessageText = ''
+
+    print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+    sendMessageText += EBEST_checkNewArticle()
+
+    print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+    sendMessageText += ShinHanInvest_checkNewArticle()
+
+    print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+    sendMessageText += HANA_checkNewArticle()
+
+    print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+    sendMessageText += Samsung_checkNewArticle()
+
+    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+    sendMessageText += Kiwoom_checkNewArticle()
+
+    if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+
+    return 
+    print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+    time.sleep(REFRESH_TIME)
+
     # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
     while True:
         print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
@@ -2178,36 +2208,8 @@ def main():
         elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
-
-        print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-        fnguideTodayReport_checkNewArticle()
-
-        print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
-        NAVER_Report_checkNewArticle()
-
-        sendMessageText = ''
-
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        sendMessageText += EBEST_checkNewArticle()
-
-        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        sendMessageText += ShinHanInvest_checkNewArticle()
-
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        sendMessageText += HANA_checkNewArticle()
-
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        sendMessageText += Samsung_checkNewArticle()
-
-        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        sendMessageText += Kiwoom_checkNewArticle()
-
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
         return 
-        print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
-        time.sleep(REFRESH_TIME)
+
 
 if __name__ == "__main__":
 	main()
