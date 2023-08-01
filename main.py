@@ -723,8 +723,8 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     payload = {
         "pageNo": 1,
         "pageSize": 10,
-        "stdate": GetCurrentDate("yyyyhhdd"),
-        "eddate": GetCurrentDate("yyyyhhdd"),
+        "stdate": GetCurrentDate("yyyymmdd"),
+        "eddate": GetCurrentDate("yyyymmdd"),
         "f_keyField": '', 
         "f_key": '',
         "_reqAgent": 'ajax',
@@ -1576,6 +1576,21 @@ def DownloadFile(URL, FILE_NAME):
             print("CONVERT_URL", CONVERT_URL)
             URL = CONVERT_URL
 
+    # 파일명 지정
+    # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
+    # 날짜-대분류-소분류-제목-증권사.pdf
+    # TODO 종목명 추가
+    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
+    print('FILE_NAME 확장자 제거 ,', FILE_NAME)
+    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
+    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NM
+
+    # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
+    MAX_FILE_NAME_LENGTH = 240
+    if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
+    FILE_NAME += '.pdf'
+    # if '.pdf' not in FILE_NAME : FILE_NAME = FILE_NAME + '.pdf'
+
     ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
     print('convert URL:',URL)
     print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
@@ -1583,7 +1598,7 @@ def DownloadFile(URL, FILE_NAME):
         response = get(URL, verify=False)     # get request
         file.write(response.content) # write to file
         
-    r = googledrive.uploadgd(str(ATTACH_FILE_NAME))
+    r = googledrive.upload(str(ATTACH_FILE_NAME))
     print('********************')
     print(f'main URL {r}')
     return r
@@ -1976,6 +1991,8 @@ def GetCurrentDate(*args):
         DATE = DATE_SPLIT[1]
     elif pattern == 'DD' or pattern == 'dd':
         DATE = DATE_SPLIT[2]
+    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
+        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
     elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
         DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
     elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
@@ -2074,7 +2091,7 @@ def main():
 
     GetSecretKey()
 
-    print(GetCurrentDay())
+    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     try: strArgs = sys.argv[1]
     except: strArgs = ''
@@ -2084,7 +2101,7 @@ def main():
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
-        fnguideTodayReport_checkNewArticle()
+        # fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         sendMessageText += EBEST_checkNewArticle()
         print(sendMessageText)
@@ -2120,7 +2137,7 @@ def main():
 
         # print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
         # NAVER_Report_checkNewArticle()
-        # googledrive.uploadgd(str(strArgs))
+        # googledrive.upload(str(strArgs))
         print('test')
         return 
 
