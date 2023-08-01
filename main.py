@@ -207,7 +207,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    r = isNxtKey(FIRST_ARTICLE_TITLE) 
     if TEST_SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
@@ -2067,6 +2067,9 @@ def GetSecretKey(*args):
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
 
+# 첫 게시글과 연속키 일치 여부를 판별 
+# 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
+# 불일치(FALSE)=> 새 게시물이 게시되어 전송함
 def isNxtKey(*args):
     global NXT_KEY
     global TEST_SEND_YN
