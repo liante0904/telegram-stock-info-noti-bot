@@ -2005,7 +2005,7 @@ def GetCurrentDate(*args):
         DATE = time_now[2:10].strip()
     elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
         DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.HH.DD' or pattern == 'yyyy.hh.dd':
+    elif pattern == 'YYYY.MM.DD' or pattern == 'yyyy.mm.dd':
         DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
     else:
         DATE = time_now[:10].strip()
@@ -2111,14 +2111,30 @@ def main():
         sendMessageText = ''
         # fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        sendMessageText += EBEST_checkNewArticle()
-        print(sendMessageText)
-        # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        sendMessageText += ShinHanInvest_checkNewArticle()
 
-        print(sendMessageText)
+        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        r = EBEST_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        r = ShinHanInvest_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        r = HANA_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        r = Samsung_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        r = Kiwoom_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+
         # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         # sendMessageText += HANA_checkNewArticle()
 
@@ -2174,24 +2190,24 @@ def main():
     sendMessageText = ''
 
     print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-    sendMessageText += EBEST_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    r = EBEST_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-    sendMessageText += ShinHanInvest_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    r = ShinHanInvest_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-    sendMessageText += HANA_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    r = HANA_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-    sendMessageText += Samsung_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    r = Samsung_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-    sendMessageText += Kiwoom_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    r = Kiwoom_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
