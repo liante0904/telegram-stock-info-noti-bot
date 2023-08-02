@@ -258,7 +258,7 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -418,7 +418,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -546,7 +546,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -683,7 +683,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -800,7 +800,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -909,6 +909,7 @@ def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    # 뉴스, 네이버(뉴스, 레포트)의 경우 분리하여 발송
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendMessageText = GetSendMessageTitle() + sendMessageText
@@ -998,6 +999,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
             return True
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    # 뉴스, 네이버(뉴스, 레포트)의 경우 분리하여 발송
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
@@ -1102,6 +1104,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    # 뉴스, 네이버(뉴스, 레포트)의 경우 분리하여 발송
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
@@ -1247,6 +1250,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    # 뉴스, 네이버(뉴스, 레포트)의 경우 분리하여 발송
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
@@ -1377,6 +1381,7 @@ def fnguideTodayReport_checkNewArticle():
         if len(sendMessageText) > 3500 : # 중간 발송
             objMessage = sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ''
+            if pageCnt == 0 : FIRST_MESSAGE_KEY = str(objMessage.message_id)
             pageCnt += 1
 
     # 나머지 최종 발송
@@ -1386,7 +1391,6 @@ def fnguideTodayReport_checkNewArticle():
         objMessage = sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
         pageCnt += 1
-        if pageCnt == 0 : FIRST_MESSAGE_KEY = str(objMessage.message_id)
 
 
     sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
@@ -2160,6 +2164,7 @@ def main():
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
+    
     print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
     fnguideTodayReport_checkNewArticle()
 
@@ -2170,18 +2175,23 @@ def main():
 
     print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
     sendMessageText += EBEST_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
     sendMessageText += ShinHanInvest_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
     sendMessageText += HANA_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
     sendMessageText += Samsung_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
     sendMessageText += Kiwoom_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
