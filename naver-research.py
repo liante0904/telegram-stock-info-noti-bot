@@ -56,23 +56,6 @@ SECRETS = ""
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
 
-# 회사이름
-FIRM_NAME = (
-    "이베스트 투자증권",    # 0
-    "신한금융투자",             # 1
-    "상상인증권",           # 2
-    "하나증권",          # 3
-    "한양증권",              # 4
-    "삼성증권",              # 5
-    "교보증권",              # 6
-    "DS투자증권",             # 7
-    "SMIC(서울대 가치투자)",             # 8
-    "현대차증권",             # 9
-    "키움증권",             # 10
-    "신영증권"
-    # "유안타증권",           # 4
-)
-
 # 게시판 이름
 BOARD_NAME = (
     [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
@@ -994,7 +977,7 @@ def main():
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
-    sendAddText('sssss', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
     return 
 
