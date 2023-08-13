@@ -257,7 +257,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
 
     jres = jres['newsItems']
-    print(jres)
+    # print(jres)
 
     try:
         FIRST_ARTICLE_URL = jres[0]['url'].strip()
@@ -378,12 +378,12 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
+    # # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # if SEND_YN == 'Y' : r = ''
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return ''
     
 
     # NaverNews 게시판에 따른 URL 지정
@@ -393,29 +393,59 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
+    print(jres['newsList'])
     for news in jres['newsList']:
+        
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+        if ARTICLE_BOARD_ORDER == 0:    # 실시간 속보 로직
+            if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+                nNewArticleCnt += 1 # 새로운 게시글 수
+                if len(sendMessageText) < 3500:
+                    sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                else:
+                    print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                    print(sendMessageText)
+                    sendText(GetSendMessageTitle() + sendMessageText)
+                    nNewArticleCnt = 0
+                    sendMessageText = ''
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+            elif SEND_YN == 'N':
+                print('###점검중 확인요망###')
+            else:
+                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+                if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                    print('최신 게시글이 채널에 발송 되어 있습니다.')
+                    return
+                else: break
+
+        else:                           # 가장 많이 본 뉴스 로직
+            print('***************가장 많이본 ***************')
+
+            dt = news['dt'].strip()
+            print(dt)
+            
+            if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+                nNewArticleCnt += 1 # 새로운 게시글 수
+                if len(sendMessageText) < 3500:
+                    sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                else:
+                    print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                    print(sendMessageText)
+                    sendText(GetSendMessageTitle() + sendMessageText)
+                    nNewArticleCnt = 0
+                    sendMessageText = ''
+
+            elif SEND_YN == 'N':
+                print('###점검중 확인요망###')
+            else:
+                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+                if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                    print('최신 게시글이 채널에 발송 되어 있습니다.')
+                    return
+                else: break
+
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
@@ -426,164 +456,6 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
-def NAVER_Report_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER      = 900
-    ARTICLE_BOARD_ORDER = 900
-
-    requests.packages.urllib3.disable_warnings()
-
-
-    # 네이버 증권 리서치 기업
-    TARGET_URL_0 = 'https://m.stock.naver.com/front-api/v1/research/list?category=company'
-    # 네이버 증권 리서치 산업
-    TARGET_URL_1 = 'https://m.stock.naver.com/front-api/v1/research/list?category=industry'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
-
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(1)
- 
-# JSON API 타입
-def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
-
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-
-    if rescode != 200 :return print("네이버 레포트 접속이 원활하지 않습니다 ")
-
-    try: jres = json.loads(response.read().decode('utf-8'))
-    except: return True
-    
-    jres = jres['result']
-    FIRST_ARTICLE_TITLE = jres[0]['title']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스 투자정보 리서치)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    print('********************')
-    print('SEND_YN', SEND_YN)
-    print(r)
-    if SEND_YN == 'Y' : r = ''
-    print('********************')
-    print(r)
-    r = True
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    else:
-        print('&&&&&&&&&&&&& ', r)
-
-    # NaverNews 게시판에 따른 URL 지정
-    if ARTICLE_BOARD_ORDER == 0:category = 'company'
-    else:                      category = 'industry'
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    brokerName = jres[0]['brokerName']
-    # JSON To List
-    for research in jres:
-        # print('***************************')
-        print(research)
-        LIST_ARTICLE_URL = research['endUrl'] 
-        LIST_ARTICLE_URL = NAVER_Report_parseURL(LIST_ARTICLE_URL)
-        LIST_ARTICLE_TITLE = research['title']
-        if ARTICLE_BOARD_ORDER == 0 : LIST_ARTICLE_TITLE = research['itemName'] +": "+ LIST_ARTICLE_TITLE # 기업분석
-        else:                         LIST_ARTICLE_TITLE = research['category'] +": "+ LIST_ARTICLE_TITLE # 산업분석
-        # if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '신한투자증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        
-        '''
-        {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
-        'itemName': '아모레퍼시픽', 'researchId': 65663, 'title': '기다림은 길어지지만 방향성은 분명', 
-        'brokerName': '한화투자증권', 'writeDate': '2023-06-23', 'readCount': '708', 
-        'endUrl': 'https://m.stock.naver.com/research/company/65663'}
-
-        {'researchCategory': '산업분석', 'category': '기타', 'researchId': 33786, 
-        'title': '한화 항공/방위산업 Weekly', 'brokerName': '한화투자증권', 'writeDate': '2023-06-23', 
-        'readCount': '288', 'endUrl': 'https://m.stock.naver.com/research/industry/33786'}
-        '''
-        print('NXT_KEY ' , NXT_KEY)
-        print('LIST_ARTICLE_TITLE ', LIST_ARTICLE_TITLE)
-        
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3000:
-                # 회사명 출력
-                if nNewArticleCnt == 1 or brokerName != research['brokerName'] : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
-                    sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
-                    brokerName = research['brokerName'] # 회사명 키 변경
-                # 종목 & 산업 출력
-                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
-                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                # 레포트 제목 출력
-                # sendMessageText += research['title'] + "\n"
-                # 레포트 URL 출력
-                # sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
-                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
-                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendText(GetSendMessageTitle() + sendMessageText)
-        # sendMessageText = ''
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
-
-def NAVER_Report_parseURL(LIST_ARTICLE_URL):
-    strUrl = ''
-    request = urllib.request.Request(LIST_ARTICLE_URL, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request).read() 
-
-    # HTML parse
-    soup = BeautifulSoup(response, "html.parser")
-    # print(soup)
-    soupList = soup.select_one('#content > div.fs3 > div > div.ArticleDetailHeaderTools_article__jSo5t.ArticleDetailHeaderTools_article_original__A_8Dq > a')
-    strUrl = soupList.attrs['href']
-
-    return strUrl
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -1256,8 +1128,6 @@ def main():
     print(GetCurrentDay())
     
     print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle(); return
-
-    
 
 
 if __name__ == "__main__":
