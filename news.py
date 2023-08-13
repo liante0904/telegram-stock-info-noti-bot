@@ -257,7 +257,6 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
 
     jres = jres['newsItems']
-    # print(jres)
 
     try:
         FIRST_ARTICLE_URL = jres[0]['url'].strip()
@@ -378,12 +377,12 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
-    # # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-    # if SEND_YN == 'Y' : r = ''
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return ''
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
     
 
     # NaverNews 게시판에 따른 URL 지정
@@ -393,59 +392,29 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
-    print(jres['newsList'])
     for news in jres['newsList']:
-        
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit'].strip()
 
-        if ARTICLE_BOARD_ORDER == 0:    # 실시간 속보 로직
-            if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                if len(sendMessageText) < 3500:
-                    sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                else:
-                    print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                    print(sendMessageText)
-                    sendText(GetSendMessageTitle() + sendMessageText)
-                    nNewArticleCnt = 0
-                    sendMessageText = ''
-
-            elif SEND_YN == 'N':
-                print('###점검중 확인요망###')
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
             else:
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-                if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                    print('최신 게시글이 채널에 발송 되어 있습니다.')
-                    return
-                else: break
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
 
-        else:                           # 가장 많이 본 뉴스 로직
-            print('***************가장 많이본 ***************')
-
-            dt = news['dt'].strip()
-            print(dt)
-            
-            if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                if len(sendMessageText) < 3500:
-                    sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                else:
-                    print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                    print(sendMessageText)
-                    sendText(GetSendMessageTitle() + sendMessageText)
-                    nNewArticleCnt = 0
-                    sendMessageText = ''
-
-            elif SEND_YN == 'N':
-                print('###점검중 확인요망###')
-            else:
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-                if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                    print('최신 게시글이 채널에 발송 되어 있습니다.')
-                    return
-                else: break
-
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
@@ -1128,7 +1097,6 @@ def main():
     print(GetCurrentDay())
     
     print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle(); return
-
 
 if __name__ == "__main__":
 	main()
