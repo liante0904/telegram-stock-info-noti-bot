@@ -604,7 +604,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     try:
         ARTICLE_BOARD_NAME =  GetBoardName() 
-        FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+        FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
         a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
@@ -646,7 +646,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text.strip()
+        LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
         a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
