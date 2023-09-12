@@ -805,6 +805,205 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+def Hmsec_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 9
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 현대차증권 투자전략
+    TARGET_URL_0 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=1'
+    
+    # 현대차증권 Report & Note 
+    TARGET_URL_1 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=2' 
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                
+    return sendMessageText
+ 
+def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+
+    payload = {"curPage":1}
+
+    jres = ''
+    try:
+        webpage = requests.post(url=TARGET_URL ,data=payload , headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
+        print(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return ''
+        
+    print(jres['data_list'])
+    
+    FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT'].strip()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    
+    REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+    print('REG_DATE:',REG_DATE)
+    
+    FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
+    print('FILE_NAME:',FILE_NAME)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', GetBoardName() )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', GetFirmName() ,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in jres['data_list']:
+        print(list)
+        # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
+        LIST_ATTACHMENT_URL = 'https://www.hmsec.com/documents/research/{}' 
+        LIST_ATTACHMENT_URL = LIST_ATTACHMENT_URL.format(list['UPLOAD_FILE1'])
+
+        # https://docs.hmsec.com/SynapDocViewServer/job?fid=#&sync=true&fileType=URL&filePath=#
+        LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}' 
+        LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(LIST_ATTACHMENT_URL, LIST_ATTACHMENT_URL)
+
+        LIST_ARTICLE_TITLE = list['SUBJECT'].strip().replace('현대차증권 리서치센터',GetCurrentDate('YYYY/HH/MM'))
+
+        REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+        print(jres['data_list'])
+        SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
+        print('REG_DATE:',REG_DATE)
+        print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
+        print('SERIAL_NO:',SERIAL_NO)
+
+        if ( NXT_KEY != REG_DATE or NXT_KEY == '' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # GET Content
+                # payload = {
+                #     "Menu_category": 6,
+                #     "queryType": "",
+                #     "serialNo": 30132,
+                #     "curPage": 1
+                # }
+                # jres = ''
+                # try:
+                #     webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
+                #     print(webpage.text)
+                # except:
+                #     return False
+
+                # # HTML parse
+                # soup = BeautifulSoup(webpage.content, "html.parser")
+                # soupList = soup.select('body > div > table > tbody > tr')
+                # return ""
+                print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+            
+    print(sendMessageText)
+    return sendMessageText
+
+def Hmsec_MessageText(SERIAL_NO):
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 9
+
+    sendMessageText = ''
+    # GET Content
+    payload = {
+        "Menu_category": 6,
+        "queryType": "",
+        "serialNo": SERIAL_NO,
+        "curPage": 1
+    }
+    
+    webpage = ''
+    try:
+        webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
+        # print(webpage.text)
+    except:
+        print(webpage)
+        return webpage
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # soupList = soup.select('body > div > table > tbody > tr')
+    soupList = soup.select('#content > div.view_con')
+
+    r = ''
+    # print(soupList)
+    for list in soupList:
+        r = str(list.text).strip()
+        r = r.replace("What's Inside","* ▶ What's Inside*")
+        r = r.replace("New Issue","* ▶ New Issue*")
+        r = r.replace("New Publication","* ▶ New Publication*")
+        r = r.replace("\n","\n -")
+        r = r.replace(" -* ▶ New Issue*","* ▶ New Issue*")
+        r = r.replace(" -* ▶ New Publication*","* ▶ New Publication*")
+
+        r = r.replace("\n -\n*","\n \n*")
+        # r = r.replace("-\n","-")
+        # r = r.replace("-\n ","-")
+
+
+        # print(r)
+        # filter = ["What's Inside","New Issue","New Publication"]
+        # print(r in filter)
+        # if r in filter:
+        #     r = "*"+ r + "*"
+        # else:
+        #     r = "- " + r
+        # sendMessageText = r
+        
+    sendMessageText = r
+    # sendText(GetSendMessageTitle() + r)
+    # time.sleep(10)
+    return sendMessageText
+
+
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1972,6 +2171,11 @@ def main():
         r = Kiwoom_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
+        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+        r = Hmsec_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+ 
+
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
@@ -2023,7 +2227,7 @@ def main():
     fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-
+    
     print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
     r = EBEST_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
@@ -2042,6 +2246,10 @@ def main():
 
     print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
     r = Kiwoom_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+    r = Hmsec_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
