@@ -849,7 +849,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
     print(jres['data_list'])
     
-    FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT'].strip()
+    FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     
     REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
@@ -891,7 +891,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}' 
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(LIST_ATTACHMENT_URL, LIST_ATTACHMENT_URL)
 
-        LIST_ARTICLE_TITLE = list['SUBJECT'].strip().replace('현대차증권 리서치센터',GetCurrentDate('YYYY/HH/MM'))
+        LIST_ARTICLE_TITLE = list['SUBJECT']
 
         REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
         print(jres['data_list'])
@@ -900,10 +900,11 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
         print('SERIAL_NO:',SERIAL_NO)
 
-        if ( NXT_KEY != REG_DATE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                LIST_ARTICLE_TITLE = list['SUBJECT'].strip().replace('현대차증권 리서치센터',GetCurrentDate('YYYY/HH/MM'))
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  GetBoardName() ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # GET Content
                 # payload = {
@@ -2223,8 +2224,8 @@ def main():
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
     
-    print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-    fnguideTodayReport_checkNewArticle()
+    # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+    # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
     
