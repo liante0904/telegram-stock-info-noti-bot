@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
 import googledrive
+import secretkey
 
 from requests import get  # to make GET request
 
@@ -946,6 +947,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Hmsec_MessageText(SERIAL_NO):
+
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -1003,6 +1005,146 @@ def Hmsec_MessageText(SERIAL_NO):
     # time.sleep(10)
     return sendMessageText
 
+def HankyungConsen_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 12
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 하나금융 Daily
+    TARGET_URL =  'https://consensus.hankyung.com/' #'http://www.bnkfn.co.kr/research/analysingCompany.jspx'
+
+
+    sendMessageText = ''
+    try:
+        sendMessageText += HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    except:
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+                
+    return sendMessageText
+
+    # TARGET_URL_TUPLE = (TARGET_URL)
+
+    # sendMessageText = ''
+    # # URL GET
+    # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    #     try:
+    #         sendMessageText += HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    #     except:
+    #         if len(sendMessageText) > 3500:
+    #             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+    #             sendAddText(GetSendMessageTitle() + sendMessageText)
+    #             sendMessageText = ''
+                
+    # return sendMessageText
+
+def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+    # TARGET_URL = 'https://consensus.hankyung.com/analysis/list?sdate=2023-03-15&edate=2023-09-15&now_page=1&search_value=&report_type=&pagenum=20&search_text=&business_code='
+    try:
+        webpage = requests.get(TARGET_URL, verify=False, headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
+    except:
+        return True
+
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # print(soup)
+    # return 
+    soupList = soup.select('#contents > div.table_style01 > table > tbody > tr')
+    print(soupList)
+    try:
+        ARTICLE_BOARD_NAME =  GetBoardName() 
+        FIRST_ARTICLE_TITLE = soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td.text_l > a')[FIRST_ARTICLE_INDEX].text
+        FIRST_ARTICLE_URL =  'https://consensus.hankyung.com' + soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td:nth-child(6) > div > a')[FIRST_ARTICLE_INDEX].attrs['href']
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', GetBoardName() )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # if SEND_YN == 'Y' : r = ''
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return '' 
+    
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    brokerName = soup.select('#contents > div.table_style01 > table > tbody > tr.first > td:nth-child(5)')[FIRST_ARTICLE_INDEX].text
+    print('brokerName' ,brokerName)
+    for list in soupList:
+        
+        print('*****************')
+        # print(list)
+        LIST_ARTICLE_TITLE = list.select_one('#contents > div.table_style01 > table > tbody > tr > td.text_l > a').text
+        LIST_ARTICLE_URL =  'https://consensus.hankyung.com' + list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(6) > div > a').attrs['href']
+        LIST_ARTICLE_BROKER_NAME =list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(5)').text
+
+        print(LIST_ARTICLE_TITLE)
+        print(LIST_ARTICLE_URL)
+        print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
+        ATTACH_URL = LIST_ARTICLE_URL
+        
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            # 회사명 출력
+            if nNewArticleCnt == 1 or brokerName != LIST_ARTICLE_BROKER_NAME : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
+                sendMessageText += "\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
+                brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
+
+            if len(sendMessageText) < 3500:
+                ATTACH_URL = LIST_ARTICLE_URL
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
 
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1016,6 +1158,7 @@ def ChosunBizBot_checkNewArticle():
     # 조선Biz Cbot API
     # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
+    # https://consensus.hankyung.com/analysis/list?search_date=3m&pagenum=1000
     
     # 조선Biz 웹 크롤링 변경
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
@@ -1703,6 +1846,7 @@ def GetSendMessageTitle():
     
     return SendMessageTitle
 
+
 def GetSendChatId():
     SendMessageChatId = 0
     if SEC_FIRM_ORDER == 998:
@@ -1716,6 +1860,8 @@ def GetSendChatId():
             SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
     elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
         SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
+    elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
     else:
         SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
@@ -2063,6 +2209,7 @@ def GetCurrentDay(*args):
     return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
 def GetSecretKey(*args):
+    global SECRETS # 시크릿 키
     global CLEARDB_DATABASE_URL
     global TELEGRAM_BOT_INFO
     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
@@ -2073,9 +2220,11 @@ def GetSecretKey(*args):
     global TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT
     global TELEGRAM_CHANNEL_ID_REPORT_ALARM
     global TELEGRAM_CHANNEL_ID_TODAY_REPORT
+    global TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
     global IS_DEV
+    
 
     SECRETS = ''
     print(os.getcwd())
@@ -2092,6 +2241,7 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   SECRETS['TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT']
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
+        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   SECRETS['TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN']
         TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
         IS_DEV                                      =   True
@@ -2106,6 +2256,7 @@ def GetSecretKey(*args):
         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
+        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   os.environ.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
@@ -2131,7 +2282,6 @@ def isNxtKey(*args):
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
-    global SECRETS # 시크릿 키
     global INTERVAL_TIME # 새로고침 주기 - 파일
     global TEST_SEND_YN
 
@@ -2150,6 +2300,13 @@ def main():
         sendMessageText = ''
         # fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+
+        # print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
+        # r = HankyungConsen_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
         print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
         r = EBEST_checkNewArticle()
