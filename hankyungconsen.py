@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
 import googledrive
-import secretkey
+# import secretkey
 
 from requests import get  # to make GET request
 
