@@ -39,6 +39,7 @@ SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
 INTERVAL_TIME = 3 # 10분 단위 적용
 INTERVAL_INIT_TIME = 1
 # secrets 
+SECRETS                                             = ""
 CLEARDB_DATABASE_URL                                = ""
 TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -48,10 +49,10 @@ TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
 TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
 TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
+TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
-SECRETS = ""
 
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
@@ -466,7 +467,6 @@ def HANA_checkNewArticle():
                 
     return sendMessageText
 
- 
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
@@ -589,7 +589,6 @@ def Samsung_checkNewArticle():
                 
     return sendMessageText
 
- 
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
@@ -1156,9 +1155,7 @@ def ChosunBizBot_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # 조선Biz Cbot API
-    # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
-    # https://consensus.hankyung.com/analysis/list?search_date=3m&pagenum=1000
     
     # 조선Biz 웹 크롤링 변경
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
@@ -1590,12 +1587,10 @@ def fnguideTodayReport_checkNewArticle():
 
     return True
 
-
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
-
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -1648,7 +1643,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-
 # URL 발신용 전용 함수 : ex) 네이버 뉴스
 def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
@@ -1670,7 +1664,6 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-
 
 def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     print('sendPhoto()')
@@ -1846,7 +1839,6 @@ def GetSendMessageTitle():
     
     return SendMessageTitle
 
-
 def GetSendChatId():
     SendMessageChatId = 0
     if SEC_FIRM_ORDER == 998:
@@ -1940,7 +1932,6 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
-
 
 def MySQL_Open_Connect():
     global conn
@@ -2438,7 +2429,6 @@ def main():
             print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
             print('CASE5')
         return 
-
 
 if __name__ == "__main__":
 	main()

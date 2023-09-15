@@ -39,6 +39,7 @@ SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
 INTERVAL_TIME = 3 # 10분 단위 적용
 INTERVAL_INIT_TIME = 1
 # secrets 
+SECRETS                                             = ""
 CLEARDB_DATABASE_URL                                = ""
 TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -48,10 +49,10 @@ TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
 TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
 TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
+TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
-SECRETS = ""
 
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
