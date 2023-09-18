@@ -5,6 +5,9 @@
 *.key
 *.pdf
 secrets.json
+storage.json
+client_drive.json
+gitignore/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
