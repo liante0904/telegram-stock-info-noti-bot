@@ -74,23 +74,6 @@ FIRM_NAME = (
     # "유안타증권",           # 4
 )
 
-# 게시판 이름
-BOARD_NAME = (
-    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
-    [ "산업분석", "기업분석" ],                                                                      # 1 = 신한금융투자
-    [ "산업리포트", "기업리포트" ],                                                                       # 2
-    [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
-    [ "기업분석", "산업 및 이슈분석" ],                                                                  # 4
-    [ "국내기업분석", "국내산업분석", "해외기업분석" ],                                                      # 5
-    [ " " ],                                                                                        # 6 (교보는 게시판 내 게시판 분류 사용)
-    [ "기업분석", "투자전략/경제분석"],                                                                  # 7 
-    [ "기업분석"],                                                # 8 
-    [ "Daily"],                                                # 9
-    [ "기업분석", "산업분석"],                                                # 10 
-    [ "기업분석", "산업분석", "탐방노트", "해외주식"]                                                # 11 
-    # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
-)
-
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -166,7 +149,7 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print(soup)
     soupList = soup.select('#contents > div.table_style01 > table > tbody > tr')
     try:
-        ARTICLE_BOARD_NAME =  GetBoardName() 
+        ARTICLE_BOARD_NAME =  BOARD_NM
         FIRST_ARTICLE_TITLE = soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td.text_l > a')[FIRST_ARTICLE_INDEX].text
         FIRST_ARTICLE_URL =  'https://consensus.hankyung.com' + soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td:nth-child(6) > div > a')[FIRST_ARTICLE_INDEX].attrs['href']
     except:
@@ -180,11 +163,11 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', GetBoardName() )
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM)
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', GetBoardName() ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
@@ -738,16 +721,6 @@ def GetFirmName(*args):
         strFirmName = ''
         
     return strFirmName
-# 게시판명을 가져옵니다. 
-def GetBoardName(*args):
-    strBoardName = ''
-    try :
-        strBoardName = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    except :
-        print('GetBoardName except')
-        strBoardName = ''
-        
-    return strBoardName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
