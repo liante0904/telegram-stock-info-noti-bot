@@ -72,23 +72,6 @@ FIRM_NAME = (
     # "유안타증권",           # 4
 )
 
-# 게시판 이름
-BOARD_NAME = (
-    [ "이슈브리프" , "기업분석", "산업분석", "투자전략", "Quant", "Macro", "FI/ Credit", "Commodity" ], # 0 = 이베스트
-    [ "산업분석", "기업분석" ],                                                                      # 1 = 신한금융투자
-    [ "산업리포트", "기업리포트" ],                                                                       # 2
-    [ "Daily", "산업분석", "기업분석", "주식전략", "Small Cap", "기업 메모", "Quant", "포트폴리오", "투자정보" ],            # 3
-    [ "기업분석", "산업 및 이슈분석" ],                                                                  # 4
-    [ "국내기업분석", "국내산업분석", "해외기업분석" ],                                                      # 5
-    [ " " ],                                                                                        # 6 (교보는 게시판 내 게시판 분류 사용)
-    [ "기업분석", "투자전략/경제분석"],                                                                  # 7 
-    [ "기업분석"],                                                # 8 
-    [ "Daily"],                                                # 9
-    [ "기업분석", "산업분석"],                                                # 10 
-    [ "기업분석", "산업분석", "탐방노트", "해외주식"]                                                # 11 
-    # [ "투자전략", "Report & Note", "해외주식" ],               # 4 => 유안타 데이터 보류 
-)
-
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -964,16 +947,6 @@ def GetFirmName(*args):
         strFirmName = ''
         
     return strFirmName
-# 게시판명을 가져옵니다. 
-def GetBoardName(*args):
-    strBoardName = ''
-    try :
-        strBoardName = BOARD_NAME[SEC_FIRM_ORDER][ARTICLE_BOARD_ORDER]
-    except :
-        print('GetBoardName except')
-        strBoardName = ''
-        
-    return strBoardName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
