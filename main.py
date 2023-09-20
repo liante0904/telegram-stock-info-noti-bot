@@ -19,7 +19,10 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
+
+# TEST 
 # from package import herokuDB
+# from package import SecretKey
 
 # import secretkey
 
@@ -60,23 +63,6 @@ IS_DEV                                              = ""
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
 
-# 회사이름
-FIRM_NAME = (
-    "이베스트 투자증권",    # 0
-    "신한금융투자",             # 1
-    "상상인증권",           # 2
-    "하나증권",          # 3
-    "한양증권",              # 4
-    "삼성증권",              # 5
-    "교보증권",              # 6
-    "DS투자증권",             # 7
-    "SMIC(서울대 가치투자)",             # 8
-    "현대차증권",             # 9
-    "키움증권",             # 10
-    "신영증권"
-    # "유안타증권",           # 4
-)
-
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -84,19 +70,26 @@ cursor  = ''
 # 연속키URL
 NXT_KEY = ''
 NXT_KEY_ARTICLE_TITLE = ''
+
 # 게시판 URL
 BOARD_URL = ''
+
 # 테스트 발송여부
 TEST_SEND_YN = ''
+
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
 TODAY_SEND_YN = ''
+
 # 텔레그램 마지막 메세지 발송시간(단위 초)
 SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
+
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
+
 # SendAddText 글로벌 변수
 SEND_ADD_MESSAGE_TEXT = ''
+
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -221,10 +214,12 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
                 ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
-                if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
-                    LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                    LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
+                # if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
+                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
 
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -2347,8 +2342,8 @@ def main():
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
     
-    # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-    # fnguideTodayReport_checkNewArticle()
+    print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+    fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
     
