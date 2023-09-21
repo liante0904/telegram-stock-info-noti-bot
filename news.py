@@ -329,7 +329,6 @@ def NAVERNews_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(1)
  
 # JSON API 타입
 def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -407,7 +406,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendText(GetSendMessageTitle() + sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
         # sendMessageText = ''
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
