@@ -24,7 +24,7 @@ def MySQL_Open_Connect():
     cursor = conn.cursor()
     return cursor
 
-def SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global FIRM_NM
     global BOARD_NM
     global BOARD_URL
@@ -56,7 +56,7 @@ def SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-def SelSleepKey(*args):
+def DB_SelSleepKey(*args):
     global NXT_KEY
     global TEST_SEND_YN
     global SEND_YN
@@ -82,7 +82,7 @@ def SelSleepKey(*args):
     SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
     return SleepTuple
 
-def DelSleepKey(*args):
+def DB_DelSleepKey(*args):
     cursor = MySQL_Open_Connect()
     dbQuery  = " DELETE  FROM nxt_key		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
     dbResult = cursor.execute(dbQuery)
@@ -90,7 +90,7 @@ def DelSleepKey(*args):
     conn.close()
     return dbResult
 
-def InsSleepKey(*args):
+def DB_InsSleepKey(*args):
     global NXT_KEY
     global TEST_SEND_YN
     global conn
@@ -101,7 +101,7 @@ def InsSleepKey(*args):
     conn.close()
     return dbQuery
 
-def InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
     global TEST_SEND_YN
     global conn
@@ -113,7 +113,7 @@ def InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     conn.close()
     return NXT_KEY
 
-def UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
+def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
@@ -126,7 +126,7 @@ def UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICL
     conn.close()
     return dbResult
 
-def UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
+def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
