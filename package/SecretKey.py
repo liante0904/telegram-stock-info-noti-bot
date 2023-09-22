@@ -75,8 +75,6 @@ class SecretKey:
             self.TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
             self.IS_DEV                                      =   False
         
-
-
 def GetSecretKey():
 
     print(os.getcwd())
@@ -87,7 +85,7 @@ def GetSecretKey():
     if os.path.isfile(j): # 로컬 개발 환경
         with open(j) as f:
             SECRETS = json.loads(f.read())
-            print("SECRETS:",SECRETS)
+            # print("SECRETS:",SECRETS)
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
