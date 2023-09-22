@@ -179,10 +179,7 @@ def fnguideTodayReport_checkNewArticle():
             listIsu = listIsu.text
         except:
             continue
-        print('***************오류********** == 시작')
-        print(listIsu)
-        print('***************오류********** ==> 끝')
-
+        
         listIsu = listIsu.replace("`","")
         listIsu = listIsu.split("|")
         strIsuNm = listIsu[0].strip()
@@ -251,17 +248,17 @@ def fnguideTodayReport_checkNewArticle():
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = SECRETKEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
 
 # 최초 send함수
@@ -279,7 +276,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #생성한 텔레그램 봇 정보 출력
     #me = bot.getMe()
@@ -318,7 +315,7 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #생성한 텔레그램 봇 정보 출력
     #me = bot.getMe()
@@ -331,7 +328,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
     print('sendPhoto()')
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -341,7 +338,7 @@ def sendText(sendMessageText):
     global CHAT_ID
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -389,7 +386,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
@@ -505,21 +502,21 @@ def GetSendChatId():
     SendMessageChatId = 0
     if SEC_FIRM_ORDER == 998:
         if  ARTICLE_BOARD_ORDER == 0 : 
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
+            SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
         else:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
+            SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
     elif SEC_FIRM_ORDER == 997:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
+            SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
     elif SEC_FIRM_ORDER == 995:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
+            SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
     elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
+        SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
     elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
+        SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
     else:
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
+        SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
     
-    # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
+    # SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_TEST
     return SendMessageChatId
 
 def GetJsonData(TARGET_URL, METHOD_TYPE):
