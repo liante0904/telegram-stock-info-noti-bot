@@ -47,21 +47,6 @@ SECRETKEY = ""
 SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
 INTERVAL_TIME = 3 # 10분 단위 적용
 INTERVAL_INIT_TIME = 1
-# secrets 
-# SECRETS                                             = ""
-# CLEARDB_DATABASE_URL                                = ""
-# TELEGRAM_BOT_INFO                                   = ""
-# TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
-# TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET             = ""
-# TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS                 = ""
-# TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
-# TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
-# TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
-# TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
-# TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
-# TELEGRAM_CHANNEL_ID_TEST                            = ""
-# TELEGRAM_USER_ID_DEV                                = ""
-# IS_DEV                                              = ""
 
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
@@ -135,16 +120,18 @@ def fnguideTodayReport_checkNewArticle():
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "0")
         return True
 
+# 0시 발송여부 초기화 
     if int(GetCurrentTime('HH')) == 0: 
         dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
         return True
-    # 오늘의 레포트 발송조건
-    # 평일, 09시, 17시 (주말이거나 9시, 17시가 아닌 경우 호출하지 않음)
     
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
-    if TODAY_SEND_YN == 'Y' : return True
-    if int(GetCurrentTime('HH')) == 9 or int(GetCurrentTime('HH')) == 17  : pass
-    else: return True
+    # 오늘의 레포트 발송조건
+    # 평일, 09시, 17시 (주말이거나 9시, 17시가 아닌 경우 호출하지 않음) => crontab 에서 구현
+    # if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
+    # if TODAY_SEND_YN == 'Y' : return True
+    # if int(GetCurrentTime('HH')) == 9 or int(GetCurrentTime('HH')) == 17  : pass
+    # else: return True
+    
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
@@ -848,59 +835,6 @@ def GetCurrentDay(*args):
     DATE_SPLIT = DATE.split("-")
     return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
-# def GetSecretKey(*args):
-#     global SECRETS # 시크릿 키
-#     global CLEARDB_DATABASE_URL
-#     global TELEGRAM_BOT_INFO
-#     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
-#     global TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET
-#     global TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS
-#     global TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS
-#     global TELEGRAM_CHANNEL_ID_ITOOZA
-#     global TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT
-#     global TELEGRAM_CHANNEL_ID_REPORT_ALARM
-#     global TELEGRAM_CHANNEL_ID_TODAY_REPORT
-#     global TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
-#     global TELEGRAM_CHANNEL_ID_TEST
-#     global TELEGRAM_USER_ID_DEV
-#     global IS_DEV
-    
-
-#     SECRETS = ''
-#     print(os.getcwd())
-#     if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
-#         with open("secrets.json") as f:
-#             SECRETS = json.loads(f.read())
-#         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
-#         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
-#         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
-#         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
-#         TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS']
-#         TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS']
-#         TELEGRAM_CHANNEL_ID_ITOOZA                  =   SECRETS['TELEGRAM_CHANNEL_ID_ITOOZA']
-#         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   SECRETS['TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT']
-#         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
-#         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
-#         TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   SECRETS['TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN']
-#         TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
-#         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
-#         IS_DEV                                      =   True
-#     else: # 서버 배포 환경(heroku)
-#         CLEARDB_DATABASE_URL                        =   os.environ.get('CLEARDB_DATABASE_URL')
-#         TELEGRAM_BOT_INFO                           =   os.environ.get('TELEGRAM_BOT_INFO')
-#         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-#         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-#         TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
-#         TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
-#         TELEGRAM_CHANNEL_ID_ITOOZA                  =   os.environ.get('TELEGRAM_CHANNEL_ID_ITOOZA')
-#         TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
-#         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-#         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-#         TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   os.environ.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
-#         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
-#         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
-#         IS_DEV                                      =   False
-
 # 첫 게시글과 연속키 일치 여부를 판별 
 # 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
 # 불일치(FALSE)=> 새 게시물이 게시되어 전송함
@@ -966,7 +900,6 @@ def main():
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
     return 
-
 
 if __name__ == "__main__":
 	main()

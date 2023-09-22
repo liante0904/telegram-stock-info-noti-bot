@@ -2033,8 +2033,8 @@ def main():
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
     
-    print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-    fnguideTodayReport_checkNewArticle()
+    # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
+    # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
     
