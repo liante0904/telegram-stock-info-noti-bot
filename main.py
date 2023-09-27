@@ -787,7 +787,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
         a_href = a_href[1]
-        LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
+        LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf&inlineYn=Y'
         fileNameArray = a_href.split("/")
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
