@@ -771,7 +771,12 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
-    
+
+    # for list in soupList:
+    #     LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
+    #     if NXT_KEY == LIST_ARTICLE_TITLE: break
+    #     else: DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -782,8 +787,8 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
-        a_href = list.select('#content > section.bbsLstWrap > ul > li > a')[FIRST_ARTICLE_INDEX].attrs['href']
+        LIST_ARTICLE_TITLE = list.select_one('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong').text
+        a_href = list.select_one('#content > section.bbsLstWrap > ul > li > a').attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
         a_href = a_href[1]
