@@ -487,23 +487,35 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        print(nNewArticleCnt)
+        print('*******************************')
+        print(list)
         # rshpprditcd
+        # CODE  =  list.select_one('#cont_body > article:nth-child(2) > div > ul > li').attrs['rshpprditcd']
+        # print('*****************CODE', CODE)
+        # if CODE == "02": continue
         # 01 = 기업, 02= 시황, 
         BOARD_NM            = list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a > div > p:nth-child(1)').text
-        if "시황" in BOARD_NM: continue
+        # if "시황" in BOARD_NM: continue
         LIST_ARTICLE_TITLE = list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a > div > p:nth-child(2)').text
         LIST_ARTICLE_URL =  'https://m.nhqv.com/' + list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a').attrs['href']
+
+        # CODE =  'https://m.nhqv.com/' + list.select_one('#cont_body > article:nth-child(2) > div > ul > li').text
+        # print(CODE)
         #\30 00000000000119502 > a > div > p.tit
         # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
-        print("이상혀", LIST_ARTICLE_TITLE)
+
+        if "Morning"in LIST_ARTICLE_TITLE : continue
+        if "대체투자"in LIST_ARTICLE_TITLE : continue
         
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 LIST_ARTICLE_URL = NHQV_parseURL(LIST_ARTICLE_URL=LIST_ARTICLE_URL)
                 # 기업, 산업 레포트만 구글 드라이브 저장
-                if "기업" == BOARD_NM or "산업 " == BOARD_NM: DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                # if "기업" == BOARD_NM or "산업 " == BOARD_NM: 
+                print(LIST_ARTICLE_URL)
+                LIST_ARTICLE_URL = DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                print(LIST_ARTICLE_URL)
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -511,7 +523,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print(sendMessageText)
                 nNewArticleCnt = 0
                 sendMessageText = ''
-
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -532,9 +543,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def NHQV_parseURL(LIST_ARTICLE_URL):
     r = LIST_ARTICLE_URL.split("rshPprNo=")
-    
-    print(r)
-    strUrl = ''
+    # print(r)
     
     payload = {
         "trName": "H3212",
@@ -550,15 +559,16 @@ def NHQV_parseURL(LIST_ARTICLE_URL):
     print(jres)
     print("########함수 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ")
     
-    # # if jres['totalCount'] == 0 : return ''
+    strUrl = ''
     print(jres['H3212']['H3212OutBlock1'][0])
-    print("########함수 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ jres")
-    # print(jres['H3212']['H3212OutBlock1'][1])
-    
-    
-    strUrl = jres['H3212']['H3212OutBlock1'][0]['hpgeFleUrlCts']
-    
-    print(strUrl)
+    try:
+        strUrl = jres['H3212']['H3212OutBlock1'][0]['hpgeFleUrlCts']
+    except:
+        strUrl = LIST_ARTICLE_URL
+    # LIST_ARTICLE_URL
+
+    if len(strUrl) == 0: strUrl = LIST_ARTICLE_URL
+    print("strUrl:>>>>>", strUrl)
     return strUrl
 
 def HANA_checkNewArticle():
@@ -1568,8 +1578,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
-    print("DownloadFile()")
-
+    print("DownloadFile()",URL, FILE_NAME)
     if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
         # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
         CONVERT_URL = URL 
@@ -2125,29 +2134,29 @@ def main():
         # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
-        print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        r = EBEST_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # r = EBEST_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        r = ShinHanInvest_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+        # r = ShinHanInvest_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        r = HANA_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+        # r = HANA_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        r = Samsung_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # r = Samsung_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        r = Kiwoom_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # r = Kiwoom_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-        r = Hmsec_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+        # r = Hmsec_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
  
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2201,7 +2210,6 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-    
     print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
     r = EBEST_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
@@ -2210,9 +2218,9 @@ def main():
     r = ShinHanInvest_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
-    print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-    r = NHQV_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    # print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
+    # r = NHQV_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
     r = HANA_checkNewArticle()
