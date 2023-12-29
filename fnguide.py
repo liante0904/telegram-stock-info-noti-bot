@@ -891,7 +891,7 @@ def MySQL_Open_Connect():
     
     # clearDB 
     # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    url = urlparse.urlparse(SECRETKEY.CLEARDB_DATABASE_URL)
+    url = urlparse.urlparse(SECRETKEY.ORACLECLOUD_MYSQL_DATABASE_URL)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     cursor = conn.cursor()
     return cursor

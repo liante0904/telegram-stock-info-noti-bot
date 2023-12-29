@@ -22,6 +22,7 @@ class SecretKey:
      def __init__(self):
         self.SECRETS                                     = ""   # 시크릿 키
         self.CLEARDB_DATABASE_URL                        = ""
+        self.ORACLECLOUD_MYSQL_DATABASE_URL              = ""
         self.TELEGRAM_BOT_INFO                           = ""
         self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      = ""
         self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     = ""
@@ -46,6 +47,7 @@ class SecretKey:
                 SECRETS = json.loads(f.read())
                 print("SECRETS:",SECRETS)
             self.CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
+            self.ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL']
             self.TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
             self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
             self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
