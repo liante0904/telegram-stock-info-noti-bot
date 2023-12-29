@@ -47,6 +47,7 @@ INTERVAL_INIT_TIME = 1
 # secrets 
 SECRETS                                             = ""
 CLEARDB_DATABASE_URL                                = ""
+ORACLECLOUD_MYSQL_DATABASE_URL                      = ""
 TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
 TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET             = ""
@@ -1780,7 +1781,8 @@ def MySQL_Open_Connect():
     
     # clearDB 
     # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    url = urlparse.urlparse(CLEARDB_DATABASE_URL)
+    # MySQL
+    url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     cursor = conn.cursor()
     return cursor
@@ -2033,6 +2035,7 @@ def GetCurrentDay(*args):
 def GetSecretKey(*args):
     global SECRETS # 시크릿 키
     global CLEARDB_DATABASE_URL
+    global ORACLECLOUD_MYSQL_DATABASE_URL
     global TELEGRAM_BOT_INFO
     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
     global TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET
@@ -2054,6 +2057,8 @@ def GetSecretKey(*args):
         with open("secrets.json") as f:
             SECRETS = json.loads(f.read())
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
+        
+        ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL'] 
         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
