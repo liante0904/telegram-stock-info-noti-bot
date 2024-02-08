@@ -416,7 +416,8 @@ def NHQV_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # 삼성증권 기업 분석
-    TARGET_URL =  'https://m.nhqv.com/research/newestBoardList'
+    # TARGET_URL =  'https://m.nhqv.com/research/newestBoardList'
+    TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
     
     TARGET_URL_TUPLE = (TARGET_URL)
 
@@ -437,26 +438,62 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global TEST_SEND_YN
     global BOARD_NM
 
-    # webpage = requests.get('https://m.nhqv.com/research/newestBoardList', headers={'Content-Type':'text/html;charset=EUC-KR','User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36'})
-    # print(webpage)
-    try:
-        webpage = requests.get(TARGET_URL, headers={'Content-Type':'text/html;charset=EUC-KR','User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Mobile Safari/537.36'})
-        # print(webpage.text)
-    except:
-        return True
     
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    soupList = soup.select('#cont_body > article:nth-child(2) > div > ul > li')
-    # print(soupList)
+    strNxtRshPprNo = ""
+    payload = {
+        "trName": "H3211",
+        "rshPprDruTmSt": "00000000",
+        "rshPprDruDtSt": GetCurrentDate("YYYYMMDD"),
+        "rshPprDruDtEd": GetCurrentDate("YYYYMMDD"),
+        "rshPprNo": ""
+    }
     
-    try:
-        ARTICLE_BOARD_NAME =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soup.select('#cont_body > article:nth-child(2) > div > ul > li:nth-child(1) > a > div > p:nth-child(2)')[FIRST_ARTICLE_INDEX].text
-        FIRST_ARTICLE_URL =  'https://m.nhqv.com/' + soup.select('#cont_body > article:nth-child(2) > div > ul > li:nth-child(1) > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
+    r = ""
+    i = 1
+    listR = []
+    while True:
+        
+        print('************************************')
+        print(i, payload['rshPprNo'])
+        try:
+            webpage = requests.post(TARGET_URL,
+                                    headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+                                                        'Accept':'application/json, text/javascript, */*; q=0.01'},
+                                    data=payload)
+            # print(webpage.text)
+            jres = json.loads(webpage.text)
+            # print(jres)
+            
+        except:
+            
+            return True
+        
+        print(int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt']))
+        print(len(jres['H3211']['H3211OutBlock2']))
+        nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
+        
+        strList = jres['H3211']['H3211OutBlock2']
+        listR = listR + strList
+        
+        if nNewArticleCnt == 11: # 연속키 있음
+            payload['rshPprNo'] = jres['H3211']['H3211OutBlock2'][nNewArticleCnt-1]['rshPprNo']
+        
+        if nNewArticleCnt < 11: break
+        i = i +1
+    # 크롤링 종료
+
+    # 중복제거
+    r = []
+    for t in listR:
+        if t not in r:
+            r.append(t)
+    
+    
+    soupList = r
+
+    BOARD_NM            = listR[0]['rshPprSerCdNm']
+    FIRST_ARTICLE_TITLE = listR[0]['rshPprTilCts']
+    FIRST_ARTICLE_URL =  listR[0]['hpgeFleUrlCts']
 
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
@@ -471,52 +508,46 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return '' 
     
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
+    # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # if TEST_SEND_YN == 'Y' : r = False
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return '' 
+    
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    # print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    # print('연속URL:', NXT_KEY) # 주소
+    # print('############')
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
         print('*******************************')
         print(list)
-        # rshpprditcd
-        # CODE  =  list.select_one('#cont_body > article:nth-child(2) > div > ul > li').attrs['rshpprditcd']
-        # print('*****************CODE', CODE)
-        # if CODE == "02": continue
-        # 01 = 기업, 02= 시황, 
-        BOARD_NM            = list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a > div > p:nth-child(1)').text
-        # if "시황" in BOARD_NM: continue
-        LIST_ARTICLE_TITLE = list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a > div > p:nth-child(2)').text
-        LIST_ARTICLE_URL =  'https://m.nhqv.com/' + list.select_one('#cont_body > article:nth-child(2) > div > ul > li > a').attrs['href']
 
-        # CODE =  'https://m.nhqv.com/' + list.select_one('#cont_body > article:nth-child(2) > div > ul > li').text
-        # print(CODE)
-        #\30 00000000000119502 > a > div > p.tit
-        # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+        BOARD_NM            = list['rshPprSerCdNm']
+        LIST_ARTICLE_TITLE = list['rshPprTilCts']
+        LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
 
-        if "Morning"in LIST_ARTICLE_TITLE : continue
-        if "대체투자"in LIST_ARTICLE_TITLE : continue
+        print('BOARD_NM',BOARD_NM)
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+        print('NXT_KEY',NXT_KEY)
         
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                LIST_ARTICLE_URL = NHQV_parseURL(LIST_ARTICLE_URL=LIST_ARTICLE_URL)
-                # 기업, 산업 레포트만 구글 드라이브 저장
-                # if "기업" == BOARD_NM or "산업 " == BOARD_NM: 
+                # LIST_ARTICLE_URL = NHQV_parseURL(LIST_ARTICLE_URL=LIST_ARTICLE_URL)
+                # # 기업, 산업 레포트만 구글 드라이브 저장
+                # # if "기업" == BOARD_NM or "산업 " == BOARD_NM: 
                 print(LIST_ARTICLE_URL)
-                LIST_ARTICLE_URL = DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                print(LIST_ARTICLE_URL)
+                # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                # 구글드라이브에 저장만
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                # print(LIST_ARTICLE_URL)
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -2223,9 +2254,9 @@ def main():
     r = ShinHanInvest_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
-    # print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-    # r = NHQV_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
+    r = NHQV_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
     r = HANA_checkNewArticle()
