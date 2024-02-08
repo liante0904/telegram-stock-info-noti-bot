@@ -412,6 +412,7 @@ def NHQV_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 2
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -454,7 +455,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     while True:
         
         print('************************************')
-        print(i, payload['rshPprNo'])
         try:
             webpage = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
@@ -465,11 +465,8 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # print(jres)
             
         except:
-            
             return True
         
-        print(int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt']))
-        print(len(jres['H3211']['H3211OutBlock2']))
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
         
         strList = jres['H3211']['H3211OutBlock2']
@@ -487,7 +484,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for t in listR:
         if t not in r:
             r.append(t)
-    
     
     soupList = r
 
@@ -510,17 +506,17 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
     
     # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-    # if TEST_SEND_YN == 'Y' : r = False
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return '' 
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if TEST_SEND_YN == 'Y' : r = False
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return '' 
     
-    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    # print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    # print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    # print('연속URL:', NXT_KEY) # 주소
-    # print('############')
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -540,9 +536,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                # LIST_ARTICLE_URL = NHQV_parseURL(LIST_ARTICLE_URL=LIST_ARTICLE_URL)
-                # # 기업, 산업 레포트만 구글 드라이브 저장
-                # # if "기업" == BOARD_NM or "산업 " == BOARD_NM: 
+                
                 print(LIST_ARTICLE_URL)
                 # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 # 구글드라이브에 저장만
@@ -572,36 +566,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
-def NHQV_parseURL(LIST_ARTICLE_URL):
-    r = LIST_ARTICLE_URL.split("rshPprNo=")
-    # print(r)
-    
-    payload = {
-        "trName": "H3212",
-        "rshPprNo": str(r[1])
-    }
-
-    try:
-        webpage = requests.post('https://m.nhqv.com/research/commonTr.json',data=payload)
-        # print(webpage.text)
-        jres = json.loads(webpage.text)
-    except:
-        return True
-    print(jres)
-    print("########함수 ㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠㅠ")
-    
-    strUrl = ''
-    print(jres['H3212']['H3212OutBlock1'][0])
-    try:
-        strUrl = jres['H3212']['H3212OutBlock1'][0]['hpgeFleUrlCts']
-    except:
-        strUrl = LIST_ARTICLE_URL
-    # LIST_ARTICLE_URL
-
-    if len(strUrl) == 0: strUrl = LIST_ARTICLE_URL
-    print("strUrl:>>>>>", strUrl)
-    return strUrl
 
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
