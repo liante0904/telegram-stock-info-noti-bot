@@ -407,6 +407,146 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+
+def KB_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 4
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 신한금융투자 산업분석
+    TARGET_URL_0 = 'https://rc.kbsec.com/ajax/categoryReportList.json'
+    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
+    # 신한금융투자 기업분석
+    # TARGET_URL_1 = ''
+    
+    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    TARGET_URL_TUPLE = (TARGET_URL_0)
+    
+    
+    sendMessageText = ''
+    # URL GET
+    try:
+        sendMessageText += KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    except:
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    return sendMessageText
+ 
+# JSON API 타입
+def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    # 요청 헤더
+    headers = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Connection": "keep-alive",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest"
+    }
+
+    # 요청 payload 데이터
+    payload = {
+        "pageNo": 1,
+        "pageSize": 60,
+        "registdateFrom": GetCurrentDate("YYYYMMDD"),
+        "registdateTo": GetCurrentDate("YYYYMMDD"),
+        "templateid": "",
+        "lowTempId": "",
+        "folderid": "", #"37,38,186",
+        "callGbn": "RCLIST"
+    }
+
+    # POST 요청 보내기
+    response = requests.post(TARGET_URL, headers=headers, json=payload)
+
+    # 응답 확인
+    if response.status_code == 200:
+        jres = response.json()
+        # print(jres)  # 데이터 출력 또는 처리
+        # return
+    else:
+        print("요청에 실패했습니다. 상태 코드:", response.status_code)
+        
+   
+    strList = jres['response']['reportList']
+    print(strList)
+    
+    FIRST_ARTICLE_TITLE = strList[0]['docTitleSub']
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if TEST_SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in strList:
+        print(list)
+
+        # if int(list['categoryid']) == 122 : # 기업  
+        #     LIST_ARTICLE_TITLE = list['docTitle'] + " - " + list['urlLink']
+        # elif int(list['categoryid']) == 110 : # 산업  
+        #     LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['urlLink']
+        LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+        LIST_ARTICLE_URL = list['urlLink'].replace("(wInfo)", "wInfo")
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -416,7 +556,7 @@ def NHQV_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 삼성증권 기업 분석
+    # NH투자증권
     # TARGET_URL =  'https://m.nhqv.com/research/newestBoardList'
     TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
     
@@ -2121,8 +2261,8 @@ def main():
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
         
-        print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-        r = NHQV_checkNewArticle()
+        print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        r = KB_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2226,6 +2366,10 @@ def main():
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
     r = HANA_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+    r = KB_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
