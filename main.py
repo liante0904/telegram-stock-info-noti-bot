@@ -514,7 +514,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # elif int(list['categoryid']) == 110 : # 산업  
         #     LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['urlLink']
         LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=wInfo&", "")
+        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
@@ -1577,6 +1577,11 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
+async def sendPlainText(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True)
+
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -1661,7 +1666,7 @@ def sendText(sendMessageText):
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+    return asyncio.run(sendPlainText(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 인자 텍스트를 더해가며 발송합니다. 
@@ -2261,11 +2266,15 @@ def main():
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
         
-        print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        r = KB_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        
+        # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
+        sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
+        # asyncio.run(sendMessage()
+        # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        # r = KB_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
 
