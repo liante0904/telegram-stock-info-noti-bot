@@ -514,7 +514,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # elif int(list['categoryid']) == 110 : # 산업  
         #     LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['urlLink']
         LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("(wInfo)", "wInfo")
+        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=wInfo&", "")
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
