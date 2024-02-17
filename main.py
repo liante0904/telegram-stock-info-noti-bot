@@ -977,6 +977,201 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+def Sangsanginib_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 6
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 상상인증권 투자전략
+    TARGET_URL_0 =  "https://www.sangsanginib.com/notice/getNoticeList"
+    # 상상인증권 산업 리포트
+    TARGET_URL_1 =  TARGET_URL_0
+    # 상상인증권 기업 리포트
+    TARGET_URL_2 =  TARGET_URL_0
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                
+    return sendMessageText
+
+def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    jres = ''
+    headers = {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+    cmsCd = ["CM0078","CM0338","CM0079"]
+    
+    data = {
+        "pageNum": "1",
+        "src": "all",
+        "cmsCd": cmsCd[ARTICLE_BOARD_ORDER],
+        "rowNum": "10",
+        "startRow": "0",
+        "sdt": "",
+        "edt": ""
+    }
+
+    try:
+        webpage = requests.post(TARGET_URL, headers=headers, data=data)
+        # print(webpage.text)
+        jres = json.loads(webpage.text)
+        # print(jres)
+    except:
+        return True
+    print('#################도착###############')    
+    # print(jres['getNoticeList'])
+    print(jres[0]['getStarCnt'])
+    FIRST_ARTICLE_TITLE = jres[0]['getNoticeList'][0]['TITLE']
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    Sangsanginib_detail(NT_NO=jres[0]['getNoticeList'][0]['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER]) #jres[0]['getNoticeList'][0]['TITLE'])
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    
+    # JSON To List
+    for list in jres[0]['getNoticeList']:
+        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+        print('list***************** \n',list)
+        # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
+        # LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
+        # print('cmsCd[ARTICLE_BOARD_ORDER]',cmsCd[ARTICLE_BOARD_ORDER])
+        print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
+        LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
+        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+        LIST_ARTICLE_TITLE = list['TITLE']
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
+def Sangsanginib_detail(NT_NO, CMS_CD):
+    ntNo = NT_NO
+    cmsCd = CMS_CD
+    print('Sangsanginib_detail***********************')
+    url = "https://www.sangsanginib.com/notice/getNoticeDetail"
+    headers = {
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+
+    data = {
+        "pageNum": "1",
+        "src": "all",
+        "cmsCd": cmsCd,
+        "rowNum": "10",
+        "startRow": "0",
+        "sdt": "",
+        "edt": "",
+        "ntNo": ntNo
+    }
+
+    response = requests.post(url, headers=headers, data=data)
+    if response.status_code == 200:
+        print(response.text)
+    else:
+        print("Failed to fetch data.")
+    
+    print(json.loads(response.text))
+    print('**********JSON!!!!!')
+    jres = json.loads(response.text)
+    # print('##############11111',jres)
+    jres = jres['file'][0] #PDF
+    print('################222222',jres) 
+    # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
+
+    # 기본 URL과 쿼리 매개변수 딕셔너리
+    base_url = 'https://www.sangsanginib.com/common/fileDownload'
+    params = {
+        'cmsCd': jres['CMS_CD'],
+        'ntNo': jres['NT_NO'],
+        'fNo': jres['FNO'], # PDF
+        'fNm': jres['FNM']
+    }
+    print(params)
+    url = base_url
+    if params:
+        print('urlparse(params)', urlparse.urlencode(params))
+        encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
+        url += '?' + encoded_params
+    
+    print('*******************완성된 URL',url)
+    return url
+
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1666,7 +1861,7 @@ def sendText(sendMessageText):
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    return asyncio.run(sendPlainText(sendMessageText)) #봇 실행하는 코드
+    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 인자 텍스트를 더해가며 발송합니다. 
@@ -2266,7 +2461,14 @@ def main():
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
         
+        print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        r = Sangsanginib_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
         
+
+        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        return
         # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
         sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
         # asyncio.run(sendMessage()
@@ -2361,9 +2563,10 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-    print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-    r = EBEST_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+    # r = EBEST_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
     r = ShinHanInvest_checkNewArticle()
@@ -2385,13 +2588,18 @@ def main():
     r = Samsung_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-    r = Kiwoom_checkNewArticle()
+    print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
+    r = Sangsanginib_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
     r = Hmsec_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+    r = Kiwoom_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
