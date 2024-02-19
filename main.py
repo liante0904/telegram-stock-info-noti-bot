@@ -512,13 +512,13 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # if int(list['categoryid']) == 122 : # 기업  
         #     LIST_ARTICLE_TITLE = list['docTitle'] + " - " + list['urlLink']
         # elif int(list['categoryid']) == 110 : # 산업  
-        #     LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['urlLink']
-        LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+        LIST_ARTICLE_TITLE = list['docTitleSub']
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
+                LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+                LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
                 # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # if TEST_SEND_YN == 'Y': return sendMessageText
