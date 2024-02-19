@@ -1047,7 +1047,6 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = jres[0]['getNoticeList'][0]['TITLE']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
-    Sangsanginib_detail(NT_NO=jres[0]['getNoticeList'][0]['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER]) #jres[0]['getNoticeList'][0]['TITLE'])
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1169,6 +1168,243 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
         url += '?' + encoded_params
     
+    print('*******************완성된 URL',url)
+    return url
+
+def Shinyoung_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 7
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+    # 신영증권 리서치
+    TARGET_URL = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
+    # # 상상인증권 투자전략
+    # TARGET_URL_0 =  "https://www.sangsanginib.com/notice/getNoticeList"
+    # # 상상인증권 산업 리포트
+    # TARGET_URL_1 =  TARGET_URL_0
+    # # 상상인증권 기업 리포트
+    # TARGET_URL_2 =  TARGET_URL_0
+    
+    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+
+    sendMessageText = ''
+    
+    try:
+        sendMessageText += Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    except:
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+                
+    return sendMessageText
+
+def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    jres = ''
+    url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
+    headers = {
+        "Accept": "text/plain, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Referer": "https://www.shinyoung.com/?page=10078&head=0",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    }
+
+    # POST 요청을 보낼 데이터
+    data = {
+        "KEYWORD": "",
+        "rows": "10",
+        "page": "1"
+    }
+
+    try:
+        webpage = requests.post(TARGET_URL, headers=headers, data=data)
+        if webpage.status_code == 200:
+            # print(webpage.text)  # 응답 내용 출력
+            jres = json.loads(webpage.text)
+        else:
+            print("Failed to fetch page:", webpage.status_code)
+            return True
+    except Exception as e:
+        print("An error occurred:", str(e))
+        return True
+
+    print(jres['rows'])
+    
+    FIRST_ARTICLE_TITLE = jres['rows'][0]['TITLE']
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if TEST_SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    
+    # JSON To List
+    for list in jres['rows']:
+        print('list***************** \n',list)
+        # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
+        LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
+        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+        LIST_ARTICLE_TITLE = list['TITLE']
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
+def Shinyoung_detail(SEQ, BBSNO):
+    # ntNo = NT_NO
+    # cmsCd = CMS_CD
+    # POST 요청에 사용할 URL
+    url = "https://www.shinyoung.com/Common/authTr/devPass"
+
+
+    # 추가할 request header
+    headers = {
+        'Accept': 'text/plain, */*; q=0.01',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Host': 'www.shinyoung.com',
+        'Origin': 'https://www.shinyoung.com',
+        'Pragma': 'no-cache',
+        'Referer': 'https://www.shinyoung.com/?page=10026',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest',
+        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"'
+    }
+
+    # POST 요청 보내기
+    response = requests.post(url, headers=headers)
+
+    # 응답의 내용 확인
+    if response.status_code == 200:
+        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
+        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
+        print(response.text)
+    else:
+        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+
+
+    # POST 요청에 사용할 URL
+    url = "https://www.shinyoung.com/Common/authTr/downloadFilePath"
+
+    # POST 요청에 포함될 데이터
+    data = {
+        'SEQ': SEQ,
+        'BBSNO': BBSNO
+    }
+
+    # 추가할 request header
+    headers = {
+        'Accept': 'text/plain, */*; q=0.01',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Cookie': 'JSESSIONID=KyWlsEhZ0A8LdQaILHM6Rm-zoVnF6FVb4QfC5E3u.was01',
+        'Host': 'www.shinyoung.com',
+        'Origin': 'https://www.shinyoung.com',
+        'Pragma': 'no-cache',
+        'Referer': 'https://www.shinyoung.com/?page=10026',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest',
+        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"'
+    }
+
+    # POST 요청 보내기
+    response = requests.post(url, data=data, headers=headers)
+
+    # 응답의 내용 확인
+    if response.status_code == 200:
+        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
+        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
+        print(response.text)
+    else:
+        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+        # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
+
+    jres = json.loads(response.text)
+    
+    print('************\n',jres)
+    # # 기본 URL과 쿼리 매개변수 딕셔너리
+    # https://www.shinyoung.com/files/20240216/4b64adc924e8e.pdf
+    base_url = 'https://www.shinyoung.com/files/'
+    # params = {
+    #     'cmsCd': jres['CMS_CD'],
+    #     'ntNo': jres['NT_NO'],
+    #     'fNo': jres['FNO'], # PDF
+    #     'fNm': jres['FNM']
+    # }
+    url = base_url + jres['FILEINFO']['FILEPATH']
+    # if params:
+    #     print('urlparse(params)', urlparse.urlencode(params))
+    #     encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
+    #     url += '?' + encoded_params
+
     print('*******************완성된 URL',url)
     return url
 
@@ -2011,7 +2247,7 @@ def GetSendMessageTitle():
         else: print(msgFirmName)
     elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
-        msgFirmName =  FIRM_NM 
+        msgFirmName =  GetFirmName() 
 
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
     SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
@@ -2461,10 +2697,13 @@ def main():
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
         
-        print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        r = Sangsanginib_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-        
+        # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
+        # r = Sangsanginib_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        r = Shinyoung_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r        
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2587,11 +2826,15 @@ def main():
     print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
     r = Samsung_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
+    
     print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
     r = Sangsanginib_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
+    
+    print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+    r = Shinyoung_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
     print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
     r = Hmsec_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
