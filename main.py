@@ -116,6 +116,7 @@ def EBEST_checkNewArticle():
     global SEC_FIRM_ORDER
     
     SEC_FIRM_ORDER = 0
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -217,10 +218,10 @@ def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
                 # if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
                 #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
+                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
 
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)].strip()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -344,7 +345,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(strList[0]['f0'],strList[0]['f1'])
     # print(l[0]['f0'])
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-    FIRST_ARTICLE_TITLE = jres['list'][0]['f1'].strip()
+    FIRST_ARTICLE_TITLE = jres['list'][0]['f1']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
@@ -374,12 +375,20 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(list)
 
         LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
-        LIST_ARTICLE_TITLE = list['f1'].strip()
+        LIST_ARTICLE_TITLE = list['f1']
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                LIST_ARTICLE_URL = list['f3']
+                try:
+                    LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
+                    LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
+                except Exception as e:
+                    print("에러 발생:", e)
+                    LIST_ARTICLE_URL = list['f3']
+                    
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -714,6 +723,7 @@ def HANA_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 3
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -848,6 +858,7 @@ def Samsung_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 5
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -949,7 +960,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)].strip()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
                 # print(LIST_ARTICLE_TITLE)
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
                 if TEST_SEND_YN == 'Y': return sendMessageText
@@ -982,6 +993,7 @@ def Sangsanginib_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 6
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1408,11 +1420,154 @@ def Shinyoung_detail(SEQ, BBSNO):
     print('*******************완성된 URL',url)
     return url
 
+def Miraeasset_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 8
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 미래에셋 Daily
+    TARGET_URL_0 =  "https://securities.miraeasset.com/bbs/board/message/list.do?categoryId=1521"
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                
+    return sendMessageText
+
+def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    print('ddd?')
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive",
+        "Host": "securities.miraeasset.com",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+    }
+    
+    try:
+        response = requests.get(TARGET_URL, headers=headers)
+        response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
+    except requests.exceptions.RequestException as e:
+        print("웹 페이지에 접속하는 중 오류가 발생했습니다:", e)
+
+
+    print('ddd?')
+    soup = BeautifulSoup(response.text, "html.parser")
+    # 첫 번째 레코드의 제목을 바로 담습니다.
+    first_post = soup.select_one("tbody tr")
+    print('ddd?()', first_post[1])
+    FIRST_ARTICLE_TITLE = first_post[1].select_one(".subject a").get_text()
+
+    print("첫 번째 레코드의 제목:", FIRST_ARTICLE_TITLE)
+    soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
+
+    ARTICLE_BOARD_NAME =  BOARD_NM 
+
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return '' 
+    
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    # 게시물 정보 파싱
+    posts = soup.select("tbody tr")
+    for index, post in enumerate(posts):
+        if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
+            continue
+        title_element = post.select_one(".subject a")
+        if not title_element:  # 제목 요소가 없는 경우
+            continue  # 건너뜁니다.
+        title = title_element.get_text()  # strip 제거
+        attachment_element = post.select_one(".bbsList_layer_icon a")
+        attachment_link = "없음"
+        if attachment_element:
+            attachment_link = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
+        print("제목:", title)
+        print("첨부 파일:", attachment_link)
+        print()
+
+
+    return
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
+        LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
+        # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                ATTACH_URL = LIST_ARTICLE_URL
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 10
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1462,7 +1617,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(jres['researchList'])
 
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-    FIRST_ARTICLE_TITLE = jres['researchList'][0]['titl'].strip()
+    FIRST_ARTICLE_TITLE = jres['researchList'][0]['titl']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
@@ -1494,7 +1649,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
         LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
-        LIST_ARTICLE_TITLE = list['titl'].strip()
+        LIST_ARTICLE_TITLE = list['titl']
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
@@ -1530,6 +1685,7 @@ def Hmsec_checkNewArticle():
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 9
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
@@ -1663,65 +1819,6 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
             
     print(sendMessageText)
-    return sendMessageText
-
-def Hmsec_MessageText(SERIAL_NO):
-
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 9
-
-    sendMessageText = ''
-    # GET Content
-    payload = {
-        "Menu_category": 6,
-        "queryType": "",
-        "serialNo": SERIAL_NO,
-        "curPage": 1
-    }
-    
-    webpage = ''
-    try:
-        webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
-        # print(webpage.text)
-    except:
-        print(webpage)
-        return webpage
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    # soupList = soup.select('body > div > table > tbody > tr')
-    soupList = soup.select('#content > div.view_con')
-
-    r = ''
-    # print(soupList)
-    for list in soupList:
-        r = str(list.text).strip()
-        r = r.replace("What's Inside","* ▶ What's Inside*")
-        r = r.replace("New Issue","* ▶ New Issue*")
-        r = r.replace("New Publication","* ▶ New Publication*")
-        r = r.replace("\n","\n -")
-        r = r.replace(" -* ▶ New Issue*","* ▶ New Issue*")
-        r = r.replace(" -* ▶ New Publication*","* ▶ New Publication*")
-
-        r = r.replace("\n -\n*","\n \n*")
-        # r = r.replace("-\n","-")
-        # r = r.replace("-\n ","-")
-
-
-        # print(r)
-        # filter = ["What's Inside","New Issue","New Publication"]
-        # print(r in filter)
-        # if r in filter:
-        #     r = "*"+ r + "*"
-        # else:
-        #     r = "- " + r
-        # sendMessageText = r
-        
-    sendMessageText = r
-    # sendText(GetSendMessageTitle() + r)
-    # time.sleep(10)
     return sendMessageText
 
 def HankyungConsen_checkNewArticle():
@@ -2701,9 +2798,15 @@ def main():
         # r = Sangsanginib_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        r = Shinyoung_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r        
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        # r = Shinyoung_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r        
+
+
+        print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
+        r = Miraeasset_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2834,6 +2937,10 @@ def main():
     print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
     r = Shinyoung_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    # print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
+    # r = Miraeasset_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
     r = Hmsec_checkNewArticle()
