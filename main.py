@@ -1451,13 +1451,10 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
 
-    print('ddd?')
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
         "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Connection": "keep-alive",
-        "Host": "securities.miraeasset.com",
         "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
     }
     
@@ -1468,19 +1465,14 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("웹 페이지에 접속하는 중 오류가 발생했습니다:", e)
 
 
-    print('ddd?')
     soup = BeautifulSoup(response.text, "html.parser")
+    
     # 첫 번째 레코드의 제목을 바로 담습니다.
-    first_post = soup.select_one("tbody tr")
-    print('ddd?()', first_post[1])
-    FIRST_ARTICLE_TITLE = first_post[1].select_one(".subject a").get_text()
-
-    print("첫 번째 레코드의 제목:", FIRST_ARTICLE_TITLE)
-    soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
+    posts = soup.select("tbody tr")[2:]  # 타이틀 제거
+    FIRST_ARTICLE_TITLE = posts[0].select_one(".subject a").get_text()
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     ARTICLE_BOARD_NAME =  BOARD_NM 
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1507,7 +1499,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############')
 
     # 게시물 정보 파싱
-    posts = soup.select("tbody tr")
     for index, post in enumerate(posts):
         if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
             continue
@@ -1524,19 +1515,23 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print()
 
 
-    return
+    soupList = posts
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
-        LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-        # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+        LIST_ARTICLE_TITLE = list.select_one(".subject a").text
+        LIST_ARTICLE_URL = "없음"
+        attachment_element = list.select_one(".bbsList_layer_icon a")
+        if attachment_element:
+            LIST_ARTICLE_URL = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                r = list.select_one(".subject a").find_all(string=True)
+                r = " : ".join(r)
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = r, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -2938,9 +2933,9 @@ def main():
     r = Shinyoung_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
-    # print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-    # r = Miraeasset_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
+    r = Miraeasset_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
     r = Hmsec_checkNewArticle()
