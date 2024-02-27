@@ -19,7 +19,10 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
-
+# selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 # TEST 
 # from package import herokuDB
 # from package import SecretKey
@@ -1816,133 +1819,101 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(sendMessageText)
     return sendMessageText
 
-def HankyungConsen_checkNewArticle():
+def EBEST_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
-    SEC_FIRM_ORDER = 12
+    SEC_FIRM_ORDER = 11
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL =  'https://consensus.hankyung.com/' #'http://www.bnkfn.co.kr/research/analysingCompany.jspx'
+    # 이베스트 리서치 모바일
+    TARGET_URL_0 =  "https://m.ebestsec.co.kr/invest/research/"
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
     sendMessageText = ''
-    try:
-        sendMessageText += HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    except:
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
                 
     return sendMessageText
 
-    # TARGET_URL_TUPLE = (TARGET_URL)
-
-    # sendMessageText = ''
-    # # URL GET
-    # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-    #     try:
-    #         sendMessageText += HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    #     except:
-    #         if len(sendMessageText) > 3500:
-    #             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-    #             sendAddText(GetSendMessageTitle() + sendMessageText)
-    #             sendMessageText = ''
-                
-    # return sendMessageText
-
-def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-    global TEST_SEND_YN
-    # TARGET_URL = 'https://consensus.hankyung.com/analysis/list?sdate=2023-03-15&edate=2023-09-15&now_page=1&search_value=&report_type=&pagenum=20&search_text=&business_code='
-    try:
-        webpage = requests.get(TARGET_URL, verify=False, headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-    except:
-        return True
+    # 헤드리스 모드로 설정
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
 
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    # print(soup)
-    # return 
-    soupList = soup.select('#contents > div.table_style01 > table > tbody > tr')
-    print(soupList)
-    try:
-        ARTICLE_BOARD_NAME =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td.text_l > a')[FIRST_ARTICLE_INDEX].text
-        FIRST_ARTICLE_URL =  'https://consensus.hankyung.com' + soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td:nth-child(6) > div > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
+    # Chrome 드라이버 초기화
+    driver = webdriver.Chrome(options=chrome_options)
 
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+    # 웹 페이지 열기
+    driver.get(TARGET_URL)
+    time.sleep(2)
+    # 모든 링크 요소 선택하기
+    link_elements = driver.find_elements(By.XPATH, "//div[@id='wrap']/div/div/div/div/ul/li/a")
 
+    FIRST_ARTICLE_TITLE = link_elements[0].find_element(By.XPATH, './/strong').text
+    print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
+    
+    # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
         # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-    # if SEND_YN == 'Y' : r = ''
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return '' 
-    
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
 
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
     nNewArticleCnt = 0
     sendMessageText = ''
-    brokerName = soup.select('#contents > div.table_style01 > table > tbody > tr.first > td:nth-child(5)')[FIRST_ARTICLE_INDEX].text
-    print('brokerName' ,brokerName)
-    for list in soupList:
-        
-        print('*****************')
-        # print(list)
-        LIST_ARTICLE_TITLE = list.select_one('#contents > div.table_style01 > table > tbody > tr > td.text_l > a').text
-        LIST_ARTICLE_URL =  'https://consensus.hankyung.com' + list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(6) > div > a').attrs['href']
-        LIST_ARTICLE_BROKER_NAME =list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(5)').text
-
-        print(LIST_ARTICLE_TITLE)
-        print(LIST_ARTICLE_URL)
-        print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
-        ATTACH_URL = LIST_ARTICLE_URL
-        
+    
+    # JSON To List
+    # for list in jres['rows']:
+    for link_element in link_elements:
+        LIST_ARTICLE_URL = link_element.get_attribute('href')
+        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+        LIST_ARTICLE_TITLE = link_element.find_element(By.XPATH, './/strong').text
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        print('?????')
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
-            # 회사명 출력
-            if nNewArticleCnt == 1 or brokerName != LIST_ARTICLE_BROKER_NAME : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
-                sendMessageText += "\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
-                brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
-
             if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                print('?????')
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                print('?????',sendMessageText)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
                 nNewArticleCnt = 0
+                sendMessageText = ''
+
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             if nNewArticleCnt == 0  or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
                 return
             else: break
                 
@@ -1951,9 +1922,26 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
+
+    # # 링크와 제목 출력
+    # for link_element in link_elements:
+    #     title = link_element.text
+    #     link = link_element.get_attribute("href")
+    #     print("제목:", title)
+    #     print("링크:", link)
+    #     print()
+
+    # 브라우저 닫기
+    driver.quit()
+    
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
+
+    
+
 
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
@@ -2798,10 +2786,13 @@ def main():
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r        
 
 
-        print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-        r = Miraeasset_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
+        # r = Miraeasset_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
+        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        r = EBEST_selenium_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2816,10 +2807,6 @@ def main():
         # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # fnguideTodayReport_checkNewArticle()
         # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-
-        # print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
-        # r = HankyungConsen_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2945,6 +2932,9 @@ def main():
     r = Kiwoom_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
+    print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+    r = EBEST_selenium_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
