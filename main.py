@@ -23,6 +23,9 @@ from package import googledrive
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 # TEST 
 # from package import herokuDB
 # from package import SecretKey
@@ -1821,7 +1824,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def EBEST_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+    global SEC_FIRM_ORDERz
 
     SEC_FIRM_ORDER = 11
     ARTICLE_BOARD_ORDER = 0
@@ -1857,7 +1860,11 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 웹 페이지 열기
     driver.get(TARGET_URL)
-    time.sleep(2)
+
+    # wait until someid is clickable
+    wait = WebDriverWait(driver, 10)
+    element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'board-list')))
+    
     # 모든 링크 요소 선택하기
     link_elements = driver.find_elements(By.XPATH, "//div[@id='wrap']/div/div/div/div/ul/li/a")
 
@@ -1939,9 +1946,6 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
-    
-
 
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
