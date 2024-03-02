@@ -48,7 +48,6 @@ from requests import get  # to make GET request
 ############공용 상수############
 # secrets 
 SECRETS                                             = ""
-CLEARDB_DATABASE_URL                                = ""
 ORACLECLOUD_MYSQL_DATABASE_URL                      = ""
 TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -109,189 +108,6 @@ LIST_ARTICLE_TITLE = ''
 FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
-
-def EBEST_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-    
-    SEC_FIRM_ORDER = 0
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 이슈브리프
-    EBEST_URL_0 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=146&left_menu_no=211&front_menu_no=1029&parent_menu_no=211'
-    # 기업분석 게시판
-    EBEST_URL_1 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=36&left_menu_no=211&front_menu_no=212&parent_menu_no=211'
-    # 산업분석
-    EBEST_URL_2 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=37&left_menu_no=211&front_menu_no=213&parent_menu_no=211'
-    # 투자전략
-    EBEST_URL_3 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=38&left_menu_no=211&front_menu_no=214&parent_menu_no=211'
-    # Quant
-    EBEST_URL_4 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=147&left_menu_no=211&front_menu_no=1036&parent_menu_no=211'
-    # Macro
-    EBEST_URL_5 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=39&left_menu_no=211&front_menu_no=215&parent_menu_no=211'
-    # FI/ Credit
-    EBEST_URL_6 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=183&left_menu_no=211&front_menu_no=1344&parent_menu_no=211'
-    # Commodity
-    EBEST_URL_7 = 'https://www.ebestsec.co.kr/EtwFrontBoard/List.jsp?board_no=145&left_menu_no=211&front_menu_no=1009&parent_menu_no=211'
-
-    TARGET_URL_TUPLE = (EBEST_URL_0, EBEST_URL_1, EBEST_URL_2, EBEST_URL_3, EBEST_URL_4, EBEST_URL_5, EBEST_URL_6, EBEST_URL_7)
-
-    ## EBEST만 로직 변경 테스트
-    sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        try:
-            sendMessageText += EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        except:
-            if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-
-    return sendMessageText
-
-def EBEST_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global LIST_ARTICLE_TITLE
-    
-    try:
-        webpage = requests.get(TARGET_URL, verify=False)
-    except:
-        return True
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    soupList = soup.select('#contents > table > tbody > tr > td.subject > a')
-    
-    ARTICLE_BOARD_NAME =  BOARD_NM 
-    try:
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
-    except IndexError:
-        return 
-
-    try:
-        FIRST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].attrs['href'].replace("amp;", "")
-    except:
-        FIRST_ARTICLE_URL = ''
-
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE) 
-    if TEST_SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    print('TEST_SEND_YN ', TEST_SEND_YN)
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    for list in soupList:
-        LIST_ARTICLE_URL = 'https://www.ebestsec.co.kr/EtwFrontBoard/' + list.attrs['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list.text
-
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-        # if  TEST_SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+EBEST_downloadFile(LIST_ARTICLE_URL)
-                ATTACH_URL = EBEST_downloadFile(LIST_ARTICLE_URL)
-                # if ARTICLE_BOARD_ORDER == 0 or ARTICLE_BOARD_ORDER == 1 :
-                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                #     LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
-    
-def EBEST_downloadFile(ARTICLE_URL):
-    global ATTACH_FILE_NAME
-    global LIST_ARTICLE_TITLE
-
-    ATTACH_BASE_URL = 'https://www.ebestsec.co.kr/_bt_lib/util/download.jsp?dataType='
-    
-    try:
-        webpage = requests.get(ARTICLE_URL, verify=False)
-    except:
-        return True
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
-    table = soup.select_one('#contents > table')
-    tbody = table.select_one('tbody')
-    trs = soup.select('tr')
-    LIST_ARTICLE_TITLE = trs[0].select_one('td').text
-    
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
-    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
-    # 첨부파일 이름
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').text
-    r = DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
-    print('*********확인용**************')
-    print(r)
-    # EBEST 모바일 페이지 PDF 링크 생성(파일명 2번 인코딩하여 조립)
-    # r = urlparse.quote(ATTACH_FILE_NAME)
-    # r = urlparse.quote(r)
-    # if ARTICLE_BOARD_ORDER == 0 : # 이슈브리프
-    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
-    # elif ARTICLE_BOARD_ORDER == 1: # 기업분석
-    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
-    # elif ARTICLE_BOARD_ORDER == 2: # 산업분석
-    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
-    # elif ARTICLE_BOARD_ORDER == 3: # 투자전략
-    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
-    # elif ARTICLE_BOARD_ORDER == 3: # QUANT
-    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
-    # else:
-    #     ATTACH_URL = "htts://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
-
-    # ATTACH_URL += r
-    # print(ATTACH_URL)
-    return r
 
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -415,7 +231,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
-
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -486,8 +301,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # return
     else:
         print("요청에 실패했습니다. 상태 코드:", response.status_code)
-        
-   
+
     strList = jres['response']['reportList']
     print(strList)
     
@@ -517,9 +331,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     for list in strList:
         print(list)
 
-        # if int(list['categoryid']) == 122 : # 기업  
-        #     LIST_ARTICLE_TITLE = list['docTitle'] + " - " + list['urlLink']
-        # elif int(list['categoryid']) == 110 : # 산업  
         LIST_ARTICLE_TITLE = list['docTitleSub']
 
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
@@ -929,12 +740,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
-
-    # for list in soupList:
-    #     LIST_ARTICLE_TITLE = list.select('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
-    #     if NXT_KEY == LIST_ARTICLE_TITLE: break
-    #     else: DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -1512,7 +1317,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("제목:", title)
         print("첨부 파일:", attachment_link)
         print()
-
 
     soupList = posts
     nNewArticleCnt = 0
@@ -2349,85 +2153,11 @@ def GetSendChatId():
     # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
     return SendMessageChatId
 
-def GetJsonData(TARGET_URL, METHOD_TYPE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
-
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except:
-        return True
-
-    # jres = jres['newsItems']
-    print(jres)
-    return jres
-
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for stockPlus in jres:
-        LIST_ARTICLE_URL = stockPlus['url'].strip()
-        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
-                # print(sendMessageText)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
-
 def MySQL_Open_Connect():
     global conn
     global cursor
     
     # clearDB 
-    # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
     # MySQL
     url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
@@ -2466,50 +2196,6 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-def DB_SelSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    nSleepCnt = 0
-    nSleepCntKey = 0
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
-    dbResult = cursor.execute(dbQuery, (9999))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        nSleepCnt = row['ARTICLE_BOARD_ORDER']
-        nSleepCntKey = row['NXT_KEY']
-
-    conn.close()
-    SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
-    return SleepTuple
-
-def DB_DelSleepKey(*args):
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
-    dbResult = cursor.execute(dbQuery)
-
-    conn.close()
-    return dbResult
-
-def DB_InsSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
-    cursor.execute(dbQuery)
-    conn.close()
-    return dbQuery
 
 def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
@@ -2577,8 +2263,6 @@ def GetCurrentTime(*args):
     print(TIME)
     return TIME
 
-
-
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
     strFirmName = ''
@@ -2641,7 +2325,6 @@ def GetCurrentDay(*args):
 
 def GetSecretKey(*args):
     global SECRETS # 시크릿 키
-    global CLEARDB_DATABASE_URL
     global ORACLECLOUD_MYSQL_DATABASE_URL
     global TELEGRAM_BOT_INFO
     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
@@ -2663,7 +2346,6 @@ def GetSecretKey(*args):
     if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
         with open("secrets.json") as f:
             SECRETS = json.loads(f.read())
-        CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
         
         ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL'] 
         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
@@ -2680,7 +2362,6 @@ def GetSecretKey(*args):
         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
         IS_DEV                                      =   True
     else: # 서버 배포 환경(heroku)
-        CLEARDB_DATABASE_URL                        =   os.environ.get('CLEARDB_DATABASE_URL')
         TELEGRAM_BOT_INFO                           =   os.environ.get('TELEGRAM_BOT_INFO')
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
@@ -2880,8 +2561,6 @@ def main():
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-
 
 if __name__ == "__main__":
 	main()
