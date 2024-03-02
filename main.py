@@ -1824,7 +1824,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def EBEST_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDERz
+    global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER = 11
     ARTICLE_BOARD_ORDER = 0
@@ -1871,6 +1871,7 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = link_elements[0].find_element(By.XPATH, './/strong').text
     print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
     
+    print('SEC_FIRM_ORDER-?>?', SEC_FIRM_ORDER)
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -1901,11 +1902,9 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = link_element.find_element(By.XPATH, './/strong').text
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        print('?????')
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                print('?????')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 print('?????',sendMessageText)
                 if TEST_SEND_YN == 'Y': return sendMessageText
@@ -2012,10 +2011,8 @@ def fnguideTodayReport_checkNewArticle():
             listIsu = listIsu.text
         except:
             continue
-        print('***************오류********** == 시작')
+        
         print(listIsu)
-        print('***************오류********** ==> 끝')
-
         listIsu = listIsu.replace("`","")
         listIsu = listIsu.split("|")
         strIsuNm = listIsu[0].strip()
