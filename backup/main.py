@@ -46,6 +46,10 @@ from requests import get  # to make GET request
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
+# sleep key
+SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
+INTERVAL_TIME = 3 # 10분 단위 적용
+INTERVAL_INIT_TIME = 1
 # secrets 
 SECRETS                                             = ""
 CLEARDB_DATABASE_URL                                = ""
@@ -62,6 +66,9 @@ TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
+
+# 게시글 갱신 시간
+REFRESH_TIME = 60 * 20 # 20분
 
 # pymysql 변수
 conn    = ''
@@ -2577,8 +2584,48 @@ def GetCurrentTime(*args):
     print(TIME)
     return TIME
 
+def SetSleepTimeKey(*args):
+    try: nSleepCntKey = args[0]
+    except: nSleepCntKey = 0
+    file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+    file.write(  str(nSleepCntKey) )      # 파일에 문자열 저장
+    print('nSleepCntKey:',nSleepCntKey, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+    file.close()                     # 파일 객체 닫기
+    
+def GetSleepTimeKey(*args):
+    # 존재 여부 확인 후 연속키 파일 생성
+    if not( os.path.isfile( SLEEP_KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
+        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
+        file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        file.write(  str(INTERVAL_INIT_TIME) )      # 파일에 문자열 저장
+        print('INTERVAL_INIT_TIME:',INTERVAL_INIT_TIME, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+        file.close()                     # 파일 객체 닫기
+        return int(INTERVAL_INIT_TIME)
+    else:   # 이미 실행
+        file = open( SLEEP_KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
+        SLEEP_KEY = file.readline()       # 파일 내 데이터 읽기
+        print('SLEEP_KEY:', SLEEP_KEY)
+        if SLEEP_KEY:
+            print('SLEEP_KEY T')
+        else:
+            SLEEP_KEY = '0'
+            
+        print('Get_nxtKey')
+        print('SLEEP_KEY:',SLEEP_KEY, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
+        file.close()                     # 파일 객체 닫기
+        return SLEEP_KEY
 
-
+def SetSleepTime(*args):
+    nSleepCntKey = GetSleepTimeKey()
+    nSleepCntKey = int(nSleepCntKey)
+    while nSleepCntKey < INTERVAL_TIME: 
+        nSleepCntKey += 1
+        SetSleepTimeKey(nSleepCntKey)
+        sys.exit(0)
+        
+    SetSleepTimeKey(0)
+    
+    return True
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
     strFirmName = ''
@@ -2715,6 +2762,8 @@ def isNxtKey(*args):
     
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
+    global REFRESH_TIME # 새로고침 주기
+    global INTERVAL_TIME # 새로고침 주기 - 파일
     global TEST_SEND_YN
 
     TEST_SEND_YN = ''
@@ -2820,6 +2869,16 @@ def main():
         return 
 
     TEST_SEND_YN = ''
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일':
+        REFRESH_TIME = 60 * 60 * 2 # 2시간
+        INTERVAL_TIME = 12
+    else:
+        REFRESH_TIME = 60 * 30 # 30분
+        INTERVAL_TIME = 3
+    
+    # 개발 환경이 아닌 경우에만 인터벌 작동
+    # if IS_DEV: pass
+    # else: SetSleepTime()
 
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
@@ -2881,7 +2940,32 @@ def main():
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
+    return 
+    print('######',REFRESH_TIME,'초 후 게시글을 재 확인 합니다.######')
+    time.sleep(REFRESH_TIME)
 
+    # SEC_FIRM_ORDER는 임시코드 추후 로직 추가 예정 
+    while True:
+        print('########  새로고침 주기는 ', REFRESH_TIME, '초 입니다 (평일 20분, 주말 2시간) ########')
+        if TimeHourMin < 0 : 
+            print("GetCurrentTime() Error => 시간 논리 에러")
+            return 
+        elif TimeHourMin in range(0, 500) and TimeHourMin in range(2200, 2400): # 22~다음날 05시까지 유휴
+            print('######',"현재시간:", GetCurrentTime() ,REFRESH_TIME,'초 스케줄을 실행합니다.######')
+            print('CASE1')
+        elif TimeHourMin in range(600, 830):  # 06~ 08:30분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            print('CASE2')
+        elif TimeHourMin in range(830, 1100):  # 08:30~ 11:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            print('CASE3')
+        elif TimeHourMin in range(1100, 1600):  # 11:00~ 16:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            print('CASE4')
+        elif TimeHourMin in range(1600, 1800):  # 16:00~ 22:00분 : 30분 단위로 게시글을 체크하여 발송
+            print('######',"현재시간:", GetCurrentTime() , REFRESH_TIME * 3,'초 단위로 스케줄을 실행합니다.######')
+            print('CASE5')
+        return 
 
 if __name__ == "__main__":
 	main()
