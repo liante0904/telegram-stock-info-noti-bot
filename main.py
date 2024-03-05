@@ -1743,6 +1743,239 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+def Koreainvestment_selenium_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER = 13
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 한국투자증권 리서치 모바일
+    TARGET_URL_0 =  "https://securities.koreainvestment.com/main/research/research/Search.jsp?schType=report"
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                
+    return sendMessageText
+
+def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    # 헤드리스 모드로 설정
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+
+    # Chrome 드라이버 초기화
+    driver = webdriver.Chrome(options=chrome_options)
+
+    # 웹 페이지 열기
+    driver.get(TARGET_URL)
+
+    # 페이지 로딩될때까지 대기
+    driver.implicitly_wait(0)
+
+    # # 페이지 로딩을 위해 10초간 대기
+    # wait = WebDriverWait(driver, 10) 
+    # element = wait.until(EC.element_to_be_clickable((By.ID, 'searchResult'))) 
+
+    # 제목 엘리먼트 찾기
+    title_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/div[2]/span[1]')
+    # 링크 엘리먼트 찾기
+    link_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[2]')
+
+    for title, link in zip(title_elements, link_elements):
+        # 제목 출력
+        print("제목:", title.text)
+        # onClick 프로퍼티값(링크) 출력
+        print("링크:", link.get_attribute("onclick"))
+
+    FIRST_ARTICLE_TITLE = title_elements[0].text
+    print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
+    
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    
+    # List
+    for title, link in zip(title_elements, link_elements):
+        LIST_ARTICLE_TITLE = title.text
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        LIST_ARTICLE_URL = link.get_attribute("onclick")
+        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
+
+
+    # # 링크와 제목 출력
+    # for link_element in link_elements:
+    #     title = link_element.text
+    #     link = link_element.get_attribute("href")
+    #     print("제목:", title)
+    #     print("링크:", link)
+    #     print()
+
+    # 브라우저 닫기
+    driver.quit()
+    
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
+
+def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
+    filename = urllib.parse.quote(filename)
+    filepath = filepath
+    
+    print('filepath =',filepath)
+    host_name = "http://research.truefriend.com/streamdocs/openResearch"
+    url = ""
+    host_name2 = "https://kis-air.com/kor/"
+    host_name3 = "https://kis-air.com/us/"
+
+    if filepath.startswith("?") or filepath.startswith("&"):
+        filepath = filepath[1:]
+
+    params = filepath.split("&")
+    print('params',params)
+    if len(params) == 2:
+        if params == ['category1=01', 'category2=01'] or params == ['category1=01', 'category2=02'] or params == ['category1=01', 'category2=03'] or params == ['category1=01', 'category2=04'] or params == ['category1=01', 'category2=05']:
+            filepath = "research/research01"
+        elif params == ['category1=02', 'category2=01'] or params == ['category1=02', 'category2=02'] or params == ['category1=02', 'category2=03']:
+            filepath = "research/research02"
+        elif params == ['category1=03', 'category2=01'] or params == ['category1=03', 'category2=02'] or params == ['category1=03', 'category2=03']:
+            filepath = "research/research03"
+        elif params == ['category1=04', 'category2=00'] or params == ['category1=04', 'category2=01'] or params == ['category1=04', 'category2=02'] or params == ['category1=04', 'category2=03']:
+            filepath = "research/research04"
+        elif params[0] == 'category1=05' or params == ['category1=05']:
+            print('????????')
+            filepath = "research/research05"
+        elif params == ['category1=07', 'category2=01']:
+            filepath = "research/research07"
+        elif params == ['category1=08', 'category2=03'] or params == ['category1=08', 'category2=04'] or params == ['category1=08', 'category2=05']:
+            filepath = "research/research08"
+        elif params == ['category1=06', 'category2=02'] or params == ['category1=06', 'category2=01']:
+            filepath = "research/research06"
+        elif params == ['category1=09', 'category2=00']:
+            filepath = "research/research11"
+        elif params == ['category1=10', 'category2=01'] or params == ['category1=10', 'category2=04']:
+            filepath = "research/research10"
+        elif params == ['category1=10', 'category2=04']:
+            filepath = "research/china"
+        elif params == ['category1=01', 'category2=06']:
+            filepath = "research/research12"
+        elif params == ['category1=10', 'category2=06']:
+            filepath = "research/research_emailcomment"
+        elif params == ['category1=14', 'category2=01']:
+            filepath = "research/research14"
+        elif params == ['category1=13', 'category2=01']:
+            filepath = "research/research11"
+        elif params == ['category1=02', 'category2=04'] or params == ['category1=02', 'category2=12'] or params == ['category1=02', 'category2=06'] or params == ['category1=02', 'category2=13'] or params == ['category1=02', 'category2=08'] or params == ['category1=02', 'category2=09'] or params == ['category1=02', 'category2=10'] or params == ['category1=02', 'category2=11'] or params == ['category1=02', 'category2=14']:
+            filepath = "research/research02"
+        elif params == ['category1=15', 'category2=01']:
+            filepath = "research/research01"
+        elif params == ['category1=16', 'category2=01']:
+            filepath = "research/research15"
+
+    print('filepath', filepath)
+    if not option or option == None or option == "":
+        option = "01"
+
+    if kor_yn == 'Y' and air_yn == 'N' and special_yn == 'N' and params == ['category1=15', 'category2=01']:
+        datasubmitdate = datasubmitdate.replace(".", "-")
+        url = f"{host_name2}{datasubmitdate}/daily"
+    elif kor_yn == 'Y' and air_yn == 'N' and special_yn == 'Y' and params == ['category1=15', 'category2=01']:
+        datasubmitdate = datasubmitdate.replace(".", "-")
+        url = f"{host_name2}{datasubmitdate}/special"
+    elif kor_yn == 'N' and air_yn == 'N' and special_yn == 'N' and params == ['category1=15', 'category2=01']:
+        datasubmitdate = datasubmitdate.replace(".", "-")
+        url = f"{host_name3}{datasubmitdate}/daily"
+    elif kor_yn == 'N' and air_yn == 'N' and special_yn == 'Y' and params == ['category1=15', 'category2=01']:
+        datasubmitdate = datasubmitdate.replace(".", "-")
+        url = f"{host_name3}{datasubmitdate}/special"
+    else:
+        url = f"{host_name}?filepath={urllib.parse.quote(filepath)}&filename={filename}&option={option}"
+
+    print(url)
+    return url
+
+def Koreainvestment_GET_LIST_ARTICLE_URL(string):
+    string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
+    params = string.split(",")
+    print(len(params),params)
+    print('###############')
+    for i in params:
+        print(i)
+    print('###############')
+    
+    # 문자열에서 필요한 정보 추출
+    category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
+    filename = params[2].strip()
+    option = params[3].strip()
+    datasubmitdate = params[4].strip()
+    air_yn = params[5].strip()
+    kor_yn = params[6].strip()
+    special_yn = params[7].strip()
+
+    # 함수 호출
+    r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
+    return r
+
+
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
     global TEST_SEND_YN
@@ -2423,9 +2656,12 @@ def main():
         # r = Miraeasset_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        r = EBEST_selenium_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # r = EBEST_selenium_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
+        r = Koreainvestment_selenium_checkNewArticle()
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2557,6 +2793,10 @@ def main():
 
     print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
     r = EBEST_selenium_checkNewArticle()
+    
+    print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
+    r = Koreainvestment_selenium_checkNewArticle()
+    
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
