@@ -722,7 +722,8 @@ def fnguideTodayReport_checkNewArticle():
     sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
     sendMessageText += '확인하려면 링크를 클릭하세요. \n'
     sendMessageText += BOARD_URL + FIRST_MESSAGE_KEY
-    asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
+    if int(GetCurrentTime('HH')) > 1 :
+        asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
 
     # 연속키 갱신
     dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, int(pageCnt), articleCnt)
