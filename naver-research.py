@@ -866,8 +866,17 @@ def GetSecretKey(*args):
 
 
     SECRETS = ''
-    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
-        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
+    # __main__ 모듈의 경로를 가져옵니다.
+    main_module_path = sys.modules['__main__'].__file__
+
+    # 절대 경로로 변환합니다.
+    main_module_path = os.path.abspath(main_module_path)
+    
+    # 프로젝트 경로로 이동 
+    BASE_PATH =os.path.dirname(main_module_path)
+    print('BASE_PATH', BASE_PATH)
+    if os.path.isfile(os.path.join(BASE_PATH, 'secrets.json')): # 로컬 개발 환경
+        with open((os.path.join(BASE_PATH, 'secrets.json'))) as f:
             SECRETS = json.loads(f.read())
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
         ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL']
