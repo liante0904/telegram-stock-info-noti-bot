@@ -2525,8 +2525,14 @@ def MySQL_Open_Connect():
     
     # clearDB 
     # MySQL
+    print('ORACLECLOUD_MYSQL_DATABASE_URL')
+    print(ORACLECLOUD_MYSQL_DATABASE_URL)
     url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
+    print('######### 여긴가?')
+    print(url)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
+    print('###conn')
+    print(conn)
     cursor = conn.cursor()
     return cursor
 
@@ -2545,7 +2551,9 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
 
     cursor = MySQL_Open_Connect()
     dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
+    print('####1111')
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+    print('####2')
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
@@ -2708,11 +2716,17 @@ def GetSecretKey(*args):
     
 
     SECRETS = ''
-    print(os.getcwd())
-    if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
-        with open("secrets.json") as f:
+    print('이걸봐야함...')
+    print(os.path.dirname(os.path.realpath(__file__)))
+    print(os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json'))
+    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
+        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
             SECRETS = json.loads(f.read())
-        
+    #SECRETS = ''
+    #print(os.getcwd())
+    #if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
+    #    with open("secrets.json") as f:
+    #        SECRETS = json.loads(f.read())        
         ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL'] 
         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']

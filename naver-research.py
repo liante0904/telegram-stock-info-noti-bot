@@ -864,10 +864,10 @@ def GetSecretKey(*args):
     global TELEGRAM_USER_ID_DEV
     global IS_DEV
 
+
     SECRETS = ''
-    print(os.getcwd())
-    if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
-        with open("secrets.json") as f:
+    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
+        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
             SECRETS = json.loads(f.read())
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
         ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL']
