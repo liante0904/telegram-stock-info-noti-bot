@@ -61,7 +61,7 @@ TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 IS_DEV                                              = ""
-
+BASE_PATH                                           = ""
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -2551,9 +2551,7 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
 
     cursor = MySQL_Open_Connect()
     dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    print('####1111')
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    print('####2')
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
@@ -2713,14 +2711,23 @@ def GetSecretKey(*args):
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
     global IS_DEV
+    global BASE_PATH
     
 
     SECRETS = ''
-    print('이걸봐야함...')
-    print(os.path.dirname(os.path.realpath(__file__)))
-    print(os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json'))
-    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
-        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
+    current_file_path = os.path.abspath(__file__)
+
+    # __main__ 모듈의 경로를 가져옵니다.
+    main_module_path = sys.modules['__main__'].__file__
+
+    # 절대 경로로 변환합니다.
+    main_module_path = os.path.abspath(main_module_path)
+    
+    # 프로젝트 경로로 이동 
+    BASE_PATH =os.path.dirname(main_module_path)
+    print('BASE_PATH', BASE_PATH)
+    if os.path.isfile(os.path.join(BASE_PATH, 'secrets.json')): # 로컬 개발 환경
+        with open((os.path.join(BASE_PATH, 'secrets.json'))) as f:
             SECRETS = json.loads(f.read())
     #SECRETS = ''
     #print(os.getcwd())
@@ -2789,7 +2796,7 @@ def main():
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
-        
+        googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
         # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
         # r = Sangsanginib_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r

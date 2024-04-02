@@ -1,14 +1,30 @@
+import os
+import sys
 from oauth2client.client import GoogleCredentials
 from googleapiclient.discovery import build
 from httplib2 import Http
 from oauth2client import file, client, tools
 
 def upload(*args):
+    # 현재 모듈의 파일 경로를 가져옵니다.
+    current_file_path = os.path.abspath(__file__)
+
+    # __main__ 모듈의 경로를 가져옵니다.
+    main_module_path = sys.modules['__main__'].__file__
+
+    # 절대 경로로 변환합니다.
+    main_module_path = os.path.abspath(main_module_path)
+    
+    # 프로젝트 경로로 이동 
+    main_module_path =os.path.dirname(main_module_path)
+
+    print("메인 파일 경로:", main_module_path)
     print('********************')
     strFileName = ''
 
     print(args[0])
-    store = file.Storage('storage.json')
+    print(os.path.join(main_module_path, 'storage.json'))
+    store = file.Storage(os.path.join(main_module_path, 'storage.json'))
     creds = store.get()
     drive = build('drive', 'v3', http=creds.authorize(Http()))
     if args[0].isspace(): 
