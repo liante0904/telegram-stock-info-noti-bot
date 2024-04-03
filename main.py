@@ -2523,20 +2523,20 @@ def MySQL_Open_Connect():
     global conn
     global cursor
     
-    # clearDB 
     # MySQL
-    print('ORACLECLOUD_MYSQL_DATABASE_URL')
-    print(ORACLECLOUD_MYSQL_DATABASE_URL)
     url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
-    print('######### 여긴가?')
-    print(url)
-    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-    print('###conn')
-    print(conn)
+    try:
+        conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
+        # 연결 객체가 반환되면 연결 성공
+        # print("MySQL 데이터베이스에 연결되었습니다.")
+    except Exception as e:
+        # 예외가 발생한 경우 오류 메시지 출력
+        print("MySQL 데이터베이스 연결 실패:", e)
+        return
     cursor = conn.cursor()
     return cursor
 
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+def  DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global FIRM_NM
     global BOARD_NM
     global BOARD_URL
@@ -2796,7 +2796,7 @@ def main():
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
-        googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
+        # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
         # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
         # r = Sangsanginib_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
@@ -2810,16 +2810,17 @@ def main():
         # r = Miraeasset_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # r = EBEST_selenium_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        r = EBEST_selenium_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
         
-        print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        r = DAOL_selenium_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        
+        # print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
+        # r = DAOL_selenium_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -2951,6 +2952,7 @@ def main():
 
     print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
     r = EBEST_selenium_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
     r = Koreainvestment_selenium_checkNewArticle()
