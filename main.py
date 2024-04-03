@@ -1119,6 +1119,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Shinyoung_detail(SEQ, BBSNO):
+    print('******************Shinyoung_detail***************')
     # ntNo = NT_NO
     # cmsCd = CMS_CD
     # POST 요청에 사용할 URL
@@ -1127,38 +1128,75 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     # 추가할 request header
     headers = {
-        'Accept': 'text/plain, */*; q=0.01',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'Host': 'www.shinyoung.com',
-        'Origin': 'https://www.shinyoung.com',
-        'Pragma': 'no-cache',
-        'Referer': 'https://www.shinyoung.com/?page=10026',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
-        'X-Requested-With': 'XMLHttpRequest',
-        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"'
+        "Accept": "text/plain, */*; q=0.01",
+        "Connection": "keep-alive",
+        "Content-Length": "0",
+        "Host": "www.shinyoung.com",
+        "Origin": "https://www.shinyoung.com",
+        "Referer": "https://www.shinyoung.com/?page=10078&head=0",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+        "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\""
     }
-
+    print('????')
+    session = requests.Session()
+    print('????')
     # POST 요청 보내기
-    response = requests.post(url, headers=headers)
+    response = session.post(url, headers=headers)
 
     # 응답의 내용 확인
     if response.status_code == 200:
         # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
         # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
+        print('devPass')
         print(response.text)
     else:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+    print('????')
+    # 서버에서 반환한 응답 확인 및 새로운 쿠키가 있다면 세션에 추가
+    if 'Set-Cookie' in response.headers:
+        # 새로운 쿠키를 세션에 추가
+        new_cookie = response.headers['Set-Cookie']
+        session.cookies.update({'new_cookie_name': new_cookie})
+
+    #### https://www.shinyoung.com/Common/checkAuth
+
+    url = "https://www.shinyoung.com/Common/checkAuth"
 
 
+    # 추가할 request header
+    headers = {
+    "Accept": "text/plain, */*; q=0.01",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+    "Connection": "keep-alive",
+    "Content-Length": "0",
+    "Host": "www.shinyoung.com",
+    "Origin": "https://www.shinyoung.com",
+    "Referer": "https://www.shinyoung.com/?page=10078&head=0",
+    "Sec-Fetch-Dest": "empty",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-origin",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest",
+    "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\""
+    }
+
+    # POST 요청 보내기
+    response = session.post(url, headers=headers)
+
+    # 응답의 내용 확인
+    if response.status_code == 200:
+        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
+        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
+        print('checkAuth')
+        print(response.text)
+    else:
+        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/downloadFilePath"
 
@@ -1167,37 +1205,36 @@ def Shinyoung_detail(SEQ, BBSNO):
         'SEQ': SEQ,
         'BBSNO': BBSNO
     }
-
+    print(data)
     # 추가할 request header
     headers = {
-        'Accept': 'text/plain, */*; q=0.01',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'Cookie': 'JSESSIONID=KyWlsEhZ0A8LdQaILHM6Rm-zoVnF6FVb4QfC5E3u.was01',
-        'Host': 'www.shinyoung.com',
-        'Origin': 'https://www.shinyoung.com',
-        'Pragma': 'no-cache',
-        'Referer': 'https://www.shinyoung.com/?page=10026',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36',
-        'X-Requested-With': 'XMLHttpRequest',
-        'sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-        'sec-ch-ua-mobile': '?1',
-        'sec-ch-ua-platform': '"Android"'
+        "Accept": "text/plain, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br, zstd",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Connection": "keep-alive",
+        "Content-Length": "18",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Host": "www.shinyoung.com",
+        "Origin": "https://www.shinyoung.com",
+        "Referer": "https://www.shinyoung.com/?page=10078&head=0",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+        "sec-ch-ua": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\""
     }
 
     # POST 요청 보내기
-    response = requests.post(url, data=data, headers=headers)
+    response = session.post(url, data=data, headers=headers)
 
     # 응답의 내용 확인
     if response.status_code == 200:
         # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
         # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
+        print('최종파일')
         print(response.text)
     else:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
@@ -2810,9 +2847,14 @@ def main():
         # r = Miraeasset_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        r = EBEST_selenium_checkNewArticle()
+
+        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        r = Shinyoung_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        
+        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # r = EBEST_selenium_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
@@ -2863,6 +2905,9 @@ def main():
         # r = Hmsec_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
  
+        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        r = Shinyoung_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
