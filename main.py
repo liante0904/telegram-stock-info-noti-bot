@@ -2,10 +2,10 @@
 import os
 import sys
 import datetime
+import logging
 from pytz import timezone
 import telegram
 import requests
-import datetime
 import time
 import ssl
 import json
@@ -118,10 +118,10 @@ def ShinHanInvest_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 신한금융투자 산업분석
+    # 신한증권 산업분석
     TARGET_URL_0 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
     
-    # 신한금융투자 기업분석
+    # 신한증권 기업분석
     TARGET_URL_1 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
@@ -240,10 +240,10 @@ def KB_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 신한금융투자 산업분석
+    # KB증권 산업분석
     TARGET_URL_0 = 'https://rc.kbsec.com/ajax/categoryReportList.json'
     TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
-    # 신한금융투자 기업분석
+    # KB증권 기업분석
     # TARGET_URL_1 = ''
     
     # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
@@ -1140,9 +1140,7 @@ def Shinyoung_detail(SEQ, BBSNO):
         "sec-ch-ua-mobile": "?0",
         "sec-ch-ua-platform": "\"Windows\""
     }
-    print('????')
     session = requests.Session()
-    print('????')
     # POST 요청 보내기
     response = session.post(url, headers=headers)
 
@@ -1150,11 +1148,10 @@ def Shinyoung_detail(SEQ, BBSNO):
     if response.status_code == 200:
         # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
         # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('devPass')
-        print(response.text)
+        print('devPass:', response.text)
     else:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
-    print('????')
+    
     # 서버에서 반환한 응답 확인 및 새로운 쿠키가 있다면 세션에 추가
     if 'Set-Cookie' in response.headers:
         # 새로운 쿠키를 세션에 추가
@@ -1193,8 +1190,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     if response.status_code == 200:
         # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
         # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('checkAuth')
-        print(response.text)
+        print('checkAuth', response.text)
     else:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     # POST 요청에 사용할 URL
@@ -2822,6 +2818,10 @@ def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
 
+    logging.basicConfig(filename='example.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    logging.debug('이것은 디버그 메시지입니다.')
+    
     TEST_SEND_YN = ''
     GetSecretKey()
 
