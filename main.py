@@ -1738,8 +1738,6 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 r = GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if LIST_ARTICLE_TITLE not in sendMessageText:sendMessageText += r # 신규 내용 아래 추가
-                
-                print('?????',sendMessageText)
                 if TEST_SEND_YN == 'Y': 
                     print( sendMessageText)
                     continue
@@ -1765,15 +1763,6 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # sendMessageText = GetSendMessageTitle() + sendMessageText
         # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # sendMessageText = ''
-
-
-    # # 링크와 제목 출력
-    # for link_element in link_elements:
-    #     title = link_element.text
-    #     link = link_element.get_attribute("href")
-    #     print("제목:", title)
-    #     print("링크:", link)
-    #     print()
 
     # 브라우저 닫기
     driver.quit()
@@ -2753,7 +2742,7 @@ def GetSecretKey(*args):
     
 
     SECRETS = ''
-    current_file_path = os.path.abspath(__file__)
+    # current_file_path = os.path.abspath(__file__)
 
     # __main__ 모듈의 경로를 가져옵니다.
     main_module_path = sys.modules['__main__'].__file__
@@ -2823,17 +2812,49 @@ def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
 
-    logging.basicConfig(filename='example.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # 쉘 파라미터 가져오기
+    try: strArgs = sys.argv[1]
+    except: strArgs = ''
 
-    logging.debug('이것은 디버그 메시지입니다.')
+    # 사용자의 홈 디렉토리 가져오기
+    HOME_PATH = os.path.expanduser("~")
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(HOME_PATH, "log")
+
+    # log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("로그 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("로그 디렉토리 이미 존재함:", LOG_PATH)
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
+
+    # log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("로그 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("로그 디렉토리 이미 존재함:", LOG_PATH)
+
+    # log 파일명
+    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + os.path.splitext(__file__)[0] + ".dbg"
+    
+    # log 전체경로
+    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+
+    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    # logging.debug('이것은 디버그 메시지입니다.')
     
     TEST_SEND_YN = ''
     GetSecretKey()
 
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
-    try: strArgs = sys.argv[1]
-    except: strArgs = ''
+
 
     if  strArgs : 
         TEST_SEND_YN = 'Y'
