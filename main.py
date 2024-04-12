@@ -1693,8 +1693,8 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # wait until someid is clickable
     wait = WebDriverWait(driver, 10)
-    element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'board-list')))
-    
+    element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'board-list')))
+    # EC.presence_of_element_located
     # 모든 링크 요소 선택하기
     link_elements = driver.find_elements(By.XPATH, "//div[@id='wrap']/div/div/div/div/ul/li/a")
 
@@ -1718,7 +1718,7 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
 
-    if r: 
+    if r and TEST_SEND_YN != 'Y': 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
     
@@ -1735,9 +1735,14 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                r = GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                if LIST_ARTICLE_TITLE not in sendMessageText:sendMessageText += r # 신규 내용 아래 추가
+                
                 print('?????',sendMessageText)
-                if TEST_SEND_YN == 'Y': return sendMessageText
+                if TEST_SEND_YN == 'Y': 
+                    print( sendMessageText)
+                    continue
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -2049,7 +2054,7 @@ def DAOL_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # wait until someid is clickable
     wait = WebDriverWait(driver, 10)
-    element = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'srch_al')))
+    element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'srch_al')))
     
     # 모든 링크 요소 선택하기
     link_elements = driver.find_elements(By.XPATH, '//*[@id="tblTbody"]/tr/td[2]/a')
@@ -2101,7 +2106,7 @@ def DAOL_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                print('?????',sendMessageText)
+                # print('?????',sendMessageText)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -2848,13 +2853,13 @@ def main():
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
 
-        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        r = Shinyoung_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-        
-        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # r = EBEST_selenium_checkNewArticle()
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        
+        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        r = EBEST_selenium_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
@@ -2950,7 +2955,6 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-    
     # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
     # r = EBEST_checkNewArticle()
     # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
@@ -3001,7 +3005,6 @@ def main():
     
     print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
     r = Koreainvestment_selenium_checkNewArticle()
-    
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
