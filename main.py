@@ -2825,26 +2825,33 @@ def main():
     # log 디렉토리가 존재하지 않으면 생성
     if not os.path.exists(LOG_PATH):
         os.makedirs(LOG_PATH)
-        print("로그 디렉토리 생성됨:", LOG_PATH)
+        print("LOG_PATH 디렉토리 생성됨:", LOG_PATH)
     else:
-        print("로그 디렉토리 이미 존재함:", LOG_PATH)
+        print("LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
 
     # log 디렉토리 경로
     LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
 
-    # log 디렉토리가 존재하지 않으면 생성
+    # daily log 디렉토리가 존재하지 않으면 생성
     if not os.path.exists(LOG_PATH):
         os.makedirs(LOG_PATH)
-        print("로그 디렉토리 생성됨:", LOG_PATH)
+        print("daily LOG_PATH 디렉토리 생성됨:", LOG_PATH)
     else:
-        print("로그 디렉토리 이미 존재함:", LOG_PATH)
+        print("daily LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
 
-    # log 파일명
-    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + os.path.splitext(__file__)[0] + ".dbg"
     
+    # 현재 스크립트의 이름 가져오기
+    script_filename = os.path.basename(__file__)
+    script_name = script_filename.split('.')
+    script_name = script_name[0]
+    print('script_filename', script_filename)
+        
+    # log 파일명
+    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
+    print('__file__', __file__, LOG_FILENAME)
     # log 전체경로
     LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-
+    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
     logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     # logging.debug('이것은 디버그 메시지입니다.')
