@@ -68,6 +68,7 @@ cursor  = ''
 
 # 연속키URL
 NXT_KEY = ''
+NXT_KEY_BF = ''
 NXT_KEY_ARTICLE_TITLE = ''
 
 # 게시판 URL
@@ -857,9 +858,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # print(jres)
     except:
         return True
-    print('#################도착###############')    
-    # print(jres['getNoticeList'])
-    print(jres[0]['getStarCnt'])
+    
     FIRST_ARTICLE_TITLE = jres[0]['getNoticeList'][0]['TITLE']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
@@ -2568,6 +2567,7 @@ def  DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global BOARD_NM
     global BOARD_URL
     global NXT_KEY
+    global NXT_KEY_BF
     global TEST_SEND_YN
     global NXT_KEY_ARTICLE_TITLE
     global SEND_YN
@@ -2577,7 +2577,7 @@ def  DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
+    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_BF, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
     dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     rows = cursor.fetchall()
     for row in rows:
@@ -2587,6 +2587,7 @@ def  DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
         BOARD_NM = row['BOARD_NM']
         BOARD_URL = row['BOARD_URL']
         NXT_KEY = row['NXT_KEY']
+        NXT_KEY_BF = row['NXT_KEY_BF']
         NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
         SEND_YN = row['SEND_YN']
         SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
@@ -2614,6 +2615,19 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     cursor = MySQL_Open_Connect()
     dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
     dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
+    if dbResult:
+        print('####DB업데이트 된 연속키####', end='\n')
+        print(dbResult)
+        NXT_KEY = FIRST_NXT_KEY
+    conn.close()
+    return dbResult
+
+def DB_UpdNxtKeyNew(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY_BF, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
+    global NXT_KEY
+    global TEST_SEND_YN
+    cursor = MySQL_Open_Connect()
+    dbQuery = "UPDATE NXT_KEY SET NXT_KEY_BF = %s,NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
+    dbResult = cursor.execute(dbQuery, (NXT_KEY_BF, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
     if dbResult:
         print('####DB업데이트 된 연속키####', end='\n')
         print(dbResult)
