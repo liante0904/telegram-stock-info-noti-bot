@@ -479,6 +479,14 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
     
+    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
+    # 중복 발송 방지
+    if NXT_KEY not in str(soupList):
+        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
+        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+        return ''
+
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
@@ -621,6 +629,14 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('연속URL:', NXT_KEY) # 주소
     print('############')
 
+    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
+    # 중복 발송 방지
+    if NXT_KEY not in str(soupList):
+        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
+        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+        return ''
+
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
@@ -729,8 +745,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-        if "(수정)"  in FIRST_ARTICLE_TITLE and NXT_KEY == FIRST_ARTICLE_TITLE.replace("(수정)", ""):  # 첫번째 게시글이 수정된 경우 무한발송 방지  
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
@@ -748,6 +763,14 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
     print('############')
+
+    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
+    # 중복 발송 방지
+    if NXT_KEY not in str(soupList):
+        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
+        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+        return ''
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1352,6 +1375,14 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print()
 
     soupList = posts
+    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
+    # 중복 발송 방지
+    if NXT_KEY not in str(soupList):
+        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
+        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
+        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+        return ''
+
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
@@ -2884,9 +2915,9 @@ def main():
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
 
-        print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        r = KB_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        # r = KB_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
         # r = Sangsanginib_checkNewArticle()
@@ -2918,11 +2949,12 @@ def main():
         # r = DAOL_selenium_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        return
-        # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
-        sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
+        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # return
+
+        # # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
+        # sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
         # asyncio.run(sendMessage()
         # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
         # r = KB_checkNewArticle()
@@ -2947,9 +2979,9 @@ def main():
         # r = HANA_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # r = Samsung_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        r = Samsung_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
         # r = Kiwoom_checkNewArticle()
@@ -2959,9 +2991,9 @@ def main():
         # r = Hmsec_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
  
-        print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        r = Shinyoung_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        # r = Shinyoung_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
