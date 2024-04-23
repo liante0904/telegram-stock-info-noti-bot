@@ -1436,12 +1436,16 @@ def Kiwoom_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 삼성증권 기업 분석
+    # 키움증권 기업 분석
     TARGET_URL_0 =  'https://bbn.kiwoom.com/research/SResearchCRListAjax'
-    # 삼성증권 산업 분석
+    # 키움증권 산업 분석
     TARGET_URL_1 =  'https://bbn.kiwoom.com/research/SResearchCIListAjax'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    # 키움증권 스팟 노트
+    TARGET_URL_2 =  'https://bbn.kiwoom.com/research/SResearchSNListAjax'
+    # 키움증권 미국/선진국
+    TARGET_URL_3 =  'https://bbn.kiwoom.com/research/SResearchCCListAjax'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2, TARGET_URL_3)
 
     sendMessageText = ''
     # URL GET
@@ -1463,7 +1467,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     payload = {
         "pageNo": 1,
         "pageSize": 10,
-        "stdate": GetCurrentDate("yyyymmdd"),
+        "stdate": '20231023',
         "eddate": GetCurrentDate("yyyymmdd"),
         "f_keyField": '', 
         "f_key": '',
@@ -2911,8 +2915,6 @@ def main():
 
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
-
-
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
@@ -2983,13 +2985,13 @@ def main():
         # r = HANA_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        r = Samsung_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        # r = Kiwoom_checkNewArticle()
+        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+        # r = Samsung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        r = Kiwoom_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # r = Hmsec_checkNewArticle()
