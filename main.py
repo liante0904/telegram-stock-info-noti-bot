@@ -923,6 +923,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -1113,6 +1114,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -1398,6 +1400,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 ATTACH_URL = LIST_ARTICLE_URL
                 r = list.select_one(".subject a").find_all(string=True)
                 r = " : ".join(r)
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = r, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -1516,6 +1519,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
