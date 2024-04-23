@@ -336,7 +336,8 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+                if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+                else: LIST_ARTICLE_TITLE = list['docTitleSub']
                 LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
                 # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -2866,7 +2867,13 @@ def main():
     if  strArgs : 
         TEST_SEND_YN = 'Y'
         sendMessageText = ''
+
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
+
+        print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+        r = KB_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
         # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
         # r = Sangsanginib_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
@@ -2884,10 +2891,10 @@ def main():
         # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-        
-        print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        r = EBEST_selenium_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # r = EBEST_selenium_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
