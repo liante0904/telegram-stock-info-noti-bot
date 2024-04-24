@@ -2949,15 +2949,14 @@ def main():
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
-        
-        
-        # print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        # r = DAOL_selenium_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+                
+        print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
+        r = DAOL_selenium_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # return
+        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        return
 
         # # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
         # sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
@@ -2989,9 +2988,9 @@ def main():
         # r = Samsung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        r = Kiwoom_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # r = Kiwoom_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # r = Hmsec_checkNewArticle()
@@ -3001,8 +3000,6 @@ def main():
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
         # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         # sendMessageText += HANA_checkNewArticle()
