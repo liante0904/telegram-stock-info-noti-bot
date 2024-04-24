@@ -2174,6 +2174,150 @@ def DAOL_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+def DAOL_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 14
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # KB증권 산업분석
+    # TARGET_URL_0 = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
+    TARGET_URL   = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
+    # KB증권 기업분석
+    # TARGET_URL_1 = ''
+    
+    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    TARGET_URL_TUPLE = (TARGET_URL)
+    
+    
+    sendMessageText = ''
+    # URL GET
+    try:
+        sendMessageText += DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    except:
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+
+    return sendMessageText
+ 
+# JSON API 타입
+def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    # 헤더 설정
+    headers = {
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
+        'Connection': 'keep-alive',
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Host': 'www.daolsecurities.com',
+        'Origin': 'https://www.daolsecurities.com',
+        'Referer': 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+
+    # form data 설정
+    form_data = {
+        'curPage': '1',
+        'bbSeq': '',
+        'rGubun': 'I01',
+        'sctrGubun': 'I02',
+        'web': '0',
+        'startDate': '2023/10/25',
+        'endDate': '2024/04/24',
+        'searchSelect': '0',
+        'searchNm1': '',
+        'searchNm2': 'I01'
+    }
+
+    # POST 요청 보내기
+    response = requests.post(TARGET_URL, data=form_data, headers=headers)
+    # HTML parse
+    soup = BeautifulSoup(response.content, "html.parser")
+    print(soup)
+    soupList = soup.select('tr > td.al > a')
+    print(soupList)
+    return
+    # 응답 처리
+    if response.status_code == 200:
+        print("요청이 성공했습니다.")
+        print("응답 내용:", response.text)
+    else:
+        print("요청이 실패했습니다.")
+        print("상태 코드:", response.status_code)
+    
+    # print(type(response.text))
+    FIRST_ARTICLE_TITLE = strList[0]['docTitleSub']
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if TEST_SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in strList:
+        print(list)
+
+        LIST_ARTICLE_TITLE = list['docTitleSub']
+
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+                else: LIST_ARTICLE_TITLE = list['docTitleSub']
+                LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+                # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
 
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
@@ -2989,9 +3133,9 @@ def main():
         # r = Samsung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        r = Kiwoom_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+        # r = Kiwoom_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
         # r = Hmsec_checkNewArticle()
@@ -3001,6 +3145,10 @@ def main():
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
+
+        print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 7
+        r = DAOL_checkNewArticle()
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
