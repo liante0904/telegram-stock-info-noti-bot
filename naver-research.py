@@ -112,9 +112,9 @@ def NAVER_Report_checkNewArticle():
 
 
     # 네이버 증권 리서치 기업
-    TARGET_URL_0 = 'https://m.stock.naver.com/front-api/v1/research/list?category=company'
+    TARGET_URL_0 = 'https://m.stock.naver.com/front-api/research/list?category=company'
     # 네이버 증권 리서치 산업
-    TARGET_URL_1 = 'https://m.stock.naver.com/front-api/v1/research/list?category=industry'
+    TARGET_URL_1 = 'https://m.stock.naver.com/front-api/research/list?category=industry'
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
