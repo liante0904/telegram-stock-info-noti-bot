@@ -2184,25 +2184,42 @@ def DAOL_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # KB증권 산업분석
-    # TARGET_URL_0 = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
-    TARGET_URL   = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
+    TARGET_URL_0 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0'  
+    TARGET_URL_1 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I03&web=0'  
+    TARGET_URL_2 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I04&web=0'  
+    TARGET_URL_3 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I05&web=0'  
+    TARGET_URL_4 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I06&web=0'  
+    TARGET_URL_5 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I07&web=0'  
+    TARGET_URL_6 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I08&web=0' 
+    TARGET_URL_7 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S02&web=0' 
+    TARGET_URL_8 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S03&web=0' 
+    TARGET_URL_9 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S04&web=0' 
+    TARGET_URL_10 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S05&web=0' 
+    TARGET_URL_11 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S06&web=0' 
+
+    # TARGET_URL   = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
+    # TARGET_URL     = ''
+    
     # KB증권 기업분석
     # TARGET_URL_1 = ''
-    
+    # https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0
+    # https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true
     # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
-    TARGET_URL_TUPLE = (TARGET_URL)
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6
+                        , TARGET_URL_7, TARGET_URL_8, TARGET_URL_9, TARGET_URL_10, TARGET_URL_11)
     
     
     sendMessageText = ''
-    # URL GET
-    try:
-        sendMessageText += DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    except:
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        # URL GET
+        try:
+            sendMessageText += DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
 
     return sendMessageText
  
@@ -2210,6 +2227,22 @@ def DAOL_checkNewArticle():
 def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
+
+    # URL을 파싱하여 주소와 쿼리 파라미터를 추출
+    parsed_url = urlparse.urlparse(TARGET_URL)
+
+    # 쿼리 파라미터를 딕셔너리로 파싱
+    query_params = urlparse.parse_qs(parsed_url.query)
+
+    BASE_URL = parsed_url.scheme + "://" + parsed_url.netloc + parsed_url.path 
+
+    TARGET_URL = BASE_URL + '?cmd=list&templet-bypass=true'
+    print('parsed_url:', parsed_url)
+    print('BASE_URL:', BASE_URL)
+    # 파라미터 출력
+    print("rGubun:", query_params.get('rGubun'))
+    print("sctrGubun:", query_params.get('sctrGubun'))
+    print("web:", query_params.get('web'))
 
     # 헤더 설정
     headers = {
@@ -2220,7 +2253,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Host': 'www.daolsecurities.com',
         'Origin': 'https://www.daolsecurities.com',
-        'Referer': 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0',
+        'Referer': BASE_URL,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'X-Requested-With': 'XMLHttpRequest'
     }
@@ -2229,24 +2262,23 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     form_data = {
         'curPage': '1',
         'bbSeq': '',
-        'rGubun': 'I01',
-        'sctrGubun': 'I02',
-        'web': '0',
-        'startDate': '2023/10/25',
-        'endDate': '2024/04/24',
+        'rGubun': query_params.get('rGubun'),
+        'sctrGubun': query_params.get('sctrGubun'),
+        'web': query_params.get('web'),
+        'startDate': '2023/10/26',
+        'endDate': GetCurrentDate("yyyy/mm/dd"),
         'searchSelect': '0',
         'searchNm1': '',
-        'searchNm2': 'I01'
+        'searchNm2': query_params.get('rGubun')
     }
 
     # POST 요청 보내기
     response = requests.post(TARGET_URL, data=form_data, headers=headers)
     # HTML parse
     soup = BeautifulSoup(response.content, "html.parser")
-    print(soup)
+    # print(soup)
     soupList = soup.select('tr > td.al > a')
     print(soupList)
-    return
     # 응답 처리
     if response.status_code == 200:
         print("요청이 성공했습니다.")
@@ -2255,51 +2287,90 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("요청이 실패했습니다.")
         print("상태 코드:", response.status_code)
     
-    # print(type(response.text))
-    FIRST_ARTICLE_TITLE = strList[0]['docTitleSub']
+    try:
+        ARTICLE_BOARD_NAME  =  BOARD_NM 
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
+    except:
+        FIRST_ARTICLE_URL = ''
+        FIRST_ARTICLE_TITLE = ''
+
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    # 연속키 데이터베이스화 작업
+    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    print('NXT_KEY===========>', NXT_KEY.isspace())
+    print('NXT_KEY===========>', NXT_KEY )
+
+
+
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-
+        if NXT_KEY.isspace() or NXT_KEY == '':
+            # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+            print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 공백입니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if TEST_SEND_YN == 'Y' : r = ''
+    if SEND_YN == 'Y' : r = ''
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
+        return '' 
     
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속URL:', NXT_KEY) # 주소
+    print('############')
+
+    # # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
+    # # 중복 발송 방지
+    # if NXT_KEY not in str(soupList):
+    #     print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
+    #     print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
+    #     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    #     return ''
+
     nNewArticleCnt = 0
     sendMessageText = ''
-    # JSON To List
-    for list in strList:
+    for list in soupList:
         print(list)
-
-        LIST_ARTICLE_TITLE = list['docTitleSub']
-
+        LIST_ARTICLE_TITLE = list['title']
+        LIST_ARTICLE_URL   =  list['href']
+ 
+        parts = LIST_ARTICLE_URL.split(',')
+        if len(parts) != 3:
+            return "잘못된 입력 형식입니다."
+        
+        path = parts[0].split("'")[1]
+        filename = parts[1].split("'")[1]
+        research_id = parts[2].split(")")[0]
+        
+        LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
+    
+        print(LIST_ARTICLE_TITLE)
+        
+        print(LIST_ARTICLE_URL)
+        
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-                else: LIST_ARTICLE_TITLE = list['docTitleSub']
-                LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-                # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                # if TEST_SEND_YN == 'Y': return sendMessageText
+                ATTACH_URL = LIST_ARTICLE_URL
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
                 sendAddText(GetSendMessageTitle() + sendMessageText)
                 sendMessageText = ''
                 nNewArticleCnt = 0
-
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
@@ -2317,7 +2388,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
 
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
@@ -2894,11 +2964,11 @@ def GetCurrentDate(*args):
         DATE = DATE_SPLIT[2]
     elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
         DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
+    elif pattern == 'YYYY/MM/DD' or pattern == 'yyyy/mm/dd':
         DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
+    elif pattern == 'YYYY-MM-DD' or pattern == 'yyyy-mm-dd':
         DATE = time_now[:10].strip()
-    elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
+    elif pattern == 'YY-MM-DD' or pattern == 'yy-mm-dd':
         DATE = time_now[2:10].strip()
     elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
         DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
@@ -3094,13 +3164,13 @@ def main():
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
         # r = Koreainvestment_selenium_checkNewArticle()
                 
-        print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        r = DAOL_selenium_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
+        # r = DAOL_selenium_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        return
+        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # return
 
         # # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
         # sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
@@ -3144,15 +3214,12 @@ def main():
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-<<<<<<< HEAD
-=======
 
         print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 7
         r = DAOL_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
->>>>>>> 15bf5a70f7dad2d39f232e1c088c05d9290b5908
 
         # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
         # sendMessageText += HANA_checkNewArticle()
