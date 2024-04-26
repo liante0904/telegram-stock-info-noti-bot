@@ -2041,139 +2041,6 @@ def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
     return r
 
-def DAOL_selenium_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 14
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 이베스트 리서치 모바일
-    TARGET_URL_0 =  "https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0"
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
-
-    sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        try:
-            sendMessageText += DAOL_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        except:
-            if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                
-    return sendMessageText
-
-def DAOL_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    # 헤드리스 모드로 설정
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-
-    # Chrome 드라이버 초기화
-    driver = webdriver.Chrome(options=chrome_options)
-
-    # 웹 페이지 열기
-    driver.get(TARGET_URL)
-
-    # wait until someid is clickable
-    wait = WebDriverWait(driver, 10)
-    element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'srch_al')))
-    
-    # 모든 링크 요소 선택하기
-    link_elements = driver.find_elements(By.XPATH, '//*[@id="tblTbody"]/tr/td[2]/a')
-    print(link_elements)
-    FIRST_ARTICLE_TITLE = link_elements[0].find_element(By.XPATH, '//*[@id="tblTbody"]/tr[1]/td[2]/a').text
-    print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
-    
-    print('SEC_FIRM_ORDER-?>?', SEC_FIRM_ORDER)
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return ''
-    
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    
-    # JSON To List
-    # for list in jres['rows']:
-    for link_element in link_elements:
-        LIST_ARTICLE_URL = link_element.get_attribute('href')
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-        # 필요한 정보 추출
-        file_path, file_name, identifier = LIST_ARTICLE_URL.split(", '")[0].split("'")[1:]
-
-        # 변환된 다운로드 링크 출력
-        base_url = "https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF"
-        path = "/".join(file_path.split('/')[:-1])
-        download_link = f"{base_url}&path={path}/{file_name}"
-        print(download_link)
-        LIST_ARTICLE_URL = download_link
-        LIST_ARTICLE_TITLE = link_element.find_element(By.XPATH, '//*[@id="tblTbody"]/tr/td[2]/a').text
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                # print('?????',sendMessageText)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
-
-
-    # # 링크와 제목 출력
-    # for link_element in link_elements:
-    #     title = link_element.text
-    #     link = link_element.get_attribute("href")
-    #     print("제목:", title)
-    #     print("링크:", link)
-    #     print()
-
-    # 브라우저 닫기
-    driver.quit()
-    
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
-
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -2278,18 +2145,19 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(response.content, "html.parser")
     # print(soup)
     soupList = soup.select('tr > td.al > a')
-    print(soupList)
+    # print(soupList[])
     # 응답 처리
     if response.status_code == 200:
         print("요청이 성공했습니다.")
-        print("응답 내용:", response.text)
+        # print("응답 내용:", response.text)
     else:
         print("요청이 실패했습니다.")
         print("상태 코드:", response.status_code)
     
+    # print(soupList[FIRST_ARTICLE_INDEX]['title'], len(soupList[FIRST_ARTICLE_INDEX]['title']))
     try:
         ARTICLE_BOARD_NAME  =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].text
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX]['title']
         FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
     except:
         FIRST_ARTICLE_URL = ''
@@ -2341,7 +2209,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        print(list)
+        # print(list)
         LIST_ARTICLE_TITLE = list['title']
         LIST_ARTICLE_URL   =  list['href']
  
@@ -2355,10 +2223,11 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
         LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
     
-        print(LIST_ARTICLE_TITLE)
-        
-        print(LIST_ARTICLE_URL)
-        
+        print('LIST_ARTICLE_TITLE['+LIST_ARTICLE_TITLE+']')
+        print('NXT_KEY['+NXT_KEY+']')
+        print(NXT_KEY != LIST_ARTICLE_TITLE)
+        print(type(NXT_KEY), type(LIST_ARTICLE_TITLE))
+        print(len(NXT_KEY), len(LIST_ARTICLE_TITLE))
         if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
