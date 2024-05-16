@@ -193,7 +193,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
         LIST_ARTICLE_TITLE = list['f1']
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -334,7 +334,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         LIST_ARTICLE_TITLE = list['docTitleSub']
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
@@ -502,7 +502,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         print('NXT_KEY',NXT_KEY)
         
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 
@@ -644,7 +644,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
         # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
@@ -784,7 +784,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         fileNameArray = a_href.split("/")
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
@@ -920,7 +920,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = list['TITLE']
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1111,7 +1111,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = list['TITLE']
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1394,7 +1394,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if attachment_element:
             LIST_ARTICLE_URL = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
@@ -1520,7 +1520,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
         LIST_ARTICLE_TITLE = list['titl']
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1646,7 +1646,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
         print('SERIAL_NO:',SERIAL_NO)
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1771,7 +1771,7 @@ def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = link_element.find_element(By.XPATH, './/strong').text
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -1898,7 +1898,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
         LIST_ARTICLE_URL = link.get_attribute("onclick")
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
@@ -2225,10 +2225,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
         print('LIST_ARTICLE_TITLE['+LIST_ARTICLE_TITLE+']')
         print('NXT_KEY['+NXT_KEY+']')
-        print(NXT_KEY != LIST_ARTICLE_TITLE)
+        # print(NXT_KEY not in LIST_ARTICLE_TITLE)
         print(type(NXT_KEY), type(LIST_ARTICLE_TITLE))
         print(len(NXT_KEY), len(LIST_ARTICLE_TITLE))
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
