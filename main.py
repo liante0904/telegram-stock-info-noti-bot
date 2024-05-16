@@ -788,8 +788,10 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
+                if '(수정)' in LIST_ARTICLE_TITLE : r = True
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
+                if r : LIST_ARTICLE_TITLE = '(수정)' + LIST_ARTICLE_TITLE
                 # print(LIST_ARTICLE_TITLE)
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
                 if TEST_SEND_YN == 'Y': return sendMessageText
