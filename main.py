@@ -648,6 +648,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
@@ -799,6 +800,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 if ARTICLE_TITLE.isspace(): pass
                 else: LIST_ARTICLE_TITLE = ARTICLE_TITLE
                 # print(LIST_ARTICLE_TITLE)
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
