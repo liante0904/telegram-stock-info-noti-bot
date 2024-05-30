@@ -2179,10 +2179,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    print('NXT_KEY===========>', NXT_KEY.isspace())
-    print('NXT_KEY===========>', NXT_KEY )
-
-
 
     if dbResult: # 1
         # 연속키가 존재하는 경우
@@ -2234,11 +2230,8 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
         LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
     
-        print('LIST_ARTICLE_TITLE['+LIST_ARTICLE_TITLE+']')
-        print('NXT_KEY['+NXT_KEY+']')
-        # print(NXT_KEY not in LIST_ARTICLE_TITLE)
-        print(type(NXT_KEY), type(LIST_ARTICLE_TITLE))
-        print(len(NXT_KEY), len(LIST_ARTICLE_TITLE))
+        print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
+        print('NXT_KEY='+NXT_KEY)
         if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
@@ -3165,9 +3158,9 @@ def main():
     r = Samsung_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
-    print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-    r = Sangsanginib_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
+    # r = Sangsanginib_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
     r = Shinyoung_checkNewArticle()
