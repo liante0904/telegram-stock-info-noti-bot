@@ -87,9 +87,6 @@ SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
 
-# SendAddText 글로벌 변수
-SEND_ADD_MESSAGE_TEXT = ''
-
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -996,9 +993,7 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         print("Failed to fetch data.")
     
     print(json.loads(response.text))
-    print('**********JSON!!!!!')
     jres = json.loads(response.text)
-    # print('##############11111',jres)
     jres = jres['file'][0] #PDF
     print('################222222',jres) 
     # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
@@ -2179,10 +2174,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    print('NXT_KEY===========>', NXT_KEY.isspace())
-    print('NXT_KEY===========>', NXT_KEY )
-
-
 
     if dbResult: # 1
         # 연속키가 존재하는 경우
@@ -2236,9 +2227,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
         print('LIST_ARTICLE_TITLE['+LIST_ARTICLE_TITLE+']')
         print('NXT_KEY['+NXT_KEY+']')
-        # print(NXT_KEY not in LIST_ARTICLE_TITLE)
-        print(type(NXT_KEY), type(LIST_ARTICLE_TITLE))
-        print(len(NXT_KEY), len(LIST_ARTICLE_TITLE))
         if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
@@ -2498,7 +2486,7 @@ def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadF
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
     global CHAT_ID
-
+    print('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET',TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
@@ -2511,17 +2499,14 @@ def sendText(sendMessageText):
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
 # 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
 def sendAddText(sendMessageText, sendType='N'): 
-    global SEND_ADD_MESSAGE_TEXT
 
-    SEND_ADD_MESSAGE_TEXT += sendMessageText
     print('sendType ', sendType)
     print('sendMessageText ',sendMessageText)
-    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
 
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
-        print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
-        sendText(SEND_ADD_MESSAGE_TEXT)
-        SEND_ADD_MESSAGE_TEXT = ''
+    if len(sendMessageText) > 3500 or sendType == 'Y':
+        print("sendAddText() (실제 발송요청)\n", sendMessageText)
+        sendText(sendMessageText)
+        sendMessageText = ''
 
     return ''
 
@@ -2824,42 +2809,57 @@ def GetFirmName(*args):
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 def GetCurrentDate(*args):
-    pattern = ''
-    for pattern in args:
-        print('pattern 입력값',pattern)
-    
+    print('*' * 10, 'GetCurrentDate', '*' * 10)
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
+    DATE = time_now[:10].strip()
 
-    if pattern == '':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY' or pattern == 'yy':
-        DATE = DATE_SPLIT[0][2:]
-    elif pattern == 'YYYY' or pattern == 'yyyy':
-        DATE = DATE_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        DATE = DATE_SPLIT[1]
-    elif pattern == 'DD' or pattern == 'dd':
-        DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/MM/DD' or pattern == 'yyyy/mm/dd':
-        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-MM-DD' or pattern == 'yyyy-mm-dd':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY-MM-DD' or pattern == 'yy-mm-dd':
-        DATE = time_now[2:10].strip()
-    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.MM.DD' or pattern == 'yyyy.mm.dd':
-        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
+
+    userInput = ''
+    if not args: 
+        print('빈 입력값')
+        return DATE_SPLIT[0]+ DATE_SPLIT[1] + DATE_SPLIT[2]
     else:
-        DATE = time_now[:10].strip()
+        print(args)
+        userInput = args[0]
 
-    print('최종',DATE)
-    return DATE
+    # 연도
+    userInput = userInput.replace("yyyy", DATE_SPLIT[0]).replace("YYYY", DATE_SPLIT[0])
+    userInput = userInput.replace("yy", DATE_SPLIT[0][2:]).replace("YY", DATE_SPLIT[0][2:])
+    # 월
+    userInput = userInput.replace("mm", DATE_SPLIT[1]).replace("MM", DATE_SPLIT[1])
+    # 일
+    userInput = userInput.replace("dd", DATE_SPLIT[2]).replace("DD", DATE_SPLIT[2])
+    
+    print('=' *5 , '>',userInput)
+    # if pattern == '':
+    #     DATE = time_now[:10].strip()
+    # elif pattern == 'YY' or pattern == 'yy':
+    #     DATE = DATE_SPLIT[0][2:]
+    # elif pattern == 'YYYY' or pattern == 'yyyy':
+    #     DATE = DATE_SPLIT[0]
+    # elif pattern == 'MM' or pattern == 'mm':
+    #     DATE = DATE_SPLIT[1]
+    # elif pattern == 'DD' or pattern == 'dd':
+    #     DATE = DATE_SPLIT[2]
+    # elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
+    #     DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
+    # elif pattern == 'YYYY/MM/DD' or pattern == 'yyyy/mm/dd':
+    #     DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
+    # elif pattern == 'YYYY-MM-DD' or pattern == 'yyyy-mm-dd':
+    #     DATE = time_now[:10].strip()
+    # elif pattern == 'YY-MM-DD' or pattern == 'yy-mm-dd':
+    #     DATE = time_now[2:10].strip()
+    # elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
+    #     DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
+    # elif pattern == 'YYYY.MM.DD' or pattern == 'yyyy.mm.dd':
+    #     DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
+    # else:
+    #     DATE = time_now[:10].strip()
+
+    return userInput
     
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
 def GetCurrentDay(*args):
@@ -2956,64 +2956,8 @@ def isNxtKey(*args):
     print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
     if SEND_YN == 'N' or args[0] in NXT_KEY: return True
     else: return False
-    
-def main():
-    global SEC_FIRM_ORDER  # 증권사 순번
-    global TEST_SEND_YN
 
-    # 쉘 파라미터 가져오기
-    try: strArgs = sys.argv[1]
-    except: strArgs = ''
-
-    # 사용자의 홈 디렉토리 가져오기
-    HOME_PATH = os.path.expanduser("~")
-
-    # log 디렉토리 경로
-    LOG_PATH = os.path.join(HOME_PATH, "log")
-
-    # log 디렉토리가 존재하지 않으면 생성
-    if not os.path.exists(LOG_PATH):
-        os.makedirs(LOG_PATH)
-        print("LOG_PATH 디렉토리 생성됨:", LOG_PATH)
-    else:
-        print("LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
-
-    # log 디렉토리 경로
-    LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
-
-    # daily log 디렉토리가 존재하지 않으면 생성
-    if not os.path.exists(LOG_PATH):
-        os.makedirs(LOG_PATH)
-        print("daily LOG_PATH 디렉토리 생성됨:", LOG_PATH)
-    else:
-        print("daily LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
-
-    
-    # 현재 스크립트의 이름 가져오기
-    script_filename = os.path.basename(__file__)
-    script_name = script_filename.split('.')
-    script_name = script_name[0]
-    print('script_filename', script_filename)
-        
-    # log 파일명
-    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
-    print('__file__', __file__, LOG_FILENAME)
-    # log 전체경로
-    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
-    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
-    # logging.debug('이것은 디버그 메시지입니다.')
-    
-    TEST_SEND_YN = ''
-    GetSecretKey()
-
-    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
-    
-    if  strArgs : 
-        TEST_SEND_YN = 'Y'
-        sendMessageText = ''
-
+def test():
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
 
         # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
@@ -3129,6 +3073,66 @@ def main():
 
         # googledrive.upload(str(strArgs))
         print('test')
+
+def main():
+    global SEC_FIRM_ORDER  # 증권사 순번
+    global TEST_SEND_YN
+
+    GetCurrentDate()
+    # 쉘 파라미터 가져오기
+    try: strArgs = sys.argv[1]
+    except: strArgs = ''
+
+    # 사용자의 홈 디렉토리 가져오기
+    HOME_PATH = os.path.expanduser("~")
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(HOME_PATH, "log")
+
+    # log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("LOG_PATH 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
+
+    # daily log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("daily LOG_PATH 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("daily LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
+
+    
+    # 현재 스크립트의 이름 가져오기
+    script_filename = os.path.basename(__file__)
+    script_name = script_filename.split('.')
+    script_name = script_name[0]
+    print('script_filename', script_filename)
+        
+    # log 파일명
+    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
+    print('__file__', __file__, LOG_FILENAME)
+    # log 전체경로
+    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
+    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    # logging.debug('이것은 디버그 메시지입니다.')
+    
+    TEST_SEND_YN = ''
+    GetSecretKey()
+
+    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
+    
+    if  strArgs : 
+        TEST_SEND_YN = 'Y'
+        sendMessageText = ''
+        test()
+
         return 
 
     TEST_SEND_YN = ''
@@ -3146,59 +3150,59 @@ def main():
     # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-    r = ShinHanInvest_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = ShinHanInvest_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-    r = NHQV_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = NHQV_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-    r = HANA_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = HANA_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-    r = KB_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = KB_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-    r = Samsung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Samsung_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-    r = Sangsanginib_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Sangsanginib_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-    r = Shinyoung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Shinyoung_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-    r = Miraeasset_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Miraeasset_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-    r = Hmsec_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Hmsec_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-    r = Kiwoom_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Kiwoom_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-    r = EBEST_selenium_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = EBEST_selenium_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
     
     print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    r = Koreainvestment_selenium_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = Koreainvestment_selenium_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-    r = DAOL_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = DAOL_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    else: pass         #               sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
 if __name__ == "__main__":
 	main()
