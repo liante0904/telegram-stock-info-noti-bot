@@ -96,8 +96,7 @@ TODAY_SEND_YN = ''
 SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
-# SendAddText 글로벌 변수
-SEND_ADD_MESSAGE_TEXT = ''
+
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -348,17 +347,14 @@ def sendText(sendMessageText):
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
 # 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
 def sendAddText(sendMessageText, sendType='N'): 
-    global SEND_ADD_MESSAGE_TEXT
 
-    SEND_ADD_MESSAGE_TEXT += sendMessageText
     print('sendType ', sendType)
     print('sendMessageText ',sendMessageText)
-    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
 
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
-        print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
-        sendText(SEND_ADD_MESSAGE_TEXT)
-        SEND_ADD_MESSAGE_TEXT = ''
+    if sendType == 'Y' or len(sendMessageText) > 0:
+        print("sendAddText() (실제 발송요청)\n", sendMessageText)
+        sendText(sendMessageText)
+        sendMessageText = ''
 
     return ''
 
@@ -866,8 +862,8 @@ def main():
     sendMessageText = ''
 
     print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    r = HankyungConsen_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    sendMessageText = HankyungConsen_checkNewArticle()
+    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
