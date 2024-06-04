@@ -110,6 +110,237 @@ FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
+def LS_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+    
+    SEC_FIRM_ORDER = 0
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 이슈브리프
+    TARGET_URL_0 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=146'
+    # 기업분석 게시판
+    TARGET_URL_1 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=36'
+    # 산업분석
+    TARGET_URL_2 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=37'
+    # 투자전략
+    TARGET_URL_3 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=38'
+    # Quant
+    TARGET_URL_4 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=147'
+    # Macro
+    TARGET_URL_5 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=39'
+    # FI/ Credit
+    TARGET_URL_6 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=183'
+    # Commodity
+    TARGET_URL_7 = 'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=145'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7)
+
+    ## EBEST만 로직 변경 테스트
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        try:
+            sendMessageText += LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+
+    return sendMessageText
+
+def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+    global LIST_ARTICLE_TITLE
+
+    headers = {
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+ 
+    try:
+        webpage = requests.get(TARGET_URL, verify=False, headers=headers)
+    except:
+        return True
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    soupList = soup.select('#contents > table > tbody > tr')
+
+    # print(soupList[0])
+    # soupListTest = soup.select('#contents > table > tbody > tr > td.subject')
+    # r = soupListTest.select('a')
+    # print(soupListTest[0].select('a'))#[0].get_text())
+    # print(len(r))
+    # for i in r:
+    #     print(i)
+    # return 
+
+    ARTICLE_BOARD_NAME =  BOARD_NM 
+    try:
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].select('td.subject > a')[FIRST_ARTICLE_INDEX].get_text()
+    except IndexError:
+        print('IndexError')
+
+    try:
+        FIRST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].select('td.subject > a').attrs['href'].replace("amp;", "")
+    except:
+        FIRST_ARTICLE_URL = ''
+
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE) 
+    if TEST_SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    print('연속키:', NXT_KEY) # 주소
+    print('############')
+
+    # print('TEST_SEND_YN ', TEST_SEND_YN)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    for list in soupList:
+        print(list.select('td')[3].get_text())
+        date = list.select('td')[3].get_text()
+        list = list.select('a')
+        # print(list[0].text)
+        # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
+        LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
+        LIST_ARTICLE_TITLE = list[0].text
+
+        print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
+        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+LS_downloadFile(LIST_ARTICLE_URL)
+                ATTACH_URL = LS_downloadFile(LIST_ARTICLE_URL, date)
+                
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
+                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                if TEST_SEND_YN == 'Y': return sendMessageText
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+                nNewArticleCnt = 0
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return  ''
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+    
+def LS_downloadFile(ARTICLE_URL, date):
+    global ATTACH_FILE_NAME
+    global LIST_ARTICLE_TITLE
+    ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
+    print('LS_downloadFile')
+    print(date)
+    ATTACH_BASE_URL = 'https://www.ls-sec.co.kr/_bt_lib/util/download.jsp?dataType='
+    
+    try:
+        print(ARTICLE_URL)
+        webpage = requests.get(ARTICLE_URL, verify=False)
+        print('안됐나?')
+    except:
+        print('여기?')
+        return True
+    # HTML parse
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    # print(soup)
+    # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
+    table = soup.select_one('#contents > table')
+    tbody = table.select_one('tbody')
+    trs = soup.select('tr')
+    LIST_ARTICLE_TITLE = trs[0].select_one('td').text
+    
+    # 첨부파일 URL
+    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
+    
+    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
+    
+    # 첨부파일 이름
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    print(ATTACH_FILE_NAME)
+    # param1 
+    URL_PARAM = date
+    # print('???>',URL_PARAM)
+    URL_PARAM = URL_PARAM.split('.')
+    print(URL_PARAM)
+    URL_PARAM = 'B' + URL_PARAM[0] + URL_PARAM[1]
+
+    print('인코딩전:',ATTACH_FILE_NAME)
+    # URL 인코딩
+    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME)
+    print('인코딩:',ATTACH_URL_FILE_NAME)
+
+    # https://www.ls-sec.co.kr/upload/EtwBoardData/B202405/%5BLS%20ELECTRIC_기업이슈_240524☆%5D성종화_1840_이슈브리프_LS%20ELECTRIC.pdf
+    ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+    ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
+
+    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    print('*********확인용**************')
+    print(ATTACH_URL)
+    # EBEST 모바일 페이지 PDF 링크 생성(파일명 2번 인코딩하여 조립)
+    # r = urlparse.quote(ATTACH_FILE_NAME)
+    # r = urlparse.quote(r)
+    # if ARTICLE_BOARD_ORDER == 0 : # 이슈브리프
+    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
+    # elif ARTICLE_BOARD_ORDER == 1: # 기업분석
+    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    # elif ARTICLE_BOARD_ORDER == 2: # 산업분석
+    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202103&filename="
+    # elif ARTICLE_BOARD_ORDER == 3: # 투자전략
+    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    # elif ARTICLE_BOARD_ORDER == 3: # QUANT
+    #     ATTACH_URL = "http://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+    # else:
+    #     ATTACH_URL = "htts://mweb.ebestsec.co.kr/download?addPath=%2F%2FEtwBoardData%2FB202102&filename="
+
+    # ATTACH_URL += r
+    # print(ATTACH_URL)
+    return ATTACH_URL
+
+
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1701,7 +1932,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(sendMessageText)
     return sendMessageText
 
-def EBEST_selenium_checkNewArticle():
+def TARGET_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -1719,7 +1950,7 @@ def EBEST_selenium_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         try:
-            sendMessageText += EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+            sendMessageText += TARGET_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
@@ -1728,7 +1959,7 @@ def EBEST_selenium_checkNewArticle():
                 
     return sendMessageText
 
-def EBEST_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def TARGET_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     # 헤드리스 모드로 설정
     chrome_options = Options()
@@ -2168,8 +2399,8 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print(soupList[FIRST_ARTICLE_INDEX]['title'], len(soupList[FIRST_ARTICLE_INDEX]['title']))
     try:
         ARTICLE_BOARD_NAME  =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX]['title']
-        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].select('a')['title']
+        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].select('a').attrs['href']
     except:
         FIRST_ARTICLE_URL = ''
         FIRST_ARTICLE_TITLE = ''
@@ -2508,7 +2739,8 @@ def sendAddText(sendMessageText, sendType='N'):
     print('sendType ', sendType)
     print('sendMessageText ',sendMessageText)
 
-    if sendType == 'Y' or len(sendMessageText) > 0:
+    # if sendType == 'Y' or len(sendMessageText) > 0:
+    if len(sendMessageText) > 0:
         print("sendAddText() (실제 발송요청)\n", sendMessageText)
         sendText(sendMessageText)
         sendMessageText = ''
@@ -3001,10 +3233,18 @@ def main():
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     if  strArgs : 
-        TEST_SEND_YN = 'Y'
+        TEST_SEND_YN = ''
         sendMessageText = ''
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
+
+        print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        r = LS_checkNewArticle()
+        print(r)
+        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
         # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
         # r = KB_checkNewArticle()
@@ -3028,8 +3268,8 @@ def main():
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        # print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # r = EBEST_selenium_checkNewArticle()
+        # print("TARGET_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # r = TARGET_selenium_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
@@ -3052,13 +3292,13 @@ def main():
         # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # fnguideTodayReport_checkNewArticle()
-        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
 
         # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
-        # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # r = EBEST_checkNewArticle()
+        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # r = LS_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
@@ -3086,9 +3326,9 @@ def main():
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
 
-        print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        r = DAOL_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+        # print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
+        # r = DAOL_checkNewArticle()
+        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
@@ -3131,9 +3371,9 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-    # print("EBEST_checkNewArticle()=> 새 게시글 정보 확인") # 0
-    # r = EBEST_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
+    r = LS_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
     r = ShinHanInvest_checkNewArticle()
@@ -3175,9 +3415,9 @@ def main():
     r = Kiwoom_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-    print("EBEST_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-    r = EBEST_selenium_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    # print("TARGET_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+    # r = TARGET_selenium_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
     r = Koreainvestment_selenium_checkNewArticle()
