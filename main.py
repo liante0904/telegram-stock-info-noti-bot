@@ -1965,7 +1965,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(sendMessageText)
     return sendMessageText
 
-def TARGET_selenium_checkNewArticle():
+def LS_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -1983,7 +1983,7 @@ def TARGET_selenium_checkNewArticle():
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         try:
-            sendMessageText += TARGET_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+            sendMessageText += LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
@@ -1992,7 +1992,7 @@ def TARGET_selenium_checkNewArticle():
                 
     return sendMessageText
 
-def TARGET_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     # 헤드리스 모드로 설정
     chrome_options = Options()
@@ -3316,8 +3316,8 @@ def main():
         # r = Shinyoung_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-        # print("TARGET_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # r = TARGET_selenium_checkNewArticle()
+        # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+        # r = LS_selenium_checkNewArticle()
         # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
@@ -3463,8 +3463,8 @@ def main():
     r = Kiwoom_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
-    # print("TARGET_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-    # r = TARGET_selenium_checkNewArticle()
+    # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+    # r = LS_selenium_checkNewArticle()
     # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
     print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
