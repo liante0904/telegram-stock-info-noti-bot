@@ -199,6 +199,9 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -399,6 +402,9 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -543,6 +549,9 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -689,6 +698,9 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -839,6 +851,9 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -975,6 +990,9 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
             
@@ -1131,6 +1149,9 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
 
@@ -1326,6 +1347,9 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
 
@@ -1580,6 +1604,9 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
 
@@ -1734,6 +1761,9 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
 
@@ -1849,6 +1879,9 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
 
@@ -1986,6 +2019,9 @@ def TARGET_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
 
@@ -2114,6 +2150,9 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
 
@@ -2411,7 +2450,11 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
 
+
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
         if NXT_KEY.isspace() or NXT_KEY == '':
@@ -2506,6 +2549,9 @@ def fnguideTodayReport_checkNewArticle():
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
     if dbResult: # 1
+        if SEND_YN == 'Y':
+            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+            return ''
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','fnguideTodayReport_checkNewArticle')
 
@@ -3238,9 +3284,11 @@ def main():
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
 
-        print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        r = LS_checkNewArticle()
-        print(r)
+        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
+        # r = LS_checkNewArticle()
+        # print(r)
+        print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
+        r = DAOL_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
