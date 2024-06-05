@@ -2383,10 +2383,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     query_params = urlparse.parse_qs(parsed_url.query)
 
     BASE_URL = parsed_url.scheme + "://" + parsed_url.netloc + parsed_url.path 
-
     TARGET_URL = BASE_URL + '?cmd=list&templet-bypass=true'
     print('parsed_url:', parsed_url)
     print('BASE_URL:', BASE_URL)
+    print('TARGET_URL:',TARGET_URL)
     # 파라미터 출력
     print("rGubun:", query_params.get('rGubun'))
     print("sctrGubun:", query_params.get('sctrGubun'))
@@ -2413,7 +2413,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         'rGubun': query_params.get('rGubun'),
         'sctrGubun': query_params.get('sctrGubun'),
         'web': query_params.get('web'),
-        'startDate': '2023/10/26',
+        'hts':'',
+        'filepath':'',
+        'attaFileNm':'',
+        'startDate': '2024/01/01',
         'endDate': GetCurrentDate("yyyy/mm/dd"),
         'searchSelect': '0',
         'searchNm1': '',
@@ -2426,7 +2429,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(response.content, "html.parser")
     # print(soup)
     soupList = soup.select('tr > td.al > a')
-    # print(soupList[])
+    print(soupList)
     # 응답 처리
     if response.status_code == 200:
         print("요청이 성공했습니다.")
@@ -2465,6 +2468,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    
+    if not soupList: 
+        print(FIRM_NM,'의 ', BOARD_NM ,'게시판 게시글이 존재하지 않습니다..\n')
+        
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
@@ -3228,6 +3235,7 @@ def isNxtKey(*args):
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
+    global SEND_YN
 
     # 쉘 파라미터 가져오기
     try: strArgs = sys.argv[1]
@@ -3280,6 +3288,7 @@ def main():
     
     if  strArgs : 
         TEST_SEND_YN = ''
+        SEND_YN = 'Y'
         sendMessageText = ''
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
