@@ -199,7 +199,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
     if dbResult: # 1
-        if SEND_YN == 'Y':
+        if SEND_YN == 'N':
             print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
             return ''
         # 연속키가 존재하는 경우
