@@ -2330,7 +2330,7 @@ def DAOL_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
  
-    # KB증권 산업분석
+    # 다올투자증권 산업분석
     TARGET_URL_0  = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I01&web=0'
     TARGET_URL_1  = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0'  
     TARGET_URL_2  = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I03&web=0'  
@@ -2429,7 +2429,11 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(response.content, "html.parser")
     # print(soup)
     soupList = soup.select('tr > td.al > a')
-    print(soupList)
+    
+    # print('*' *40)
+    # print(soupList[0])
+    # print('*' *40)
+
     # 응답 처리
     if response.status_code == 200:
         print("요청이 성공했습니다.")
@@ -2438,17 +2442,27 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("요청이 실패했습니다.")
         print("상태 코드:", response.status_code)
     
-    # print(soupList[FIRST_ARTICLE_INDEX]['title'], len(soupList[FIRST_ARTICLE_INDEX]['title']))
+    
+    # print('=' *40)
+    # print('======>',soupList[FIRST_ARTICLE_INDEX])
+    # print('======>',soupList[FIRST_ARTICLE_INDEX]['title'])
+    # print('======>',soupList[FIRST_ARTICLE_INDEX].attrs['href'])
+    # print('=' *40)
+    
+
+    FIRST_ARTICLE_URL = ''
+    FIRST_ARTICLE_TITLE = ''
+
     try:
         ARTICLE_BOARD_NAME  =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].select('a')['title']
-        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].select('a').attrs['href']
+        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX]['title']
+        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
+
     except:
         FIRST_ARTICLE_URL = ''
         FIRST_ARTICLE_TITLE = ''
 
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
+
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
@@ -2463,6 +2477,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if NXT_KEY.isspace() or NXT_KEY == '':
             # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
             print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 공백입니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+            print('##########확인용',FIRST_ARTICLE_TITLE)
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
@@ -3231,7 +3246,68 @@ def isNxtKey(*args):
     print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
     if SEND_YN == 'N' or args[0] in NXT_KEY: return True
     else: return False
+
+def test_code():
+    sendMessageText = ''
+    print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
+    r = LS_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
+    r = ShinHanInvest_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
+    print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
+    r = NHQV_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
+    r = HANA_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
+    r = KB_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
+    r = Samsung_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
+    # r = Sangsanginib_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
+    r = Shinyoung_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
+    r = Miraeasset_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
+    r = Hmsec_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
+    r = Kiwoom_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
+    # r = LS_selenium_checkNewArticle()
+    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    
+    print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
+    r = Koreainvestment_selenium_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
+    r = DAOL_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+
+    if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
@@ -3293,126 +3369,14 @@ def main():
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
 
-        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # r = LS_checkNewArticle()
-        # print(r)
         print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
         r = DAOL_checkNewArticle()
         if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
         if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-        # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        # r = KB_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-        # r = Sangsanginib_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        # r = Shinyoung_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r        
-
-
-        # print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-        # r = Miraeasset_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-
-        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        # r = Shinyoung_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-        # r = LS_selenium_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
-        # r = Koreainvestment_selenium_checkNewArticle()
-                
-        # print("DAOL_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        # r = DAOL_selenium_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # return
-
-        # # sendAddText() # 쌓인 메세지를 무조건 보냅니다.        
-        # sendText("http://146.56.168.28:5000/static/pdf/"+urlparse.quote('240117_산업분석_통신서비스; 4Q23 Preview 총선 전 점검_신한투자증권.pdf'))
-        # asyncio.run(sendMessage()
-        # print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-        # r = KB_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # fnguideTodayReport_checkNewArticle()
-        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-
-        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-        # print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-        # r = LS_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-        # r = ShinHanInvest_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        # r = HANA_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # r = Samsung_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        # r = Kiwoom_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        # print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-        # r = Hmsec_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
- 
-        # print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-        # r = Shinyoung_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-
-        # print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        # r = DAOL_checkNewArticle()
-        # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-        # print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-        # sendMessageText += HANA_checkNewArticle()
-
-        # print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-        # sendMessageText += Samsung_checkNewArticle()
-
-        # print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-        # sendMessageText += Kiwoom_checkNewArticle()
-
-        # if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-        # payload = {"pageNo":1,"pageSize":12,"registdateFrom":"20220727","registdateTo":"20230727","keyword":"","templateid":"","lowTempId":"79,63,64,65,66,67,68,69,75,76,137,193,77,78,74,184,185,174,81,82,83,84,70,71,73,177,191,192,85,156,86,158,166,162,88,160,89,90,91,92,161,169,171,93,94,183,180,164,103,104,105,106,107,108,109,110,111,112,133,167,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,131,188","folderid":"","callGbn":"RCLIST"}
-
-        # try:
-        #     webpage = requests.post('https://rc.kbsec.com/ajax/reNewCategoryReportList.json',data=payload , headers={'Content-Type':'application/json','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'})
-        #     print(webpage.text)
-        #     jres = json.loads(webpage.text)
-        # except:
-        #     return True
-            
-        # if jres['totalCount'] == 0 : return ''
-        # print(jres['researchList'])
+        return
+        test_code()
 
         # googledrive.upload(str(strArgs))
         print('test')
@@ -3428,6 +3392,7 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
+
     print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
     r = LS_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
