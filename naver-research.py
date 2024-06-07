@@ -154,39 +154,27 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    print('****** 네이버 디버그용 **************')
-    print('TEST_SEND_YN', TEST_SEND_YN)
-    print(r)
     if TEST_SEND_YN == 'Y' : r = ''
-    print('********************')
-    print(r)
 
     if r: 
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
-    else:
-        print('&&&&&&&&&&&&& ', r)
-
-    # NaverNews 게시판에 따른 URL 지정
-    if ARTICLE_BOARD_ORDER == 0:category = 'company'
-    else:                      category = 'industry'
 
     nNewArticleCnt = 0
     sendMessageText = ''
+
+    MainBot_nNewArticleCnt = 0
+    MainBot_sendMessageText = ''
     brokerName = jres[0]['brokerName']
     # JSON To List
     for research in jres:
         # print('***************************')
-        print(research)
-        LIST_ARTICLE_URL = research['endUrl'] 
-        LIST_ARTICLE_URL = NAVER_Report_parseURL(LIST_ARTICLE_URL)
+        # print(research)
+        LIST_ARTICLE_URL = NAVER_Report_parseURL(research['endUrl'])
         LIST_ARTICLE_TITLE = research['title']
         if ARTICLE_BOARD_ORDER == 0 : LIST_ARTICLE_TITLE = research['itemName'] +": "+ LIST_ARTICLE_TITLE # 기업분석
         else:                         LIST_ARTICLE_TITLE = research['category'] +": "+ LIST_ARTICLE_TITLE # 산업분석
-        # if '하나증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '키움증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '삼성증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
-        # if '신한투자증권'  in str(research['brokerName']) : continue # 해당 증권사는 이미 발송중이므로 제외
+        
         
         '''
         {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
@@ -217,7 +205,11 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
                 # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
                 # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                # if '' in brokerName: # 메인봇에서 발송안하는 회사
+                    # MainBot_sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
+                    # MainBot_sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                    
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -259,11 +251,6 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
 
     return strUrl
 
-async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True)
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -273,80 +260,6 @@ async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-
-# 최초 send함수
-# URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
-def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('send()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
-        DISABLE_WEB_PAGE_PREVIEW = False
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
-    
-
-    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        try:
-            time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-            #bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-            r = asyncio.run(sendDocument(ATTACH_FILE_NAME)) #봇 실행하는 코드
-            os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
-            return r
-        except:
-            return
-    else: 
-        return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드    
-    
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-
-# URL 발신용 전용 함수 : ex) 네이버 뉴스
-def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('sendURL()')
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-
-
-def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('sendPhoto()')
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
@@ -378,85 +291,7 @@ def sendAddText(sendMessageText, sendType='N'):
 
     return ''
 
-def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-    global sendMessageText
-
-    print('sendMarkdown()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 첫 인덱스 타이틀
-    if INDEX == 0:
-        sendMessageText = ''
-        sendMessageText += GetSendMessageTitle()
-
-    sendMessageText += ARTICLE_TITLE + "\n" 
-
-    # 원문 링크 , 레포트 링크
-    if SEC_FIRM_ORDER == 996:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
-    else:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
-
-    if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-# URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
-def DownloadFile(URL, FILE_NAME):
-    global ATTACH_FILE_NAME
-    print("DownloadFile()")
-
-    if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
-        # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
-        CONVERT_URL = URL 
-        for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
-            # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
-            # 1. 주소에서 한글 문자를 판별
-            # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-            print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
-            if ord('가') <= ord(c) <= ord('힣'): 
-                c_encode = c.encode('euc-kr')
-                CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-
-        if URL != CONVERT_URL: 
-            print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
-            print("CONVERT_URL", CONVERT_URL)
-            URL = CONVERT_URL
-
-    # 파일명 지정
-    # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
-    # 날짜-대분류-소분류-제목-증권사.pdf
-    # TODO 종목명 추가
-    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
-    print('FILE_NAME 확장자 제거 ,', FILE_NAME)
-    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NM
-
-    # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
-    MAX_FILE_NAME_LENGTH = 240
-    if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
-    FILE_NAME += '.pdf'
-    # if '.pdf' not in FILE_NAME : FILE_NAME = FILE_NAME + '.pdf'
-
-    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
-    print('convert URL:',URL)
-    print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
-    with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
-        response = get(URL, verify=False)     # get request
-        file.write(response.content) # write to file
-        
-    r = googledrive.upload(str(ATTACH_FILE_NAME))
-    print('********************')
-    print(f'main URL {r}')
-    return r
-
-def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
+def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
     # 실제 전송할 메시지 작성
     sendMessageText = ''
     # 발신 게시판 종류
@@ -467,22 +302,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
 
-    return sendMessageText
-
-# 실제 전송할 메시지 작성 
-# 유형   : Markdown
-# Paran  : ARTICLE_TITLE -> 레포트 제목  , ATTACH_URL -> 레포트 URL(PDF)
-def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
-    
-    sendMessageText = ''
-
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ATTACH_URL + ")"  + "\n" 
-
-    return sendMessageText
-    
+    return sendMessageText 
 # 타이틀 생성 
 # : 게시판 이름 삭제
 def GetSendMessageTitle(): 
@@ -516,80 +336,6 @@ def GetSendMessageTitle():
 def GetSendChatId():
     SendMessageChatId = 0
     return TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM
-
-def GetJsonData(TARGET_URL, METHOD_TYPE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
-
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except:
-        return True
-
-    # jres = jres['newsItems']
-    print(jres)
-    return jres
-
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for stockPlus in jres:
-        LIST_ARTICLE_URL = stockPlus['url'].strip()
-        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
-                # print(sendMessageText)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
-
 
 def MySQL_Open_Connect():
     global conn
@@ -633,51 +379,6 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
 
     conn.close()
     return dbResult
-
-def DB_SelSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    nSleepCnt = 0
-    nSleepCntKey = 0
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
-    dbResult = cursor.execute(dbQuery, (9999))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        nSleepCnt = row['ARTICLE_BOARD_ORDER']
-        nSleepCntKey = row['NXT_KEY']
-
-    conn.close()
-    SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
-    return SleepTuple
-
-def DB_DelSleepKey(*args):
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
-    dbResult = cursor.execute(dbQuery)
-
-    conn.close()
-    return dbResult
-
-def DB_InsSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
-    cursor.execute(dbQuery)
-    conn.close()
-    return dbQuery
 
 def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
     global NXT_KEY
@@ -745,48 +446,6 @@ def GetCurrentTime(*args):
     print(TIME)
     return TIME
 
-def SetSleepTimeKey(*args):
-    try: nSleepCntKey = args[0]
-    except: nSleepCntKey = 0
-    file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-    file.write(  str(nSleepCntKey) )      # 파일에 문자열 저장
-    print('nSleepCntKey:',nSleepCntKey, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-    file.close()                     # 파일 객체 닫기
-    
-def GetSleepTimeKey(*args):
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( SLEEP_KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        file.write(  str(INTERVAL_INIT_TIME) )      # 파일에 문자열 저장
-        print('INTERVAL_INIT_TIME:',INTERVAL_INIT_TIME, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-        file.close()                     # 파일 객체 닫기
-        return int(INTERVAL_INIT_TIME)
-    else:   # 이미 실행
-        file = open( SLEEP_KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        SLEEP_KEY = file.readline()       # 파일 내 데이터 읽기
-        print('SLEEP_KEY:', SLEEP_KEY)
-        if SLEEP_KEY:
-            print('SLEEP_KEY T')
-        else:
-            SLEEP_KEY = '0'
-            
-        print('Get_nxtKey')
-        print('SLEEP_KEY:',SLEEP_KEY, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-        file.close()                     # 파일 객체 닫기
-        return SLEEP_KEY
-
-def SetSleepTime(*args):
-    nSleepCntKey = GetSleepTimeKey()
-    nSleepCntKey = int(nSleepCntKey)
-    while nSleepCntKey < INTERVAL_TIME: 
-        nSleepCntKey += 1
-        SetSleepTimeKey(nSleepCntKey)
-        sys.exit(0)
-        
-    SetSleepTimeKey(0)
-    
-    return True
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
     strFirmName = ''
@@ -799,43 +458,34 @@ def GetFirmName(*args):
     return strFirmName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
+# 'yyyymmdd'
 def GetCurrentDate(*args):
-    pattern = ''
-    for pattern in args:
-        print('pattern 입력값',pattern)
-    
+
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
+    
 
-    if pattern == '':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY' or pattern == 'yy':
-        DATE = DATE_SPLIT[0][2:]
-    elif pattern == 'YYYY' or pattern == 'yyyy':
-        DATE = DATE_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        DATE = DATE_SPLIT[1]
-    elif pattern == 'DD' or pattern == 'dd':
-        DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
-        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
-        DATE = time_now[2:10].strip()
-    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.HH.DD' or pattern == 'yyyy.hh.dd':
-        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
-    else:
-        DATE = time_now[:10].strip()
+    pattern = ''
+    r = ''
+    # r = ['y','m','d','Y','M','D']    
+    if not args:
+        pattern= ''.join(DATE_SPLIT) 
+    else: pattern = args[0]
+    # if ['y','m','d','Y','M','D'] not in pattern :  return ''.join(DATE_SPLIT)
 
-    print('최종',DATE)
-    return DATE
+    print(pattern)
+    pattern= pattern.replace('yyyy', DATE_SPLIT[0])
+    pattern= pattern.replace('YYYY', DATE_SPLIT[0])
+    pattern= pattern.replace('mm', DATE_SPLIT[1])
+    pattern= pattern.replace('MM', DATE_SPLIT[1])
+    pattern= pattern.replace('dd', DATE_SPLIT[2])
+    pattern= pattern.replace('DD', DATE_SPLIT[2])
+
+
+    print('최종', pattern)
+    return pattern
     
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
 def GetCurrentDay(*args):
@@ -935,8 +585,8 @@ def main():
 
     TEST_SEND_YN = ''
     GetSecretKey()
-
-    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
+    GetCurrentDate('yyyy')
+    # print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     try: strArgs = sys.argv[1]
     except: strArgs = ''
@@ -949,26 +599,13 @@ def main():
         return 
 
     TEST_SEND_YN = ''
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일':
-        REFRESH_TIME = 60 * 60 * 2 # 2시간
-        INTERVAL_TIME = 12
-    else:
-        REFRESH_TIME = 60 * 30 # 30분
-        INTERVAL_TIME = 3
     
-    # 개발 환경이 아닌 경우에만 인터벌 작동
-    # if IS_DEV: pass
-    # else: SetSleepTime()
-
-    #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
-    TimeHourMin = int(GetCurrentTime('HHMM'))
-    TimeHour = int(GetCurrentTime('HH'))
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
-    sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    # sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
-    return 
+    # return 
 
 if __name__ == "__main__":
 	main()
