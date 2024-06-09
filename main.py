@@ -207,21 +207,21 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE) 
     if TEST_SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속키:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
 
     # print('TEST_SEND_YN ', TEST_SEND_YN)
 
@@ -353,13 +353,22 @@ def ShinHanInvest_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 신한증권 산업분석
-    TARGET_URL_0 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+    # 신한증권 국내산업분석
+    TARGET_URL_0 = 'giindustry'
+    # 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
     
-    # 신한증권 기업분석
-    TARGET_URL_1 = 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+    # 신한증권 국내기업분석
+    TARGET_URL_1 = 'gicompanyanalyst'
+    #'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+
+    # 신한증권 국내스몰캡
+    TARGET_URL_2 = 'giresearchIPO'
     
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    # 신한증권 해외주식
+    TARGET_URL_3 = 'foreignstock'
+    #'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
+    
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2,TARGET_URL_3)
 
     sendMessageText = ''
     # URL GET
@@ -379,7 +388,29 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
 
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # 변동되는 파라미터 
+    board_name = TARGET_URL
+    # 고정된 파라미터
+    cur_page = 1
+    param1 = "Q1"
+    param2 = "+"
+    param3 = ""
+    param4 = f"/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
+    param5 = "Q"
+    param6 = 99999
+    param7 = ""
+    type_param = "bbs2"
+
+    # URL 구성
+    base_url = "https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp"
+    url = (f"{base_url}?url=/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
+           f"&param1={param1}&param2={param2}&param3={param3}&param4={param4}&param5={param5}"
+           f"&param6={param6}&param7={param7}&type={type_param}")
+
+
+    #request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    print('신한 request URL:', url)
+    request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
@@ -410,14 +441,14 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if TEST_SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -557,13 +588,13 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if TEST_SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -706,21 +737,21 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
     
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if TEST_SEND_YN == 'Y' : r = False
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return '' 
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
     
     # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
     # 중복 발송 방지
@@ -859,21 +890,21 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return '' 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
 
     # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
     # 중복 발송 방지
@@ -998,21 +1029,21 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
 
     # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
     # 중복 발송 방지
@@ -1164,7 +1195,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -1362,7 +1393,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if TEST_SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -1612,21 +1643,21 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return '' 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
 
     # 게시물 정보 파싱
     for index, post in enumerate(posts):
@@ -1777,7 +1808,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -1895,7 +1926,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
 
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -2035,7 +2066,7 @@ def LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
 
     if r and TEST_SEND_YN != 'Y': 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -2166,7 +2197,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
 
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return ''
     
     nNewArticleCnt = 0
@@ -2481,7 +2512,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
         NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
     
     if not soupList: 
@@ -2492,14 +2523,14 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     r = isNxtKey(FIRST_ARTICLE_TITLE)
     if SEND_YN == 'Y' : r = ''
     if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
         return '' 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('연속URL:', NXT_KEY) # 주소
-    print('############')
+    print('############\n\n')
 
     # # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
     # # 중복 발송 방지
@@ -3113,43 +3144,34 @@ def GetFirmName(*args):
     return strFirmName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
+# 'yyyymmdd'
 def GetCurrentDate(*args):
-    pattern = ''
-    for pattern in args:
-        print('pattern 입력값',pattern)
-    
+
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
+    
 
-    if pattern == '':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY' or pattern == 'yy':
-        DATE = DATE_SPLIT[0][2:]
-    elif pattern == 'YYYY' or pattern == 'yyyy':
-        DATE = DATE_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        DATE = DATE_SPLIT[1]
-    elif pattern == 'DD' or pattern == 'dd':
-        DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/MM/DD' or pattern == 'yyyy/mm/dd':
-        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-MM-DD' or pattern == 'yyyy-mm-dd':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY-MM-DD' or pattern == 'yy-mm-dd':
-        DATE = time_now[2:10].strip()
-    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.MM.DD' or pattern == 'yyyy.mm.dd':
-        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
-    else:
-        DATE = time_now[:10].strip()
+    pattern = ''
+    r = ''
+    # r = ['y','m','d','Y','M','D']    
+    if not args:
+        pattern= ''.join(DATE_SPLIT) 
+    else: pattern = args[0]
+    # if ['y','m','d','Y','M','D'] not in pattern :  return ''.join(DATE_SPLIT)
 
-    print('최종',DATE)
-    return DATE
+    print('pattern->',pattern)
+    pattern= pattern.replace('yyyy', DATE_SPLIT[0])
+    pattern= pattern.replace('YYYY', DATE_SPLIT[0])
+    pattern= pattern.replace('mm', DATE_SPLIT[1])
+    pattern= pattern.replace('MM', DATE_SPLIT[1])
+    pattern= pattern.replace('dd', DATE_SPLIT[2])
+    pattern= pattern.replace('DD', DATE_SPLIT[2])
+
+
+    print('최종', pattern)
+    return pattern
     
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
 def GetCurrentDay(*args):
