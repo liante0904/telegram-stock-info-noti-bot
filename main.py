@@ -2146,9 +2146,14 @@ def Koreainvestment_selenium_checkNewArticle():
 
 def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-    # 헤드리스 모드로 설정
-    chrome_options = Options()
+
+    chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+
+    # 헤드리스 모드로 설정
+    # chrome_options = Options()
+    # chrome_options.add_argument("--headless")
 
     # Chrome 드라이버 초기화
     driver = webdriver.Chrome(options=chrome_options)
@@ -2252,6 +2257,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
+
 
 
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
