@@ -3478,7 +3478,6 @@ def main():
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
 if __name__ == "__main__":
 	main()
