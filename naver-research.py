@@ -205,7 +205,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
                 # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
                 # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                sendMessageText += GetSendMessageText(ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # if '' in brokerName: # 메인봇에서 발송안하는 회사
                     # MainBot_sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
                     # MainBot_sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -603,7 +603,6 @@ def main():
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
-    # sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
     # return 
 
