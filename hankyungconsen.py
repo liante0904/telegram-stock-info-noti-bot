@@ -234,9 +234,10 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
+    # if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    #     print(sendMessageText)
+    #     sendMessageText = GetSendMessageTitle() + sendMessageText
+    #     sendMessageText = ''
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
@@ -863,10 +864,10 @@ def main():
 
     print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
     sendMessageText = HankyungConsen_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText += GetSendMessageTitle() + sendMessageText
+    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
     return True
 
