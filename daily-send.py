@@ -19,6 +19,7 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
+from package.common import *
 # from package import herokuDB
 
 # import secretkey
@@ -753,140 +754,6 @@ def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     conn.close()
     return dbResult
- 
-# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
-def GetCurrentTime(*args):
-    pattern = ''
-    for pattern in args:
-        print(pattern)
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    TIME = time_now[11:].strip()
-    TIME_SPLIT = TIME.split(":")
-
-    if pattern == '':
-        TIME = time_now[11:].strip()
-    elif pattern == 'HH' or pattern == 'hh':
-        TIME = TIME_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        TIME = TIME_SPLIT[1]
-    elif pattern == 'SS' or pattern == 'ss':
-        TIME = TIME_SPLIT[2]
-    elif pattern == 'HH:MM' or pattern == 'hh:mm':
-        TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
-    elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
-        TIME = TIME
-    elif pattern == 'HHMM' or pattern == 'hhmm':
-        TIME = TIME_SPLIT[0] + TIME_SPLIT[1]
-    elif pattern == 'HHMMSS' or pattern == 'hhmmss':
-        TIME = TIME.replace(":", "")
-    else:
-        TIME = time_now[11:].strip()
-    print(TIME)
-    return TIME
-
-def SetSleepTimeKey(*args):
-    try: nSleepCntKey = args[0]
-    except: nSleepCntKey = 0
-    file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-    file.write(  str(nSleepCntKey) )      # 파일에 문자열 저장
-    print('nSleepCntKey:',nSleepCntKey, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-    file.close()                     # 파일 객체 닫기
-    
-def GetSleepTimeKey(*args):
-    # 존재 여부 확인 후 연속키 파일 생성
-    if not( os.path.isfile( SLEEP_KEY_DIR_FILE_NAME ) ): # 최초 실행 이거나 연속키 초기화
-        # 연속키가 없는 경우 => 첫 게시글을 연속키로 저장
-        file = open( SLEEP_KEY_DIR_FILE_NAME , 'w')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        file.write(  str(INTERVAL_INIT_TIME) )      # 파일에 문자열 저장
-        print('INTERVAL_INIT_TIME:',INTERVAL_INIT_TIME, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-        file.close()                     # 파일 객체 닫기
-        return int(INTERVAL_INIT_TIME)
-    else:   # 이미 실행
-        file = open( SLEEP_KEY_DIR_FILE_NAME , 'r')    # hello.txt 파일을 쓰기 모드(w)로 열기. 파일 객체 반환
-        SLEEP_KEY = file.readline()       # 파일 내 데이터 읽기
-        print('SLEEP_KEY:', SLEEP_KEY)
-        if SLEEP_KEY:
-            print('SLEEP_KEY T')
-        else:
-            SLEEP_KEY = '0'
-            
-        print('Get_nxtKey')
-        print('SLEEP_KEY:',SLEEP_KEY, '연속키 파일 경로 :',SLEEP_KEY_DIR_FILE_NAME)
-        file.close()                     # 파일 객체 닫기
-        return SLEEP_KEY
-
-def SetSleepTime(*args):
-    nSleepCntKey = GetSleepTimeKey()
-    nSleepCntKey = int(nSleepCntKey)
-    while nSleepCntKey < INTERVAL_TIME: 
-        nSleepCntKey += 1
-        SetSleepTimeKey(nSleepCntKey)
-        sys.exit(0)
-        
-    SetSleepTimeKey(0)
-    
-    return True
-# 증권사명을 가져옵니다. 
-def GetFirmName(*args):
-    strFirmName = ''
-    try :
-        strFirmName = FIRM_NM
-    except :
-        print('GetFirmName except')
-        strFirmName = ''
-        
-    return strFirmName
-
-# 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
-def GetCurrentDate(*args):
-    pattern = ''
-    for pattern in args:
-        print('pattern 입력값',pattern)
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-
-    if pattern == '':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY' or pattern == 'yy':
-        DATE = DATE_SPLIT[0][2:]
-    elif pattern == 'YYYY' or pattern == 'yyyy':
-        DATE = DATE_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        DATE = DATE_SPLIT[1]
-    elif pattern == 'DD' or pattern == 'dd':
-        DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
-        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
-        DATE = time_now[2:10].strip()
-    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.HH.DD' or pattern == 'yyyy.hh.dd':
-        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
-    else:
-        DATE = time_now[:10].strip()
-
-    print('최종',DATE)
-    return DATE
-    
-# 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
-def GetCurrentDay(*args):
-    daylist = ['월', '화', '수', '목', '금', '토', '일']
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-    return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL

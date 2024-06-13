@@ -386,17 +386,6 @@ def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     conn.close()
     return dbResult
 
-# 증권사명을 가져옵니다. 
-def GetFirmName(*args):
-    strFirmName = ''
-    try :
-        strFirmName = FIRM_NM
-    except :
-        print('GetFirmName except')
-        strFirmName = ''
-        
-    return strFirmName
-
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL
     global ORACLECLOUD_MYSQL_DATABASE_URL
