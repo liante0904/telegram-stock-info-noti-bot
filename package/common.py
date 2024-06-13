@@ -530,44 +530,34 @@ def GetFirmName(*args):
     return strFirmName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
+# 'yyyymmdd'
 def GetCurrentDate(*args):
-    pattern = ''
-    for pattern in args:
-        print('pattern 입력값',pattern)
-    
+
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
     DATE = time_now[:10].strip()
     DATE_SPLIT = DATE.split("-")
-
-    if pattern == '':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY' or pattern == 'yy':
-        DATE = DATE_SPLIT[0][2:]
-    elif pattern == 'YYYY' or pattern == 'yyyy':
-        DATE = DATE_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        DATE = DATE_SPLIT[1]
-    elif pattern == 'DD' or pattern == 'dd':
-        DATE = DATE_SPLIT[2]
-    elif pattern == 'YYYYMMDD' or pattern == 'yyyymmdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] +  DATE_SPLIT[2]
-    elif pattern == 'YYYY/HH/DD' or pattern == 'yyyy/hh/dd':
-        DATE = DATE_SPLIT[0] + "/" + DATE_SPLIT[1] + "/" + DATE_SPLIT[2]
-    elif pattern == 'YYYY-HH-DD' or pattern == 'yyyy-hh-dd':
-        DATE = time_now[:10].strip()
-    elif pattern == 'YY-HH-DD' or pattern == 'yy-hh-dd':
-        DATE = time_now[2:10].strip()
-    elif pattern == 'YYYYHHDD' or pattern == 'yyyyhhdd':
-        DATE = DATE_SPLIT[0] + DATE_SPLIT[1] + DATE_SPLIT[2]
-    elif pattern == 'YYYY.MM.DD' or pattern == 'yyyy.mm.dd':
-        DATE = DATE_SPLIT[0] + "." + DATE_SPLIT[1] + "." + DATE_SPLIT[2]
-    else:
-        DATE = time_now[:10].strip()
-
-    print('최종',DATE)
-    return DATE
     
+
+    pattern = ''
+    r = ''
+    # r = ['y','m','d','Y','M','D']    
+    if not args:
+        pattern= ''.join(DATE_SPLIT) 
+    else: pattern = args[0]
+    # if ['y','m','d','Y','M','D'] not in pattern :  return ''.join(DATE_SPLIT)
+
+    print('pattern->',pattern)
+    pattern= pattern.replace('yyyy', DATE_SPLIT[0])
+    pattern= pattern.replace('YYYY', DATE_SPLIT[0])
+    pattern= pattern.replace('mm', DATE_SPLIT[1])
+    pattern= pattern.replace('MM', DATE_SPLIT[1])
+    pattern= pattern.replace('dd', DATE_SPLIT[2])
+    pattern= pattern.replace('DD', DATE_SPLIT[2])
+
+
+    print('최종', pattern)
+    return pattern  
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
 def GetCurrentDay(*args):
     daylist = ['월', '화', '수', '목', '금', '토', '일']

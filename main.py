@@ -2259,6 +2259,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 
+
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
     filename = urllib.parse.quote(filename)
     filepath = filepath
@@ -3480,7 +3481,6 @@ def main():
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
 if __name__ == "__main__":
 	main()

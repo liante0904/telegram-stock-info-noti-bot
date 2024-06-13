@@ -19,7 +19,16 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
+# selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+# TEST 
 # from package import herokuDB
+# from package import SecretKey
 
 # import secretkey
 
@@ -61,23 +70,6 @@ IS_DEV                                              = ""
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
 
-# 회사이름
-FIRM_NAME = (
-    "이베스트 투자증권",    # 0
-    "신한금융투자",             # 1
-    "상상인증권",           # 2
-    "하나증권",          # 3
-    "한양증권",              # 4
-    "삼성증권",              # 5
-    "교보증권",              # 6
-    "DS투자증권",             # 7
-    "SMIC(서울대 가치투자)",             # 8
-    "현대차증권",             # 9
-    "키움증권",             # 10
-    "신영증권"
-    # "유안타증권",           # 4
-)
-
 # pymysql 변수
 conn    = ''
 cursor  = ''
@@ -85,17 +77,25 @@ cursor  = ''
 # 연속키URL
 NXT_KEY = ''
 NXT_KEY_ARTICLE_TITLE = ''
+
 # 게시판 URL
 BOARD_URL = ''
+
 # 테스트 발송여부
 TEST_SEND_YN = ''
+
 # 텔레그램 채널 발송 여부
 SEND_YN = ''
 TODAY_SEND_YN = ''
+
 # 텔레그램 마지막 메세지 발송시간(단위 초)
 SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
+
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
+
+# SendAddText 글로벌 변수
+SEND_ADD_MESSAGE_TEXT = ''
 
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
@@ -117,141 +117,20 @@ FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
-def HankyungConsen_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 12
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 하나금융 Daily
-    TARGET_URL =  'https://consensus.hankyung.com/analysis/list?search_date=today&search_text=&pagenum=1000'
-
-    sendMessageText = ''
-    try:
-        sendMessageText += HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    except:
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
-                
-    return sendMessageText
-
-def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    
-    try:
-        webpage = requests.get(TARGET_URL, verify=False, headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-    except:
-        return True
-
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-    # print(soup)
-    soupList = soup.select('#contents > div.table_style01 > table > tbody > tr')
-    try:
-        ARTICLE_BOARD_NAME =  BOARD_NM
-        FIRST_ARTICLE_TITLE = soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td.text_l > a')[FIRST_ARTICLE_INDEX].text
-        FIRST_ARTICLE_URL =  'https://consensus.hankyung.com' + soup.select('#contents > div.table_style01 > table > tbody > tr:nth-child(1) > td:nth-child(6) > div > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
-
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM)
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return '' 
-    
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
-    print('############')
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    brokerName = soup.select('#contents > div.table_style01 > table > tbody > tr.first > td:nth-child(5)')[FIRST_ARTICLE_INDEX].text
-    print('brokerName' ,brokerName)
-    for list in soupList:
-        
-        print('*****************')
-        # print(list)
-        LIST_ARTICLE_CLASS = list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(2)').text
-        LIST_ARTICLE_TITLE = list.select_one('#contents > div.table_style01 > table > tbody > tr > td.text_l > a').text
-        LIST_ARTICLE_URL =  'https://consensus.hankyung.com' + list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(6) > div > a').attrs['href']
-        LIST_ARTICLE_BROKER_NAME =list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(5)').text
-
-        print(LIST_ARTICLE_CLASS)
-        print(LIST_ARTICLE_TITLE)
-        print(LIST_ARTICLE_URL)
-        print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
-        ATTACH_URL = LIST_ARTICLE_URL
-        
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            # 회사명 출력
-            if nNewArticleCnt == 1 or brokerName != LIST_ARTICLE_BROKER_NAME : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
-                sendMessageText += "\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
-                brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
-
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_CLASS +" : "+ LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    # if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-    #     print(sendMessageText)
-    #     sendMessageText = GetSendMessageTitle() + sendMessageText
-    #     sendMessageText = ''
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
-
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
 
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
+async def sendPlainText(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True)
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -300,38 +179,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 
-# URL 발신용 전용 함수 : ex) 네이버 뉴스
-def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('sendURL()')
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-
-
-def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('sendPhoto()')
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
     global CHAT_ID
@@ -348,14 +195,17 @@ def sendText(sendMessageText):
 # 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
 # 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
 def sendAddText(sendMessageText, sendType='N'): 
+    global SEND_ADD_MESSAGE_TEXT
 
+    SEND_ADD_MESSAGE_TEXT += sendMessageText
     print('sendType ', sendType)
     print('sendMessageText ',sendMessageText)
+    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
 
-    if sendType == 'Y' or len(sendMessageText) > 0:
-        print("sendAddText() (실제 발송요청)\n", sendMessageText)
-        sendText(sendMessageText)
-        sendMessageText = ''
+    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
+        print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
+        sendText(SEND_ADD_MESSAGE_TEXT)
+        SEND_ADD_MESSAGE_TEXT = ''
 
     return ''
 
@@ -391,8 +241,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
-    print("DownloadFile()")
-
+    print("DownloadFile()",URL, FILE_NAME)
     if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
         # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
         CONVERT_URL = URL 
@@ -487,7 +336,7 @@ def GetSendMessageTitle():
         else: print(msgFirmName)
     elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
-        msgFirmName =  FIRM_NM 
+        msgFirmName =  GetFirmName() 
 
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
     SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
@@ -495,8 +344,25 @@ def GetSendMessageTitle():
     return SendMessageTitle
 
 def GetSendChatId():
-
-    return TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
+    SendMessageChatId = 0
+    if SEC_FIRM_ORDER == 998:
+        if  ARTICLE_BOARD_ORDER == 0 : 
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
+        else:
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
+    elif SEC_FIRM_ORDER == 997:
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
+    elif SEC_FIRM_ORDER == 995:
+            SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
+    elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
+    elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
+    else:
+        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
+    
+    # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
+    return SendMessageChatId
 
 def GetJsonData(TARGET_URL, METHOD_TYPE):
     global NXT_KEY
@@ -516,12 +382,68 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     print(jres)
     return jres
 
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for stockPlus in jres:
+        LIST_ARTICLE_URL = stockPlus['url'].strip()
+        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
+        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
+                # print(sendMessageText)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+            else:
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            return True
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    return True
+
 def MySQL_Open_Connect():
     global conn
     global cursor
     
     # clearDB 
     # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
+    # MySQL
     url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     cursor = conn.cursor()
@@ -789,13 +711,16 @@ def GetSecretKey(*args):
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
     global IS_DEV
+    
 
     SECRETS = ''
-    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
-        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
+    print(os.getcwd())
+    if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
+        with open("secrets.json") as f:
             SECRETS = json.loads(f.read())
         CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
-        ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL']
+        
+        ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL'] 
         TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
         TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
@@ -857,20 +782,75 @@ def main():
     try: strArgs = sys.argv[1]
     except: strArgs = ''
 
-    TimeHourMin = int(GetCurrentTime('HHMM'))
-    TimeHour = int(GetCurrentTime('HH'))
+    if  strArgs : 
+        TEST_SEND_YN = 'Y'
+        sendMessageText = ''
+        
+
+    TEST_SEND_YN = ''
+    if GetCurrentDay() == '토' or GetCurrentDay() == '일':
+        REFRESH_TIME = 60 * 60 * 2 # 2시간
+        INTERVAL_TIME = 12
+    else:
+        REFRESH_TIME = 60 * 30 # 30분
+        INTERVAL_TIME = 3
     
+    # 개발 환경이 아닌 경우에만 인터벌 작동
+    # if IS_DEV: pass
+    # else: SetSleepTime()
+
     sendMessageText = ''
 
-    print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    sendMessageText = HankyungConsen_checkNewArticle()
-    if len(sendMessageText) > 0 : sendMessageText = GetSendMessageTitle() + sendMessageText
+    url = 'https://stockwatch.co.kr'
+
+    headers = {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'ko,en-US;q=0.9,en;q=0.8',
+        'Cache-Control': 'max-age=0',
+        'Connection': 'keep-alive',
+        'Host': 'stockwatch.co.kr',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+        'sec-ch-ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"',
+    }
+
+    response = requests.get(url)#, headers=headers)
+
+    # print(response.text)
+    # HTML parse
+    soup = BeautifulSoup(response.text, "html.parser")
+    rTitle1 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.jisu > div.header > h3')
+    rTitle1_1 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.jisu > div.header > p')
+    rTitle1_2 = soup.select_one('#jisu > div:nth-child(2)')
+    
+    rTitle2 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.valuation > div.header > h3')
+    soupList = soup.select('body > div.layout > div.content > div.market_wrap > div > div.group.valuation > div.items')
+
+
+    sendMessageText = "\n\n" + " ●"+  '마켓밸류에이션' + GetCurrentDate() + "\n" 
+    # print(soupList)
+    # return 
+    for r in soupList:
+        print(rTitle1.get_text(separator='\n').strip(), rTitle1_1.get_text(separator='\n').strip())
+        print(re.sub(r'\s+', ' ', rTitle1_2.get_text(separator='\n').strip()))
+        print(re.sub(r'\s+', ' ', rTitle2.get_text(separator='\n').strip()))
+        print(r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / '))
+        print(r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / '))
+        sendMessageText += r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ')+ "\n" 
+        sendMessageText += r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ')+ "\n" 
+
+    print(sendMessageText) 
+
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    # else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-    return True
-
+    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
 if __name__ == "__main__":
 	main()
