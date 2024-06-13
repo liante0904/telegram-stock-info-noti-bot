@@ -2146,9 +2146,14 @@ def Koreainvestment_selenium_checkNewArticle():
 
 def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
-    # 헤드리스 모드로 설정
-    chrome_options = Options()
+
+    chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+
+    # 헤드리스 모드로 설정
+    # chrome_options = Options()
+    # chrome_options.add_argument("--headless")
 
     # Chrome 드라이버 초기화
     driver = webdriver.Chrome(options=chrome_options)
@@ -3415,6 +3420,9 @@ def main():
 
     sendMessageText = ''
 
+    print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
+    r = Koreainvestment_selenium_checkNewArticle()
+    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
     r = LS_checkNewArticle()
     if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
