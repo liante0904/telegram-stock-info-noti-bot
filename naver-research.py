@@ -19,6 +19,7 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
+from package.common import *
 # from package import herokuDB
 
 # import secretkey
@@ -303,35 +304,6 @@ def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
 
     return sendMessageText 
-# 타이틀 생성 
-# : 게시판 이름 삭제
-def GetSendMessageTitle(): 
-    SendMessageTitle = ""
-    msgFirmName = ""
-    
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
-        else: msgFirmName += "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
-    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
-    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
-    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
-    elif SEC_FIRM_ORDER == 900: 
-        msgFirmName = "[네이버 증권 "
-        if ARTICLE_BOARD_ORDER == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
-        elif ARTICLE_BOARD_ORDER == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
-        else: print(msgFirmName)
-    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
-    else: # 증권사
-        msgFirmName =  FIRM_NM 
-
-    # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
-    
-    return SendMessageTitle
 
 def GetSendChatId():
     SendMessageChatId = 0
@@ -413,38 +385,6 @@ def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     conn.close()
     return dbResult
- 
-# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
-def GetCurrentTime(*args):
-    pattern = ''
-    for pattern in args:
-        print(pattern)
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    TIME = time_now[11:].strip()
-    TIME_SPLIT = TIME.split(":")
-
-    if pattern == '':
-        TIME = time_now[11:].strip()
-    elif pattern == 'HH' or pattern == 'hh':
-        TIME = TIME_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        TIME = TIME_SPLIT[1]
-    elif pattern == 'SS' or pattern == 'ss':
-        TIME = TIME_SPLIT[2]
-    elif pattern == 'HH:MM' or pattern == 'hh:mm':
-        TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
-    elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
-        TIME = TIME
-    elif pattern == 'HHMM' or pattern == 'hhmm':
-        TIME = TIME_SPLIT[0] + TIME_SPLIT[1]
-    elif pattern == 'HHMMSS' or pattern == 'hhmmss':
-        TIME = TIME.replace(":", "")
-    else:
-        TIME = time_now[11:].strip()
-    print(TIME)
-    return TIME
 
 # 증권사명을 가져옵니다. 
 def GetFirmName(*args):
@@ -456,46 +396,6 @@ def GetFirmName(*args):
         strFirmName = ''
         
     return strFirmName
-
-# 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
-# 'yyyymmdd'
-def GetCurrentDate(*args):
-
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-    
-
-    pattern = ''
-    r = ''
-    # r = ['y','m','d','Y','M','D']    
-    if not args:
-        pattern= ''.join(DATE_SPLIT) 
-    else: pattern = args[0]
-    # if ['y','m','d','Y','M','D'] not in pattern :  return ''.join(DATE_SPLIT)
-
-    print(pattern)
-    pattern= pattern.replace('yyyy', DATE_SPLIT[0])
-    pattern= pattern.replace('YYYY', DATE_SPLIT[0])
-    pattern= pattern.replace('mm', DATE_SPLIT[1])
-    pattern= pattern.replace('MM', DATE_SPLIT[1])
-    pattern= pattern.replace('dd', DATE_SPLIT[2])
-    pattern= pattern.replace('DD', DATE_SPLIT[2])
-
-
-    print('최종', pattern)
-    return pattern
-    
-# 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
-def GetCurrentDay(*args):
-    daylist = ['월', '화', '수', '목', '금', '토', '일']
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-    return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL
@@ -585,8 +485,8 @@ def main():
 
     TEST_SEND_YN = ''
     GetSecretKey()
-    GetCurrentDate('yyyy')
-    # print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
+    # GetCurrentDate('')
+    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     try: strArgs = sys.argv[1]
     except: strArgs = ''
