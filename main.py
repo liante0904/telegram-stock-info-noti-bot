@@ -1866,9 +1866,11 @@ def Hmsec_checkNewArticle():
     TARGET_URL_0 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=1'
     
     # 현대차증권 Report & Note 
-    TARGET_URL_1 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=2' 
+    TARGET_URL_1 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=2'
     
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    # 현대차증권 해외주식
+    TARGET_URL_2 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=8'
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
     sendMessageText = ''
     # URL GET
