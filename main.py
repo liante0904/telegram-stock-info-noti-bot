@@ -953,13 +953,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
-def HANA_downloadFile(LIST_ARTICLE_URL, LIST_ATTACT_FILE_NAME):
-    global ATTACH_FILE_NAME
-    ATTACH_FILE_NAME = LIST_ATTACT_FILE_NAME #BeautifulSoup(webpage.content, "html.parser").select_one('#contents > div > div.bbs_a_view > dl.b_bottom > dd > em:nth-child(1)> a').text
-    
-    DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = ATTACH_FILE_NAME)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -3073,7 +3066,7 @@ def MySQL_Open_Connect():
     cursor = conn.cursor()
     return cursor
 
-def  DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global FIRM_NM
     global BOARD_NM
     global BOARD_URL
@@ -3126,19 +3119,6 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     cursor = MySQL_Open_Connect()
     dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
     dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
-    if dbResult:
-        print('####DB업데이트 된 연속키####', end='\n')
-        print(dbResult)
-        NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
-
-def DB_UpdNxtKeyNew(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY_BF, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY_BF = %s,NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (NXT_KEY_BF, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
     if dbResult:
         print('####DB업데이트 된 연속키####', end='\n')
         print(dbResult)
