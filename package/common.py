@@ -21,7 +21,6 @@ import urllib.request
 from package import googledrive
 
 # TEST 
-from package import herokuDB
 from package import SecretKey
 
 # import secretkey
