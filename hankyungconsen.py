@@ -20,6 +20,7 @@ import urllib.request
 
 from package import googledrive
 from package.common import *
+from package.SecretKey import SecretKey
 # from package import herokuDB
 
 # import secretkey
@@ -44,40 +45,9 @@ INTERVAL_TIME = 3 # 10분 단위 적용
 INTERVAL_INIT_TIME = 1
 # secrets 
 SECRETS                                             = ""
-CLEARDB_DATABASE_URL                                = ""
-ORACLECLOUD_MYSQL_DATABASE_URL                      = ""
-TELEGRAM_BOT_INFO                                   = ""
-TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
-TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET             = ""
-TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS                 = ""
-TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
-TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
-TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
-TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
-TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
-TELEGRAM_CHANNEL_ID_TEST                            = ""
-TELEGRAM_USER_ID_DEV                                = ""
-IS_DEV                                              = ""
 
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
-
-# 회사이름
-FIRM_NAME = (
-    "이베스트 투자증권",    # 0
-    "신한금융투자",             # 1
-    "상상인증권",           # 2
-    "하나증권",          # 3
-    "한양증권",              # 4
-    "삼성증권",              # 5
-    "교보증권",              # 6
-    "DS투자증권",             # 7
-    "SMIC(서울대 가치투자)",             # 8
-    "현대차증권",             # 9
-    "키움증권",             # 10
-    "신영증권"
-    # "유안타증권",           # 4
-)
 
 # pymysql 변수
 conn    = ''
@@ -118,11 +88,14 @@ FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
+SECRET_KEY = SecretKey()
+SECRET_KEY.load_secrets()
+
 def HankyungConsen_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
-    SEC_FIRM_ORDER = 12
+    SEC_FIRM_ORDER = 100
 
     requests.packages.urllib3.disable_warnings()
 
@@ -245,18 +218,17 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
-
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
 
 # 최초 send함수
@@ -274,7 +246,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #생성한 텔레그램 봇 정보 출력
     #me = bot.getMe()
@@ -300,7 +272,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-
 # URL 발신용 전용 함수 : ex) 네이버 뉴스
 def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
     global CHAT_ID
@@ -314,7 +285,7 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     sendMessageText += EMOJI_PICK + ARTICLE_URL 
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #생성한 텔레그램 봇 정보 출력
     #me = bot.getMe()
@@ -323,22 +294,12 @@ def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경�
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
 
-
-def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('sendPhoto()')
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
     global CHAT_ID
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
@@ -383,7 +344,7 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
@@ -497,7 +458,7 @@ def GetSendMessageTitle():
 
 def GetSendChatId():
 
-    return TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
+    return SECRET_KEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
 
 def GetJsonData(TARGET_URL, METHOD_TYPE):
     global NXT_KEY
@@ -522,8 +483,8 @@ def MySQL_Open_Connect():
     global cursor
     
     # clearDB 
-    # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
+    # url = urlparse.urlparse(os.environ['SECRET_KEY.CLEARDB_DATABASE_URL'])
+    url = urlparse.urlparse(SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL)
     conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
     cursor = conn.cursor()
     return cursor
@@ -639,59 +600,6 @@ def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
     conn.close()
     return dbResult
 
-def GetSecretKey(*args):
-    global SECRETS # 시크릿 키
-    global CLEARDB_DATABASE_URL
-    global ORACLECLOUD_MYSQL_DATABASE_URL
-    global TELEGRAM_BOT_INFO
-    global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
-    global TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET
-    global TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS
-    global TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS
-    global TELEGRAM_CHANNEL_ID_ITOOZA
-    global TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT
-    global TELEGRAM_CHANNEL_ID_REPORT_ALARM
-    global TELEGRAM_CHANNEL_ID_TODAY_REPORT
-    global TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
-    global TELEGRAM_CHANNEL_ID_TEST
-    global TELEGRAM_USER_ID_DEV
-    global IS_DEV
-
-    SECRETS = ''
-    if os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'secrets.json')): # 로컬 개발 환경
-        with open( os.path.join( os.path.dirname(os.path.realpath(__file__) ), 'secrets.json') ) as f:
-            SECRETS = json.loads(f.read())
-        CLEARDB_DATABASE_URL                        =   SECRETS['CLEARDB_DATABASE_URL']
-        ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL']
-        TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
-        TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
-        TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
-        TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS']
-        TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS']
-        TELEGRAM_CHANNEL_ID_ITOOZA                  =   SECRETS['TELEGRAM_CHANNEL_ID_ITOOZA']
-        TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   SECRETS['TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT']
-        TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
-        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
-        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   SECRETS['TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN']
-        TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
-        TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
-        IS_DEV                                      =   True
-    else: # 서버 배포 환경(heroku)
-        CLEARDB_DATABASE_URL                        =   os.environ.get('CLEARDB_DATABASE_URL')
-        TELEGRAM_BOT_INFO                           =   os.environ.get('TELEGRAM_BOT_INFO')
-        TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-        TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-        TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
-        TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
-        TELEGRAM_CHANNEL_ID_ITOOZA                  =   os.environ.get('TELEGRAM_CHANNEL_ID_ITOOZA')
-        TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
-        TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   os.environ.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
-        TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
-        TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
-        IS_DEV                                      =   False
-
 # 첫 게시글과 연속키 일치 여부를 판별 
 # 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
 # 불일치(FALSE)=> 새 게시물이 게시되어 전송함
@@ -717,15 +625,12 @@ def main():
     global TEST_SEND_YN
 
     TEST_SEND_YN = ''
-    GetSecretKey()
 
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     try: strArgs = sys.argv[1]
     except: strArgs = ''
 
-    TimeHourMin = int(GetCurrentTime('HHMM'))
-    TimeHour = int(GetCurrentTime('HH'))
     
     sendMessageText = ''
 
