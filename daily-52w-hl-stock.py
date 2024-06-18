@@ -8,15 +8,17 @@ import requests
 import datetime
 import time
 import ssl
-import json
 import re
 import asyncio
 import pymysql
 import pymysql.cursors
+import urllib.request
+import json
+import urllib.parse as urlparse
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
 from typing import List
 from bs4 import BeautifulSoup
-import urllib.parse as urlparse
-import urllib.request
 
 from package import googledrive
 from package.common import *
@@ -145,6 +147,7 @@ def NAVER_52weekPrice_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global TEST_SEND_YN
 
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
 
@@ -152,27 +155,50 @@ def NAVER_52weekPrice_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     try: jres = json.loads(response.read().decode('utf-8'))
     except: return True
-    # print(jres['stocks'])
-    # print('\n\n')
-    # print('종목명:',jres['stocks'][0]['stockName'] , "\n등락률:", jres['stocks'][0]['fluctuationsRatio']+'%' , '\n링크: ', jres['stocks'][0]['endUrl'] )
-    # print(jres)
+    # print(jres['totalCount'])
+
+    total_count = int(jres['totalCount'])
+    page_size = int(jres['pageSize'])
+    total_pages = (total_count + page_size - 1) // page_size  # 올림 계산
     
+    
+    print('여기???',total_count,page_size ,  total_pages)
+
+    # URL 파싱
+    parsed_url = urllib.parse.urlparse(TARGET_URL)
+    query_params = urllib.parse.parse_qs(parsed_url.query)
     sendMessageText = ''
-    for r in jres['stocks']:
-        # print("r['stockName']", r['stockName'] , "int(r['itemCode'])" , int(r['itemCode']) ,  ('스팩' in r['stockName'] and int(r['itemCode']) >= 400000))
-        if 'et' in r['stockEndType']  : continue
-        if ('스팩' in r['stockName'] and
-            int(r['itemCode']) >= 400000): continue # 스팩은 표시 안함
+    for page in range(1, total_pages + 1):
         
-        sendMessageText += '{0} ({1}%)      [네이버]({2}) , [fnguide]({3})\n'.format(
-                            r['stockName'], r['fluctuationsRatio'] , r['endUrl'], convert_stock_url(r['endUrl']) )
-        # print((sendMessageText))
-        # return ''
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
+        query_params['page'] = page
+        new_query_string = urlencode(query_params, doseq=True)
+        new_url = urlunparse(parsed_url._replace(query=new_query_string))
+
+        request = urllib.request.Request(new_url, headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
+        rescode = response.getcode()
+        if rescode != 200:
+            return f"Page {page} 접속이 원활하지 않습니다"
+
+        try:
+            jres = json.loads(response.read().decode('utf-8'))
+        except: return True
         
+        for r in jres['stocks']:
+            # print("r['stockName']", r['stockName'] , "int(r['itemCode'])" , int(r['itemCode']) ,  ('스팩' in r['stockName'] and int(r['itemCode']) >= 400000))
+            if 'et' in r['stockEndType']  : continue
+            if ('스팩' in r['stockName'] and
+                int(r['itemCode']) >= 400000): continue # 스팩은 표시 안함
+            
+            sendMessageText += '{0} ({1}%)      [네이버]({2}) , [fnguide]({3})\n'.format(
+                                r['stockName'], r['fluctuationsRatio'] , r['endUrl'], convert_stock_url(r['endUrl']) )
+            # print((sendMessageText))
+            # return ''
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                sendAddText(GetSendMessageTitle() + sendMessageText)
+                sendMessageText = ''
+            
     if len(sendMessageText) > 0:
         print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
         sendAddText(GetSendMessageTitle() + sendMessageText)
