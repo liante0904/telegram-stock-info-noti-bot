@@ -155,13 +155,17 @@ def NAVER_52weekPrice_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print(jres['stocks'])
     # print('\n\n')
     # print('종목명:',jres['stocks'][0]['stockName'] , "\n등락률:", jres['stocks'][0]['fluctuationsRatio']+'%' , '\n링크: ', jres['stocks'][0]['endUrl'] )
-    print(jres)
+    # print(jres)
     
     sendMessageText = ''
     for r in jres['stocks']:
+        # print("r['stockName']", r['stockName'] , "int(r['itemCode'])" , int(r['itemCode']) ,  ('스팩' in r['stockName'] and int(r['itemCode']) >= 400000))
         if 'et' in r['stockEndType']  : continue
-        sendMessageText += '{0} ({1}%) [링크(클릭)]({2})\n'.format(
-                            r['stockName'], r['fluctuationsRatio'] , r['endUrl'] )
+        if ('스팩' in r['stockName'] and
+            int(r['itemCode']) >= 400000): continue # 스팩은 표시 안함
+        
+        sendMessageText += '{0} ({1}%)      [네이버]({2}) , [fnguide]({3})\n'.format(
+                            r['stockName'], r['fluctuationsRatio'] , r['endUrl'], convert_stock_url(r['endUrl']) )
         # print((sendMessageText))
         # return ''
         if len(sendMessageText) > 3500:
@@ -299,6 +303,15 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
 
     return strUrl
 
+def convert_stock_url(naver_url):
+    # 네이버 주식 URL에서 주식 코드를 추출
+    stock_code = naver_url.split('/')[-1]
+    
+    # FN가이드 주식 URL 생성
+    fnguide_url = f"https://m.comp.fnguide.com/m2/company_01.asp?pGB=1&gicode=A{stock_code}"
+    
+    return fnguide_url
+
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -308,11 +321,6 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
 
 # 최초 send함수
 # URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
@@ -601,129 +609,6 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
-
-
-def MySQL_Open_Connect():
-    global conn
-    global cursor
-    
-    # clearDB 
-    # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
-    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-    cursor = conn.cursor()
-    return cursor
-
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
-    global FIRM_NM
-    global BOARD_NM
-    global BOARD_URL
-    global NXT_KEY
-    global TEST_SEND_YN
-    global NXT_KEY_ARTICLE_TITLE
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        FIRM_NM = row['FIRM_NM']
-        BOARD_NM = row['BOARD_NM']
-        BOARD_URL = row['BOARD_URL']
-        NXT_KEY = row['NXT_KEY']
-        NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
-        SEND_YN = row['SEND_YN']
-        SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
-        TODAY_SEND_YN = row['TODAY_SEND_YN']
-
-    conn.close()
-    return dbResult
-
-def DB_SelSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    nSleepCnt = 0
-    nSleepCntKey = 0
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
-    dbResult = cursor.execute(dbQuery, (9999))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        nSleepCnt = row['ARTICLE_BOARD_ORDER']
-        nSleepCntKey = row['NXT_KEY']
-
-    conn.close()
-    SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
-    return SleepTuple
-
-def DB_DelSleepKey(*args):
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
-    dbResult = cursor.execute(dbQuery)
-
-    conn.close()
-    return dbResult
-
-def DB_InsSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
-    cursor.execute(dbQuery)
-    conn.close()
-    return dbQuery
-
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
-    NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return NXT_KEY
-
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
-    if dbResult:
-        print('####DB업데이트 된 연속키####', end='\n')
-        print(dbResult)
-        NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
-
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    conn.close()
-    return dbResult
 
 def GetSecretKey(*args):
     global CLEARDB_DATABASE_URL
