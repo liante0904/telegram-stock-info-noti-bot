@@ -118,26 +118,11 @@ FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
-async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-async def sendPlainText(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True)
-
-async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-
+ 
 # 최초 send함수
 # URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
 def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
@@ -238,54 +223,6 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-# URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
-def DownloadFile(URL, FILE_NAME):
-    global ATTACH_FILE_NAME
-    print("DownloadFile()",URL, FILE_NAME)
-    if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
-        # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
-        CONVERT_URL = URL 
-        for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
-            # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
-            # 1. 주소에서 한글 문자를 판별
-            # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-            print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
-            if ord('가') <= ord(c) <= ord('힣'): 
-                c_encode = c.encode('euc-kr')
-                CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-
-        if URL != CONVERT_URL: 
-            print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
-            print("CONVERT_URL", CONVERT_URL)
-            URL = CONVERT_URL
-
-    # 파일명 지정
-    # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
-    # 날짜-대분류-소분류-제목-증권사.pdf
-    # TODO 종목명 추가
-    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
-    print('FILE_NAME 확장자 제거 ,', FILE_NAME)
-    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NM
-
-    # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
-    MAX_FILE_NAME_LENGTH = 240
-    if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
-    FILE_NAME += '.pdf'
-    # if '.pdf' not in FILE_NAME : FILE_NAME = FILE_NAME + '.pdf'
-
-    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
-    print('convert URL:',URL)
-    print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
-    with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
-        response = get(URL, verify=False)     # get request
-        file.write(response.content) # write to file
-        
-    r = googledrive.upload(str(ATTACH_FILE_NAME))
-    print('********************')
-    print(f'main URL {r}')
-    return r
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 실제 전송할 메시지 작성
@@ -438,129 +375,6 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
-def MySQL_Open_Connect():
-    global conn
-    global cursor
-    
-    # clearDB 
-    # url = urlparse.urlparse(os.environ['CLEARDB_DATABASE_URL'])
-    # MySQL
-    url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
-    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-    cursor = conn.cursor()
-    return cursor
-
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
-    global FIRM_NM
-    global BOARD_NM
-    global BOARD_URL
-    global NXT_KEY
-    global TEST_SEND_YN
-    global NXT_KEY_ARTICLE_TITLE
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        FIRM_NM = row['FIRM_NM']
-        BOARD_NM = row['BOARD_NM']
-        BOARD_URL = row['BOARD_URL']
-        NXT_KEY = row['NXT_KEY']
-        NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
-        SEND_YN = row['SEND_YN']
-        SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
-        TODAY_SEND_YN = row['TODAY_SEND_YN']
-
-    conn.close()
-    return dbResult
-
-def DB_SelSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    nSleepCnt = 0
-    nSleepCntKey = 0
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
-    dbResult = cursor.execute(dbQuery, (9999))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        nSleepCnt = row['ARTICLE_BOARD_ORDER']
-        nSleepCntKey = row['NXT_KEY']
-
-    conn.close()
-    SleepTuple = (int(nSleepCnt), int(nSleepCntKey))
-    return SleepTuple
-
-def DB_DelSleepKey(*args):
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
-    dbResult = cursor.execute(dbQuery)
-
-    conn.close()
-    return dbResult
-
-def DB_InsSleepKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
-    cursor.execute(dbQuery)
-    conn.close()
-    return dbQuery
-
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
-    NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return NXT_KEY
-
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
-    if dbResult:
-        print('####DB업데이트 된 연속키####', end='\n')
-        print(dbResult)
-        NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
-
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    conn.close()
-    return dbResult
-
 def GetSecretKey(*args):
     global SECRETS # 시크릿 키
     global CLEARDB_DATABASE_URL
@@ -708,10 +522,10 @@ def main():
         print(rTitle1.get_text(separator='\n').strip(), rTitle1_1.get_text(separator='\n').strip())
         print(re.sub(r'\s+', ' ', rTitle1_2.get_text(separator='\n').strip()))
         print(re.sub(r'\s+', ' ', rTitle2.get_text(separator='\n').strip()))
-        print(r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / '))
-        print(r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / '))
-        sendMessageText += r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ')+ "\n" 
-        sendMessageText += r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ')+ "\n" 
+        print(r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : '))
+        print(r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : '))
+        sendMessageText += r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ')+ "\n" 
+        sendMessageText += r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ')+ "\n" 
 
     print(sendMessageText) 
 
