@@ -822,38 +822,37 @@ def HANA_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 하나금융 Daily
-    TARGET_URL_0 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1'
-    # 하나금융 산업 분석
-    TARGET_URL_1 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1'
-    # 하나금융 기업 분석
-    TARGET_URL_2 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2'
-    # 하나금융 주식 전략
-    TARGET_URL_3 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=1'
-    # 하나금융 Small Cap
-    TARGET_URL_4 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=3'
-    # 하나금융 기업 메모
-    TARGET_URL_5 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=4'
-    # 하나금융 Quant
-    TARGET_URL_6 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=2'
-    # 하나금융 포트폴리오
-    TARGET_URL_7 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=3'
-    # 하나금융 투자정보
-    TARGET_URL_8 =  'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=4'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
+    TARGET_URLS = [
+        # 하나금융 Daily
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1',
+        # 하나금융 산업 분석
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=1',
+        # 하나금융 기업 분석
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=2',
+        # 하나금융 주식 전략
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=1',
+        # 하나금융 Small Cap
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=3',
+        # 하나금융 기업 메모
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=3&cid=4',
+        # 하나금융 Quant
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=2',
+        # 하나금융 포트폴리오
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=3',
+        # 하나금융 투자정보
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=4'
+    ]
 
     sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
         try:
             sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        except:
+        except Exception as e:
             if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                print(f"발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n{sendMessageText}")
                 sendAddText(GetSendMessageTitle() + sendMessageText)
                 sendMessageText = ''
-                
+    
     return sendMessageText
 
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
@@ -3449,65 +3448,35 @@ def main():
     # fnguideTodayReport_checkNewArticle()
 
     sendMessageText = ''
-
-    print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-    r = LS_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-    r = ShinHanInvest_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
     
-    print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-    r = NHQV_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    # check functions 리스트
+    check_functions = [
+        LS_checkNewArticle,
+        ShinHanInvest_checkNewArticle,
+        NHQV_checkNewArticle,
+        HANA_checkNewArticle,
+        KB_checkNewArticle,
+        Samsung_checkNewArticle,
+        # Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        Shinyoung_checkNewArticle,
+        Miraeasset_checkNewArticle,
+        Hmsec_checkNewArticle,
+        Kiwoom_checkNewArticle,
+        # LS_selenium_checkNewArticle, # 주석 처리된 부분
+        Koreainvestment_selenium_checkNewArticle,
+        DAOL_checkNewArticle
+    ]
 
-    print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-    r = HANA_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-    r = KB_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-    r = Samsung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
+    for check_function in check_functions:
+        print(f"{check_function.__name__} => 새 게시글 정보 확인")
+        r = check_function()
+        if len(r) > 0:
+            sendMessageText += GetSendMessageTitle() + r
     
-    # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-    # r = Sangsanginib_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-    r = Shinyoung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-    r = Miraeasset_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-    r = Hmsec_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-    r = Kiwoom_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-    # r = LS_selenium_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    r = Koreainvestment_selenium_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-    r = DAOL_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+    if len(sendMessageText) > 0:
+        sendAddText(sendMessageText, 'Y')
+    else:
+        sendAddText('', 'Y')
 
 if __name__ == "__main__":
-	main()
+    main()
