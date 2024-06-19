@@ -509,29 +509,98 @@ def main():
     soup = BeautifulSoup(response.text, "html.parser")
     rTitle1 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.jisu > div.header > h3')
     rTitle1_1 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.jisu > div.header > p')
-    rTitle1_2 = soup.select_one('#jisu > div:nth-child(2)')
-    
+    rTitle1_2 = soup.select_one('#jisu > div:nth-child(1)')
+    rTitle1_3 = soup.select_one('#jisu > div:nth-child(2)')
+    rTitle1_4 = soup.select_one('#jisu > div:nth-child(3)')
+    # print(rTitle1_2, type(rTitle1_2))
+    # print(rTitle1_3, type(rTitle1_3))
+    # print(rTitle1_4, type(rTitle1_4)) 
+
+    # rTitle1_2 데이터 추출
+    print("rTitle1_2 Data:")
+    extract_data(rTitle1_2)
+    print()
+
+    # rTitle1_3 데이터 추출
+    print("rTitle1_3 Data:")
+    extract_data(rTitle1_3)
+    print()
+
+    # rTitle1_4 데이터 추출
+    print("rTitle1_4 Data:")
+    extract_data(rTitle1_4)
+    print()
+
     rTitle2 = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.valuation > div.header > h3')
     soupList = soup.select('body > div.layout > div.content > div.market_wrap > div > div.group.valuation > div.items')
     rDate = soup.select_one('body > div.layout > div.content > div.market_wrap > div > div.group.valuation > div.header > p').get_text()
 
-    sendMessageText = "\n\n" + "* ●"+  '마켓밸류에이션*  ' + '_'+rDate + '일자 기준_' + "\n" 
+    sendMessageText = "\n\n" + "* ●" + '마켓밸류에이션*  ' + '_' + rDate + '일자 기준_' + "\n \n" 
     # print(soupList)
     # return 
     for r in soupList:
         print(rTitle1.get_text(separator='\n').strip(), rTitle1_1.get_text(separator='\n').strip())
-        print(re.sub(r'\s+', ' ', rTitle1_2.get_text(separator='\n').strip()))
-        print(re.sub(r'\s+', ' ', rTitle2.get_text(separator='\n').strip()))
-        print(r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : '))
-        print(r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : '))
-        sendMessageText += r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ')+ "\n" 
-        sendMessageText += r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ')+ "\n" 
+        # 코스피
+        sendMessageText += extract_data(rTitle1_2) + "\n"
+        # 코스닥
+        sendMessageText += extract_data(rTitle1_3) + "\n"
+        sendMessageText += "\n"
+        # 마켓벨류
+        sendMessageText += r.select_one('.item1').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ') + "\n" 
+        sendMessageText += r.select_one('.item2').text.strip().replace('\n\n', '\n').replace('\n', ' / ').replace('PER', '*PER* : ').replace('PBR', '*PBR* : ').replace('ROE', '*ROE* : ') + "\n" 
+        sendMessageText += "\n"
+        # 달러
+        sendMessageText += extract_data(rTitle1_4) + "\n"
 
-    print(sendMessageText) 
+    print(sendMessageText)
 
-
+    # sys.exit(0)
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
+
+def extract_data(element):
+    if element:
+        # index_name 추출
+        index_name = element.select_one('.index_name').get_text(strip=True)
+        
+        # index_value 추출
+        index_value_tag = element.select_one('.index_value')
+        if index_value_tag:
+            index_value_str = index_value_tag.get_text(strip=True).replace(",", "")
+            index_value = float(index_value_str)
+        
+        # stock-down 또는 stock-up 값 추출 및 전일종가 지수 계산
+        index_range_tag = element.select_one('.index_range > span')
+        if index_range_tag:
+            class_name = index_range_tag.get('class', [None])[0]
+            index_range_value_str = index_range_tag.get_text(strip=True).replace(",", "")
+            index_range_value = float(index_range_value_str)
+            
+            if index_name == "원/달러":
+                if class_name == 'stock-down':
+                    previous_close = index_value + index_range_value
+                    result = (f"원&달러 / {index_value:.2f}원  / -{index_range_value:.2f}원 하락 (전일 {previous_close:.2f}원)")
+                elif class_name == 'stock-up':
+                    previous_close = index_value - index_range_value
+                    result = (f"원&달러 / {index_value:.2f}원  / +{index_range_value:.2f}원 상승 (전일 {previous_close:.2f}원)")
+            else:
+                if class_name == 'stock-down':
+                    previous_close = index_value + index_range_value
+                    previous_label = {
+                        "코스피": "→ 코스피 지수 :",
+                        "코스닥": "→ 코스닥 지수 :"
+                    }.get(index_name, "전일 지수")
+                    result = (f"{previous_label} {previous_close:.2f}pt")
+                elif class_name == 'stock-up':
+                    previous_close = index_value - index_range_value
+                    previous_label = {
+                        "코스피": "→ 코스피 지수 :",
+                        "코스닥": "→ 코스닥 지수 :"
+                    }.get(index_name, "전일 지수")
+                    result = (f"{previous_label} {previous_close:.2f}pt")
+            return result
+    else:
+        return "Element not found"
 
 if __name__ == "__main__":
 	main()
