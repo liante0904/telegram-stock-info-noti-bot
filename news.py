@@ -1,20 +1,14 @@
 # -*- coding:utf-8 -*- 
 import os
-import sys
-import datetime
-from pytz import timezone
 import telegram
 import requests
 import datetime
 import time
-import ssl
 import json
 import re
 import asyncio
 import pymysql
 import pymysql.cursors
-from typing import List
-from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
 
