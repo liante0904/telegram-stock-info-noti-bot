@@ -19,7 +19,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.8.10'  # Python 3.8.10 버전 설정
+        python-version: '3.10.12'  # Python 3.8.10 버전 설정
 
     - name: Install dependencies and run setup script
       run: |
