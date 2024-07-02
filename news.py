@@ -72,7 +72,6 @@ FIRST_ARTICLE_INDEX = 0
 # 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
 LIST_ARTICLE_TITLE = ''
 
-
 #################### global 변수 정리 ###################################
 FIRM_NM = ''
 BOARD_NM = ''
@@ -91,114 +90,20 @@ def ChosunBizBot_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     # 조선Biz Cbot API
-    # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%2Corg%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
+    # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
     
     # 조선Biz 웹 크롤링 변경
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
     
-    
-    # 조선Biz Cbot API JSON 크롤링
-    # ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL)
-
-
     # 조선Biz Cbot API JSON 크롤링
     ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL)
-
-    # ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    # 조선Biz Cbot 웹 크롤링
-    # for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-    #     ChosunBizBot_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    #     time.sleep(1)
  
-# JSON API 타입
-def ChosunBizBot_JSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
-    BASE_URL = 'biz.chosun.com'
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if rescode != 200 :return print("ChosunBizBot_JSONparse 접속이 원활하지 않습니다 ")
-
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except:
-        return True
-    jres = jres['content_elements']
-    # print(jres)
-
-    try:
-        FIRST_ARTICLE_URL = BASE_URL + jres[0]['canonical_url'].strip()
-        FIRST_ARTICLE_TITLE = jres[0]['headlines']['basic'].strip()
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for chosun in jres:
-        # print(chosun)
-        LIST_ARTICLE_URL = BASE_URL + chosun['canonical_url'].strip()
-        LIST_ARTICLE_TITLE = chosun['headlines']['basic'].strip()
-
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendText(GetSendMessageTitle() + sendMessageText)
-        # sendMessageText = ''
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
-
 # 증권플러스 뉴스 JSON API 타입
 def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
     if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
@@ -211,8 +116,8 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     jres = jres['newsItems']
 
     try:
-        FIRST_ARTICLE_URL = jres[0]['url'].strip()
-        FIRST_ARTICLE_TITLE = jres[0]['title'].strip()
+        FIRST_ARTICLE_URL = jres[0]['url']
+        FIRST_ARTICLE_TITLE = jres[0]['title']
     except:
         FIRST_ARTICLE_URL = ''
         FIRST_ARTICLE_TITLE = ''
@@ -244,10 +149,10 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # JSON To List
     for stockPlus in jres:
-        LIST_ARTICLE_URL = stockPlus['url'].strip()
-        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        LIST_ARTICLE_URL = stockPlus['url']
+        LIST_ARTICLE_TITLE = stockPlus['title']
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
@@ -274,32 +179,26 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
-def NAVERNews_checkNewArticle():
+def NAVERNews_checkNewArticle_0():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
     SEC_FIRM_ORDER      = 998
-    ARTICLE_BOARD_ORDER = 998
+    ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
     TARGET_URL_0 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
-    # 네이버 많이 본 뉴스
-    TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+    NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL_0)
 
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
- 
 # JSON API 타입
-def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
 
+    print('NAVERNews_parse_0')
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -312,7 +211,7 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
     jres = jres['result']
 
-    FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit'].strip()
+    FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
@@ -345,9 +244,10 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # JSON To List
     for news in jres['newsList']:
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
-        LIST_ARTICLE_TITLE = news['tit'].strip()
+        LIST_ARTICLE_TITLE = news['tit']
 
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            if LIST_ARTICLE_TITLE in sendMessageText: continue
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -377,11 +277,108 @@ def NAVERNews_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
+def NAVERNews_checkNewArticle_1():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+
+    SEC_FIRM_ORDER      = 998
+    ARTICLE_BOARD_ORDER = 1
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 네이버 많이 본 뉴스
+    TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
+    
+    NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
+
+# JSON API 타입
+def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global NXT_KEY
+    global TEST_SEND_YN
+
+    print('NAVERNews_parse_1')
+    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    #검색 요청 및 처리
+    response = urllib.request.urlopen(request)
+    rescode = response.getcode()
+    if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+
+    try:
+        jres = json.loads(response.read().decode('utf-8'))
+    except:
+        return True
+    jres = jres['result']
+    
+    FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit']
+    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+
+    # 연속키 데이터베이스화 작업
+    # 연속키 데이터 저장 여부 확인 구간
+    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 1
+        # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스)')
+
+    else: # 0
+        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+        print('데이터베이스에 ', '(네이버 뉴스)')
+        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+
+
+    # 연속키 체크
+    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    if SEND_YN == 'Y' : r = ''
+    if r: 
+        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+        return ''
+    
+
+    # NaverNews 게시판에 따른 URL 지정
+    if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
+    else:                      category = 'ranknews'
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for news in jres['newsList']:
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
+        LIST_ARTICLE_TITLE = news['tit']
+
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            if len(sendMessageText) < 3500:
+                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+            else:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        elif SEND_YN == 'N':
+            print('###점검중 확인요망###')
+        else:
+            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+                print('최신 게시글이 채널에 발송 되어 있습니다.')
+                return
+            else: break
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle() + sendMessageText)
+        # sendMessageText = ''
+
+    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    return sendMessageText
+
+
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
-
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -678,10 +675,10 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     sendMessageText = ''
     # JSON To List
     for stockPlus in jres:
-        LIST_ARTICLE_URL = stockPlus['url'].strip()
-        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        LIST_ARTICLE_URL = stockPlus['url']
+        LIST_ARTICLE_TITLE = stockPlus['title']
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
+        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
@@ -856,7 +853,10 @@ def main():
     print('SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL', SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL)
     print(GetCurrentDay())
     
-    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); print("NAVERNews_checkNewArticle()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle(); return
+    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); 
+    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_0(); 
+    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_1(); 
+    return
 
 if __name__ == "__main__":
 	main()
