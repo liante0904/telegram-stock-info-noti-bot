@@ -19,11 +19,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10.12'  # Python 3.8.10 버전 설정
+        python-version: '3.8.10'  # Python 3.8.10 버전 설정
 
     - name: Install dependencies and run setup script
       run: |
         bash setup.sh
+
+    - name: Add SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Deploy to Server
       env:
@@ -33,6 +38,9 @@ jobs:
         PROJECT_DIR: '~/dev/telegram-stock-info-noti-bot'
       run: |
         echo "Starting deployment..."
+        echo "DEPLOY_SERVER: $DEPLOY_SERVER"
+        echo "DEPLOY_USER: $DEPLOY_USER"
+        echo "DEPLOY_PATH: $DEPLOY_PATH"
         rsync -avz --exclude 'venv' --exclude '.git' . $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH
         ssh $DEPLOY_USER@$DEPLOY_SERVER << EOF
           echo "Connecting to server..."
