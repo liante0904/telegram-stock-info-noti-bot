@@ -38,13 +38,14 @@ jobs:
         PROJECT_DIR: '~/dev/telegram-stock-info-noti-bot'
       run: |
         echo "Starting deployment..."
-        echo "DEPLOY_SERVER: $DEPLOY_SERVER"
-        echo "DEPLOY_USER: $DEPLOY_USER"
-        echo "DEPLOY_PATH: $DEPLOY_PATH"
-        rsync -avz --exclude 'venv' --exclude '.git' . $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH
-        ssh $DEPLOY_USER@$DEPLOY_SERVER << EOF
-          echo "Connecting to server..."
-          cd $DEPLOY_PATH
+        echo "SERVER_HOST: $SERVER_HOST"
+        echo "SERVER_USER: $SERVER_USER"
+        echo "PROJECT_DIR: $PROJECT_DIR"
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+          cd /home/ubuntu/dev/telegram-stock-info-noti-bot  # 실제 배포할 프로젝트 경로
           git pull origin master
           source venv/bin/activate
           echo "Installing requirements..."
