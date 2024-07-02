@@ -2890,7 +2890,7 @@ def DownloadFile(URL, FILE_NAME):
             # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
             # 1. 주소에서 한글 문자를 판별
             # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-            print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
+            # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
             if ord('가') <= ord(c) <= ord('힣'): 
                 c_encode = c.encode('euc-kr')
                 CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
@@ -2918,10 +2918,16 @@ def DownloadFile(URL, FILE_NAME):
     ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
     print('convert URL:',URL)
     print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
+
+    if os.path.exists(ATTACH_FILE_NAME):
+        print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
+        return None
+    
     with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
         response = get(URL, verify=False)     # get request
         file.write(response.content) # write to file
-        
+
+            
     r = googledrive.upload(str(ATTACH_FILE_NAME))
     print('********************')
     print(f'main URL {r}')
@@ -2937,7 +2943,7 @@ def DownloadFile_wget(URL, FILE_NAME):
         # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
         # 1. 주소에서 한글 문자를 판별
         # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-        print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
+        # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
         if ord('가') <= ord(c) <= ord('힣'): 
             c_encode = c.encode('euc-kr')
             CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
@@ -2965,6 +2971,11 @@ def DownloadFile_wget(URL, FILE_NAME):
     ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
     print('convert URL:',URL)
     print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
+
+    if os.path.exists(ATTACH_FILE_NAME):
+        print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
+        return None
+
     wget.download(url=URL, out=ATTACH_FILE_NAME)
     r = googledrive.upload(str(ATTACH_FILE_NAME))
     print('********************')
