@@ -4,6 +4,10 @@
 ### My custom ###
 *.key
 *.pdf
+secrets.json
+storage.json
+client_drive.json
+gitignore/
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -146,3 +150,10 @@ dmypy.json
 .prof
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+(test)telegram-stock-info-noti-bot.code-workspace
+.gitignore
+.gitignore
+NeverIdle
+requirements.txt_bak
+(main)telegram-stock-info-noti-bot.code-workspace
+.vscode/settings.json
