@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master  # master 브랜치에 푸시될 때 트리거
+  pull_request:
+    branches:
+      - master  # master 브랜치에 PR이 열릴 때 트리거
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10.12'  # Python 3.8.10 버전 설정
+
+    - name: Install dependencies and run setup script
+      run: |
+        bash setup.sh
+
+    - name: Add SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to Server
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        PROJECT_DIR: '/home/ubuntu/dev/telegram-stock-info-noti-bot'
+      run: |
+        echo "Starting deployment..."
+        echo "SERVER_HOST: $SERVER_HOST"
+        echo "SERVER_USER: $SERVER_USER"
+        echo "PROJECT_DIR: $PROJECT_DIR"
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
+          cd $PROJECT_DIR  # 실제 배포할 프로젝트 경로
+          git pull origin master
+          source venv/bin/activate
+          # setup.sh 스크립트 실행
+          if [ -f setup.sh ]; then
+            echo "Running setup.sh in $PROJECT_DIR..."
+            bash setup.sh
+          fi
+          # 필요한 경우 추가 배포 명령어 실행
+          echo "Installing requirements..."
+          pip install -r requirements.txt
+          echo "Deployment completed in $PROJECT_DIR."
+        EOF
