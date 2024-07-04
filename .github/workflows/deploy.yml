@@ -45,7 +45,7 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
-          cd $PROJECT_DIR  # 실제 배포할 프로젝트 경로
+          cd /home/ubuntu/dev/telegram-stock-info-noti-bot  # 실제 배포할 프로젝트 경로
           git pull origin master
           source venv/bin/activate
           # setup.sh 스크립트 실행
