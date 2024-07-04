@@ -35,7 +35,7 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_USER: ${{ secrets.SERVER_USER }}
-        PROJECT_DIR: '/home/ubuntu/dev/telegram-stock-info-noti-bot'
+        PROJECT_DIR:  ${{ secrets.PROJECT_DIR }}
       run: |
         echo "Starting deployment..."
         echo "SERVER_HOST: $SERVER_HOST"
