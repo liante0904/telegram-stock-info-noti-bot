@@ -15,7 +15,7 @@ import urllib.request
 from package import googledrive
 from package.common import *
 from package.SecretKey import SecretKey
-
+from package.MariaDB import MariaDB
 from requests import get  # to make GET request
 
 # 로직 설명
@@ -79,6 +79,12 @@ BOARD_NM = ''
 
 SECRET_KEY = SecretKey()
 SECRET_KEY.load_secrets()
+
+# 데이터베이스 연결 초기화
+db_url = 'your_database_url_here'
+db = MariaDB(SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL)
+db.open_connect()
+
 
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -200,10 +206,11 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print('NAVERNews_parse_0')
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
+    # 검색 요청 및 처리
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
-    if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+    if rescode != 200:
+        return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
     try:
         jres = json.loads(response.read().decode('utf-8'))
@@ -212,45 +219,48 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
     jres = jres['result']
 
     FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    print('FIRST_ARTICLE_TITLE:', FIRST_ARTICLE_TITLE)
+    
+    
+    # 데이터베이스 연결 초기화
+    db.open_connect()
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+    dbResult = db.SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    if dbResult: # 연속키가 존재하는 경우
+        print('데이터베이스에 연속키가 존재합니다. ', '(네이버 뉴스)')
+    else: # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '(네이버 뉴스)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
+        NXT_KEY = db.InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
     # 연속키 체크
     r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
+    if SEND_YN == 'Y':
+        r = ''
+    if r:
         print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
         return ''
-    
 
     # NaverNews 게시판에 따른 URL 지정
-    if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
-    else:                      category = 'ranknews'
+    if ARTICLE_BOARD_ORDER == 0:
+        category = 'flashnews'
+    else:
+        category = 'ranknews'
 
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
-        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit']
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            if LIST_ARTICLE_TITLE in sendMessageText: continue
+        if (NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y') and SEND_YN == 'Y':
+            if LIST_ARTICLE_TITLE in sendMessageText:
+                continue
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX=nNewArticleCnt, ARTICLE_BOARD_NAME='', ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -261,20 +271,23 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+            db.UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0 or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
                 return
-            else: break
-                
+            else:
+                break
+
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
+    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
         # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    db.UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    # 작업 완료 후 데이터베이스 연결 종료
+    db.close_connect()
     return sendMessageText
 
 def NAVERNews_checkNewArticle_1():
@@ -309,6 +322,16 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
     jres = jres['result']
     
+    # 파일명 결정
+    if ARTICLE_BOARD_ORDER == 0:
+        filename = 'naver_flashnews.json'
+    else:
+        filename = 'naver_ranknews.json'
+    
+    # jres를 파일로 저장
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(jres, f, ensure_ascii=False, indent=4)
+    
     FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
@@ -373,7 +396,6 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
-
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
