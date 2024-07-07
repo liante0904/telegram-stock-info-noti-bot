@@ -157,3 +157,4 @@ NeverIdle
 requirements.txt_bak
 (main)telegram-stock-info-noti-bot.code-workspace
 .vscode/settings.json
+naver_*.json

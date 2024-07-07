@@ -235,7 +235,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # print(list[0].text)
         # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
         LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list[0].text
+        LIST_ARTICLE_TITLE = list[0].get_text()
 
         print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
@@ -285,9 +285,7 @@ def LS_downloadFile(ARTICLE_URL, date):
     try:
         print(ARTICLE_URL)
         webpage = requests.get(ARTICLE_URL, verify=False)
-        print('안됐나?')
     except:
-        print('여기?')
         return True
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
