@@ -3,6 +3,7 @@ import os
 import telegram
 import requests
 import datetime
+import logging
 import time
 import json
 import re
@@ -305,72 +306,125 @@ def NAVERNews_checkNewArticle_1():
     NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
 
 # JSON API 타입
+def remove_duplicates(a_data, b_data):
+    try:
+        # b_data를 set으로 변환하여 중복 제거에 사용할 수 있게 함
+        b_set = {json.dumps(item, sort_keys=True) for item in b_data['newsList']}
+    except KeyError as e:
+        print(f"KeyError in b_data: {e}")
+        print(f"b_data: {json.dumps(b_data, indent=4, ensure_ascii=False)}")
+        raise
+
+    try:
+        # a_data에서 b_data와 중복되지 않는 항목만 선택
+        result = [item for item in a_data['newsList'] if json.dumps(item, sort_keys=True) not in b_set]
+    except KeyError as e:
+        print(f"KeyError in a_data: {e}")
+        print(f"a_data: {json.dumps(a_data, indent=4, ensure_ascii=False)}")
+        raise
+    
+    return result
+
 def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
     global NXT_KEY
     global TEST_SEND_YN
 
-    print('NAVERNews_parse_1')
+    logging.debug('NAVERNews_parse_1')
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request)
+    # 검색 요청 및 처리
+    try:
+        response = urllib.request.urlopen(request)
+    except Exception as e:
+        print(f"Error during request to {TARGET_URL}: {e}")
+        return
+
     rescode = response.getcode()
-    if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+    if rescode != 200:
+        return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
     try:
         jres = json.loads(response.read().decode('utf-8'))
-    except:
+    except Exception as e:
+        print(f"Error loading JSON from response: {e}")
         return True
-    jres = jres['result']
-    
+
+    try:
+        jres = jres['result']
+    except KeyError as e:
+        print(f"KeyError in jres: {e}")
+        print(f"jres: {json.dumps(jres, indent=4, ensure_ascii=False)}")
+        return True
+
+    logging.debug(jres)
     # 파일명 결정
-    if ARTICLE_BOARD_ORDER == 0:
-        filename = 'naver_flashnews.json'
+    filename = 'naver_ranknews.json'
+
+    filtered_jres = []
+
+    # 파일 존재 여부 확인 및 저장
+    if not os.path.exists(filename):
+        # jres를 파일로 저장
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(jres, f, ensure_ascii=False, indent=4)
+            filtered_jres = jres['newsList']
+            print(f"saving JSON to file {filename}")
+        except Exception as e:
+            print(f"Error saving JSON to file {filename}: {e}")
+            return True
     else:
-        filename = 'naver_ranknews.json'
-    
-    # jres를 파일로 저장
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(jres, f, ensure_ascii=False, indent=4)
-    
-    FIRST_ARTICLE_TITLE = jres['newsList'][0]['tit']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+        # 파일이 이미 존재하는 경우, 파일을 읽어오기
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                saved_jres = json.load(f)
 
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스)')
+            # 예외 처리: 'newsList' 키가 없을 경우 기본값 설정
+            if 'newsList' not in saved_jres:
+                print("Key 'newsList' not found in saved_jres, initializing with empty list")
+                saved_jres['newsList'] = []
+            logging.debug(saved_jres)
+            logging.debug(jres)
 
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(네이버 뉴스)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+            # 중복 제거 로직 추가
+            try:
+                existing_ids = {item['id'] for item in saved_jres['newsList']}
+            except KeyError as e:
+                print(f"KeyError in saved_jres: {e}")
+                existing_ids = set()
+            
+            try:
+                new_unique_data = [item for item in jres['newsList'] if item.get('id') not in existing_ids]
+            except KeyError as e:
+                print(f"KeyError in jres: {e}")
+                new_unique_data = []
 
+            saved_jres['newsList'].extend(new_unique_data)
+            filtered_jres = saved_jres['newsList']
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
+            logging.debug(json.dumps(filtered_jres, indent=4, ensure_ascii=False))
+
+            # 병합된 데이터를 파일에 저장
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(saved_jres, f, ensure_ascii=False, indent=4)
+
+        except Exception as e:
+            print(f"Error reading or processing file {filename}: {e}")
+            return True
 
     # NaverNews 게시판에 따른 URL 지정
-    if ARTICLE_BOARD_ORDER == 0:category = 'flashnews'
-    else:                      category = 'ranknews'
+    category = 'ranknews'
 
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
-    for news in jres['newsList']:
-        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/'+ category + '/' + news['oid'] + '/' + news['aid']
+    for news in filtered_jres:
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit']
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
+        if (NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y') and SEND_YN == 'Y':
+            nNewArticleCnt += 1  # 새로운 게시글 수
             if len(sendMessageText) < 3500:
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(INDEX=nNewArticleCnt, ARTICLE_BOARD_NAME='', ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
@@ -381,20 +435,22 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
         elif SEND_YN == 'N':
             print('###점검중 확인요망###')
         else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+            # DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            if nNewArticleCnt == 0 or len(sendMessageText) == 0:
                 print('최신 게시글이 채널에 발송 되어 있습니다.')
                 return
-            else: break
-                
+            else:
+                break
+
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}')
+    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
         # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+    # 이미 파일이 있는 경우 처리
+    # DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
@@ -872,11 +928,60 @@ def main():
     global INTERVAL_TIME # 새로고침 주기 - 파일
     global TEST_SEND_YN
 
-    print('SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL', SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL)
+    # 사용자의 홈 디렉토리 가져오기
+    HOME_PATH = os.path.expanduser("~")
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(HOME_PATH, "log")
+
+    # log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("LOG_PATH 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
+
+    # log 디렉토리 경로
+    LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
+
+    # daily log 디렉토리가 존재하지 않으면 생성
+    if not os.path.exists(LOG_PATH):
+        os.makedirs(LOG_PATH)
+        print("daily LOG_PATH 디렉토리 생성됨:", LOG_PATH)
+    else:
+        print("daily LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
+
+    # 현재 스크립트의 이름 가져오기
+    script_filename = os.path.basename(__file__)
+    script_name = script_filename.split('.')[0]
+    print('script_filename', script_filename)
+
+    # log 파일명
+    LOG_FILENAME = GetCurrentDate('YYYYMMDD') + '_' + script_name + ".dbg"
+    print('__file__', __file__, LOG_FILENAME)
+
+    # log 전체경로
+    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    print('LOG_FULLFILENAME', LOG_FULLFILENAME)
+
+    # 로깅 설정 추가
+    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
+                        format='%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]', force=True)
+
+    # 콘솔 핸들러 추가
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]'))
+    logging.getLogger().addHandler(console_handler)
+
+    # 디버그 메시지 출력
+    print("LOG_FULLFILENAME", LOG_FULLFILENAME)
+    logging.debug('이것은 디버그 메시지입니다.')
+    
     print(GetCurrentDay())
     
     print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); 
-    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_0(); 
+    # print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_0(); 
     print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_1(); 
     return
 
