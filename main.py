@@ -19,10 +19,6 @@ from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
 
-import base64
-from urllib.parse import urlparse, parse_qs
-
-
 from package import googledrive
 # selenium
 from selenium import webdriver
@@ -615,8 +611,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
                 else: LIST_ARTICLE_TITLE = list['docTitleSub']
                 LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-                LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
                 # if TEST_SEND_YN == 'Y': return sendMessageText
@@ -3379,38 +3373,6 @@ def test_code():
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-def extract_and_decode_url(url):
-    """
-    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
-
-    Parameters:
-    url (str): URL 문자열
-
-    Returns:
-    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
-    """
-    # URL 파싱
-    parsed_url = urlparse(url)
-    
-    # 쿼리 문자열 파싱
-    query_params = parse_qs(parsed_url.query)
-    
-    # id와 url 추출
-    id_value = query_params.get('id', [None])[0]
-    encoded_url = query_params.get('url', [None])[0]
-    
-    if id_value is None or encoded_url is None:
-        return "Invalid URL: id or url is missing"
-    
-    # Base64 디코딩
-    try:
-        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
-    except Exception as e:
-        return f"Error decoding url: {e}"
-    
-    # return f"Extracted id: {id_value}, Decoded URL: {decoded_url}"
-    return decoded_url
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
