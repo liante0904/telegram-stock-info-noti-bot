@@ -20,7 +20,7 @@ import urllib.request
 
 
 import base64
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs
 
 from package import googledrive
 
