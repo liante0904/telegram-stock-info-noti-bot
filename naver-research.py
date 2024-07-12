@@ -128,102 +128,67 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = jres[0]['title']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스 투자정보 리서치)')
+    # # 연속키 데이터베이스화 작업
+    # # 연속키 데이터 저장 여부 확인 구간
+    # dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    # if dbResult: # 1
+    #     # 연속키가 존재하는 경우
+    #     print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스 투자정보 리서치)')
 
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    # else: # 0
+    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+    #     print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
+    #     NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if TEST_SEND_YN == 'Y' : r = ''
+    # # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # if TEST_SEND_YN == 'Y' : r = ''
 
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return ''
 
     nNewArticleCnt = 0
     sendMessageText = ''
-
-    MainBot_nNewArticleCnt = 0
-    MainBot_sendMessageText = ''
     brokerName = jres[0]['brokerName']
-    # JSON To List
+    first_article_processed = False
+
     for research in jres:
-        # print('***************************')
-        # print(research)
         LIST_ARTICLE_URL = NAVER_Report_parseURL(research['endUrl'])
         LIST_ARTICLE_TITLE = research['title']
-        if ARTICLE_BOARD_ORDER == 0 : LIST_ARTICLE_TITLE = research['itemName'] +": "+ LIST_ARTICLE_TITLE # 기업분석
-        else:                         LIST_ARTICLE_TITLE = research['category'] +": "+ LIST_ARTICLE_TITLE # 산업분석
-        
-        
-        '''
-        {'researchCategory': '종목분석', 'category': '종목분석', 'itemCode': '090430', 
-        'itemName': '아모레퍼시픽', 'researchId': 65663, 'title': '기다림은 길어지지만 방향성은 분명', 
-        'brokerName': '한화투자증권', 'writeDate': '2023-06-23', 'readCount': '708', 
-        'endUrl': 'https://m.stock.naver.com/research/company/65663'}
-
-        {'researchCategory': '산업분석', 'category': '기타', 'researchId': 33786, 
-        'title': '한화 항공/방위산업 Weekly', 'brokerName': '한화투자증권', 'writeDate': '2023-06-23', 
-        'readCount': '288', 'endUrl': 'https://m.stock.naver.com/research/industry/33786'}
-        '''
-        print('NXT_KEY ' , NXT_KEY)
-        print('LIST_ARTICLE_TITLE ', LIST_ARTICLE_TITLE)
-        
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3000:
-                # 회사명 출력
-                if nNewArticleCnt == 1 or brokerName != research['brokerName'] : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
-                    sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
-                    brokerName = research['brokerName'] # 회사명 키 변경
-                # 종목 & 산업 출력
-                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
-                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                # 레포트 제목 출력
-                # sendMessageText += research['title'] + "\n"
-                # 레포트 URL 출력
-                # sendMessageText += NAVER_Report_parseURL(LIST_ARTICLE_URL) + "\n"+ "\n"
-                # if ARTICLE_BOARD_ORDER == 0 : sendMessageText += "●"+research['itemName'] + "\n" # 기업분석
-                # else:                         sendMessageText += "●"+research['category'] + "\n" # 산업분석
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                # if '' in brokerName: # 메인봇에서 발송안하는 회사
-                    # MainBot_sendMessageText += "\n"+ "●"+research['brokerName'] + "\n"
-                    # MainBot_sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                    
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
+        if ARTICLE_BOARD_ORDER == 0:
+            LIST_ARTICLE_TITLE = research['itemName'] + ": " + LIST_ARTICLE_TITLE  # 기업분석
         else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    # 뉴스, 네이버(뉴스, 레포트)의 경우 분리하여 발송
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+            LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
+
+        nNewArticleCnt += 1  # 새로운 게시글 수
+        new_article_message = save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=research['brokerName'], attach_url=LIST_ARTICLE_URL, article_title=LIST_ARTICLE_TITLE)
+        
+        if new_article_message:
+            if not first_article_processed or brokerName != research['brokerName']:
+                sendMessageText += "\n" + "●" + research['brokerName'] + "\n"
+                brokerName = research['brokerName']  # 회사명 키 변경
+                first_article_processed = True
+
+            sendMessageText += new_article_message
+
+        if len(sendMessageText) >= 3000:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            nNewArticleCnt = 0
+            sendMessageText = ''
+
+    if nNewArticleCnt == 0 or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
+
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
+    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
         print(sendMessageText)
         sendText(GetSendMessageTitle() + sendMessageText)
         sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
 
 def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     strUrl = ''
@@ -280,16 +245,7 @@ def sendAddText(sendMessageText, sendType='N'):
     return ''
 
 def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # 발신 게시판 종류
-    # if INDEX == 1:
-    #     sendMessageText += GetSendMessageTitle() + "\n"
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
-    save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ARTICLE_URL, article_title=ARTICLE_TITLE)
+    sendMessageText = save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ARTICLE_URL, article_title=ARTICLE_TITLE)
     return sendMessageText 
 
 def GetSendChatId():
@@ -437,9 +393,25 @@ def save_to_local_json(sec_firm_order, article_board_order, firm_nm, attach_url,
             json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
         
         print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+        
+        # 중복되지 않은 항목을 템플릿 형식으로 반환
+        return format_message(new_data)
     else:
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
+        return ''
 
+def format_message(data):
+    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
+    ARTICLE_TITLE = data['ARTICLE_TITLE']
+    ARTICLE_URL = data['ATTACH_URL']
+    
+    sendMessageText = ""
+    # 게시글 제목(굵게)
+    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+    # 원문 링크
+    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n"
+    
+    return sendMessageText
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
