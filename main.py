@@ -3408,6 +3408,8 @@ def extract_and_decode_url(url):
     
     # Base64 디코딩
     try:
+        # '&amp;'를 '&'로 변환
+        encoded_url = encoded_url.replace('&amp;', '&')
         decoded_url = base64.b64decode(encoded_url).decode('utf-8')
     except Exception as e:
         return f"Error decoding url: {e}"
