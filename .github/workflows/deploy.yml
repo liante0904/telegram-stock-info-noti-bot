@@ -69,8 +69,8 @@ jobs:
 
     - name: Set up Git user
       run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
+        git config user.name "seunghoon shin"
+        git config user.email "liante0904@gmail.com"
 
     - name: Get list of changed files
       id: changed-files
