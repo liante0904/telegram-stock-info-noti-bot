@@ -20,7 +20,6 @@ import urllib.parse as urlparse
 import urllib.request
 
 import base64
-from urllib.parse import urlparse, parse_qs
 
 
 from package import googledrive
@@ -3394,7 +3393,7 @@ def extract_and_decode_url(url):
     parsed_url = urlparse(url)
     
     # 쿼리 문자열 파싱
-    query_params = parse_qs(parsed_url.query)
+    query_params = urlparse.parse_qs(parsed_url.query)
     
     # id와 url 추출
     id_value = query_params.get('id', [None])[0]

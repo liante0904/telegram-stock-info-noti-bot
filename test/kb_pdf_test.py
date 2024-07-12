@@ -1,5 +1,5 @@
 import base64
-from urllib.parse import urlparse, parse_qs
+import urllib.parse as urlparse
 
 def extract_and_decode_url(url):
     """
@@ -12,10 +12,10 @@ def extract_and_decode_url(url):
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
     # URL 파싱
-    parsed_url = urlparse(url)
+    parsed_url = urlparse.urlparse(url)
     
     # 쿼리 문자열 파싱
-    query_params = parse_qs(parsed_url.query)
+    query_params = urlparse.parse_qs(parsed_url.query)
     
     # id와 url 추출
     id_value = query_params.get('id', [None])[0]
