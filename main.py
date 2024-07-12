@@ -3390,7 +3390,7 @@ def extract_and_decode_url(url):
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
     # URL 파싱
-    parsed_url = urlparse(url)
+    parsed_url = urlparse.urlparse(url)
     
     # 쿼리 문자열 파싱
     query_params = urlparse.parse_qs(parsed_url.query)
@@ -3404,6 +3404,8 @@ def extract_and_decode_url(url):
     
     # Base64 디코딩
     try:
+        # '&amp;'를 '&'로 변환
+        encoded_url = encoded_url.replace('&amp;', '&')
         decoded_url = base64.b64decode(encoded_url).decode('utf-8')
     except Exception as e:
         return f"Error decoding url: {e}"

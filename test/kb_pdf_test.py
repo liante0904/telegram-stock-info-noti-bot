@@ -26,6 +26,8 @@ def extract_and_decode_url(url):
     
     # Base64 디코딩
     try:
+        # '&amp;'를 '&'로 변환
+        encoded_url = encoded_url.replace('&amp;', '&')
         decoded_url = base64.b64decode(encoded_url).decode('utf-8')
     except Exception as e:
         return f"Error decoding url: {e}"
@@ -33,5 +35,5 @@ def extract_and_decode_url(url):
     return f"Extracted id: {id_value}, Decoded URL: {decoded_url}"
 
 # 예제 사용
-url = 'https://rcv.kbsec.com/streamdocs/pdfview?id=B520190322125512762443&url=aHR0cDovL3JkYXRhLmtic2VjLmNvbS9wZGZfZGF0YS8yMDI0MDcxMDEwMDYyMDEwM0sucGRm'
+url = 'https://rcv.kbsec.com/streamdocs/pdfview?id=B520190322125512762443&url=aHR0cDovL3JkYXRhLmtic2VjLmNvbS9wZGZfZGF0YS8yMDI0MDcxMjEzMTAwOTk2MEsucGRm'
 print(extract_and_decode_url(url))
