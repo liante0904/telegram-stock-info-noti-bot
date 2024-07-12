@@ -89,8 +89,12 @@ jobs:
         for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
           git checkout master -- "$file"
         done
-        git commit -m "Sync changed files from master to test"
-        git push origin test
+        if ! git diff-index --quiet HEAD; then
+          git commit -m "Sync changed files from master to test"
+          git push origin test
+        else
+          echo "No changes to commit"
+        fi
 
     - name: Sync changed files with dev branch
       run: |
@@ -98,5 +102,9 @@ jobs:
         for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
           git checkout master -- "$file"
         done
-        git commit -m "Sync changed files from master to dev"
-        git push origin dev
+        if ! git diff-index --quiet HEAD; then
+          git commit -m "Sync changed files from master to dev"
+          git push origin dev
+        else
+          echo "No changes to commit"
+        fi
