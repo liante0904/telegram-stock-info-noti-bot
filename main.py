@@ -3392,6 +3392,7 @@ def extract_and_decode_url(url):
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
     print(url)
+    url = url.replace('&amp;', '&')
     # URL 파싱
     parsed_url = urlparse.urlparse(url)
     
@@ -3404,6 +3405,7 @@ def extract_and_decode_url(url):
     encoded_url = query_params.get('url', [None])[0]
     
     if id_value is None or encoded_url is None:
+        print('Invalid URL: id or url is missing')
         return "Invalid URL: id or url is missing"
     
     # Base64 디코딩
@@ -3421,7 +3423,7 @@ def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
     global SEND_YN
-
+    
     # 쉘 파라미터 가져오기
     try: strArgs = sys.argv[1]
     except: strArgs = ''
