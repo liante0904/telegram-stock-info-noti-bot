@@ -152,9 +152,10 @@ dmypy.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 (test)telegram-stock-info-noti-bot.code-workspace
 .gitignore
-.gitignore
 NeverIdle
 requirements.txt_bak
 (main)telegram-stock-info-noti-bot.code-workspace
 .vscode/settings.json
 naver_*.json
+*.json
+testcode/*
