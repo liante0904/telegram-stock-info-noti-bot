@@ -75,13 +75,16 @@ jobs:
     - name: Get list of changed files
       id: changed-files
       run: |
-        echo "CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)" >> $GITHUB_ENV
+        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+        echo "CHANGED_FILES<<EOF" >> $GITHUB_ENV
+        echo "$CHANGED_FILES" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
 
     - name: Sync changed files with test branch
       run: |
         git checkout test
-        for file in $(echo $CHANGED_FILES | tr ',' '\n'); do
-          git checkout master -- $file
+        for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
+          git checkout master -- "$file"
         done
         git commit -m "Sync changed files from master to test"
         git push origin test
@@ -89,8 +92,8 @@ jobs:
     - name: Sync changed files with dev branch
       run: |
         git checkout dev
-        for file in $(echo $CHANGED_FILES | tr ',' '\n'); do
-          git checkout master -- $file
+        for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
+          git checkout master -- "$file"
         done
         git commit -m "Sync changed files from master to dev"
         git push origin dev
