@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy and Sync Changed Files
 
 on:
   push:
@@ -19,9 +19,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10.12'  # Python 3.8.10 버전 설정
+        python-version: '3.10.12'  # Python 3.10.12 버전 설정
 
-    - name: Install dependencies and run setup script
+    - name: Run setup script
       run: |
         bash setup.sh
 
@@ -35,7 +35,7 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SERVER_HOST: ${{ secrets.SERVER_HOST }}
         SERVER_USER: ${{ secrets.SERVER_USER }}
-        PROJECT_DIR:  ${{ secrets.PROJECT_DIR }}
+        PROJECT_DIR: ${{ secrets.PROJECT_DIR }}
       run: |
         echo "Starting deployment..."
         echo "SERVER_HOST: $SERVER_HOST"
@@ -45,16 +45,52 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
-          cd /home/ubuntu/dev/telegram-stock-info-noti-bot  # 실제 배포할 프로젝트 경로
-          git pull origin master
+          cd $PROJECT_DIR  # 실제 배포할 프로젝트 경로
+          git fetch --all
+          git reset --hard origin/master
           source venv/bin/activate
           # setup.sh 스크립트 실행
           if [ -f setup.sh ]; then
             echo "Running setup.sh in $PROJECT_DIR..."
             bash setup.sh
           fi
-          # 필요한 경우 추가 배포 명령어 실행
-          echo "Installing requirements..."
-          pip install -r requirements.txt
           echo "Deployment completed in $PROJECT_DIR."
         EOF
+
+  sync_branches:
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Git user
+      run: |
+        git config user.name "seunghoon shin"
+        git config user.email "liante0904@gmail.com"
+
+    - name: Get list of changed files
+      id: changed-files
+      run: |
+        echo "CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)" >> $GITHUB_ENV
+
+    - name: Sync changed files with test branch
+      run: |
+        git checkout test
+        for file in $CHANGED_FILES; do
+          git checkout master -- $file
+        done
+        git commit -m "Sync changed files from master to test"
+        git push origin test
+
+    - name: Sync changed files with dev branch
+      run: |
+        git checkout dev
+        for file in $CHANGED_FILES; do
+          git checkout master -- $file
+        done
+        git commit -m "Sync changed files from master to dev"
+        git push origin dev
