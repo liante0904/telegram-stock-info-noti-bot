@@ -607,7 +607,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(list)
 
         LIST_ARTICLE_TITLE = list['docTitleSub']
-
+ 
         if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
