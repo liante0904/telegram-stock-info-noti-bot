@@ -24,4 +24,4 @@ pip install pycairo
 # 나머지 패키지 설치
 pip install --no-build-isolation -r requirements.txt
 
-echo "Setup completed in $PROJECT_DIR." 
+echo "Setup completed in $PROJECT_DIR."

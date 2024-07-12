@@ -80,7 +80,7 @@ jobs:
     - name: Sync changed files with test branch
       run: |
         git checkout test
-        for file in $CHANGED_FILES; do
+        for file in $(echo $CHANGED_FILES | tr ',' '\n'); do
           git checkout master -- $file
         done
         git commit -m "Sync changed files from master to test"
@@ -89,7 +89,7 @@ jobs:
     - name: Sync changed files with dev branch
       run: |
         git checkout dev
-        for file in $CHANGED_FILES; do
+        for file in $(echo $CHANGED_FILES | tr ',' '\n'); do
           git checkout master -- $file
         done
         git commit -m "Sync changed files from master to dev"
