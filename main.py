@@ -683,8 +683,8 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     payload = {
         "trName": "H3211",
         "rshPprDruTmSt": "00000000",
-        "rshPprDruDtSt": GetCurrentDate("YYYYMMDD"),
-        "rshPprDruDtEd": GetCurrentDate("YYYYMMDD"),
+        "rshPprDruDtSt": GetCurrentDate_NH(),
+        "rshPprDruDtEd": GetCurrentDate_NH(),
         "rshPprNo": ""
     }
     
@@ -3458,6 +3458,25 @@ def save_to_local_json(sec_firm_order, article_board_order, firm_nm, attach_url,
         print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
     else:
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
+
+# 전용 현재일자 (주말인 경우 월요일)
+def GetCurrentDate_NH():
+    # 한국 표준시(KST) 시간대를 설정합니다.
+    tz_kst = timezone('Asia/Seoul')
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    now_kst = now_utc.astimezone(tz_kst)
+
+    # 현재 요일을 구합니다. (월요일=0, 일요일=6)
+    current_weekday = now_kst.weekday()
+
+    if current_weekday == 5:  # 오늘이 토요일인 경우
+        next_monday = now_kst + datetime.timedelta(days=2)
+    elif current_weekday == 6:  # 오늘이 일요일인 경우
+        next_monday = now_kst + datetime.timedelta(days=1)
+    else:
+        next_monday = now_kst  # 오늘이 월요일~금요일인 경우 현재 일자 반환
+
+    return next_monday.strftime('%Y%m%d')
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
