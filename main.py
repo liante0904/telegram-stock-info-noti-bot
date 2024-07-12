@@ -251,7 +251,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -476,7 +476,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                     print("에러 발생:", e)
                     LIST_ARTICLE_URL = list['f3']
                     
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -619,7 +619,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 print('nnnnnnnnnnnnnnnn')
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 # if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -794,7 +794,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                     DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 else: continue
                 # print(LIST_ARTICLE_URL)
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -932,7 +932,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1080,7 +1080,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 else: LIST_ARTICLE_TITLE = ARTICLE_TITLE
                 # print(LIST_ARTICLE_TITLE)
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1216,7 +1216,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 # if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1410,7 +1410,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1699,7 +1699,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 r = list.select_one(".subject a").find_all(string=True)
                 r = " : ".join(r)
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = r, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = r, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1825,7 +1825,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1959,7 +1959,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
                 DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 # GET Content
                 # payload = {
                 #     "Menu_category": 6,
@@ -2087,7 +2087,7 @@ def LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                r = GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                r = GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if LIST_ARTICLE_TITLE not in sendMessageText:sendMessageText += r # 신규 내용 아래 추가
                 if TEST_SEND_YN == 'Y': 
                     print( sendMessageText)
@@ -2222,7 +2222,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
-                sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -2573,7 +2573,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             if len(sendMessageText) < 3500:
                 ATTACH_URL = LIST_ARTICLE_URL
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
                 if TEST_SEND_YN == 'Y': return sendMessageText
             else:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -2987,23 +2987,11 @@ def DownloadFile_wget(URL, FILE_NAME):
     print(f'main URL {r}')
     return r
 
-def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # 발신 게시판 종류
-    # if INDEX == 1:
-    #     sendMessageText += GetSendMessageTitle() + "\n"
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
-
-    return sendMessageText
 
 # 실제 전송할 메시지 작성 
 # 유형   : Markdown
 # Paran  : ARTICLE_TITLE -> 레포트 제목  , ATTACH_URL -> 레포트 URL(PDF)
-def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
+def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
     
     sendMessageText = ''
 
@@ -3011,7 +2999,7 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ATTACH_URL + ")"  + "\n" 
-
+    save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
     return sendMessageText
     
 # 타이틀 생성 
@@ -3381,6 +3369,8 @@ def test_code():
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
 
+
+# KB증권 암호화 해제
 def extract_and_decode_url(url):
     """
     주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
@@ -3419,11 +3409,61 @@ def extract_and_decode_url(url):
     print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
     return decoded_url
 
+
+# json 로컬 저장
+def save_to_local_json(sec_firm_order, article_board_order, firm_nm, attach_url, article_title):
+    directory = './json'
+    filename = os.path.join(directory, 'data_main_daily_send.json')
+
+    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"디렉터리 '{directory}'를 생성했습니다.")
+
+    # 현재 시간을 저장합니다.
+    current_time = datetime.datetime.now().isoformat()
+    
+    # 새 데이터를 딕셔너리로 저장합니다.
+    new_data = {
+        "SEC_FIRM_ORDER": sec_firm_order,
+        "ARTICLE_BOARD_ORDER": article_board_order,
+        "FIRM_NM": firm_nm,
+        "ATTACH_URL": attach_url,
+        "ARTICLE_TITLE": article_title,
+        "SAVE_TIME": current_time
+    }
+
+    # 기존 데이터를 읽어옵니다.
+    if os.path.exists(filename):
+        with open(filename, 'r', encoding='utf-8') as json_file:
+            existing_data = json.load(json_file)
+    else:
+        existing_data = []
+
+    # 중복 체크 (ATTACH_URL, FIRM_NM, ARTICLE_TITLE 중복 확인)
+    is_duplicate = any(
+        existing_item["ATTACH_URL"] == new_data["ATTACH_URL"] and
+        existing_item["FIRM_NM"] == new_data["FIRM_NM"] and
+        existing_item["ARTICLE_TITLE"] == new_data["ARTICLE_TITLE"]
+        for existing_item in existing_data
+    )
+
+    if not is_duplicate:
+        existing_data.append(new_data)
+        
+        # 업데이트된 데이터를 JSON 파일로 저장합니다.
+        with open(filename, 'w', encoding='utf-8') as json_file:
+            json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
+        
+        print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+    else:
+        print("중복된 데이터가 발견되어 저장하지 않았습니다.")
+
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
     global TEST_SEND_YN
     global SEND_YN
-    
+
     # 쉘 파라미터 가져오기
     try: strArgs = sys.argv[1]
     except: strArgs = ''
