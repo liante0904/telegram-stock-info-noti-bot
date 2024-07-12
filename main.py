@@ -607,13 +607,17 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(list)
 
         LIST_ARTICLE_TITLE = list['docTitleSub']
- 
+
         if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
             nNewArticleCnt += 1 # 새로운 게시글 수
             if len(sendMessageText) < 3500:
                 if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
                 else: LIST_ARTICLE_TITLE = list['docTitleSub']
                 LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+                print('?????????????????????')
+                LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
+                print('nnnnnnnnnnnnnnnn')
+                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 print('?????????????????????')
                 LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
                 print('nnnnnnnnnnnnnnnn')
@@ -3380,40 +3384,6 @@ def test_code():
 
     if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
     else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-def extract_and_decode_url(url):
-    """
-    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
-
-    Parameters:
-    url (str): URL 문자열
-
-    Returns:
-    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
-    """
-    print(url)
-    # URL 파싱
-    parsed_url = urlparse.urlparse(url)
-    
-    print(url)
-    # 쿼리 문자열 파싱
-    query_params = urlparse.parse_qs(parsed_url.query)
-    
-    # id와 url 추출
-    id_value = query_params.get('id', [None])[0]
-    encoded_url = query_params.get('url', [None])[0]
-    
-    if id_value is None or encoded_url is None:
-        return "Invalid URL: id or url is missing"
-    
-    # Base64 디코딩
-    try:
-        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
-    except Exception as e:
-        return f"Error decoding url: {e}"
-    
-    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
-    return decoded_url
 
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
