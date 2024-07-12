@@ -25,3 +25,4 @@ pip install pycairo
 pip install --no-build-isolation -r requirements.txt
 
 echo "Setup completed in $PROJECT_DIR."
+ 
