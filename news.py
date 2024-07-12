@@ -356,8 +356,11 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
 
     logging.debug(jres)
+
+    directory = './json'
+
     # 파일명 결정
-    filename = 'naver_ranknews.json'
+    filename = os.path.join(directory, 'naver_ranknews.json')
 
     # 파일 존재 여부 확인 및 저장
     if not os.path.exists(filename):
