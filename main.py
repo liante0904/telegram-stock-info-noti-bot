@@ -614,7 +614,9 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
                 if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
                 else: LIST_ARTICLE_TITLE = list['docTitleSub']
                 LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+                print('?????????????????????')
                 LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
+                print('nnnnnnnnnnnnnnnn')
                 DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 # LIST_ARTICLE_URL = DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
@@ -3389,9 +3391,11 @@ def extract_and_decode_url(url):
     Returns:
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
+    print(url)
     # URL 파싱
-    parsed_url = urlparse(url)
+    parsed_url = urlparse.urlparse(url)
     
+    print(url)
     # 쿼리 문자열 파싱
     query_params = urlparse.parse_qs(parsed_url.query)
     
@@ -3408,7 +3412,7 @@ def extract_and_decode_url(url):
     except Exception as e:
         return f"Error decoding url: {e}"
     
-    # return f"Extracted id: {id_value}, Decoded URL: {decoded_url}"
+    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
     return decoded_url
 
 def main():
