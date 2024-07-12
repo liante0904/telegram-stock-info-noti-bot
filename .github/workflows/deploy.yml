@@ -48,6 +48,7 @@ jobs:
           cd $PROJECT_DIR  # 실제 배포할 프로젝트 경로
           git fetch --all
           git reset --hard origin/master
+          git pull
           source venv/bin/activate
           # setup.sh 스크립트 실행
           if [ -f setup.sh ]; then
