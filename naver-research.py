@@ -19,7 +19,6 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
-from package.common import *
 from package.SecretKey import SecretKey
 
 # import secretkey
@@ -37,57 +36,13 @@ from requests import get  # to make GET request
 #   - 어떻게 구분지을지 생각해봐야함
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
-############공용 상수############
-# sleep key
-SLEEP_KEY_DIR_FILE_NAME = './key/sleep.key'
-INTERVAL_TIME = 3 # 10분 단위 적용
-INTERVAL_INIT_TIME = 1
-
-# 게시글 갱신 시간
-REFRESH_TIME = 60 * 20 # 20분
-
-# pymysql 변수
-conn    = ''
-cursor  = ''
-
-# 연속키URL
-NXT_KEY = ''
-NXT_KEY_ARTICLE_TITLE = ''
-# 게시판 URL
-BOARD_URL = ''
-# 테스트 발송여부
-TEST_SEND_YN = ''
-# 텔레그램 채널 발송 여부
-SEND_YN = ''
-TODAY_SEND_YN = ''
-# 텔레그램 마지막 메세지 발송시간(단위 초)
-SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
-# 첫번째URL 
-FIRST_ARTICLE_URL = ''
-# SendAddText 글로벌 변수
-SEND_ADD_MESSAGE_TEXT = ''
-# LOOP 인덱스 변수
+############ global 변수 ############
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
-# 이모지
-EMOJI_FIRE = u'\U0001F525'
-EMOJI_PICK = u'\U0001F449'
-
-# 연속키용 상수
-FIRST_ARTICLE_INDEX = 0
-
-# 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
-LIST_ARTICLE_TITLE = ''
-
-
-#################### global 변수 정리 ###################################
-FIRM_NM = ''
-BOARD_NM = ''
-#################### global 변수 정리 끝###################################
-
 SECRET_KEY = SecretKey()
 SECRET_KEY.load_secrets()
+############ global 변수 끝 ############
 
 def NAVER_Report_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -97,7 +52,6 @@ def NAVER_Report_checkNewArticle():
     ARTICLE_BOARD_ORDER = 900
 
     requests.packages.urllib3.disable_warnings()
-
 
     # 네이버 증권 리서치 기업
     TARGET_URL_0 = 'https://m.stock.naver.com/front-api/research/list?category=company'
@@ -110,10 +64,9 @@ def NAVER_Report_checkNewArticle():
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         time.sleep(1)
+
 # JSON API 타입
 def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     response = urllib.request.urlopen(request)
@@ -128,26 +81,6 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = jres[0]['title']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
-    # # 연속키 데이터베이스화 작업
-    # # 연속키 데이터 저장 여부 확인 구간
-    # dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    # if dbResult: # 1
-    #     # 연속키가 존재하는 경우
-    #     print('데이터베이스에 연속키가 존재합니다. ','(네이버 뉴스 투자정보 리서치)')
-
-    # else: # 0
-    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-    #     print('데이터베이스에 ', '(네이버 뉴스 투자정보 리서치)')
-    #     NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-    # if TEST_SEND_YN == 'Y' : r = ''
-
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-    #     return ''
-
     nNewArticleCnt = 0
     sendMessageText = ''
     brokerName = jres[0]['brokerName']
@@ -161,10 +94,10 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         else:
             LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
 
-        nNewArticleCnt += 1  # 새로운 게시글 수
         new_article_message = save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=research['brokerName'], attach_url=LIST_ARTICLE_URL, article_title=LIST_ARTICLE_TITLE)
         
         if new_article_message:
+            nNewArticleCnt += 1  # 새로운 게시글 수
             if not first_article_processed or brokerName != research['brokerName']:
                 sendMessageText += "\n" + "●" + research['brokerName'] + "\n"
                 brokerName = research['brokerName']  # 회사명 키 변경
@@ -186,9 +119,8 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
     if nNewArticleCnt > 0 or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
+        sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
         sendMessageText = ''
-
 
 def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     strUrl = ''
@@ -209,11 +141,6 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
-async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
     global CHAT_ID
@@ -224,128 +151,39 @@ def sendText(sendMessageText):
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-# 인자 텍스트를 더해가며 발송합니다. 
-# 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
-# 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
-# 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
-# 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
-def sendAddText(sendMessageText, sendType='N'): 
-    global SEND_ADD_MESSAGE_TEXT
-
-    SEND_ADD_MESSAGE_TEXT += sendMessageText
-    print('sendType ', sendType)
-    print('sendMessageText ',sendMessageText)
-    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
-
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
-        print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
-        sendText(SEND_ADD_MESSAGE_TEXT)
-        SEND_ADD_MESSAGE_TEXT = ''
-
-    return ''
-
-def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
-    sendMessageText = save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ARTICLE_URL, article_title=ARTICLE_TITLE)
-    return sendMessageText 
-
 def GetSendChatId():
     SendMessageChatId = 0
     return SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM
 
-def MySQL_Open_Connect():
-    global conn
-    global cursor
+# 타이틀 생성 
+# : 게시판 이름 삭제
+def GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER): 
+    SendMessageTitle = ""
+    msgFirmName = ""
     
-    # clearDB 
-    # url = urlparse.urlparse(os.environ['SECRET_KEY.CLEARDB_DATABASE_URL'])
-    url = urlparse.urlparse(SECRET_KEY.ORACLECLOUD_MYSQL_DATABASE_URL)
-    conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-    cursor = conn.cursor()
-    return cursor
+    if SEC_FIRM_ORDER == 999:
+        msgFirmName = "매매동향"
+    elif SEC_FIRM_ORDER == 998:
+        msgFirmName = "네이버 - "
+        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
+        else: msgFirmName += "가장 많이 본 뉴스"
+    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
+    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
+    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
+    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
+    elif SEC_FIRM_ORDER == 900: 
+        msgFirmName = "[네이버 증권 "
+        if ARTICLE_BOARD_ORDER == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
+        elif ARTICLE_BOARD_ORDER == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
+        else: print(msgFirmName)
+    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
+    else: # 증권사
+        msgFirmName =  '' 
 
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
-    global FIRM_NM
-    global BOARD_NM
-    global BOARD_URL
-    global NXT_KEY
-    global TEST_SEND_YN
-    global NXT_KEY_ARTICLE_TITLE
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        FIRM_NM = row['FIRM_NM']
-        BOARD_NM = row['BOARD_NM']
-        BOARD_URL = row['BOARD_URL']
-        NXT_KEY = row['NXT_KEY']
-        NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
-        SEND_YN = row['SEND_YN']
-        SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
-        TODAY_SEND_YN = row['TODAY_SEND_YN']
-
-    conn.close()
-    return dbResult
-
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
-    NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return NXT_KEY
-
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
-    if dbResult:
-        print('####DB업데이트 된 연속키####', end='\n')
-        print(dbResult)
-        NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
-
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    conn.close()
-    return dbResult
-
-# 첫 게시글과 연속키 일치 여부를 판별 
-# 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
-# 불일치(FALSE)=> 새 게시물이 게시되어 전송함
-def isNxtKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    print('isNxtKey')
-
-    print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
-    if SEND_YN == 'N' or args[0] in NXT_KEY: return True
-    else: return False
+    # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
+    SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
+    
+    return SendMessageTitle
 
 # json 로컬 저장
 def save_to_local_json(sec_firm_order, article_board_order, firm_nm, attach_url, article_title):
@@ -412,34 +250,19 @@ def format_message(data):
     sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n"
     
     return sendMessageText
+
 def main():
-    global SEC_FIRM_ORDER  # 증권사 순번
-    global REFRESH_TIME # 새로고침 주기
-    global INTERVAL_TIME # 새로고침 주기 - 파일
-    global TEST_SEND_YN
 
-    TEST_SEND_YN = ''
-
-    # GetCurrentDate('')
-    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
-    
     try: strArgs = sys.argv[1]
     except: strArgs = ''
 
     if  strArgs : 
-        TEST_SEND_YN = 'Y'
-        sendMessageText = ''
-
         print('test')
         return 
-
-    TEST_SEND_YN = ''
-    
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
 
-    # return 
 
 if __name__ == "__main__":
 	main()
