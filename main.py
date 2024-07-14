@@ -1857,25 +1857,25 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
+    # if dbResult: # 1
+    #     if SEND_YN == 'N':
+    #         print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
+    #         return ''
+    #     # 연속키가 존재하는 경우
+    #     print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
 
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    # else: # 0
+    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+    #     print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+    #     NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
 
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
+    #     return ''
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1899,52 +1899,38 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
         print('SERIAL_NO:',SERIAL_NO)
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
-                DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                # GET Content
-                # payload = {
-                #     "Menu_category": 6,
-                #     "queryType": "",
-                #     "serialNo": 30132,
-                #     "curPage": 1
-                # }
-                # jres = ''
-                # try:
-                #     webpage = requests.post('https://m.hmsec.com/mobile/research/research01_view.do?Menu_category=6',data=payload)
-                #     print(webpage.text)
-                # except:
-                #     return False
+        DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:nNewArticleCnt += 1 # 새로운 게시글 수
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
 
-                # # HTML parse
-                # soup = BeautifulSoup(webpage.content, "html.parser")
-                # soupList = soup.select('body > div > table > tbody > tr')
-                # return ""
-                print(sendMessageText)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+        # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return sendMessageText
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-            
-    print(sendMessageText)
     return sendMessageText
 
 def LS_selenium_checkNewArticle():
@@ -3357,56 +3343,6 @@ def extract_and_decode_url(url):
     
     print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
     return decoded_url
-
-
-# json 로컬 저장
-def save_to_local_json(sec_firm_order, article_board_order, firm_nm, attach_url, article_title):
-    directory = './json'
-    filename = os.path.join(directory, 'data_main_daily_send.json')
-
-    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        print(f"디렉터리 '{directory}'를 생성했습니다.")
-
-    # 현재 시간을 저장합니다.
-    current_time = datetime.datetime.now().isoformat()
-    
-    # 새 데이터를 딕셔너리로 저장합니다.
-    new_data = {
-        "SEC_FIRM_ORDER": sec_firm_order,
-        "ARTICLE_BOARD_ORDER": article_board_order,
-        "FIRM_NM": firm_nm,
-        "ATTACH_URL": attach_url,
-        "ARTICLE_TITLE": article_title,
-        "SAVE_TIME": current_time
-    }
-
-    # 기존 데이터를 읽어옵니다.
-    if os.path.exists(filename):
-        with open(filename, 'r', encoding='utf-8') as json_file:
-            existing_data = json.load(json_file)
-    else:
-        existing_data = []
-
-    # 중복 체크 (ATTACH_URL, FIRM_NM, ARTICLE_TITLE 중복 확인)
-    is_duplicate = any(
-        existing_item["ATTACH_URL"] == new_data["ATTACH_URL"] and
-        existing_item["FIRM_NM"] == new_data["FIRM_NM"] and
-        existing_item["ARTICLE_TITLE"] == new_data["ARTICLE_TITLE"]
-        for existing_item in existing_data
-    )
-
-    if not is_duplicate:
-        existing_data.append(new_data)
-        
-        # 업데이트된 데이터를 JSON 파일로 저장합니다.
-        with open(filename, 'w', encoding='utf-8') as json_file:
-            json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
-        
-        print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
-    else:
-        print("중복된 데이터가 발견되어 저장하지 않았습니다.")
 
 # 전용 현재일자 (주말인 경우 월요일)
 def GetCurrentDate_NH():
