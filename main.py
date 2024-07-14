@@ -2532,156 +2532,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
-def fnguideTodayReport_checkNewArticle():
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER      = 123
-    ARTICLE_BOARD_ORDER = 123
-
-    # 유효 발송 시간에만 로직 실행
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','fnguideTodayReport_checkNewArticle')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "0")
-        return True
-
-    if int(GetCurrentTime('HH')) == 0: 
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
-        return True
-    # 오늘의 레포트 발송조건
-    # 평일, 09시, 17시 (주말이거나 9시, 17시가 아닌 경우 호출하지 않음)
-    
-    if GetCurrentDay() == '토' or GetCurrentDay() == '일': return True
-    if TODAY_SEND_YN == 'Y' : return True
-    if int(GetCurrentTime('HH')) == 9 or int(GetCurrentTime('HH')) == 17  : pass
-    else: return True
-    requests.packages.urllib3.disable_warnings()
-
-    TARGET_URL = 'https://comp.fnguide.com/SVO/WooriRenewal/Report_Data.asp?stext=&check=all'
-
-    try:
-        webpage = requests.get(TARGET_URL, verify=False)
-    except: 
-        return True
-    
-    print(BOARD_URL)
-    print(NXT_KEY)
-    
-    # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
-
-    # 종목 정보(레포트 수) 
-    soupList1 = soup.select('tr > td.sub_mgl10')
-    
-    # 애널리스트 정보
-    soupList2 = soup.select('tr > td:nth-child(5)')
-
-    sendMessageText = ''
-    pageCnt = 0
-    articleCnt = 0
-    NxtArticleCnt = int(NXT_KEY_ARTICLE_TITLE)
-    objMessage = ''
-    FIRST_MESSAGE_KEY = ''
-    for listIsu, listAnalyst in zip(soupList1, soupList2):
-        print('######################')
-        articleCnt += 1
-        try:
-            listIsu = listIsu.text
-        except:
-            continue
-        
-        print(listIsu)
-        listIsu = listIsu.replace("`","")
-        listIsu = listIsu.split("|")
-        strIsuNm = listIsu[0].strip()
-        strIsuNo = strIsuNm.split("(A")
-        strIsuNo = strIsuNo[1].replace(")","")
-        strIsuUrl = "[종목링크]" + "(" + "https://finance.naver.com/item/main.naver?code=" + strIsuNo + ")"
-        listIsu = listIsu[1].split("-  ")
-        strReportTitle = listIsu[0].strip().replace("1-","")
-
-        # 17시 발송건일때 이미 전송된 인덱스는 제외처리
-        if articleCnt <= NxtArticleCnt and int(GetCurrentTime('HH')) == 17 : continue   
-
-        try:
-            strInvestOpinion_1 = listIsu[1].strip()
-        except:
-            strInvestOpinion_1 = ''
-
-        try:    
-            strInvestOpinion_2 = listIsu[2].strip()
-        except:
-            strInvestOpinion_2 = ''
-
-        strHead  = '*' + strIsuNm + ' - ' +strReportTitle + '*' + " | " +  strIsuUrl
-        strBody  = '- '  + strInvestOpinion_1.strip()
-        if len(strInvestOpinion_2) > 0:
-            strBody += '\n'
-            strBody += '- '  + strInvestOpinion_2.strip()
-
-        strTail = listAnalyst.get_text(' - ', strip=True)
-
-        print(strHead)
-        print(strBody)
-        print(strTail)
-        sendMessageText += strHead + "\n"
-        sendMessageText += strBody + "\n" 
-        sendMessageText += strTail + "\n" + "\n" 
-        if len(sendMessageText) > 3500 : # 중간 발송
-            objMessage = sendText(GetSendMessageTitle() + sendMessageText)
-            sendMessageText = ''
-            if pageCnt == 0 : FIRST_MESSAGE_KEY = str(objMessage.message_id)
-            pageCnt += 1
-
-    # 나머지 최종 발송
-    if len(sendMessageText) > 0 : # 중간 발송
-        print('=================================발송구간')
-        print(sendMessageText)
-        objMessage = sendText(GetSendMessageTitle() + sendMessageText)
-        sendMessageText = ''
-        pageCnt += 1
-
-
-    sendMessageText  = '오늘의 레포트가 발송되었습니다. \n'
-    sendMessageText += '확인하려면 링크를 클릭하세요. \n'
-    sendMessageText += BOARD_URL + FIRST_MESSAGE_KEY
-    asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
-
-    # 연속키 갱신
-    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, int(pageCnt), articleCnt)
-
-    # 9시, 17시 두차례 발송을 위해 17시 발송후 발송여부 갱신
-    if int(GetCurrentTime('HH')) == 17 :
-        # 발송 처리
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
-
-    return True
-
-async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-async def sendPlainText(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True)
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -2729,37 +2583,6 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-# URL 발신용 전용 함수 : ex) 네이버 뉴스
-def sendURL(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('sendURL()')
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText)
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-
-def sendPhoto(ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    print('sendPhoto()')
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    return bot.sendPhoto(chat_id = GetSendChatId(), photo = ARTICLE_URL)
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
     global CHAT_ID
@@ -2787,35 +2610,6 @@ def sendAddText(sendMessageText, sendType='N'):
         sendMessageText = ''
 
     return ''
-
-def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-    global sendMessageText
-
-    print('sendMarkdown()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 첫 인덱스 타이틀
-    if INDEX == 0:
-        sendMessageText = ''
-        sendMessageText += GetSendMessageTitle()
-
-    sendMessageText += ARTICLE_TITLE + "\n" 
-
-    # 원문 링크 , 레포트 링크
-    if SEC_FIRM_ORDER == 996:
-        sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
-    else:
-        sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크]" + "("+ ATTACH_URL + ")"
-
-    if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
-
-    #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
@@ -3065,15 +2859,6 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
         print('####DB업데이트 된 연속키####', end='\n')
         print(dbResult)
         NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
-
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
     conn.close()
     return dbResult
  
@@ -3443,9 +3228,6 @@ def main():
     TimeHourMin = int(GetCurrentTime('HHMM'))
     TimeHour = int(GetCurrentTime('HH'))
     
-    # print("fnguideTodayReport_checkNewArticle()=> 새 게시글 정보 확인") # 123
-    # fnguideTodayReport_checkNewArticle()
-
     sendMessageText = ''
     
     # check functions 리스트
