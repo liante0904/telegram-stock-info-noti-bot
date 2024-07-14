@@ -149,6 +149,9 @@ dmypy.json
 # profiling data
 .prof
 
+# tmp
+*.tmp
+
 # End of https://www.toptal.com/developers/gitignore/api/python
 (test)telegram-stock-info-noti-bot.code-workspace
 .gitignore

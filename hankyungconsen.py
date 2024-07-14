@@ -19,6 +19,7 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
+from package.json_util import save_data_to_local_json  # import the function from json_util
 from package.common import *
 from package.SecretKey import SecretKey
 
@@ -137,31 +138,32 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM)
+    # if dbResult: # 1
+    #     # 연속키가 존재하는 경우
+    #     print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM)
 
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+    # else: # 0
+    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
+    #     print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
+    #     NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return '' 
+    # # 연속키 체크
+    # r = isNxtKey(FIRST_ARTICLE_TITLE)
+    # if SEND_YN == 'Y' : r = ''
+    # if r: 
+    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
+    #     return '' 
     
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
+    # print('연속URL:', NXT_KEY) # 주소
     print('############')
 
     nNewArticleCnt = 0
     sendMessageText = ''
     brokerName = soup.select('#contents > div.table_style01 > table > tbody > tr.first > td:nth-child(5)')[FIRST_ARTICLE_INDEX].text
+    first_article_processed = False
     print('brokerName' ,brokerName)
     for list in soupList:
         
@@ -178,42 +180,44 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
         ATTACH_URL = LIST_ARTICLE_URL
         
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
+
+        # Use the imported save_data_to_local_json function with filename parameter
+        new_article_message = save_data_to_local_json(
+            filename='./json/hankyungconsen_research.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=LIST_ARTICLE_BROKER_NAME,
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        
+        if new_article_message:
             # 회사명 출력
-            if nNewArticleCnt == 1 or brokerName != LIST_ARTICLE_BROKER_NAME : # 첫 페이지 이거나 다음 회사명이 다를때만 출력
+            nNewArticleCnt += 1  # 새로운 게시글 수
+            if not first_article_processed or brokerName != LIST_ARTICLE_BROKER_NAME:
                 sendMessageText += "\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
                 brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
+                first_article_processed = True
 
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                sendMessageText += GetSendMessageTextMarkdown(ARTICLE_TITLE = LIST_ARTICLE_CLASS +" : "+ LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    # if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-    #     print(sendMessageText)
-    #     sendMessageText = GetSendMessageTitle() + sendMessageText
-    #     sendMessageText = ''
+            sendMessageText += new_article_message
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
+        if len(sendMessageText) >= 3000:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendText(GetSendMessageTitle() + sendMessageText)
+            nNewArticleCnt = 0
+            sendMessageText = ''
+
+
+    if nNewArticleCnt == 0 or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
+
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
+    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
+        print(sendMessageText)
+        sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
+        sendMessageText = ''
 
 async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
