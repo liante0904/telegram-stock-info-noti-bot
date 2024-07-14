@@ -23,6 +23,7 @@ import base64
 
 
 from package import googledrive
+from package.json_util import save_data_to_local_json  # import the function from json_util
 # selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -2999,7 +3000,16 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ATTACH_URL + ")"  + "\n" 
-    save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
+    # save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
+    save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=ATTACH_URL,
+            article_title=ARTICLE_TITLE
+    )
+    
     return sendMessageText
     
 # 타이틀 생성 
