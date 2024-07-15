@@ -33,7 +33,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
 
     # 중복 체크 (ATTACH_URL, FIRM_NM, ARTICLE_TITLE 중복 확인)
     is_duplicate = any(
-        existing_item["ATTACH_URL"] == new_data["ATTACH_URL"] and
+        # existing_item["ATTACH_URL"] == new_data["ATTACH_URL"] and
         existing_item["FIRM_NM"] == new_data["FIRM_NM"] and
         existing_item["ARTICLE_TITLE"] == new_data["ARTICLE_TITLE"]
         for existing_item in existing_data
