@@ -268,9 +268,9 @@ def LS_detail(ARTICLE_URL, date):
     # print(date)
     ATTACH_BASE_URL = 'https://www.ls-sec.co.kr/_bt_lib/util/download.jsp?dataType='
     
-    time.sleep(0.5)
+    time.sleep(0.1)
     try:
-        print(ARTICLE_URL)
+        # print(ARTICLE_URL)
         webpage = requests.get(ARTICLE_URL, verify=False)
     except:
         return True
