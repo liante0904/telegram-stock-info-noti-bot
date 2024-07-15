@@ -152,7 +152,7 @@ def LS_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -242,7 +242,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -254,9 +254,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
     
@@ -346,7 +344,7 @@ def ShinHanInvest_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -434,7 +432,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -446,9 +444,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -480,7 +476,7 @@ def KB_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
 
     return sendMessageText
@@ -561,7 +557,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -573,9 +569,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -601,7 +595,7 @@ def NHQV_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
                 
     return sendMessageText
@@ -705,7 +699,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -717,9 +711,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -760,7 +752,7 @@ def HANA_checkNewArticle():
         except Exception as e:
             if len(sendMessageText) > 3500:
                 print(f"발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n{sendMessageText}")
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
     
     return sendMessageText
@@ -816,7 +808,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
         print(LIST_ARTICLE_TITLE)
@@ -859,7 +851,7 @@ def Samsung_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -932,7 +924,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -944,9 +936,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -976,7 +966,7 @@ def Sangsanginib_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1052,7 +1042,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1064,9 +1054,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -1155,7 +1143,7 @@ def Shinyoung_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
                 
     return sendMessageText
@@ -1229,7 +1217,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1241,9 +1229,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -1408,7 +1394,7 @@ def Miraeasset_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1494,7 +1480,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1506,9 +1492,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -1540,7 +1524,7 @@ def Kiwoom_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1606,7 +1590,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1618,9 +1602,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -1651,7 +1633,7 @@ def Hmsec_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1723,7 +1705,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1735,131 +1717,8 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
-
-    return sendMessageText
-
-def LS_selenium_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
-    SEC_FIRM_ORDER = 11
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 이베스트 리서치 모바일
-    TARGET_URL_0 =  "https://m.ebestsec.co.kr/invest/research/"
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
-
-    sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        try:
-            sendMessageText += LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        except:
-            if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                
-    return sendMessageText
-
-def LS_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    # 헤드리스 모드로 설정
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-
-    # Chrome 드라이버 초기화
-    driver = webdriver.Chrome(options=chrome_options)
-
-    # 웹 페이지 열기
-    driver.get(TARGET_URL)
-
-    # wait until someid is clickable
-    wait = WebDriverWait(driver, 10)
-    element = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'board-list')))
-    # EC.presence_of_element_located
-    # 모든 링크 요소 선택하기
-    link_elements = driver.find_elements(By.XPATH, "//div[@id='wrap']/div/div/div/div/ul/li/a")
-
-    FIRST_ARTICLE_TITLE = link_elements[0].find_element(By.XPATH, './/strong').text
-    print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
-    
-    print('SEC_FIRM_ORDER-?>?', SEC_FIRM_ORDER)
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-
-    if r and TEST_SEND_YN != 'Y': 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
-    
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    
-    # JSON To List
-    # for list in jres['rows']:
-    for link_element in link_elements:
-        LIST_ARTICLE_URL = link_element.get_attribute('href')
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-        LIST_ARTICLE_TITLE = link_element.find_element(By.XPATH, './/strong').text
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                # sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME =  BOARD_NM ,ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)
-                r = GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                if LIST_ARTICLE_TITLE not in sendMessageText:sendMessageText += r # 신규 내용 아래 추가
-                if TEST_SEND_YN == 'Y': 
-                    print( sendMessageText)
-                    continue
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
-
-    # 브라우저 닫기
-    driver.quit()
-    
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 def Koreainvestment_selenium_checkNewArticle():
@@ -1884,7 +1743,7 @@ def Koreainvestment_selenium_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1942,7 +1801,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = link.get_attribute("onclick")
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
-        sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
@@ -1958,7 +1817,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1970,9 +1829,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     # # 링크와 제목 출력
     # for link_element in link_elements:
@@ -2130,7 +1987,7 @@ def DAOL_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -2275,7 +2132,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendAddText(GetSendMessageTitle() + sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -2287,9 +2144,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        # sendMessageText = GetSendMessageTitle() + sendMessageText
-        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        # sendMessageText = ''
+
 
     return sendMessageText
 
@@ -2297,81 +2152,12 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-
-# 최초 send함수
-# URL(프리뷰해제) 발송 + 해당 레포트 pdf 발송
-def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 전역변수로 처리 (downloadFile 함수)
-    global CHAT_ID
-
-    print('send()')
-    DISABLE_WEB_PAGE_PREVIEW = True # 메시지 프리뷰 여부 기본값 설정
-
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    sendMessageText += GetSendMessageTitle()
-    sendMessageText += ARTICLE_TITLE + "\n"
-    sendMessageText += EMOJI_PICK + ARTICLE_URL 
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-
-    #생성한 텔레그램 봇 정보 출력
-    #me = bot.getMe()
-    #print('텔레그램 채널 정보 :',me)
-
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
-        DISABLE_WEB_PAGE_PREVIEW = False
-
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
-    
-
-    if DISABLE_WEB_PAGE_PREVIEW: # 첨부파일이 있는 경우 => 프리뷰는 사용하지 않음
-        try:
-            time.sleep(1) # 메시지 전송 텀을 두어 푸시를 겹치지 않게 함
-            #bot.sendDocument(chat_id = GetSendChatId(), document = open(ATTACH_FILE_NAME, 'rb'))
-            r = asyncio.run(sendDocument(ATTACH_FILE_NAME)) #봇 실행하는 코드
-            os.remove(ATTACH_FILE_NAME) # 파일 전송 후 PDF 삭제
-            return r
-        except:
-            return
-    else: 
-        return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드    
-    
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-# 가공없이 텍스트를 발송합니다.
-def sendText(sendMessageText): 
-    global CHAT_ID
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-# 인자 텍스트를 더해가며 발송합니다. 
-# 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
-# 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
-# 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
-# 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
-def sendAddText(sendMessageText, sendType='N'): 
-
-    print('sendType ', sendType)
-    print('sendMessageText ',sendMessageText)
-
-    # if sendType == 'Y' or len(sendMessageText) > 0:
-    if len(sendMessageText) > 0:
-        print("sendAddText() (실제 발송요청)\n", sendMessageText)
-        sendText(sendMessageText)
-        sendMessageText = ''
-
-    return ''
+    return await bot.sendDocument(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, document = open(ATTACH_FILE_NAME, 'rb'))
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
@@ -2484,7 +2270,7 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
     
     sendMessageText = ''
 
-    # save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=GetFirmName() , attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
+    # save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=FIRM_NM, attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
     sendMessageText = save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -2499,53 +2285,10 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
 # 타이틀 생성 
 # : 게시판 이름 삭제
 def GetSendMessageTitle(): 
-    SendMessageTitle = ""
-    msgFirmName = ""
-    
-    if SEC_FIRM_ORDER == 999:
-        msgFirmName = "매매동향"
-    elif SEC_FIRM_ORDER == 998:
-        msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
-        else: msgFirmName += "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
-    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
-    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
-    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
-    elif SEC_FIRM_ORDER == 900: 
-        msgFirmName = "[네이버 증권 "
-        if ARTICLE_BOARD_ORDER == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
-        elif ARTICLE_BOARD_ORDER == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
-        else: print(msgFirmName)
-    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
-    else: # 증권사
-        msgFirmName =  GetFirmName() 
-
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    SendMessageTitle += "\n\n" + " ●"+  msgFirmName + "\n" 
+    SendMessageTitle = "\n\n" + " ●"+  FIRM_NM + "\n" 
     
     return SendMessageTitle
-
-def GetSendChatId():
-    SendMessageChatId = 0
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
-        else:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
-    elif SEC_FIRM_ORDER == 995:
-            SendMessageChatId = TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
-    elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
-    else:
-        SendMessageChatId = TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
-    
-    # SendMessageChatId = TELEGRAM_CHANNEL_ID_TEST
-    return SendMessageChatId
 
 def MySQL_Open_Connect():
     global conn
@@ -2598,32 +2341,6 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global conn
-    global cursor
-    cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
-    NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return NXT_KEY
-
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
-    global NXT_KEY
-    global TEST_SEND_YN
-    cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
-    if dbResult:
-        print('####DB업데이트 된 연속키####', end='\n')
-        print(dbResult)
-        NXT_KEY = FIRST_NXT_KEY
-    conn.close()
-    return dbResult
- 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentTime(*args):
     pattern = ''
@@ -2772,86 +2489,6 @@ def GetSecretKey(*args):
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
         IS_DEV                                      =   False
 
-# 첫 게시글과 연속키 일치 여부를 판별 
-# 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
-# 불일치(FALSE)=> 새 게시물이 게시되어 전송함
-def isNxtKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    print('isNxtKey')
-
-    print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
-    if SEND_YN == 'N' or args[0] in NXT_KEY: return True
-    else: return False
-
-def test_code():
-    sendMessageText = ''
-    print("LS_checkNewArticle()=> 새 게시글 정보 확인") # 0
-    r = LS_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("ShinHanInvest_checkNewArticle()=> 새 게시글 정보 확인") # 1
-    r = ShinHanInvest_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("NHQV_checkNewArticle()=> 새 게시글 정보 확인") # 2
-    r = NHQV_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("HANA_checkNewArticle()=> 새 게시글 정보 확인") # 3
-    r = HANA_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("KB_checkNewArticle()=> 새 게시글 정보 확인") # 4
-    r = KB_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("Samsung_checkNewArticle()=> 새 게시글 정보 확인") # 5
-    r = Samsung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    # print("Sangsanginib_checkNewArticle()=> 새 게시글 정보 확인") # 6
-    # r = Sangsanginib_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Shinyoung_checkNewArticle()=> 새 게시글 정보 확인") # 7
-    r = Shinyoung_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Miraeasset_checkNewArticle()=> 새 게시글 정보 확인") # 8
-    r = Miraeasset_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Hmsec_checkNewArticle()=> 새 게시글 정보 확인") # 9
-    r = Hmsec_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Kiwoom_checkNewArticle()=> 새 게시글 정보 확인") # 10
-    r = Kiwoom_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    # print("LS_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 11
-    # r = LS_selenium_checkNewArticle()
-    # if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-    
-    print("Koreainvestment_selenium_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    r = Koreainvestment_selenium_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-    r = DAOL_checkNewArticle()
-    if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-    if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-    else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-
-
 # KB증권 암호화 해제
 def extract_and_decode_url(url):
     """
@@ -2971,18 +2608,6 @@ def main():
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
 
-        print("DAOL_checkNewArticle()=> 새 게시글 정보 확인") # 14
-        r = DAOL_checkNewArticle()
-        if len(r) > 0 : sendMessageText += GetSendMessageTitle() + r
-
-        if len(sendMessageText) > 0: sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        else:                        sendAddText('', 'Y') # 쌓인 메세지를 무조건 보냅니다.
-        return
-        test_code()
-
-        # googledrive.upload(str(strArgs))
-        print('test')
-        return 
 
     TEST_SEND_YN = ''
 
@@ -3005,7 +2630,6 @@ def main():
         Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
         Kiwoom_checkNewArticle,
-        # LS_selenium_checkNewArticle, # 주석 처리된 부분
         Koreainvestment_selenium_checkNewArticle,
         DAOL_checkNewArticle
     ]
@@ -3015,7 +2639,7 @@ def main():
         r = check_function()
         if len(r) > 0:
             sendMessageText += GetSendMessageTitle() + r
-            if sendMessageText > 3500 : asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+            if len(sendMessageText) > 3500 : asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     
     if len(sendMessageText) > 0:
         asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
