@@ -3076,11 +3076,10 @@ def main():
         r = check_function()
         if len(r) > 0:
             sendMessageText += GetSendMessageTitle() + r
+            if sendMessageText > 3500 : asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     
     if len(sendMessageText) > 0:
-        sendAddText(sendMessageText, 'Y')
-    else:
-        sendAddText('', 'Y')
+        asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
 
 if __name__ == "__main__":
     main()
