@@ -203,32 +203,13 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE) 
-    if TEST_SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
     
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속키:', NXT_KEY) # 주소
+    # print('연속키:', NXT_KEY) # 주소
     print('############\n\n')
 
-    # print('TEST_SEND_YN ', TEST_SEND_YN)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -244,41 +225,43 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        LIST_ARTICLE_URL = LS_detail(LIST_ARTICLE_URL, date)
+        # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
+        # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
+
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                # ATTACH_URL = 'https://docs.google.com/viewer?embedded=true&url='+LS_downloadFile(LIST_ARTICLE_URL)
-                ATTACH_URL = LS_downloadFile(LIST_ARTICLE_URL, date)
-                
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return  ''
-            else: break
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
     
-def LS_downloadFile(ARTICLE_URL, date):
+def LS_detail(ARTICLE_URL, date):
     global ATTACH_FILE_NAME
     global LIST_ARTICLE_TITLE
     ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
@@ -324,7 +307,7 @@ def LS_downloadFile(ARTICLE_URL, date):
     ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
     ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
 
-    DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
+    # DownloadFile(URL = ATTACH_URL, FILE_NAME = ATTACH_FILE_NAME)
     print('*********확인용**************')
     print(ATTACH_URL)
     # EBEST 모바일 페이지 PDF 링크 생성(파일명 2번 인코딩하여 조립)
@@ -436,24 +419,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if TEST_SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -462,47 +427,50 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
         print(list)
 
-        LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
+        # LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
         LIST_ARTICLE_TITLE = list['f1']
+        LIST_ARTICLE_URL = list['f3']
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        # DownloadFile_wget(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        try:
+            LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
+            LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
+        except Exception as e:
+            print("에러 발생:", e)
+            LIST_ARTICLE_URL = list['f3']
+            
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                DownloadFile(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                LIST_ARTICLE_URL = list['f3']
-                try:
-                    LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
-                    LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
-                except Exception as e:
-                    print("에러 발생:", e)
-                    LIST_ARTICLE_URL = list['f3']
-                    
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
+
 
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -987,38 +955,12 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-            
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
     print('############\n\n')
 
-    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
-    # 중복 발송 방지
-    if NXT_KEY not in str(soupList):
-        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
-        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
-        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-        return ''
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1029,49 +971,44 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         a_href = a_href.split("'")
         a_href = a_href[1]
         LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf&inlineYn=Y'
-        fileNameArray = a_href.split("/")
+        # fileNameArray = a_href.split("/")
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                ARTICLE_TITLE = ''
-                # 수정된 제목인지 확인
-                if '(수정)' in LIST_ARTICLE_TITLE : r = True
-                # 제목 가공
-                ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)", "")
-                ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
-                if r : ARTICLE_TITLE = '(수정)' + LIST_ARTICLE_TITLE
+        # 제목 가공
+        # ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
 
-                if ARTICLE_TITLE.isspace(): pass
-                else: LIST_ARTICLE_TITLE = ARTICLE_TITLE
-                # print(LIST_ARTICLE_TITLE)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+        # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 def Sangsanginib_checkNewArticle():
@@ -1326,24 +1263,6 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if TEST_SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1356,26 +1275,28 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = list['TITLE']
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
@@ -1385,7 +1306,6 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 def Shinyoung_detail(SEQ, BBSNO):
@@ -1575,41 +1495,22 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(response.text, "html.parser")
     
     # 첫 번째 레코드의 제목을 바로 담습니다.
-    posts = soup.select("tbody tr")[2:]  # 타이틀 제거
-    FIRST_ARTICLE_TITLE = posts[0].select_one(".subject a").get_text()
+    soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
+    FIRST_ARTICLE_TITLE = soupList[0].select_one(".subject a").get_text()
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     ARTICLE_BOARD_NAME =  BOARD_NM 
 
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return '' 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
     print('############\n\n')
 
     # 게시물 정보 파싱
-    for index, post in enumerate(posts):
+    for index, post in enumerate(soupList):
         if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
             continue
         title_element = post.select_one(".subject a")
@@ -1624,14 +1525,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("첨부 파일:", attachment_link)
         print()
 
-    soupList = posts
-    # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
-    # 중복 발송 방지
-    if NXT_KEY not in str(soupList):
-        print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
-        print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
-        DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-        return ''
+    # soupList = posts
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1641,38 +1535,42 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         attachment_element = list.select_one(".bbsList_layer_icon a")
         if attachment_element:
             LIST_ARTICLE_URL = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
+            # ATTACH_URL = LIST_ARTICLE_URL
+            LIST_ARTICLE_TITLE = list.select_one(".subject a").find_all(string=True)
+            LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
+            # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                r = list.select_one(".subject a").find_all(string=True)
-                r = " : ".join(r)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = r, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 def Kiwoom_checkNewArticle():
@@ -1740,25 +1638,6 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM ,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1771,34 +1650,39 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
         LIST_ARTICLE_TITLE = list['titl']
 
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+        # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
 
 def Hmsec_checkNewArticle():
@@ -2107,26 +1991,8 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
 
 
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return ''
-    
     nNewArticleCnt = 0
     sendMessageText = ''
     
@@ -2136,26 +2002,30 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
         LIST_ARTICLE_URL = link.get_attribute("onclick")
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
+        LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
+        sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
@@ -2164,7 +2034,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # sendMessageText = GetSendMessageTitle() + sendMessageText
         # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
         # sendMessageText = ''
-
 
     # # 링크와 제목 출력
     # for link_element in link_elements:
@@ -2176,10 +2045,8 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 브라우저 닫기
     driver.quit()
-    
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    return sendMessageText
 
+    return sendMessageText
 
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
     filename = urllib.parse.quote(filename)
@@ -2425,47 +2292,12 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
 
-
-    if dbResult: # 1
-        if SEND_YN == 'N':
-            print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-            return ''
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ', FIRM_NM,'의 ', BOARD_NM )
-        if NXT_KEY.isspace() or NXT_KEY == '':
-            # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-            print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 공백입니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-            print('##########확인용',FIRST_ARTICLE_TITLE)
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', FIRM_NM,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.\n\n')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-    
-    if not soupList: 
-        print(FIRM_NM,'의 ', BOARD_NM ,'게시판 게시글이 존재하지 않습니다..\n')
-        
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-        return '' 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
-    print('연속URL:', NXT_KEY) # 주소
     print('############\n\n')
 
-    # # 연속키있으나, 게시판에서 삭제된 경우 : 현재의 첫 게시물로 연속키 갱신
-    # # 중복 발송 방지
-    # if NXT_KEY not in str(soupList):
-    #     print('기존 연속키:', NXT_KEY, '가 존재하지 않습니다.')
-    #     print('첫번째 게시물 연속키를 저장합니다 :', FIRST_ARTICLE_TITLE)
-    #     DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-    #     return ''
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -2484,38 +2316,44 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
         LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
     
-        print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
-        print('NXT_KEY='+NXT_KEY)
-        if ( NXT_KEY not in LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
+        # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
+        # print('NXT_KEY='+NXT_KEY)
+        # ATTACH_URL = LIST_ARTICLE_URL
+        # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=GetFirmName(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                ATTACH_URL = LIST_ARTICLE_URL
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-                sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-                if TEST_SEND_YN == 'Y': return sendMessageText
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendAddText(GetSendMessageTitle() + sendMessageText)
-                sendMessageText = ''
-                nNewArticleCnt = 0
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-                return
-            else: break
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            sendAddText(GetSendMessageTitle() + sendMessageText)
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
         # sendMessageText = GetSendMessageTitle() + sendMessageText
+        # sendAddText(sendMessageText, 'Y') # 쌓인 메세지를 무조건 보냅니다.
+        # sendMessageText = ''
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
     return sendMessageText
+
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
