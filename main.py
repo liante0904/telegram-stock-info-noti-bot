@@ -784,7 +784,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         # print('NXT_KEY',NXT_KEY)
         
-        DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -793,7 +792,9 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
-        if sendMessageText:nNewArticleCnt += 1 # 새로운 게시글 수
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -894,7 +895,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
         ATTACH_URL = LIST_ARTICLE_URL
 
-        DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -903,7 +903,9 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=ATTACH_URL,
             article_title=LIST_ARTICLE_TITLE
         )
-        if sendMessageText:nNewArticleCnt += 1 # 새로운 게시글 수
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -1160,7 +1162,6 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = list['TITLE']
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
 
-        DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -1169,7 +1170,9 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
-        if sendMessageText:nNewArticleCnt += 1 # 새로운 게시글 수
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -1857,25 +1860,6 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
     dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    # if dbResult: # 1
-    #     if SEND_YN == 'N':
-    #         print('임시 발송 중단 회원사 입니다. => ', FIRM_NM, 'SEC_FIRM_ORDER :',SEC_FIRM_ORDER)
-    #         return ''
-    #     # 연속키가 존재하는 경우
-    #     print('데이터베이스에 연속키가 존재합니다. ', GetFirmName() ,'의 ', BOARD_NM )
-
-    # else: # 0
-    #     # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-    #     print('데이터베이스에 ', GetFirmName() ,'의 ', BOARD_NM ,'게시판 연속키는 존재하지 않습니다.\n', '첫번째 게시물을 연속키로 지정하고 메시지는 전송하지 않습니다.')
-    #     NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # # 연속키 체크
-    # r = isNxtKey(FIRST_ARTICLE_TITLE)
-
-    # if r: 
-    #     print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****\n\n')
-    #     return ''
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1902,7 +1886,6 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
-        DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -1911,7 +1894,9 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
-        if sendMessageText:nNewArticleCnt += 1 # 새로운 게시글 수
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
