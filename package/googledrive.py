@@ -1,10 +1,12 @@
 import os
 import sys
 import hashlib
-from oauth2client.client import GoogleCredentials
 from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 from httplib2 import Http
 from oauth2client import file, client, tools
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def calculate_md5(file_path):
     hash_md5 = hashlib.md5()
@@ -19,8 +21,32 @@ def file_exists(drive, file_name, file_md5, folder_id):
     items = results.get('files', [])
     for item in items:
         if item.get('md5Checksum') == file_md5:
-            return True
-    return False
+            return item['id']
+    return None
+
+def delete_duplicate_files(drive, folder_id):
+    query = f"'{folder_id}' in parents and trashed=false"
+    results = drive.files().list(q=query, spaces='drive', fields='files(id, name, md5Checksum, createdTime, modifiedTime)').execute()
+    items = results.get('files', [])
+    
+    md5_dict = {}
+    for item in items:
+        file_md5 = item.get('md5Checksum')
+        if file_md5:
+            if file_md5 in md5_dict:
+                existing_item = md5_dict[file_md5]
+                existing_time = existing_item['createdTime']
+                current_time = item['createdTime']
+                # 최신 파일을 삭제하는 조건
+                if current_time > existing_time:
+                    print(f"Deleting duplicate file: {item['name']} ({item['id']})")
+                    drive.files().delete(fileId=item['id']).execute()
+                else:
+                    print(f"Deleting duplicate file: {existing_item['name']} ({existing_item['id']})")
+                    drive.files().delete(fileId=existing_item['id']).execute()
+                    md5_dict[file_md5] = item
+            else:
+                md5_dict[file_md5] = item
 
 def upload(*args):
     # 현재 모듈의 파일 경로를 가져옵니다.
@@ -60,12 +86,14 @@ def upload(*args):
     for f in uploadfiles:
         fname = f
         file_md5 = calculate_md5(fname)
-        if file_exists(drive, fname, file_md5, folderId):
+        existing_file_id = file_exists(drive, fname, file_md5, folderId)
+        if existing_file_id:
             print(f"File '{fname}' already exists in folder ID '{folderId}' with the same content. Upload canceled.")
             continue
 
         metadata = {'name': fname, 'parents': [folderId], 'mimeType': None}
-        res = drive.files().create(body=metadata, media_body=fname).execute()
+        media = MediaFileUpload(fname)
+        res = drive.files().create(body=metadata, media_body=media).execute()
         if res:
             print('uploadFileName %s' % fname)
             print('uploadFileId %s' % res.get('id'))
@@ -78,3 +106,23 @@ def upload(*args):
     # print(f'google drive URL {googleDriveUrl}')
     print(f'google driveViewer URL {googleDriveViewerUrl}')
     return googleDriveViewerUrl
+
+if __name__ == "__main__":
+    action = sys.argv[1]  # 'upload' or 'delete_duplicates'
+    file_name = sys.argv[2] if len(sys.argv) > 2 else None
+
+    store = file.Storage('storage.json')
+    creds = store.get()
+    if not creds or creds.invalid:
+        flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
+        creds = tools.run_flow(flow, store)
+    drive = build('drive', 'v3', http=creds.authorize(Http()))
+
+    folder_id = '1jn8tAPBc2OIK3jvDzyOr9NUBghZEn7Nb'
+
+    if action == 'upload' and file_name:
+        upload(file_name)
+    elif action == 'delete_duplicates':
+        delete_duplicate_files(drive, folder_id)
+    else:
+        print("Invalid action or missing file name for upload.")
