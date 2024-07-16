@@ -5,7 +5,7 @@ import requests
 import asyncio
 from bs4 import BeautifulSoup
 
-from package.json_util import save_data_to_local_json  # import the function from json_util
+from package.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 # from package.common import *
 from package.SecretKey import SecretKey
 
@@ -20,6 +20,8 @@ ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 SECRET_KEY = SecretKey()
 SECRET_KEY.load_secrets()
+
+JSON_FILE_NAME = './json/hankyungconsen_research.json'
 
 def HankyungConsen_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -91,7 +93,7 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         # Use the imported save_data_to_local_json function with filename parameter
         new_article_message = save_data_to_local_json(
-            filename='./json/hankyungconsen_research.json',
+            filename=JSON_FILE_NAME,
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=LIST_ARTICLE_BROKER_NAME,
@@ -103,7 +105,7 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             # 회사명 출력
             nNewArticleCnt += 1  # 새로운 게시글 수
             if not first_article_processed or brokerName != LIST_ARTICLE_BROKER_NAME:
-                sendMessageText += "\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
+                sendMessageText += "\n\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
                 brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
                 first_article_processed = True
 
@@ -133,6 +135,12 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
+async def sendMessageToMain(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
+
 def main():
     global SEC_FIRM_ORDER  # 증권사 순번
 
@@ -149,6 +157,12 @@ def main():
 
     if len(sendMessageText) > 0: asyncio.run(sendMessage(sendMessageText))
 
+    lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
+    if lists:
+        for sendMessageText in lists:
+            asyncio.run(sendMessageToMain(sendMessageText))
+        update_main_ch_send_yn_to_y(JSON_FILE_NAME)
+    
     return True
 
 
