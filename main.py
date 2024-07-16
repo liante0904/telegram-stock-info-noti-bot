@@ -12,8 +12,6 @@ import json
 import re
 import asyncio
 import wget
-import pymysql
-import pymysql.cursors
 from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
@@ -33,9 +31,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# TEST 
-# from package import herokuDB
-# from package import SecretKey
 
 # import secretkey
 
@@ -55,47 +50,15 @@ from requests import get  # to make GET request
 ############공용 상수############
 # secrets 
 SECRETS                                             = ""
-ORACLECLOUD_MYSQL_DATABASE_URL                      = ""
-TELEGRAM_BOT_INFO                                   = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
-TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET             = ""
-TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS                 = ""
-TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS                  = ""
-TELEGRAM_CHANNEL_ID_ITOOZA                          = ""
-TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT                    = ""
 TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
-TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN                 = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
-IS_DEV                                              = ""
 BASE_PATH                                           = ""
-# pymysql 변수
-conn    = ''
-cursor  = ''
 
-# 연속키URL
-NXT_KEY = ''
-NXT_KEY_BF = ''
-NXT_KEY_ARTICLE_TITLE = ''
-
-# 게시판 URL
-BOARD_URL = ''
-
-# 테스트 발송여부
-TEST_SEND_YN = ''
-
-# 텔레그램 채널 발송 여부
-SEND_YN = ''
-TODAY_SEND_YN = ''
-
-# 텔레그램 마지막 메세지 발송시간(단위 초)
-SEND_TIME_TERM = 0 # XX초 전에 해당 증권사 메시지 발송
 
 # 첫번째URL 
 FIRST_ARTICLE_URL = ''
-
-# SendAddText 글로벌 변수
-SEND_ADD_MESSAGE_TEXT = ''
 
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
@@ -160,8 +123,6 @@ def LS_checkNewArticle():
     return sendMessageText
 
 def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
     global LIST_ARTICLE_TITLE
 
     headers = {
@@ -354,8 +315,6 @@ def ShinHanInvest_checkNewArticle():
  
 # JSON API 타입
 def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     # 변동되는 파라미터 
     board_name = TARGET_URL
@@ -432,7 +391,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -487,8 +446,6 @@ def KB_checkNewArticle():
  
 # JSON API 타입
 def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     # 요청 헤더
     headers = {
@@ -605,8 +562,6 @@ def NHQV_checkNewArticle():
     return sendMessageText
  
 def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
     global BOARD_NM
 
     
@@ -762,8 +717,6 @@ def HANA_checkNewArticle():
     return sendMessageText
 
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
@@ -861,8 +814,6 @@ def Samsung_checkNewArticle():
     return sendMessageText
 
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     try:
         webpage = requests.get(TARGET_URL, verify=False)
@@ -976,8 +927,6 @@ def Sangsanginib_checkNewArticle():
     return sendMessageText
 
 def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     jres = ''
     headers = {
@@ -1153,8 +1102,6 @@ def Shinyoung_checkNewArticle():
     return sendMessageText
 
 def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     jres = ''
     url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
@@ -1404,8 +1351,6 @@ def Miraeasset_checkNewArticle():
     return sendMessageText
 
 def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -1534,8 +1479,6 @@ def Kiwoom_checkNewArticle():
     return sendMessageText
  
 def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     payload = {
         "pageNo": 1,
@@ -1643,7 +1586,6 @@ def Hmsec_checkNewArticle():
     return sendMessageText
  
 def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
 
     payload = {"curPage":1}
 
@@ -1753,7 +1695,6 @@ def Koreainvestment_selenium_checkNewArticle():
     return sendMessageText
 
 def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
 
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
@@ -1998,8 +1939,6 @@ def DAOL_checkNewArticle():
  
 # JSON API 타입
 def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global NXT_KEY
-    global TEST_SEND_YN
 
     # URL을 파싱하여 주소와 쿼리 파라미터를 추출
     parsed_url = urlparse.urlparse(TARGET_URL)
@@ -2294,57 +2233,6 @@ def GetSendMessageTitle():
     
     return SendMessageTitle
 
-def MySQL_Open_Connect():
-    global conn
-    global cursor
-    
-    # MySQL
-    url = urlparse.urlparse(ORACLECLOUD_MYSQL_DATABASE_URL)
-    try:
-        conn = pymysql.connect(host=url.hostname, user=url.username, password=url.password, charset='utf8', db=url.path.replace('/', ''), cursorclass=pymysql.cursors.DictCursor, autocommit=True)
-        # 연결 객체가 반환되면 연결 성공
-        # print("MySQL 데이터베이스에 연결되었습니다.")
-    except Exception as e:
-        # 예외가 발생한 경우 오류 메시지 출력
-        print("MySQL 데이터베이스 연결 실패:", e)
-        return
-    cursor = conn.cursor()
-    return cursor
-
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
-    global FIRM_NM
-    global BOARD_NM
-    global BOARD_URL
-    global NXT_KEY
-    global NXT_KEY_BF
-    global TEST_SEND_YN
-    global NXT_KEY_ARTICLE_TITLE
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-    global conn
-    global cursor
-
-    cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_BF, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
-    rows = cursor.fetchall()
-    for row in rows:
-        print('####DB조회된 연속키####', end='\n')
-        print(row)
-        FIRM_NM = row['FIRM_NM']
-        BOARD_NM = row['BOARD_NM']
-        BOARD_URL = row['BOARD_URL']
-        NXT_KEY = row['NXT_KEY']
-        NXT_KEY_BF = row['NXT_KEY_BF']
-        NXT_KEY_ARTICLE_TITLE = row['NXT_KEY_ARTICLE_TITLE']
-        SEND_YN = row['SEND_YN']
-        SEND_TIME_TERM = int(row['SEND_TIME_TERM'])
-        TODAY_SEND_YN = row['TODAY_SEND_YN']
-
-    conn.close()
-    return dbResult
-
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentTime(*args):
     pattern = ''
@@ -2427,20 +2315,11 @@ def GetCurrentDay(*args):
 
 def GetSecretKey(*args):
     global SECRETS # 시크릿 키
-    global ORACLECLOUD_MYSQL_DATABASE_URL
-    global TELEGRAM_BOT_INFO
     global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
-    global TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET
-    global TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS
-    global TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS
-    global TELEGRAM_CHANNEL_ID_ITOOZA
-    global TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT
     global TELEGRAM_CHANNEL_ID_REPORT_ALARM
     global TELEGRAM_CHANNEL_ID_TODAY_REPORT
-    global TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN
     global TELEGRAM_CHANNEL_ID_TEST
     global TELEGRAM_USER_ID_DEV
-    global IS_DEV
     global BASE_PATH
     
 
@@ -2464,34 +2343,17 @@ def GetSecretKey(*args):
     #if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
     #    with open("secrets.json") as f:
     #        SECRETS = json.loads(f.read())        
-        ORACLECLOUD_MYSQL_DATABASE_URL              =   SECRETS['ORACLECLOUD_MYSQL_DATABASE_URL'] 
-        TELEGRAM_BOT_INFO                           =   SECRETS['TELEGRAM_BOT_INFO']
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
-        TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   SECRETS['TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET']
-        TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS']
-        TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   SECRETS['TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS']
-        TELEGRAM_CHANNEL_ID_ITOOZA                  =   SECRETS['TELEGRAM_CHANNEL_ID_ITOOZA']
-        TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   SECRETS['TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT']
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
-        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   SECRETS['TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN']
         TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
         TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
-        IS_DEV                                      =   True
     else: # 서버 배포 환경(heroku)
-        TELEGRAM_BOT_INFO                           =   os.environ.get('TELEGRAM_BOT_INFO')
         TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-        TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET     =   os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-        TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS         =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
-        TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS          =   os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
-        TELEGRAM_CHANNEL_ID_ITOOZA                  =   os.environ.get('TELEGRAM_CHANNEL_ID_ITOOZA')
-        TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT            =   os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
         TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
         TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-        TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN         =   os.environ.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
         TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
-        IS_DEV                                      =   False
 
 # KB증권 암호화 해제
 def extract_and_decode_url(url):
@@ -2600,20 +2462,16 @@ def main():
     # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     # logging.debug('이것은 디버그 메시지입니다.')
     
-    TEST_SEND_YN = ''
+    
     GetSecretKey()
 
     print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
     
     if  strArgs : 
-        TEST_SEND_YN = ''
-        SEND_YN = 'Y'
+        
         sendMessageText = ''
 
         # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
-
-
-    TEST_SEND_YN = ''
 
     #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
     TimeHourMin = int(GetCurrentTime('HHMM'))
