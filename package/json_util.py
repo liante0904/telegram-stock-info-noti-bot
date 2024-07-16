@@ -108,7 +108,7 @@ def format_message_with_firm(data, include_firm_nm):
     
     sendMessageText = ""
     if include_firm_nm:
-        sendMessageText += "●" + FIRM_NM + "\n"
+        sendMessageText += "\n\n"+"●" + FIRM_NM + "\n"
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
     
@@ -177,6 +177,37 @@ def get_unsent_main_ch_data_to_local_json(filename):
         messages.append(current_message)
 
     return messages
+
+def update_main_ch_send_yn_to_y(file_path, target_date=None):
+    directory = os.path.dirname(file_path)
+
+    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"디렉터리 '{directory}'를 생성했습니다.")
+    
+    if not os.path.exists(file_path):
+        print(f"파일 경로 '{file_path}'가 존재하지 않습니다.")
+        return
+
+    # 대상 날짜를 설정합니다. 날짜를 받지 않은 경우 오늘 날짜로 설정합니다.
+    if target_date is None:
+        target_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    with open(file_path, 'r', encoding='utf-8') as json_file:
+        data = json.load(json_file)
+
+    # 대상 날짜의 항목들에 대해 MAIN_CH_SEND_YN 값을 Y로 설정합니다.
+    for item in data:
+        if item["SAVE_TIME"].startswith(target_date):
+            item["MAIN_CH_SEND_YN"] = "Y"
+
+    # 업데이트된 데이터를 다시 JSON 파일로 저장합니다.
+    with open(file_path, 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, ensure_ascii=False, indent=4)
+    
+    print(f"{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
