@@ -23,6 +23,8 @@ import base64
 
 
 from package import googledrive
+
+from package.firm_info import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
 # selenium
 from selenium import webdriver
@@ -202,8 +204,9 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_URL = ''
 
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
-    
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+    # print(firm_info)
+    # print(firm_info)
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
@@ -231,7 +234,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -397,8 +400,9 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
+    # print(firm_info)
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -422,7 +426,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -527,7 +531,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -547,7 +551,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -661,7 +665,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -689,7 +693,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -782,7 +786,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
     # # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -798,7 +802,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=ATTACH_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -885,7 +889,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -914,7 +918,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1011,7 +1015,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1032,7 +1036,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1189,7 +1193,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1207,7 +1211,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1427,7 +1431,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     ARTICLE_BOARD_NAME =  BOARD_NM 
 
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
@@ -1470,7 +1474,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1560,7 +1564,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1580,7 +1584,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1664,7 +1668,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1695,7 +1699,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -1788,7 +1792,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
     nNewArticleCnt = 0
@@ -1807,7 +1811,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
@@ -2086,7 +2090,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER = ARTICLE_BOARD_ORDER)
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -2122,7 +2126,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
