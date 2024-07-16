@@ -2277,7 +2277,7 @@ def GetSendMessageTitle():
     
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    SendMessageTitle = "\n\n" + " ●"+  firm_info['firm_name'], + "\n" 
+    SendMessageTitle = "\n\n" + " ●"+  firm_info['firm_name'] + "\n" 
     
     return SendMessageTitle
 
