@@ -13,6 +13,8 @@ firm_names = [
     "미래에셋증권",  # 8
     "현대차증권",    # 9
     "키움증권",      # 10
+    "",              # 11
+    "",              # 12
     "한국투자증권",  # 13
     "다올투자증권"   # 14
 ]
@@ -79,6 +81,12 @@ board_names = [
      "스팟노트",      # ARTICLE_BOARD_ORDER 2
      "미국/선진국"],  # ARTICLE_BOARD_ORDER 3
     
+    # SEC_FIRM_ORDER 11
+    [""],             # ARTICLE_BOARD_ORDER 0
+    
+    # SEC_FIRM_ORDER 12
+    [""],             # ARTICLE_BOARD_ORDER 0
+    
     # SEC_FIRM_ORDER 13
     ["오늘의레포트"], # ARTICLE_BOARD_ORDER 0
     
@@ -135,14 +143,16 @@ label_names = [
     [""],              # ARTICLE_BOARD_ORDER 0
     
     # SEC_FIRM_ORDER 5
-    [""],              # ARTICLE_BOARD_ORDER 0,
-    [""],              # ARTICLE_BOARD_ORDER 1,
-    [""],              # ARTICLE_BOARD_ORDER 2,
+    ["",               # ARTICLE_BOARD_ORDER 0,
+     "",               # ARTICLE_BOARD_ORDER 1,
+     ""],               # ARTICLE_BOARD_ORDER 2
+    
     
     # SEC_FIRM_ORDER 6
-    [""],              # ARTICLE_BOARD_ORDER 0,
-    [""],              # ARTICLE_BOARD_ORDER 1,
-    [""],              # ARTICLE_BOARD_ORDER 2,
+    ["",               # ARTICLE_BOARD_ORDER 0,
+     "",               # ARTICLE_BOARD_ORDER 1,
+     ""],               # ARTICLE_BOARD_ORDER 2
+    
     
     # SEC_FIRM_ORDER 7
     [""],              # ARTICLE_BOARD_ORDER 0,
@@ -151,15 +161,22 @@ label_names = [
     [""],              # ARTICLE_BOARD_ORDER 0,
     
     # SEC_FIRM_ORDER 9
-    [""],              # ARTICLE_BOARD_ORDER 0,
-    [""],              # ARTICLE_BOARD_ORDER 1,
-    [""],              # ARTICLE_BOARD_ORDER 2,
+    ["",               # ARTICLE_BOARD_ORDER 0,
+     "",               # ARTICLE_BOARD_ORDER 1,
+     ""],               # ARTICLE_BOARD_ORDER 2
+    
     
     # SEC_FIRM_ORDER 10
+    ["",               # ARTICLE_BOARD_ORDER 0,
+     "",               # ARTICLE_BOARD_ORDER 1,
+     "",               # ARTICLE_BOARD_ORDER 2,
+     ""],               # ARTICLE_BOARD_ORDER 3,
+    
+    # SEC_FIRM_ORDER 11
     [""],              # ARTICLE_BOARD_ORDER 0,
-    [""],              # ARTICLE_BOARD_ORDER 1,
-    [""],              # ARTICLE_BOARD_ORDER 2,
-    [""],              # ARTICLE_BOARD_ORDER 3,
+    
+    # SEC_FIRM_ORDER 12
+    [""],              # ARTICLE_BOARD_ORDER 0,
     
     # SEC_FIRM_ORDER 13
     [""],              # ARTICLE_BOARD_ORDER 0,
@@ -186,6 +203,7 @@ def get_firm_name(sec_firm_order):
     try:
         return firm_names[sec_firm_order]
     except IndexError:
+        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}")
         return "Unknown Firm"
 
 # 게시판 이름을 반환하는 함수
@@ -193,6 +211,7 @@ def get_board_name(sec_firm_order, article_board_order):
     try:
         return board_names[sec_firm_order][article_board_order]
     except IndexError:
+        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}, ARTICLE_BOARD_ORDER: {article_board_order}")
         return "Unknown Board"
 
 # 라벨 이름을 반환하는 함수
@@ -200,6 +219,7 @@ def get_label_name(sec_firm_order, article_board_order):
     try:
         return label_names[sec_firm_order][article_board_order]
     except IndexError:
+        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}, ARTICLE_BOARD_ORDER: {article_board_order}")
         return "Unknown Label"
 
 # 통합 정보를 반환하는 함수
