@@ -48,6 +48,7 @@ from requests import get  # to make GET request
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
+firm_info                                           = ""
 # secrets 
 SECRETS                                             = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -76,13 +77,14 @@ LIST_ARTICLE_TITLE = ''
 
 
 #################### global 변수 정리 ###################################
-FIRM_NM = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
 def LS_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
     
     SEC_FIRM_ORDER = 0
     ARTICLE_BOARD_ORDER = 0
@@ -112,6 +114,7 @@ def LS_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -164,7 +167,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     except:
         FIRST_ARTICLE_URL = ''
 
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -276,6 +279,8 @@ def LS_detail(ARTICLE_URL, date):
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
@@ -302,6 +307,7 @@ def ShinHanInvest_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -357,7 +363,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -414,6 +420,8 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER      = 4
     ARTICLE_BOARD_ORDER = 0
@@ -486,7 +494,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = strList[0]['docTitleSub']
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -537,6 +545,8 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
@@ -619,7 +629,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -678,6 +688,8 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
@@ -707,6 +719,7 @@ def HANA_checkNewArticle():
 
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except Exception as e:
@@ -739,7 +752,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
-    # # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
@@ -786,6 +799,8 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 5
     ARTICLE_BOARD_ORDER = 0
@@ -804,6 +819,7 @@ def Samsung_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -840,7 +856,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
 
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
@@ -900,6 +916,8 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Sangsanginib_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 6
     ARTICLE_BOARD_ORDER = 0
@@ -918,6 +936,7 @@ def Sangsanginib_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -965,7 +984,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -1076,6 +1095,8 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
 def Shinyoung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 7
     ARTICLE_BOARD_ORDER = 0
@@ -1142,7 +1163,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -1330,6 +1351,9 @@ def Shinyoung_detail(SEQ, BBSNO):
 def Miraeasset_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
+    global firm_info
 
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
@@ -1344,6 +1368,7 @@ def Miraeasset_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1379,7 +1404,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     ARTICLE_BOARD_NAME =  BOARD_NM 
 
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -1453,6 +1478,8 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
@@ -1473,6 +1500,7 @@ def Kiwoom_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1511,7 +1539,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -1562,6 +1590,8 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Hmsec_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 9
     ARTICLE_BOARD_ORDER = 0
@@ -1581,6 +1611,7 @@ def Hmsec_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1615,7 +1646,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FILE_NAME:',FILE_NAME)
 
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -1677,6 +1708,8 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Koreainvestment_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER = 13
     ARTICLE_BOARD_ORDER = 0
@@ -1691,6 +1724,7 @@ def Koreainvestment_selenium_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1739,7 +1773,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
     
     # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
@@ -1898,6 +1932,8 @@ def Koreainvestment_GET_LIST_ARTICLE_URL(string):
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
+    global firm_info
+    
 
     SEC_FIRM_ORDER      = 14
     ARTICLE_BOARD_ORDER = 0
@@ -1934,6 +1970,7 @@ def DAOL_checkNewArticle():
     
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         # URL GET
         try:
             sendMessageText += DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
@@ -2036,7 +2073,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 
 
-    # 연속키 데이터 저장 여부 확인 구간
+    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
@@ -2139,7 +2176,7 @@ def DownloadFile(URL, FILE_NAME):
     FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
     print('FILE_NAME 확장자 제거 ,', FILE_NAME)
     FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + GetFirmName()
+    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + firm_info['firm_name']
 
     # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
     MAX_FILE_NAME_LENGTH = 240
@@ -2192,7 +2229,7 @@ def DownloadFile_wget(URL, FILE_NAME):
     FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
     print('FILE_NAME 확장자 제거 ,', FILE_NAME)
     FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NM
+    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + firm_info['firm_name']
 
     # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
     MAX_FILE_NAME_LENGTH = 240
@@ -2227,7 +2264,7 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=GetFirmName(),
+            firm_nm=firm_info['firm_name'],
             attach_url=ATTACH_URL,
             article_title=ARTICLE_TITLE
     )
@@ -2237,8 +2274,10 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
 # 타이틀 생성 
 # : 게시판 이름 삭제
 def GetSendMessageTitle(): 
+    
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    SendMessageTitle = "\n\n" + " ●"+  FIRM_NM + "\n" 
+    SendMessageTitle = "\n\n" + " ●"+  firm_info['firm_name'], + "\n" 
     
     return SendMessageTitle
 
@@ -2273,17 +2312,6 @@ def GetCurrentTime(*args):
         TIME = time_now[11:].strip()
     print(TIME)
     return TIME
-
-# 증권사명을 가져옵니다. 
-def GetFirmName(*args):
-    strFirmName = ''
-    try :
-        strFirmName = FIRM_NM
-    except :
-        print('GetFirmName except')
-        strFirmName = ''
-        
-    return strFirmName
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 # 'yyyymmdd'
