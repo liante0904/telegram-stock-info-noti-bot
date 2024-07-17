@@ -7,23 +7,21 @@ from pytz import timezone
 import telegram
 import requests
 import time
-import ssl
 import json
 import re
 import asyncio
 import wget
-from typing import List
-from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 import urllib.request
-
 import base64
+from typing import List
+from bs4 import BeautifulSoup
 
 
 from package import googledrive
-
 from package.firm_info import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
+
 # selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -58,9 +56,6 @@ TELEGRAM_USER_ID_DEV                                = ""
 BASE_PATH                                           = ""
 
 
-# 첫번째URL 
-FIRST_ARTICLE_URL = ''
-
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
@@ -71,10 +66,6 @@ EMOJI_PICK = u'\U0001F449'
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
-
-# 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
-LIST_ARTICLE_TITLE = ''
-
 
 #################### global 변수 정리 ###################################
 BOARD_NM = ''
@@ -1421,7 +1412,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('############\n\n')
 
     # 게시물 정보 파싱
