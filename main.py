@@ -188,6 +188,8 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list[0].get_text()
 
+        item = LS_detail(LIST_ARTICLE_URL, date)
+        # print(item)
         print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
         print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
 
@@ -199,12 +201,11 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
+            article_title=item['LIST_ARTICLE_TITLE']
         )
         if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            LIST_ARTICLE_URL = LS_detail(LIST_ARTICLE_URL, date)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+            nNewArticleCnt += 1 # 새로운 게시글 수 
+            DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -253,6 +254,7 @@ def LS_detail(ARTICLE_URL, date):
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
     
     # 첨부파일 이름
+    LIST_ARTICLE_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
     ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
     # print(ATTACH_FILE_NAME)
     # param1 
@@ -271,9 +273,18 @@ def LS_detail(ARTICLE_URL, date):
     ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
     ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
 
+    item = {}  # 빈 딕셔너리로 초기화
+    item['LIST_ARTICLE_URL'] = ATTACH_URL
+    item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
+    item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
+
+    print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
+    print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
+    print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
     print('*********확인용**************')
 
-    return ATTACH_URL
+    return item
+
 
 
 def ShinHanInvest_checkNewArticle():
