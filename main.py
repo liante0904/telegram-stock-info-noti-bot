@@ -45,6 +45,7 @@ from requests import get  # to make GET request
 #   - 어떻게 구분지을지 생각해봐야함
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
+#################### global 변수 정리 ###################################
 ############공용 상수############
 firm_info                                           = ""
 # secrets 
@@ -67,8 +68,7 @@ EMOJI_PICK = u'\U0001F449'
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
 
-#################### global 변수 정리 ###################################
-BOARD_NM = ''
+
 #################### global 변수 정리 끝###################################
 
 def LS_checkNewArticle():
@@ -147,7 +147,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     #     print(i)
     # return 
 
-    ARTICLE_BOARD_NAME =  BOARD_NM 
+    # ARTICLE_BOARD_NAME =  BOARD_NM 
     try:
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].select('td.subject > a')[FIRST_ARTICLE_INDEX].get_text()
     except IndexError:
@@ -574,8 +574,6 @@ def NHQV_checkNewArticle():
     return sendMessageText
  
 def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    global BOARD_NM
-
     
     strNxtRshPprNo = ""
     payload = {
@@ -744,7 +742,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
     try:
-        ARTICLE_BOARD_NAME =  BOARD_NM 
+        # ARTICLE_BOARD_NAME =  BOARD_NM 
         FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text
         FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
     except:
@@ -844,7 +842,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
     try:
-        ARTICLE_BOARD_NAME =  BOARD_NM 
+        # ARTICLE_BOARD_NAME =  BOARD_NM 
         FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
         a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
@@ -862,7 +860,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('############\n\n')
@@ -1404,13 +1402,13 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = soupList[0].select_one(".subject a").get_text()
     print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
-    ARTICLE_BOARD_NAME =  BOARD_NM 
+    # ARTICLE_BOARD_NAME =  BOARD_NM 
 
     
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('############\n\n')
 
@@ -2061,7 +2059,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     FIRST_ARTICLE_TITLE = ''
 
     try:
-        ARTICLE_BOARD_NAME  =  BOARD_NM 
+        # ARTICLE_BOARD_NAME  =  BOARD_NM 
         FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX]['title']
         FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
 
@@ -2076,7 +2074,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 
     
-    print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('############\n\n')
@@ -2150,22 +2148,23 @@ async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile()",URL, FILE_NAME)
-    if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
-        # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
-        CONVERT_URL = URL 
-        for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
-            # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
-            # 1. 주소에서 한글 문자를 판별
-            # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-            # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
-            if ord('가') <= ord(c) <= ord('힣'): 
-                c_encode = c.encode('euc-kr')
-                CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
 
-        if URL != CONVERT_URL: 
-            print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
-            print("CONVERT_URL", CONVERT_URL)
-            URL = CONVERT_URL
+    BOARD_NM = ''
+    # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
+    CONVERT_URL = URL 
+    for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
+        # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
+        # 1. 주소에서 한글 문자를 판별
+        # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
+        # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
+        if ord('가') <= ord(c) <= ord('힣'): 
+            c_encode = c.encode('euc-kr')
+            CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
+
+    if URL != CONVERT_URL: 
+        print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
+        print("CONVERT_URL", CONVERT_URL)
+        URL = CONVERT_URL
 
     # 파일명 지정
     # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
@@ -2204,6 +2203,7 @@ def DownloadFile(URL, FILE_NAME):
 def DownloadFile_wget(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile_wget()",URL, FILE_NAME)
+    BOARD_NM = ''
     # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
     CONVERT_URL = URL 
     for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
