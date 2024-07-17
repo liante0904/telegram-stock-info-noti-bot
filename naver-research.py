@@ -15,7 +15,7 @@ import urllib.request
 
 from package import googledrive
 from package.SecretKey import SecretKey
-from package.json_util import save_data_to_local_json  # import the function from json_util
+from package.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 
 # import secretkey
 
@@ -38,6 +38,8 @@ ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 SECRET_KEY = SecretKey()
 SECRET_KEY.load_secrets()
+
+JSON_FILE_NAME = './json/naver_research.json'
 ############ global 변수 끝 ############
 
 def NAVER_Report_checkNewArticle():
@@ -92,7 +94,7 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         # Use the imported save_data_to_local_json function with filename parameter
         new_article_message = save_data_to_local_json(
-            filename='./json/naver_research.json',
+            filename=JSON_FILE_NAME,
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=research['brokerName'],
@@ -144,6 +146,12 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
+async def sendMessageToMain(sendMessageText): #실행시킬 함수명 임의지정
+    global CHAT_ID
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
+    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+
 
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
@@ -200,6 +208,14 @@ def main():
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
+
+    lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
+    if lists:
+        for sendMessageText in lists:
+            asyncio.run(sendMessageToMain(sendMessageText))
+        update_main_ch_send_yn_to_y(JSON_FILE_NAME)
+    
+    return True
 
 
 if __name__ == "__main__":
