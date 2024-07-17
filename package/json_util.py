@@ -24,7 +24,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         "FIRM_NM": firm_nm,
         "ATTACH_URL": attach_url,
         "ARTICLE_TITLE": article_title,
-        "MAIN_CH_SEND_YN": main_ch_send_yn,  # main_ch_send_yn 값을 대문자로 변환하지 않음
+        "MAIN_CH_SEND_YN": main_ch_send_yn,
         "SAVE_TIME": current_time
     }
 
@@ -143,9 +143,28 @@ def get_unsent_main_ch_data_to_local_json(filename):
     else:
         sent_firms = set()
 
-    # 전역 변수의 필터링할 증권사를 sent_firms에 추가
-    sent_firms.update(EXCLUDED_FIRMS)
-    print(f"최종 필터링할 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
+    additional_firms = set()
+
+    # filename에 따른 추가적인 FIRM_NM 목록 가져오기
+    if 'hankyungconsen_research.json' in filename:
+        naver_research_path = 'json/naver_research.json'
+        if os.path.exists(naver_research_path) and os.path.getsize(naver_research_path) > 0:
+            with open(naver_research_path, 'r', encoding='utf-8') as json_file:
+                naver_data = json.load(json_file)
+                additional_firms.update(item["FIRM_NM"] for item in naver_data)
+                print(f"추가된 naver_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+
+    elif 'naver_research.json' in filename:
+        hankyungconsen_research_path = 'json/hankyungconsen_research.json'
+        if os.path.exists(hankyungconsen_research_path) and os.path.getsize(hankyungconsen_research_path) > 0:
+            with open(hankyungconsen_research_path, 'r', encoding='utf-8') as json_file:
+                hankyungconsen_data = json.load(json_file)
+                additional_firms.update(item["FIRM_NM"] for item in hankyungconsen_data)
+                print(f"추가된 hankyungconsen_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+
+    # 추가된 목록을 sent_firms에 합치기
+    sent_firms.update(additional_firms)
+    print(f"최종 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
 
     # 조건에 맞는 데이터를 필터링합니다.
     unsent_data = [
@@ -207,7 +226,6 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
     print(f"{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
