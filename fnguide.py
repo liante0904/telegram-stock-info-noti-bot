@@ -232,9 +232,9 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
 
     # 원문 링크 , 레포트 링크
     if SEC_FIRM_ORDER == 996:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
+        sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
     else:
-        sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크(클릭)]" + "("+ ATTACH_URL + ")"
+        sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크]" + "("+ ATTACH_URL + ")"
 
     if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
@@ -303,7 +303,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
+    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
 
     return sendMessageText
 
@@ -317,7 +317,7 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ATTACH_URL + ")"  + "\n" 
+    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ATTACH_URL + ")"  + "\n" 
 
     return sendMessageText
     
@@ -744,7 +744,7 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ARTICLE_URL + ")"  + "\n" 
+    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
 
     return sendMessageText
 
@@ -758,7 +758,7 @@ def GetSendMessageTextMarkdown(ARTICLE_TITLE , ATTACH_URL):
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[원문링크(클릭)]" + "("+ ATTACH_URL + ")"  + "\n" 
+    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ATTACH_URL + ")"  + "\n" 
 
     return sendMessageText
     
