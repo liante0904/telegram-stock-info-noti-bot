@@ -148,22 +148,15 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # return 
 
     # ARTICLE_BOARD_NAME =  BOARD_NM 
-    try:
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX].select('td.subject > a')[FIRST_ARTICLE_INDEX].get_text()
-    except IndexError:
-        print('IndexError')
+    # try:
+    # except IndexError:
+        # print('IndexError')
 
-    try:
-        FIRST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + soupList[FIRST_ARTICLE_INDEX].select('td.subject > a').attrs['href'].replace("amp;", "")
-    except:
-        FIRST_ARTICLE_URL = ''
 
     
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     # print('연속키:', NXT_KEY) # 주소
     print('############\n\n')
 
@@ -178,14 +171,10 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
         LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list[0].get_text()
+        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
 
         item = LS_detail(LIST_ARTICLE_URL, date)
         # print(item)
-        print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-
-        # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -196,6 +185,8 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수 
+            print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -343,8 +334,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
            f"&param6={param6}&param7={param7}&type={type_param}")
 
 
-    #request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    print('신한 request URL:', url)
+    # print('신한 request URL:', url)
     request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     #검색 요청 및 처리
     response = urllib.request.urlopen(request)
@@ -357,12 +347,10 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
 
     strList = jres['list']
-    print(strList[0])
-    print(strList[0]['f0'],strList[0]['f1'])
+    # print(strList[0])
+    # print(strList[0]['f0'],strList[0]['f1'])
     # print(l[0]['f0'])
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-    FIRST_ARTICLE_TITLE = jres['list'][0]['f1']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
     
@@ -374,13 +362,11 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # JSON To List
     for list in jres['list']:
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-        print(list)
+        # print(list)
 
-        # LIST_ARTICLE_URL = 'https://docs.google.com/viewer?embedded=true&url='+ list['f3']
         LIST_ARTICLE_TITLE = list['f1']
         LIST_ARTICLE_URL = list['f3']
 
-        # DownloadFile_wget(URL = list['f3'], FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         try:
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
@@ -398,6 +384,8 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -430,15 +418,15 @@ def KB_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # KB증권 산업분석
-    TARGET_URL_0 = 'https://rc.kbsec.com/ajax/categoryReportList.json'
+    
+    # KB증권 오늘의 레포트
     TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
     # KB증권 기업분석
     # TARGET_URL_1 = ''
     
     # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
-    TARGET_URL_TUPLE = (TARGET_URL_0)
+    # TARGET_URL_TUPLE = (TARGET_URL_0)
     
     
     sendMessageText = ''
@@ -491,12 +479,10 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("요청에 실패했습니다. 상태 코드:", response.status_code)
 
     strList = jres['response']['reportList']
-    print(strList)
+    # print(strList)
     
-    FIRST_ARTICLE_TITLE = strList[0]['docTitleSub']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
+    
     # 연속키 데이터베이스화 작업
-    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
@@ -504,7 +490,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # JSON To List
     for list in strList:
-        print(list)
+        # print(list)
 
         LIST_ARTICLE_TITLE = list['docTitleSub']
         if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
@@ -524,6 +510,8 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -541,7 +529,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
 
-
     return sendMessageText
 
 def NHQV_checkNewArticle():
@@ -555,12 +542,10 @@ def NHQV_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # NH투자증권
     # TARGET_URL =  'https://m.nhqv.com/research/newestBoardList'
+    # NH투자증권 오늘의 레포트
     TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
     
-    TARGET_URL_TUPLE = (TARGET_URL)
-
     sendMessageText = ''
     
     try:
@@ -575,7 +560,6 @@ def NHQV_checkNewArticle():
  
 def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
-    strNxtRshPprNo = ""
     payload = {
         "trName": "H3211",
         "rshPprDruTmSt": "00000000",
@@ -623,19 +607,11 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = r
 
     BOARD_NM            = listR[0]['rshPprSerCdNm']
-    FIRST_ARTICLE_TITLE = listR[0]['rshPprTilCts']
-    FIRST_ARTICLE_URL =  listR[0]['hpgeFleUrlCts']
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
-
-    
+   
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     # print('연속URL:', NXT_KEY) # 주소
     print('############\n\n')
     
@@ -644,15 +620,12 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     for list in soupList:
         print('*******************************')
-        print(list)
+        # print(list)
 
         BOARD_NM            = list['rshPprSerCdNm']
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
         LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
 
-        print('BOARD_NM',BOARD_NM)
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         # print('NXT_KEY',NXT_KEY)
         
         sendMessageText += save_data_to_local_json(
@@ -665,6 +638,9 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('BOARD_NM',BOARD_NM)
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -741,19 +717,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soup = BeautifulSoup(webpage.content, "html.parser")
     soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
-    try:
-        # ARTICLE_BOARD_NAME =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li.mb4 > h3 > a:nth-child(1)')[FIRST_ARTICLE_INDEX].text
-        FIRST_ARTICLE_URL =  'https://www.hanaw.com' + soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li:nth-child(1)> div.con > ul > li:nth-child(5)> div > a')[FIRST_ARTICLE_INDEX].attrs['href']
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
-
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
-
-    
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -843,26 +806,17 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     try:
         # ARTICLE_BOARD_NAME =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a > dl > dt > strong')[FIRST_ARTICLE_INDEX].text
         a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
         a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
         a_href = a_href.split("'")
         a_href = a_href[1]
-        FIRST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf'
     except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
+        return ''
 
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
-    print('FIRST_ARTICLE_URL:',FIRST_ARTICLE_URL)
-
-    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('############\n\n')
 
 
@@ -980,8 +934,6 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     except:
         return True
     
-    FIRST_ARTICLE_TITLE = jres[0]['getNoticeList'][0]['TITLE']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
     
@@ -1159,8 +1111,6 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print(jres['rows'])
     
-    FIRST_ARTICLE_TITLE = jres['rows'][0]['TITLE']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
     
@@ -1399,8 +1349,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     # 첫 번째 레코드의 제목을 바로 담습니다.
     soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
-    FIRST_ARTICLE_TITLE = soupList[0].select_one(".subject a").get_text()
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # ARTICLE_BOARD_NAME =  BOARD_NM 
 
@@ -1409,7 +1357,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
     print('############\n\n')
 
     # 게시물 정보 파싱
@@ -1534,8 +1481,6 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(jres['researchList'])
 
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-    FIRST_ARTICLE_TITLE = jres['researchList'][0]['titl']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     # 연속키 데이터베이스화 작업
     
@@ -1635,8 +1580,6 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
     print(jres['data_list'])
     
-    FIRST_ARTICLE_TITLE = jres['data_list'][0]['SUBJECT']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
     
     REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
     print('REG_DATE:',REG_DATE)
@@ -1768,8 +1711,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # onClick 프로퍼티값(링크) 출력
         print("링크:", link.get_attribute("onclick"))
 
-    FIRST_ARTICLE_TITLE = title_elements[0].text
-    print('FIRST_ARTICLE_TITLE',FIRST_ARTICLE_TITLE)
     
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1780,9 +1721,8 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # List
     for title, link in zip(title_elements, link_elements):
         LIST_ARTICLE_TITLE = title.text
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
         LIST_ARTICLE_URL = link.get_attribute("onclick")
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+
         LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
         # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
@@ -1796,6 +1736,8 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
             # DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -2055,28 +1997,11 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print('=' *40)
     
 
-    FIRST_ARTICLE_URL = ''
-    FIRST_ARTICLE_TITLE = ''
-
-    try:
-        # ARTICLE_BOARD_NAME  =  BOARD_NM 
-        FIRST_ARTICLE_TITLE = soupList[FIRST_ARTICLE_INDEX]['title']
-        FIRST_ARTICLE_URL   = soupList[FIRST_ARTICLE_INDEX].attrs['href']
-
-    except:
-        FIRST_ARTICLE_URL = ''
-        FIRST_ARTICLE_TITLE = ''
 
 
-
-    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
-
-    
+   
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     print('############\n\n')
 
 
