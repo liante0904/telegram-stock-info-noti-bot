@@ -1,13 +1,14 @@
 import os
 import json
 import datetime
+import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
 EXCLUDED_FIRMS = {"하나증권", "신한투자증권", "이베스트증권", "이베스트투자증권"}
 
 def clean_title(title):
     # 제목에서 불필요한 부분을 제거하고 앞부분 20자를 기준으로 비교
-    return title.split("\t")[0].strip()[:20]
+    return title.split("\t")[0].strip()[:10]
 
 def format_message(data):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
