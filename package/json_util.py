@@ -1,10 +1,26 @@
 import os
 import json
 import datetime
-import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
-EXCLUDED_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권"}
+EXCLUDED_FIRMS = {"하나증권", "신한투자증권", "이베스트증권", "이베스트투자증권"}
+
+def clean_title(title):
+    # 제목에서 불필요한 부분을 제거하고 앞부분 20자를 기준으로 비교
+    return title.split("\t")[0].strip()[:20]
+
+def format_message(data):
+    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
+    ARTICLE_TITLE = data['ARTICLE_TITLE']
+    ARTICLE_URL = data['ATTACH_URL']
+    
+    sendMessageText = ""
+    # 게시글 제목(굵게)
+    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+    # 원문 링크
+    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n"
+    
+    return sendMessageText
 
 def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
@@ -36,39 +52,26 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         existing_data = []
 
     # 중복 체크 (FIRM_NM, ARTICLE_TITLE 중복 확인)
+    clean_new_title = clean_title(new_data["ARTICLE_TITLE"])
     is_duplicate = any(
         existing_item["FIRM_NM"] == new_data["FIRM_NM"] and
-        existing_item["ARTICLE_TITLE"] == new_data["ARTICLE_TITLE"]
+        clean_title(existing_item["ARTICLE_TITLE"]) == clean_new_title
         for existing_item in existing_data
     )
 
     if not is_duplicate:
         existing_data.append(new_data)
-        
         # 업데이트된 데이터를 JSON 파일로 저장합니다.
         with open(filename, 'w', encoding='utf-8') as json_file:
             json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
-        
         print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+        print(f"증권사: {firm_nm}, 제목: {article_title}")
         
         # 중복되지 않은 항목을 템플릿 형식으로 반환
         return format_message(new_data)
     else:
-        print("중복된 데이터가 발견되어 저장하지 않았습니다.")
+        print(f"중복된 데이터가 발견되어 저장하지 않았습니다. 증권사: {firm_nm}, 제목: {article_title}")
         return ''
-
-def format_message(data):
-    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-    ARTICLE_TITLE = data['ARTICLE_TITLE']
-    ARTICLE_URL = data['ATTACH_URL']
-    
-    sendMessageText = ""
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n"
-    
-    return sendMessageText
 
 def update_json_with_main_ch_send_yn(file_path):
     directory = os.path.dirname(file_path)

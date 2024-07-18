@@ -163,31 +163,40 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     nNewArticleCnt = 0
     sendMessageText = ''
-    for list in soupList:
-        # print(list.select('td')[3].get_text())
-        date = list.select('td')[3].get_text()
-        list = list.select('a')
-        # print(list[0].text)
-        # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
-        LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
-        LIST_ARTICLE_TITLE = list[0].get_text()
-        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
+    for list_item in soupList:
+        date = list_item.select('td')[3].get_text()
+        list_a = list_item.select('a')
+        LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list_a[0]['href'].replace("amp;", "")
+        LIST_ARTICLE_TITLE = list_a[0].get_text()
+        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:].strip()
 
-        item = LS_detail(LIST_ARTICLE_URL, date)
-        # print(item)
-        sendMessageText += save_data_to_local_json(
+        # Save data and get formatted message
+        message = save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
+            sec_firm_order=1,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
-            attach_url=item['LIST_ARTICLE_URL'],
-            article_title=item['LIST_ARTICLE_TITLE']
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
         )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수 
+
+        if message:
+            # LS증권의 경우 전체 게시글 제목을 다시 저장
+            item = LS_detail(LIST_ARTICLE_URL, date)
+            message += save_data_to_local_json(
+                filename='./json/data_main_daily_send.json',
+                sec_firm_order=1,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm=firm_info['firm_name'],
+                attach_url=item['LIST_ARTICLE_URL'],
+                article_title=item['LIST_ARTICLE_TITLE']
+            )
+            sendMessageText += message
+            nNewArticleCnt += 1  # 새로운 게시글 수 
             print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
+            print('LIST_ARTICLE_TITLE', LIST_ARTICLE_TITLE)
+            DownloadFile(URL=item['LIST_ARTICLE_URL'], FILE_NAME=item['LIST_ARTICLE_FILE_NAME'] + '.pdf')
+        
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -195,15 +204,15 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             sendMessageText = ''
             nNewArticleCnt = 0
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+    if nNewArticleCnt == 0 or len(sendMessageText) == 0:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
     print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
         print(sendMessageText)
-
+        asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
 
     return sendMessageText
     
