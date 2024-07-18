@@ -260,10 +260,10 @@ def LS_detail(ARTICLE_URL, date):
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
 
-    print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
-    print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
-    print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
-    print('*********확인용**************')
+    # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
+    # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
+    # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
+    # print('*********확인용**************')
 
     return item
 
@@ -1478,8 +1478,8 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         return True
         
     if jres['totalCount'] == 0 : return ''
-    print(jres['researchList'])
 
+    # print(jres['researchList'])
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
 
     # 연속키 데이터베이스화 작업
@@ -1492,7 +1492,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # JSON To List
     for list in jres['researchList']:
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-        print(list)
+        # print(list)
         # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
         LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
         LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
@@ -1511,6 +1511,8 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print(LIST_ARTICLE_URL)
+            print(LIST_ARTICLE_TITLE)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1573,19 +1575,18 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     jres = ''
     try:
         webpage = requests.post(url=TARGET_URL ,data=payload , headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-        print(webpage.text)
+        # print(webpage.text)
         jres = json.loads(webpage.text)
     except:
         return ''
         
-    print(jres['data_list'])
+    # print(jres['data_list'])
     
     
     REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
-    print('REG_DATE:',REG_DATE)
-    
     FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
-    print('FILE_NAME:',FILE_NAME)
+    # print('REG_DATE:',REG_DATE)
+    # print('FILE_NAME:',FILE_NAME)
 
     # 연속키 데이터베이스화 작업
     
@@ -1596,7 +1597,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     # JSON To List
     for list in jres['data_list']:
-        print(list)
+        # print(list)
         # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
         LIST_ATTACHMENT_URL = 'https://www.hmsec.com/documents/research/{}' 
         LIST_ATTACHMENT_URL = LIST_ATTACHMENT_URL.format(list['UPLOAD_FILE1'])
@@ -1608,11 +1609,9 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = list['SUBJECT']
 
         REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
-        print(jres['data_list'])
+        # print(jres['data_list'])
         SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
-        print('REG_DATE:',REG_DATE)
-        print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
-        print('SERIAL_NO:',SERIAL_NO)
+        # print('REG_DATE:',REG_DATE)
 
         # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1627,6 +1626,8 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
+            print('SERIAL_NO:',SERIAL_NO)
             DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1931,13 +1932,13 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     BASE_URL = parsed_url.scheme + "://" + parsed_url.netloc + parsed_url.path 
     TARGET_URL = BASE_URL + '?cmd=list&templet-bypass=true'
-    print('parsed_url:', parsed_url)
-    print('BASE_URL:', BASE_URL)
-    print('TARGET_URL:',TARGET_URL)
-    # 파라미터 출력
-    print("rGubun:", query_params.get('rGubun'))
-    print("sctrGubun:", query_params.get('sctrGubun'))
-    print("web:", query_params.get('web'))
+    # print('parsed_url:', parsed_url)
+    # print('BASE_URL:', BASE_URL)
+    # print('TARGET_URL:',TARGET_URL)
+    # # 파라미터 출력
+    # print("rGubun:", query_params.get('rGubun'))
+    # print("sctrGubun:", query_params.get('sctrGubun'))
+    # print("web:", query_params.get('web'))
 
     # 헤더 설정
     headers = {
@@ -1995,9 +1996,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print('======>',soupList[FIRST_ARTICLE_INDEX]['title'])
     # print('======>',soupList[FIRST_ARTICLE_INDEX].attrs['href'])
     # print('=' *40)
-    
-
-
 
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
    
