@@ -164,7 +164,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        print(list.select('td')[3].get_text())
+        # print(list.select('td')[3].get_text())
         date = list.select('td')[3].get_text()
         list = list.select('a')
         # print(list[0].text)
@@ -1784,7 +1784,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
         filepath = filepath[1:]
 
     params = filepath.split("&")
-    print('params',params)
+    # print('params',params)
     if len(params) == 2:
         if params == ['category1=01', 'category2=01'] or params == ['category1=01', 'category2=02'] or params == ['category1=01', 'category2=03'] or params == ['category1=01', 'category2=04'] or params == ['category1=01', 'category2=05']:
             filepath = "research/research01"
@@ -1795,7 +1795,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
         elif params == ['category1=04', 'category2=00'] or params == ['category1=04', 'category2=01'] or params == ['category1=04', 'category2=02'] or params == ['category1=04', 'category2=03']:
             filepath = "research/research04"
         elif params[0] == 'category1=05' or params == ['category1=05']:
-            print('????????')
+            # print('????????')
             filepath = "research/research05"
         elif params == ['category1=07', 'category2=01']:
             filepath = "research/research07"
@@ -1824,7 +1824,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
         elif params == ['category1=16', 'category2=01']:
             filepath = "research/research15"
 
-    print('filepath', filepath)
+    # print('filepath', filepath)
     if not option or option == None or option == "":
         option = "01"
 
@@ -1843,17 +1843,17 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
     else:
         url = f"{host_name}?filepath={urllib.parse.quote(filepath)}&filename={filename}&option={option}"
 
-    print(url)
+    # print(url)
     return url
 
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
     params = string.split(",")
-    print(len(params),params)
-    print('###############')
-    for i in params:
-        print(i)
-    print('###############')
+    # print(len(params),params)
+    # print('###############')
+    # for i in params:
+    #     print(i)
+    # print('###############')
     
     # 문자열에서 필요한 정보 추출
     category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
