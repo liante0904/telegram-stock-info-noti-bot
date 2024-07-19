@@ -161,8 +161,6 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
     except:
         return True
     jres = jres['result']
-
-    
     category = 'flashnews'
 
 
@@ -173,7 +171,6 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit']
 
-        
         sendMessageText += save_data_to_local_json(
             filename='./json/naver_flashnews.json',
             sec_firm_order=SEC_FIRM_ORDER,
