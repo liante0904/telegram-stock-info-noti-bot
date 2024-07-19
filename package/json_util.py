@@ -6,7 +6,7 @@ import argparse
 # 전역 변수로 필터링할 증권사 목록 정의
 EXCLUDED_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권"}
 
-def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, main_ch_send_yn="N"):
+def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, send_users=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
 
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
@@ -17,6 +17,10 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # 현재 시간을 저장합니다.
     current_time = datetime.datetime.now().isoformat()
     
+    # `send_users`가 None이면 빈 배열로 초기화합니다.
+    if send_users is None:
+        send_users = []
+    
     # 새 데이터를 딕셔너리로 저장합니다.
     new_data = {
         "SEC_FIRM_ORDER": sec_firm_order,
@@ -24,9 +28,11 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         "FIRM_NM": firm_nm,
         "ATTACH_URL": attach_url,
         "ARTICLE_TITLE": article_title,
+        "SEND_USER": send_users,
         "MAIN_CH_SEND_YN": main_ch_send_yn,
         "SAVE_TIME": current_time
     }
+
 
     # 기존 데이터를 읽어옵니다.
     if os.path.exists(filename) and os.path.getsize(filename) > 0:
