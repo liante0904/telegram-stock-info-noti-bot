@@ -52,7 +52,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
         
         # 중복되지 않은 항목을 템플릿 형식으로 반환
-        if '네이버 'in firm_nm or '조선비즈 ' in firm_nm:
+        if '네이버'in firm_nm or '조선비즈' in firm_nm:
             return format_message(new_data) + '\n'
         else:
             return format_message(new_data)
