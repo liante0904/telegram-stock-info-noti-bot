@@ -66,24 +66,41 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
-def format_message(data):
+
+def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-    ARTICLE_TITLE = data['ARTICLE_TITLE']
-    ARTICLE_URL = data['ATTACH_URL']
-    
-    sendMessageText = ""
-    
-    # 'FIRM_NM'이 존재하는 경우에만 포함
-    if 'FIRM_NM' in data:
-        FIRM_NM = data['FIRM_NM']
-        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-    
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    # 원문 링크
-    sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-    
-    return sendMessageText
+    formatted_messages = []
+
+    # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
+    if isinstance(data_list, dict):
+        data_list = [data_list]
+
+    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
+
+    for data in data_list:
+        ARTICLE_TITLE = data['ARTICLE_TITLE']
+        ARTICLE_URL = data['ATTACH_URL']
+        
+        sendMessageText = ""
+        
+        # 'FIRM_NM'이 존재하는 경우에만 포함
+        if 'FIRM_NM' in data:
+            FIRM_NM = data['FIRM_NM']
+            # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
+            if FIRM_NM != last_firm_nm:
+                sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                last_firm_nm = FIRM_NM
+        
+        # 게시글 제목(굵게)
+        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+        # 원문 링크
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+        
+        formatted_messages.append(sendMessageText)
+
+    # 모든 메시지를 하나의 문자열로 결합합니다.
+    return "\n".join(formatted_messages)
+
 def update_json_with_main_ch_send_yn(file_path):
     directory = os.path.dirname(file_path)
 
