@@ -65,11 +65,12 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     else:
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
-
-
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
     formatted_messages = []
+
+    # 특정 FIRM_NM을 제외할 리스트
+    EXCLUDED_FIRMS = {"네이버", "조선비즈"}
 
     # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
     if isinstance(data_list, dict):
@@ -86,10 +87,12 @@ def format_message(data_list):
         # 'FIRM_NM'이 존재하는 경우에만 포함
         if 'FIRM_NM' in data:
             FIRM_NM = data['FIRM_NM']
-            # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
-            if FIRM_NM != last_firm_nm:
-                sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                last_firm_nm = FIRM_NM
+            # 제외할 FIRM_NM이 아닌 경우에만 처리
+            if FIRM_NM not in EXCLUDED_FIRMS:
+                # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
+                if FIRM_NM != last_firm_nm:
+                    sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                    last_firm_nm = FIRM_NM
         
         # 게시글 제목(굵게)
         sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
