@@ -72,13 +72,18 @@ def format_message(data):
     ARTICLE_URL = data['ATTACH_URL']
     
     sendMessageText = ""
+    
+    # 'FIRM_NM'이 존재하는 경우에만 포함
+    if 'FIRM_NM' in data:
+        FIRM_NM = data['FIRM_NM']
+        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+    
     # 게시글 제목(굵게)
     sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
-    sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n"
+    sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
     
     return sendMessageText
-
 def update_json_with_main_ch_send_yn(file_path):
     directory = os.path.dirname(file_path)
 
@@ -108,20 +113,6 @@ def update_json_with_main_ch_send_yn(file_path):
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
     print(f"{file_path} 파일에 MAIN_CH_SEND_YN 키가 업데이트되었습니다.")
-
-def format_message_with_firm(data, include_firm_nm):
-    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-    FIRM_NM = data['FIRM_NM']
-    ARTICLE_TITLE = data['ARTICLE_TITLE']
-    ARTICLE_URL = data['ATTACH_URL']
-    
-    sendMessageText = ""
-    if include_firm_nm:
-        sendMessageText += "\n\n"+"●" + FIRM_NM + "\n"
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-    sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-    
-    return sendMessageText
 
 def get_unsent_main_ch_data_to_local_json(filename):
     directory = os.path.dirname(filename)
@@ -190,8 +181,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     previous_firm_nm = None
 
     for item in unsent_data:
-        include_firm_nm = (item["FIRM_NM"] != previous_firm_nm)
-        message_part = format_message_with_firm(item, include_firm_nm)
+        message_part = format_message(item)
 
         if len(current_message) + len(message_part) > 3000:
             messages.append(current_message)
