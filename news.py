@@ -99,7 +99,7 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = stockPlus['url']
         LIST_ARTICLE_TITLE = stockPlus['title']
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
-
+        
         sendMessageText += save_data_to_local_json(
             filename='./json/ChosunBizBot.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -110,8 +110,12 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+            print()
+            print(LIST_ARTICLE_URL)
+            print(LIST_ARTICLE_TITLE)
+            print(LIST_ARTICLE_WRITER_NAME)
+            print()
+            
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
