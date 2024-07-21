@@ -66,8 +66,8 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         FIRST_ARTICLE_TITLE = ''
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
-    print('게시글URL:', FIRST_ARTICLE_URL) # 주소
+    # print('게시글 제목:', FIRST_ARTICLE_TITLE) # 게시글 제목
+    # print('게시글URL:', FIRST_ARTICLE_URL) # 주소
     # print('연속URL:', NXT_KEY) # 주소
     print('############')
 
@@ -75,20 +75,17 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     sendMessageText = ''
     brokerName = soup.select('#contents > div.table_style01 > table > tbody > tr.first > td:nth-child(5)')[0].text
     first_article_processed = False
-    print('brokerName' ,brokerName)
+    # print('brokerName' ,brokerName)
     for list in soupList:
         
-        print('*****************')
+        # print('*****************')
         # print(list)
         LIST_ARTICLE_CLASS = list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(2)').text
         LIST_ARTICLE_TITLE = list.select_one('#contents > div.table_style01 > table > tbody > tr > td.text_l > a').text
         LIST_ARTICLE_URL =  'https://consensus.hankyung.com' + list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(6) > div > a').attrs['href']
         LIST_ARTICLE_BROKER_NAME =list.select_one('#contents > div.table_style01 > table > tbody > tr > td:nth-child(5)').text
 
-        print(LIST_ARTICLE_CLASS)
-        print(LIST_ARTICLE_TITLE)
-        print(LIST_ARTICLE_URL)
-        print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
+
         
 
         # Use the imported save_data_to_local_json function with filename parameter
@@ -104,6 +101,10 @@ def HankyungConsen_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if new_article_message:
             # 회사명 출력
             nNewArticleCnt += 1  # 새로운 게시글 수
+            print(LIST_ARTICLE_CLASS)
+            print(LIST_ARTICLE_TITLE)
+            print(LIST_ARTICLE_URL)
+            print('LIST_ARTICLE_BROKER_NAME=',LIST_ARTICLE_BROKER_NAME)
             if not first_article_processed or brokerName != LIST_ARTICLE_BROKER_NAME:
                 sendMessageText += "\n\n"+ "●"+ LIST_ARTICLE_BROKER_NAME + "\n"
                 brokerName = LIST_ARTICLE_BROKER_NAME # 회사명 키 변경
