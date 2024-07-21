@@ -111,7 +111,7 @@ def LS_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -191,7 +191,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -306,7 +306,7 @@ def ShinHanInvest_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -390,7 +390,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -436,7 +436,7 @@ def KB_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
 
     return sendMessageText
@@ -516,7 +516,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -553,7 +553,7 @@ def NHQV_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
                 
     return sendMessageText
@@ -645,7 +645,7 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -701,7 +701,7 @@ def HANA_checkNewArticle():
         except Exception as e:
             if len(sendMessageText) > 3500:
                 print(f"발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n{sendMessageText}")
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
     
     return sendMessageText
@@ -740,7 +740,7 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -785,7 +785,7 @@ def Samsung_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -848,7 +848,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -893,7 +893,7 @@ def Sangsanginib_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -967,7 +967,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1062,7 +1062,7 @@ def Shinyoung_checkNewArticle():
     except:
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
                 
     return sendMessageText
@@ -1129,7 +1129,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1308,7 +1308,7 @@ def Miraeasset_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1386,7 +1386,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1433,7 +1433,7 @@ def Kiwoom_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1496,7 +1496,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1542,7 +1542,7 @@ def Hmsec_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1611,7 +1611,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1652,7 +1652,7 @@ def Koreainvestment_selenium_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
                 
     return sendMessageText
@@ -1713,7 +1713,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -1885,7 +1885,7 @@ def DAOL_checkNewArticle():
         except:
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
                 sendMessageText = ''
 
     return sendMessageText
@@ -2009,7 +2009,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            asyncio.run(sendMessage(sendMessageText))
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
 
@@ -2427,7 +2427,7 @@ def main():
         print(f"{check_function.__name__} => 새 게시글 정보 확인")
         r = check_function()
         if len(r) > 0:
-            # sendMessageText += GetSendMessageTitle() + r
+            sendMessageText += GetSendMessageTitle() + r
             if len(sendMessageText) > 3500 : asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     
     if len(sendMessageText) > 0:
