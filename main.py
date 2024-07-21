@@ -724,20 +724,18 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
         LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
         # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
-
         
-        ATTACH_URL = LIST_ARTICLE_URL
-
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
-            attach_url=ATTACH_URL,
+            attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print(LIST_ARTICLE_TITLE)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -745,7 +743,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
             sendMessageText = ''
             nNewArticleCnt = 0
-        print(LIST_ARTICLE_TITLE)
 
     if nNewArticleCnt == 0  or len(sendMessageText) == 0:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
@@ -945,15 +942,14 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # JSON To List
     for list in jres[0]['getNoticeList']:
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-        print('list***************** \n',list)
+        # print('list***************** \n',list)
         # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
         # LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
         # print('cmsCd[ARTICLE_BOARD_ORDER]',cmsCd[ARTICLE_BOARD_ORDER])
-        print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
+        # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
+
         LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = list['TITLE']
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
 
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
@@ -965,6 +961,8 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1013,17 +1011,17 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     }
 
     response = requests.post(url, headers=headers, data=data)
-    if response.status_code == 200:
-        print(response.text)
+    if response.status_code == 200: pass
+        # print(response.text)
     else:
         print("Failed to fetch data.")
     
-    print(json.loads(response.text))
-    print('**********JSON!!!!!')
+    # print(json.loads(response.text))
+    # print('**********JSON!!!!!')
     jres = json.loads(response.text)
     # print('##############11111',jres)
     jres = jres['file'][0] #PDF
-    print('################222222',jres) 
+    # print('################222222',jres) 
     # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
     # 기본 URL과 쿼리 매개변수 딕셔너리
@@ -1034,10 +1032,10 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         'fNo': jres['FNO'], # PDF
         'fNm': jres['FNM']
     }
-    print(params)
+    # print(params)
     url = base_url
     if params:
-        print('urlparse(params)', urlparse.urlencode(params))
+        # print('urlparse(params)', urlparse.urlencode(params))
         encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
         url += '?' + encoded_params
     
@@ -1056,14 +1054,6 @@ def Shinyoung_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
     # 신영증권 리서치
     TARGET_URL = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
-    # # 상상인증권 투자전략
-    # TARGET_URL_0 =  "https://www.sangsanginib.com/notice/getNoticeList"
-    # # 상상인증권 산업 리포트
-    # TARGET_URL_1 =  TARGET_URL_0
-    # # 상상인증권 기업 리포트
-    # TARGET_URL_2 =  TARGET_URL_0
-    
-    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
     sendMessageText = ''
     
@@ -1109,25 +1099,19 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("An error occurred:", str(e))
         return True
 
-    print(jres['rows'])
-    
+    # print(jres['rows'])
 
     # 연속키 데이터베이스화 작업
-    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
     
     nNewArticleCnt = 0
     sendMessageText = ''
-    
     # JSON To List
     for list in jres['rows']:
-        print('list***************** \n',list)
+        # print('list***************** \n',list)
         # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
-        print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         LIST_ARTICLE_TITLE = list['TITLE']
-        print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
 
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
@@ -1139,6 +1123,8 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
@@ -1268,18 +1254,18 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, data=data, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200:
+    if response.status_code == 200: pass
         # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
         # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('최종파일')
-        print(response.text)
+        # print('최종파일')
+        # print(response.text)
     else:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
         # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
     jres = json.loads(response.text)
     
-    print('************\n',jres)
+    # print('************\n',jres)
     # # 기본 URL과 쿼리 매개변수 딕셔너리
     # https://www.shinyoung.com/files/20240216/4b64adc924e8e.pdf
     base_url = 'https://www.shinyoung.com/files/'
@@ -1303,8 +1289,6 @@ def Miraeasset_checkNewArticle():
     global SEC_FIRM_ORDER
     global firm_info
     
-    global firm_info
-
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
 
@@ -1350,11 +1334,8 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 첫 번째 레코드의 제목을 바로 담습니다.
     soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
 
-    # ARTICLE_BOARD_NAME =  BOARD_NM 
-
-    
+    # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     print('############\n\n')
@@ -1483,10 +1464,8 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
 
     # 연속키 데이터베이스화 작업
-    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
-    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -1684,10 +1663,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
 
-    # 헤드리스 모드로 설정
-    # chrome_options = Options()
-    # chrome_options.add_argument("--headless")
-
     # Chrome 드라이버 초기화
     driver = webdriver.Chrome(options=chrome_options)
 
@@ -1696,10 +1671,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 페이지 로딩될때까지 대기
     driver.implicitly_wait(0)
-
-    # # 페이지 로딩을 위해 10초간 대기
-    # wait = WebDriverWait(driver, 10) 
-    # element = wait.until(EC.element_to_be_clickable((By.ID, 'searchResult'))) 
 
     # 제목 엘리먼트 찾기
     title_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/div[2]/span[1]')
@@ -1711,7 +1682,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("제목:", title.text)
         # onClick 프로퍼티값(링크) 출력
         print("링크:", link.get_attribute("onclick"))
-
     
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1774,7 +1744,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
     filename = urllib.parse.quote(filename)
     filepath = filepath
     
-    print('filepath =',filepath)
+    # print('filepath =',filepath)
     host_name = "http://research.truefriend.com/streamdocs/openResearch"
     url = ""
     host_name2 = "https://kis-air.com/kor/"
@@ -1795,7 +1765,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
         elif params == ['category1=04', 'category2=00'] or params == ['category1=04', 'category2=01'] or params == ['category1=04', 'category2=02'] or params == ['category1=04', 'category2=03']:
             filepath = "research/research04"
         elif params[0] == 'category1=05' or params == ['category1=05']:
-            # print('????????')
             filepath = "research/research05"
         elif params == ['category1=07', 'category2=01']:
             filepath = "research/research07"
