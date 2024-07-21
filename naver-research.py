@@ -76,8 +76,6 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     except: return True
     
     jres = jres['result']
-    FIRST_ARTICLE_TITLE = jres[0]['title']
-    print('FIRST_ARTICLE_TITLE:',FIRST_ARTICLE_TITLE)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -104,6 +102,9 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         
         if new_article_message:
             nNewArticleCnt += 1  # 새로운 게시글 수
+            print(LIST_ARTICLE_URL)
+            print(LIST_ARTICLE_TITLE)
+            
             if not first_article_processed or brokerName != research['brokerName']:
                 sendMessageText += "\n" + "●" + research['brokerName'] + "\n"
                 brokerName = research['brokerName']  # 회사명 키 변경
