@@ -210,11 +210,11 @@ def main():
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
     NAVER_Report_checkNewArticle()
 
-    # lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
-    # if lists:
-    #     for sendMessageText in lists:
-    #         asyncio.run(sendMessageToMain(sendMessageText))
-    #     update_main_ch_send_yn_to_y(JSON_FILE_NAME)
+    lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
+    if lists:
+        for sendMessageText in lists:
+            asyncio.run(sendMessageToMain(sendMessageText))
+        update_main_ch_send_yn_to_y(JSON_FILE_NAME)
     
     return True
 

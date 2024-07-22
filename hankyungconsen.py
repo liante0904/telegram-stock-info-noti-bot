@@ -158,11 +158,11 @@ def main():
 
     if len(sendMessageText) > 0: asyncio.run(sendMessage(sendMessageText))
 
-    # lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
-    # if lists:
-    #     for sendMessageText in lists:
-    #         asyncio.run(sendMessageToMain(sendMessageText))
-    #     update_main_ch_send_yn_to_y(JSON_FILE_NAME)
+    lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
+    if lists:
+        for sendMessageText in lists:
+            asyncio.run(sendMessageToMain(sendMessageText))
+        update_main_ch_send_yn_to_y(JSON_FILE_NAME)
     
     return True
 
