@@ -24,7 +24,7 @@ application = ApplicationBuilder().token(token).build()
 bot = application.bot
 
 # 기본 날짜를 전역 변수로 설정
-DEFAULT_DATE = '2024-07-21'#datetime.now().strftime('%Y-%m-%d')
+DEFAULT_DATE = datetime.now().strftime('%Y-%m-%d')
 
 async def sendMessage(chat_id, sendMessageText):
     print(f"Sending message to chat_id {chat_id}: \n\n {sendMessageText}")
@@ -32,7 +32,7 @@ async def sendMessage(chat_id, sendMessageText):
     return await bot.send_message(
         chat_id=chat_id,
         text=sendMessageText,
-        disable_web_page_preview = True,
+        disable_web_page_preview=True,
         parse_mode="Markdown"
     )
 
@@ -82,18 +82,50 @@ def filter_by_keyword(data, keyword):
         return [item for item in data if keyword in item['ARTICLE_TITLE']]
     return data
 
+def format_message(data):
+    if not data:
+        return ""
+
+    firm_messages = []
+    current_firm = None
+    current_message = ""
+
+    for item in data:
+        firm_nm = item["FIRM_NM"]
+        article_title = item["ARTICLE_TITLE"]
+        attach_url = item["ATTACH_URL"]
+
+        if firm_nm != current_firm:
+            if current_message:
+                firm_messages.append(current_message)
+            current_message = f"*●{firm_nm}*\n"
+            current_firm = firm_nm
+
+        current_message += f"{article_title}\n👉[링크]({attach_url})\n\n"
+
+    if current_message:
+        firm_messages.append(current_message)
+
+    return "\n".join(firm_messages)
+
 async def send_long_message(chat_id, entry):
-    message = format_message(filter_by_keyword(merged_data, entry['keyword']))
-    keyword_line = f"*===========알림 키워드 : [{entry['keyword']}]===========*\n\n"
-    
-    if len(message) > 3000:
-        # 메시지를 3000자씩 나누어 보냄
-        for i in range(0, len(message), 3000):
-            part = message[i:i + 3000]
-            await sendMessage(chat_id, keyword_line + part)
+    keyword = entry['keyword']
+    filtered_data = filter_by_keyword(merged_data, keyword)
+    print(filtered_data)
+    message = format_message(filtered_data)
+    full_message = ''
+    # 메시지가 비어있다면 "해당 키워드의 레포트는 없습니다" 문구를 보냄
+    if not message.strip():
+        no_message = f"===========알림 키워드 : * [{keyword}] *===========\n\n해당 키워드의 레포트는 없습니다."
+        full_message += no_message
     else:
-        # 메시지가 3000자 이하면 한 번에 전송
-        await sendMessage(chat_id, keyword_line + message)
+        keyword_line = f"===========알림 키워드 : * [{keyword}] *===========\n\n"
+        full_message += keyword_line + message
+
+    # 전체 메시지가 3000자를 넘지 않으면 한 번에 전송
+    if len(full_message) <= 3000:
+        await sendMessage(chat_id, full_message)
+        full_message = ''
 
 async def main():
     # 경로 설정
