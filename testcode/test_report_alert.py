@@ -7,28 +7,39 @@ from dotenv import load_dotenv
 from telegram import Bot
 from telegram.ext import ApplicationBuilder
 
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from package.json_util import format_message  # import the function from json_utiltest
+# 현재 파일의 디렉토리를 기준으로 절대 경로를 설정합니다.
+def get_project_root():
+    return os.path.dirname(os.path.abspath(__file__))
 
 # 환경 변수 로드
-load_dotenv()  # .env 파일의 환경 변수를 로드합니다
+load_dotenv()
 env = os.getenv('ENV')
-print(env)
-if env == 'production':
-    token = os.getenv('TELEGRAM_STOCK_INFO_BOT')
-else:
-    token = os.getenv('TELEGRAM_STOCK_INFO_BOT')
-print(token)
-
+token = os.getenv('TELEGRAM_STOCK_INFO_BOT')
 application = ApplicationBuilder().token(token).build()
 bot = application.bot
 
 # 기본 날짜를 전역 변수로 설정
 DEFAULT_DATE = datetime.now().strftime('%Y-%m-%d')
 
+def get_file_path(relative_path):
+    """
+    현재 파일의 디렉토리를 기준으로 상대 경로를 설정합니다.
+    :param relative_path: 현재 파일의 디렉토리를 기준으로 한 상대 경로
+    :return: 파일의 절대 경로
+    """
+    project_root = get_project_root()
+    file_path = os.path.join(project_root, relative_path)
+    return file_path
+
+def save_updated_data(data, filepath):
+    directory = os.path.dirname(filepath)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    with open(filepath, 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
 async def sendMessage(chat_id, sendMessageText):
     print(f"Sending message to chat_id {chat_id}: \n\n {sendMessageText}")
-    print('=' * 80)
     return await bot.send_message(
         chat_id=chat_id,
         text=sendMessageText,
@@ -36,23 +47,7 @@ async def sendMessage(chat_id, sendMessageText):
         parse_mode="Markdown"
     )
 
-def get_file_path(relative_path):
-    """
-    현재 작업 디렉토리를 기준으로 상위 폴더에서 파일 경로를 설정합니다.
-    :param relative_path: 상위 폴더를 기준으로 한 상대 경로
-    :return: 파일의 절대 경로
-    """
-    current_dir = os.getcwd()
-    print(f"Current working directory: {current_dir}")
-    
-    parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
-    print(f"Parent directory: {parent_dir}")
-    
-    file_path = os.path.join(parent_dir, relative_path)
-    return file_path
-
 def read_json_file(filepath):
-    print(filepath)
     with open(filepath, 'r', encoding='utf-8') as file:
         return json.load(file)
 
@@ -69,12 +64,6 @@ def remove_duplicates(main_data, *other_data_sources):
     return main_data + filtered_data
 
 def filter_today_data(data, date=DEFAULT_DATE):
-    """
-    주어진 날짜에 해당하는 데이터만 필터링합니다.
-    :param data: 필터링할 데이터 리스트
-    :param date: 필터링할 날짜 (형식: 'YYYY-MM-DD'). 기본값은 현재 날짜
-    :return: 필터링된 데이터 리스트
-    """
     return [item for item in data if item['SAVE_TIME'].startswith(date)]
 
 def filter_by_keyword(data, keyword):
@@ -111,10 +100,9 @@ def format_message(data):
 async def send_long_message(chat_id, entry):
     keyword = entry['keyword']
     filtered_data = filter_by_keyword(merged_data, keyword)
-    print(filtered_data)
     message = format_message(filtered_data)
     full_message = ''
-    # 메시지가 비어있다면 "해당 키워드의 레포트는 없습니다" 문구를 보냄
+
     if not message.strip():
         no_message = f"===========알림 키워드 : * [{keyword}] *===========\n\n해당 키워드의 레포트는 없습니다."
         full_message += no_message
@@ -122,46 +110,47 @@ async def send_long_message(chat_id, entry):
         keyword_line = f"===========알림 키워드 : * [{keyword}] *===========\n\n"
         full_message += keyword_line + message
 
-    # 전체 메시지가 3000자를 넘지 않으면 한 번에 전송
     if len(full_message) <= 3000:
         await sendMessage(chat_id, full_message)
-        full_message = ''
+    else:
+        for i in range(0, len(full_message), 3000):
+            part = full_message[i:i + 3000]
+            await sendMessage(chat_id, part)
+    
+    for item in filtered_data:
+        if 'SEND_USER' in item:
+            if chat_id not in item['SEND_USER']:
+                item['SEND_USER'].append(chat_id)
 
 async def main():
-    # 경로 설정
-    base_path = './json'
+    base_path = 'json'
     main_file = os.path.join(base_path, 'data_main_daily_send.json')
     other_files = [
         os.path.join(base_path, 'hankyungconsen_research.json'),
         os.path.join(base_path, 'naver_research.json')
     ]
 
-    # JSON 데이터 읽기
-    main_data = read_json_file(main_file)
-    other_data_sources = [read_json_file(filepath) for filepath in other_files]
+    main_data = read_json_file(get_file_path(main_file))
+    other_data_sources = [read_json_file(get_file_path(filepath)) for filepath in other_files]
 
-    # 오늘 날짜의 데이터만 필터링
     main_data_today = filter_today_data(main_data)
     other_data_sources_today = [filter_today_data(data) for data in other_data_sources]
 
-    # 중복 데이터 제거 및 병합
     global merged_data
     merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
 
-    # 시스템 일자 출력
     print(f"시스템(조회) 일자: {DEFAULT_DATE}")
 
-    # 상위 폴더 기준 파일 경로 설정
     relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
     file_path = get_file_path(relative_path)
     data = read_json_file(file_path)
 
-    # 사용자 ID를 기준으로 데이터를 순회
     for user_id, keywords in data.items():
-        print(f"User ID: {user_id}")
-        for keyword in keywords:
-            # print(f"알림 키워드 : {keyword}")
-            await send_long_message(user_id, keyword)
+        for keyword_entry in keywords:
+            await send_long_message(user_id, keyword_entry)
+
+    updated_file_path = get_file_path('json/send_report_alert.json')
+    save_updated_data(merged_data, updated_file_path)
 
 if __name__ == "__main__":
     asyncio.run(main())
