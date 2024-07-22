@@ -197,21 +197,27 @@ def get_unsent_main_ch_data_to_local_json(filename):
     # 디버깅 로그 추가
     print(f"필터링된 unsent_data: {unsent_data}")
 
-    # 데이터 형식화
     messages = []
     current_message = ""
     previous_firm_nm = None
 
     for item in unsent_data:
+        firm_nm = item['FIRM_NM']
         message_part = format_message(item)
+        
+        # 회사명이 변경되면 새로운 회사명을 추가
+        if firm_nm != previous_firm_nm:
+            if previous_firm_nm is not None:
+                current_message += "\n"
+            current_message += f"●{firm_nm}\n"
+            previous_firm_nm = firm_nm
 
+        # 메시지의 길이가 3000자를 넘으면 분리
         if len(current_message) + len(message_part) > 3000:
             messages.append(current_message)
             current_message = message_part
         else:
             current_message += message_part
-
-        previous_firm_nm = item["FIRM_NM"]
 
     if current_message:
         messages.append(current_message)
