@@ -4,7 +4,7 @@ import datetime
 import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
-EXCLUDED_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권"}
+EXCLUDED_FORWARD_REPORT_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권"}
 
 def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, send_users=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
@@ -12,7 +12,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if not os.path.exists(directory):
         os.makedirs(directory)
-        print(f"디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
 
     # 현재 시간을 저장합니다.
     current_time = datetime.datetime.now().isoformat()
@@ -55,7 +55,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         with open(filename, 'w', encoding='utf-8') as json_file:
             json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
         
-        print(f"새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+        print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
         
         # 중복되지 않은 항목을 템플릿 형식으로 반환
         if '네이버'in firm_nm or '조선비즈' in firm_nm:
@@ -112,10 +112,10 @@ def update_json_with_main_ch_send_yn(file_path):
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if not os.path.exists(directory):
         os.makedirs(directory)
-        print(f"디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     if not os.path.exists(file_path):
-        print(f"파일 경로 '{file_path}'가 존재하지 않습니다.")
+        print(f"\n파일 경로 '{file_path}'가 존재하지 않습니다.")
         return
 
     with open(file_path, 'r', encoding='utf-8') as json_file:
@@ -134,7 +134,7 @@ def update_json_with_main_ch_send_yn(file_path):
     with open(file_path, 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
-    print(f"{file_path} 파일에 MAIN_CH_SEND_YN 키가 업데이트되었습니다.")
+    print(f"\n{file_path} 파일에 MAIN_CH_SEND_YN 키가 업데이트되었습니다.")
 
 def get_unsent_main_ch_data_to_local_json(filename):
     directory = os.path.dirname(filename)
@@ -142,7 +142,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
-        print(f"디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     # 현재 날짜를 가져옵니다.
     today_str = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -152,7 +152,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         with open(filename, 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
     else:
-        print(f"파일 경로 '{filename}'가 존재하지 않습니다.")
+        print(f"\n파일 경로 '{filename}'가 존재하지 않습니다.")
         return ''
 
     # 중복 확인을 위해 json/data_main_daily_send.json의 FIRM_NM 목록을 가져옵니다.
@@ -161,9 +161,13 @@ def get_unsent_main_ch_data_to_local_json(filename):
         with open(main_daily_send_path, 'r', encoding='utf-8') as json_file:
             main_daily_data = json.load(json_file)
             sent_firms = {item["FIRM_NM"] for item in main_daily_data}
-            print(f"중복 확인을 위해 로드된 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
+            print(f"\n중복 확인을 위해 로드된 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
     else:
         sent_firms = set()
+
+    # EXCLUDED_FORWARD_REPORT_FIRMS를 sent_firms에 합치기
+    sent_firms.update(EXCLUDED_FORWARD_REPORT_FIRMS)
+    print(f"\n수기 EXCLUDED_FORWARD_REPORT_FIRMS 추가 목록(제외할 증권사 포함): {sent_firms}")  # 디버깅 로그 추가
 
     additional_firms = set()
 
@@ -174,7 +178,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
             with open(naver_research_path, 'r', encoding='utf-8') as json_file:
                 naver_data = json.load(json_file)
                 additional_firms.update(item["FIRM_NM"] for item in naver_data)
-                print(f"추가된 naver_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+                print(f"\n추가된 naver_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
 
     elif 'naver_research.json' in filename:
         hankyungconsen_research_path = 'json/hankyungconsen_research.json'
@@ -182,11 +186,11 @@ def get_unsent_main_ch_data_to_local_json(filename):
             with open(hankyungconsen_research_path, 'r', encoding='utf-8') as json_file:
                 hankyungconsen_data = json.load(json_file)
                 additional_firms.update(item["FIRM_NM"] for item in hankyungconsen_data)
-                print(f"추가된 hankyungconsen_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+                print(f"\n추가된 hankyungconsen_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
 
     # 추가된 목록을 sent_firms에 합치기
     sent_firms.update(additional_firms)
-    print(f"최종 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
+    print(f"\n최종 FIRM_NM 목록: {sent_firms}")  # 디버깅 로그 추가
 
     # 조건에 맞는 데이터를 필터링합니다.
     unsent_data = [
@@ -195,7 +199,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     ]
 
     # 디버깅 로그 추가
-    print(f"필터링된 unsent_data: {unsent_data}")
+    print(f"\n필터링된 unsent_data: {unsent_data}")
 
     messages = []
     current_message = ""
@@ -209,7 +213,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         if firm_nm != previous_firm_nm:
             if previous_firm_nm is not None:
                 current_message += "\n"
-            current_message += f"●{firm_nm}\n"
+            current_message += f"\n●{firm_nm}\n"
             previous_firm_nm = firm_nm
 
         # 메시지의 길이가 3000자를 넘으면 분리
@@ -230,10 +234,10 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if not os.path.exists(directory):
         os.makedirs(directory)
-        print(f"디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     if not os.path.exists(file_path):
-        print(f"파일 경로 '{file_path}'가 존재하지 않습니다.")
+        print(f"\n파일 경로 '{file_path}'가 존재하지 않습니다.")
         return
 
     # 대상 날짜를 설정합니다. 날짜를 받지 않은 경우 오늘 날짜로 설정합니다.
@@ -252,7 +256,7 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
     with open(file_path, 'w', encoding='utf-8') as json_file:
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
-    print(f"{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
+    print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
