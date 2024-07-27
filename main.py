@@ -1705,6 +1705,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
+        # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
             print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
@@ -1739,6 +1740,43 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     driver.quit()
 
     return sendMessageText
+
+def Koreainvestment_GET_LIST_ARTICLE_URL(string):
+    string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
+    params = string.split(",")
+    print(len(params),params)
+    print('###############')
+    for i in params:
+        print(i)
+    print('###############')
+    
+    # 문자열에서 필요한 정보 추출
+    category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
+    filename = params[2].strip()
+    option = params[3].strip()
+    datasubmitdate = params[4].strip()
+    air_yn = params[5].strip()
+    kor_yn = params[6].strip()
+    special_yn = params[7].strip()
+
+    # 함수 호출
+    r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
+
+    # 입력 URL을 파싱합니다.
+    parsed_url = urlparse.urlparse(r)
+    
+    # 쿼리 파라미터를 파싱합니다.
+    query_params = urlparse.parse_qs(parsed_url.query)
+    
+    # filepath와 filename 값을 가져옵니다.
+    filepath = query_params.get('filepath', [''])[0]
+    filename = query_params.get('filename', [''])[0]
+    
+    # 새로운 URL을 생성합니다.
+    new_url = f"http://file.truefriend.com/Storage/{filepath}/{filename}"
+    
+    return new_url
+
 
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
     filename = urllib.parse.quote(filename)
@@ -1814,28 +1852,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 
     # print(url)
     return url
-
-def Koreainvestment_GET_LIST_ARTICLE_URL(string):
-    string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
-    params = string.split(",")
-    # print(len(params),params)
-    # print('###############')
-    # for i in params:
-    #     print(i)
-    # print('###############')
-    
-    # 문자열에서 필요한 정보 추출
-    category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
-    filename = params[2].strip()
-    option = params[3].strip()
-    datasubmitdate = params[4].strip()
-    air_yn = params[5].strip()
-    kor_yn = params[6].strip()
-    special_yn = params[7].strip()
-
-    # 함수 호출
-    r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
-    return r
 
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -2408,19 +2424,19 @@ def main():
     
     # check functions 리스트
     check_functions = [
-        LS_checkNewArticle,
-        ShinHanInvest_checkNewArticle,
-        NHQV_checkNewArticle,
-        HANA_checkNewArticle,
-        KB_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle, # 주석 처리된 부분
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
-        Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
+        # LS_checkNewArticle,
+        # ShinHanInvest_checkNewArticle,
+        # NHQV_checkNewArticle,
+        # HANA_checkNewArticle,
+        # KB_checkNewArticle,
+        # Samsung_checkNewArticle,
+        # Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        # Shinyoung_checkNewArticle,
+        # Miraeasset_checkNewArticle,
+        # Hmsec_checkNewArticle,
+        # Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle
+        # DAOL_checkNewArticle
     ]
 
     for check_function in check_functions:
