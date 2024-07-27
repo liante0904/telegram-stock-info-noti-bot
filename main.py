@@ -17,7 +17,6 @@ import base64
 from typing import List
 from bs4 import BeautifulSoup
 
-
 from package import googledrive
 from package.firm_info import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
@@ -28,9 +27,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-
-# import secretkey
 
 from requests import get  # to make GET request
 
@@ -55,7 +51,6 @@ TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 BASE_PATH                                           = ""
-
 
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
@@ -2424,19 +2419,19 @@ def main():
     
     # check functions 리스트
     check_functions = [
-        # LS_checkNewArticle,
-        # ShinHanInvest_checkNewArticle,
-        # NHQV_checkNewArticle,
-        # HANA_checkNewArticle,
-        # KB_checkNewArticle,
-        # Samsung_checkNewArticle,
-        # Sangsanginib_checkNewArticle, # 주석 처리된 부분
-        # Shinyoung_checkNewArticle,
-        # Miraeasset_checkNewArticle,
-        # Hmsec_checkNewArticle,
-        # Kiwoom_checkNewArticle,
+        LS_checkNewArticle,
+        ShinHanInvest_checkNewArticle,
+        NHQV_checkNewArticle,
+        HANA_checkNewArticle,
+        KB_checkNewArticle,
+        Samsung_checkNewArticle,
+        Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        Shinyoung_checkNewArticle,
+        Miraeasset_checkNewArticle,
+        Hmsec_checkNewArticle,
+        Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
-        # DAOL_checkNewArticle
+        DAOL_checkNewArticle
     ]
 
     for check_function in check_functions:
