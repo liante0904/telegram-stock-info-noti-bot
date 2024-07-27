@@ -825,6 +825,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
         # 제목 가공
+        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
         LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
 
         # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
