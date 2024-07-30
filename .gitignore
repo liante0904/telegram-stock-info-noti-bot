@@ -161,4 +161,5 @@ requirements.txt_bak
 .vscode/settings.json
 naver_*.json
 *.json
-testcode/*
+token.*
+token.pickle
