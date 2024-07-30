@@ -17,7 +17,6 @@ import base64
 from typing import List
 from bs4 import BeautifulSoup
 
-
 from package import googledrive
 from package.firm_info import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
@@ -28,9 +27,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-
-# import secretkey
 
 from requests import get  # to make GET request
 
@@ -55,7 +51,6 @@ TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
 TELEGRAM_CHANNEL_ID_TEST                            = ""
 TELEGRAM_USER_ID_DEV                                = ""
 BASE_PATH                                           = ""
-
 
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
@@ -830,8 +825,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
         # 제목 가공
-        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("(수정)","")
-        
+        LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
         LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
 
         # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1707,11 +1701,12 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
+        # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수
             print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            # DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+            DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -1741,6 +1736,43 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     driver.quit()
 
     return sendMessageText
+
+def Koreainvestment_GET_LIST_ARTICLE_URL(string):
+    string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
+    params = string.split(",")
+    print(len(params),params)
+    print('###############')
+    for i in params:
+        print(i)
+    print('###############')
+    
+    # 문자열에서 필요한 정보 추출
+    category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
+    filename = params[2].strip()
+    option = params[3].strip()
+    datasubmitdate = params[4].strip()
+    air_yn = params[5].strip()
+    kor_yn = params[6].strip()
+    special_yn = params[7].strip()
+
+    # 함수 호출
+    r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
+
+    # 입력 URL을 파싱합니다.
+    parsed_url = urlparse.urlparse(r)
+    
+    # 쿼리 파라미터를 파싱합니다.
+    query_params = urlparse.parse_qs(parsed_url.query)
+    
+    # filepath와 filename 값을 가져옵니다.
+    filepath = query_params.get('filepath', [''])[0]
+    filename = query_params.get('filename', [''])[0]
+    
+    # 새로운 URL을 생성합니다.
+    new_url = f"http://file.truefriend.com/Storage/{filepath}/{filename}"
+    
+    return new_url
+
 
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
     filename = urllib.parse.quote(filename)
@@ -1816,28 +1848,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 
     # print(url)
     return url
-
-def Koreainvestment_GET_LIST_ARTICLE_URL(string):
-    string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
-    params = string.split(",")
-    # print(len(params),params)
-    # print('###############')
-    # for i in params:
-    #     print(i)
-    # print('###############')
-    
-    # 문자열에서 필요한 정보 추출
-    category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
-    filename = params[2].strip()
-    option = params[3].strip()
-    datasubmitdate = params[4].strip()
-    air_yn = params[5].strip()
-    kor_yn = params[6].strip()
-    special_yn = params[7].strip()
-
-    # 함수 호출
-    r = Koreainvestment_MAKE_LIST_ARTICLE_URL(category, filename, option, datasubmitdate, air_yn, kor_yn, special_yn)
-    return r
 
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
