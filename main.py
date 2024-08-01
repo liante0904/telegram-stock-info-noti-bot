@@ -2441,9 +2441,11 @@ def main():
         if len(r) > 0:
             sendMessageText += GetSendMessageTitle() + r
             if len(sendMessageText) > 3500 : asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+            sendMessageText = ''
     
     if len(sendMessageText) > 0:
         asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+        sendMessageText = ''
 
 if __name__ == "__main__":
     main()
