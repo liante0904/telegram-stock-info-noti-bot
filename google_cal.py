@@ -241,16 +241,33 @@ def delete_all_events(calendar_id):
         return
 
     now = datetime.utcnow().isoformat() + 'Z'
-    future = (datetime.utcnow() + timedelta(days=90)).isoformat() + 'Z'
-    events = service.events().list(calendarId=calendar_id, timeMin=now, timeMax=future).execute()
+    page_token = None
     
-    for event in events.get('items', []):
+    while True:
         try:
-            event_id = event['id']
-            service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
-            print(f'이벤트 삭제됨: {event.get("summary")} (ID: {event_id})')
+            # 이벤트를 페이지네이션 처리하여 가져오기
+            events = service.events().list(
+                calendarId=calendar_id,
+                timeMin=now,
+                pageToken=page_token
+            ).execute()
+            
+            for event in events.get('items', []):
+                try:
+                    event_id = event['id']
+                    service.events().delete(calendarId=calendar_id, eventId=event_id).execute()
+                    print(f'이벤트 삭제됨: {event.get("summary")} (ID: {event_id})')
+                except Exception as e:
+                    print(f'이벤트 삭제 중 오류 발생: {e}')
+            
+            # 다음 페이지가 있으면 계속해서 가져오기
+            page_token = events.get('nextPageToken')
+            if not page_token:
+                break  # 더 이상 페이지가 없으면 종료
+        
         except Exception as e:
-            print(f'이벤트 삭제 중 오류 발생: {e}')
+            print(f'이벤트 조회 중 오류 발생: {e}')
+            break
 
 def main():
     """메인 함수"""
