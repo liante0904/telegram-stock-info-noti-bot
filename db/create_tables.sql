@@ -1,0 +1,38 @@
+-- SQLite 데이터베이스 파일을 생성합니다.
+-- sudo apt-get install sqlite3
+--sqlite3 ~/sqlite3/telegram.db < create_tables.sql
+CREATE TABLE IF NOT EXISTS hankyungconsen (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    SEC_FIRM_ORDER INTEGER,
+    ARTICLE_BOARD_ORDER INTEGER,
+    FIRM_NM TEXT,
+    ATTACH_URL TEXT UNIQUE, -- 유니크 제약 조건 추가
+    ARTICLE_TITLE TEXT,
+    SEND_USER TEXT, -- JSON 형식으로 저장
+    MAIN_CH_SEND_YN TEXT,
+    SAVE_TIME TEXT
+);
+
+CREATE TABLE IF NOT EXISTS data_main_daily_send (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    SEC_FIRM_ORDER INTEGER,
+    ARTICLE_BOARD_ORDER INTEGER,
+    FIRM_NM TEXT,
+    ATTACH_URL TEXT UNIQUE, -- 유니크 제약 조건 추가
+    ARTICLE_TITLE TEXT,
+    SEND_USER TEXT, -- JSON 형식으로 저장
+    MAIN_CH_SEND_YN TEXT,
+    SAVE_TIME TEXT
+);
+
+CREATE TABLE IF NOT EXISTS naver_research (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    SEC_FIRM_ORDER INTEGER,
+    ARTICLE_BOARD_ORDER INTEGER,
+    FIRM_NM TEXT,
+    ATTACH_URL TEXT UNIQUE, -- 유니크 제약 조건 추가
+    ARTICLE_TITLE TEXT,
+    SEND_USER TEXT, -- JSON 형식으로 저장
+    MAIN_CH_SEND_YN TEXT,
+    SAVE_TIME TEXT
+);
