@@ -6,6 +6,12 @@ import argparse
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
 
+# 현재 스크립트 파일의 디렉토리 경로
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# JSON 파일 경로
+json_dir = os.path.join(script_dir, 'json')
+
 # SQLite 데이터베이스 연결
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
@@ -37,7 +43,9 @@ def print_tables():
 def insert_data():
     """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
     for json_file, table_name in json_files.items():
-        with open(f'~/json/{json_file}', 'r', encoding='utf-8') as file:
+        json_file_path = os.path.join(json_dir, json_file)
+        print(json_file_path)
+        with open(json_file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             for entry in data:
                 cursor.execute(f'''
