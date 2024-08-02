@@ -37,7 +37,7 @@ def print_tables():
 def insert_data():
     """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
     for json_file, table_name in json_files.items():
-        with open(os.path.expanduser(f'~/json/{json_file}'), 'r', encoding='utf-8') as file:
+        with open(f'~/json/{json_file}', 'r', encoding='utf-8') as file:
             data = json.load(file)
             for entry in data:
                 cursor.execute(f'''
