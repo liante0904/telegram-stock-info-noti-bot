@@ -19,7 +19,7 @@ json_files = {
 
 # 명령행 인자 파서 설정
 parser = argparse.ArgumentParser(description="SQLite Database Management Script")
-parser.add_argument('action', choices=['table', 'insert', 'select'], help="Action to perform")
+parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select'], help="Action to perform")
 parser.add_argument('name', nargs='?', help="Table name for the action")
 args = parser.parse_args()
 
@@ -70,7 +70,8 @@ def select_data(table=None):
         for row in rows:
             print(row)
 
-if args.action == 'table':
+# 명령 실행
+if args.action == 'table' or args.action is None:
     print_tables()
 elif args.action == 'insert':
     insert_data()
