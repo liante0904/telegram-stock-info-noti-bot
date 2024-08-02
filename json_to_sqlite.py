@@ -25,7 +25,7 @@ json_files = {
 
 # 명령행 인자 파서 설정
 parser = argparse.ArgumentParser(description="SQLite Database Management Script")
-parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select'], help="Action to perform")
+parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'keyword_select'], help="Action to perform")
 parser.add_argument('name', nargs='?', help="Table name for the action")
 args = parser.parse_args()
 
@@ -78,6 +78,36 @@ def select_data(table=None):
         for row in rows:
             print(row)
 
+def keyword_select(keyword):
+    """특정 키워드가 포함된 기사 제목을 가진 데이터를 조회하고, 특정 조건에 따라 필터링합니다."""
+    # 기준 테이블에서 키워드 포함 데이터 추출
+    cursor.execute(f"""
+        SELECT FIRM_NM, ARTICLE_TITLE, SAVE_TIME
+        FROM data_main_daily_send
+        WHERE ARTICLE_TITLE LIKE ?
+    """, (f'%{keyword}%',))
+    main_results = cursor.fetchall()
+    main_firms = {row[0] for row in main_results}  # 기준 테이블의 증권사 목록
+
+    print(f"\nResults from data_main_daily_send containing '{keyword}':")
+    for result in main_results:
+        print(result)
+
+    # 다른 테이블에서 키워드 포함 데이터를 추출하며, 기준 테이블에 없는 증권사만 추출
+    other_tables = [table for table in json_files.values() if table != 'data_main_daily_send']
+    for table in other_tables:
+        cursor.execute(f"""
+            SELECT FIRM_NM, ARTICLE_TITLE, SAVE_TIME
+            FROM {table}
+            WHERE ARTICLE_TITLE LIKE ? AND FIRM_NM NOT IN ({', '.join('?'*len(main_firms))})
+        """, (f'%{keyword}%', *main_firms))
+
+        other_results = cursor.fetchall()
+        
+        print(f"\nResults from {table} containing '{keyword}':")
+        for result in other_results:
+            print(result)
+
 # 명령 실행
 if args.action == 'table' or args.action is None:
     print_tables()
@@ -85,6 +115,11 @@ elif args.action == 'insert':
     insert_data()
 elif args.action == 'select':
     select_data(args.name)
+elif args.action == 'keyword_select':
+    if args.name:
+        keyword_select(args.name)
+    else:
+        print("Error: 'keyword_select' action requires a keyword argument.")
 
 # 연결 종료
 conn.close()
