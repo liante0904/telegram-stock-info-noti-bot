@@ -2,6 +2,7 @@ import json
 import sqlite3
 import os
 import argparse
+from datetime import datetime  # datetime 모듈 추가
 
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
@@ -48,6 +49,8 @@ def insert_data():
         with open(json_file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             for entry in data:
+                # 현재 시스템 시간을 SAVE_TIME으로 설정
+                current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
@@ -59,7 +62,7 @@ def insert_data():
                     entry["FIRM_NM"],
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
-                    entry["SAVE_TIME"]
+                    current_time  # 현재 시간을 SAVE_TIME으로 사용
                 ))
     print("Data inserted successfully.")
     conn.commit()
