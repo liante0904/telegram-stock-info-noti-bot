@@ -2,7 +2,7 @@ import json
 import sqlite3
 import os
 import argparse
-from datetime import datetime  # datetime 모듈 추가
+from datetime import datetime
 
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
@@ -49,8 +49,6 @@ def insert_data():
         with open(json_file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             for entry in data:
-                # 현재 시스템 시간을 SAVE_TIME으로 설정
-                current_time = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
@@ -62,7 +60,7 @@ def insert_data():
                     entry["FIRM_NM"],
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
-                    current_time  # 현재 시간을 SAVE_TIME으로 사용
+                    entry["SAVE_TIME"]
                 ))
     print("Data inserted successfully.")
     conn.commit()
@@ -81,35 +79,98 @@ def select_data(table=None):
         for row in rows:
             print(row)
 
+def format_message(data_list):
+    """데이터를 포맷팅하여 문자열로 반환합니다."""
+    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
+    formatted_messages = []
+
+    # 특정 FIRM_NM을 제외할 리스트
+    EXCLUDED_FIRMS = {"네이버", "조선비즈"}
+
+    # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
+    if isinstance(data_list, tuple):
+        data_list = [data_list]
+
+    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
+
+    for data in data_list:
+        # 데이터 항목을 사전으로 변환
+        data_dict = {
+            'FIRM_NM': data[0],
+            'ARTICLE_TITLE': data[1],
+            'ATTACH_URL': data[2],
+            'SAVE_TIME': data[3]
+        }
+        
+        ARTICLE_TITLE = data_dict['ARTICLE_TITLE']
+        ARTICLE_URL = data_dict['ATTACH_URL']
+        
+        sendMessageText = ""
+        
+        # 'FIRM_NM'이 존재하는 경우에만 포함
+        if 'FIRM_NM' in data_dict:
+            FIRM_NM = data_dict['FIRM_NM']
+            # data_list가 단건인 경우, 회사명 출력을 생략
+            if len(data_list) > 1:
+                # 제외할 FIRM_NM이 아닌 경우에만 처리
+                if '네이버' not in FIRM_NM and '조선비즈' not in FIRM_NM:
+                    # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
+                    if FIRM_NM != last_firm_nm:
+                        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                        last_firm_nm = FIRM_NM
+        
+        # 게시글 제목(굵게)
+        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+        # 원문 링크
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+        formatted_messages.append(sendMessageText)
+    
+    # 모든 메시지를 하나의 문자열로 결합합니다.
+    return "\n".join(formatted_messages)
+
 def keyword_select(keyword):
     """특정 키워드가 포함된 기사 제목을 가진 데이터를 조회하고, 특정 조건에 따라 필터링합니다."""
+    today = datetime.now().strftime('%Y-%m-%d')  # 오늘 날짜를 'YYYY-MM-DD' 형식으로 저장
+
     # 기준 테이블에서 키워드 포함 데이터 추출
     cursor.execute(f"""
-        SELECT FIRM_NM, ARTICLE_TITLE, SAVE_TIME
+        SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, SAVE_TIME
         FROM data_main_daily_send
-        WHERE ARTICLE_TITLE LIKE ?
-    """, (f'%{keyword}%',))
+        WHERE ARTICLE_TITLE LIKE ? AND DATE(SAVE_TIME) = ?
+    """, (f'%{keyword}%', today))
     main_results = cursor.fetchall()
     main_firms = {row[0] for row in main_results}  # 기준 테이블의 증권사 목록
 
-    print(f"\nResults from data_main_daily_send containing '{keyword}':")
+    print(f"\nResults containing '{keyword}' on {today}:")
     for result in main_results:
         print(result)
 
     # 다른 테이블에서 키워드 포함 데이터를 추출하며, 기준 테이블에 없는 증권사만 추출
-    other_tables = [table for table in json_files.values() if table != 'data_main_daily_send']
-    for table in other_tables:
-        cursor.execute(f"""
-            SELECT FIRM_NM, ARTICLE_TITLE, SAVE_TIME
-            FROM {table}
-            WHERE ARTICLE_TITLE LIKE ? AND FIRM_NM NOT IN ({', '.join('?'*len(main_firms))})
-        """, (f'%{keyword}%', *main_firms))
+    query_parts = [
+        f"""
+        SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, SAVE_TIME
+        FROM {table}
+        WHERE ARTICLE_TITLE LIKE ? AND DATE(SAVE_TIME) = ? AND FIRM_NM NOT IN ({','.join('?'*len(main_firms))})
+        """
+        for table in json_files.values()
+        if table != 'data_main_daily_send'
+    ]
 
-        other_results = cursor.fetchall()
-        
-        print(f"\nResults from {table} containing '{keyword}':")
-        for result in other_results:
-            print(result)
+    # 전체 쿼리 조합
+    union_query = " UNION ".join(query_parts)
+    params = [f'%{keyword}%', today] * (len(json_files) - 1) + list(main_firms) * (len(json_files) - 1)
+
+    # `ORDER BY` 추가: SAVE_TIME과 FIRM_NM으로 정렬
+    final_query = f"""
+    {union_query}
+    ORDER BY SAVE_TIME ASC, FIRM_NM ASC
+    """
+    cursor.execute(final_query, params)
+
+    other_results = cursor.fetchall()
+    formatted_message = format_message(main_results + other_results)
+    print(formatted_message)
+    return formatted_message
 
 # 명령 실행
 if args.action == 'table' or args.action is None:
