@@ -480,7 +480,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
-    
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
@@ -2054,6 +2053,7 @@ def DownloadFile(URL, FILE_NAME):
     print("DownloadFile()",URL, FILE_NAME)
 
     BOARD_NM = ''
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
     CONVERT_URL = URL 
     for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
@@ -2078,7 +2078,6 @@ def DownloadFile(URL, FILE_NAME):
     print('FILE_NAME 확장자 제거 ,', FILE_NAME)
     FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
     FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + firm_info['firm_name']
-
     # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
     MAX_FILE_NAME_LENGTH = 240
     if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
@@ -2107,7 +2106,10 @@ def DownloadFile(URL, FILE_NAME):
 def DownloadFile_wget(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile_wget()",URL, FILE_NAME)
+
+
     BOARD_NM = ''
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
     CONVERT_URL = URL 
     for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
