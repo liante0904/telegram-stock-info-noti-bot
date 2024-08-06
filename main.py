@@ -113,7 +113,7 @@ def LS_checkNewArticle():
 
 def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     global LIST_ARTICLE_TITLE
-
+    global firm_info
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Encoding": "gzip, deflate, br",
@@ -262,8 +262,6 @@ def LS_detail(ARTICLE_URL, date):
 
     return item
 
-
-
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -308,7 +306,7 @@ def ShinHanInvest_checkNewArticle():
  
 # JSON API 타입
 def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     # 변동되는 파라미터 
     board_name = TARGET_URL
     # 고정된 파라미터
@@ -401,131 +399,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     return sendMessageText
 
-
-def KB_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-    global firm_info
-    
-
-    SEC_FIRM_ORDER      = 4
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    
-    # KB증권 오늘의 레포트
-    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
-    # KB증권 기업분석
-    # TARGET_URL_1 = ''
-    
-    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
-
-    # TARGET_URL_TUPLE = (TARGET_URL_0)
-    
-    
-    sendMessageText = ''
-    # URL GET
-    try:
-        sendMessageText += KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    except:
-        if len(sendMessageText) > 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-
-    return sendMessageText
- 
-# JSON API 타입
-def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
-    # 요청 헤더
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-        "Connection": "keep-alive",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-    }
-
-    # 요청 payload 데이터
-    payload = {
-        "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": GetCurrentDate("YYYYMMDD"),
-        "registdateTo": GetCurrentDate("YYYYMMDD"),
-        "templateid": "",
-        "lowTempId": "",
-        "folderid": "", #"37,38,186",
-        "callGbn": "RCLIST"
-    }
-
-    # POST 요청 보내기
-    response = requests.post(TARGET_URL, headers=headers, json=payload)
-
-    # 응답 확인
-    if response.status_code == 200:
-        jres = response.json()
-        # print(jres)  # 데이터 출력 또는 처리
-        # return
-    else:
-        print("요청에 실패했습니다. 상태 코드:", response.status_code)
-
-    strList = jres['response']['reportList']
-    # print(strList)
-    
-    
-    # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
-    
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for list in strList:
-        # print(list)
-
-        LIST_ARTICLE_TITLE = list['docTitleSub']
-        if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        else: LIST_ARTICLE_TITLE = list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-        LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
-        
-        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
- 
-        sendMessageText += save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
-
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
-    return sendMessageText
-
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -554,7 +427,7 @@ def NHQV_checkNewArticle():
     return sendMessageText
  
 def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-    
+    global firm_info
     payload = {
         "trName": "H3211",
         "rshPprDruTmSt": "00000000",
@@ -702,7 +575,7 @@ def HANA_checkNewArticle():
     return sendMessageText
 
 def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     try:
         webpage = requests.get(TARGET_URL, verify=False)
     except:
@@ -751,6 +624,131 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     return sendMessageText
 
+
+def KB_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+    global firm_info
+    
+
+    SEC_FIRM_ORDER      = 4
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    
+    # KB증권 오늘의 레포트
+    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
+    # KB증권 기업분석
+    # TARGET_URL_1 = ''
+    
+    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
+
+    # TARGET_URL_TUPLE = (TARGET_URL_0)
+    
+    
+    sendMessageText = ''
+    # URL GET
+    try:
+        sendMessageText += KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+    except:
+        if len(sendMessageText) > 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
+            sendMessageText = ''
+
+    return sendMessageText
+ 
+# JSON API 타입
+def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global firm_info
+    # 요청 헤더
+    headers = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Connection": "keep-alive",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest"
+    }
+
+    # 요청 payload 데이터
+    payload = {
+        "pageNo": 1,
+        "pageSize": 60,
+        "registdateFrom": GetCurrentDate("YYYYMMDD"),
+        "registdateTo": GetCurrentDate("YYYYMMDD"),
+        "templateid": "",
+        "lowTempId": "",
+        "folderid": "", #"37,38,186",
+        "callGbn": "RCLIST"
+    }
+
+    # POST 요청 보내기
+    response = requests.post(TARGET_URL, headers=headers, json=payload)
+
+    # 응답 확인
+    if response.status_code == 200:
+        jres = response.json()
+        # print(jres)  # 데이터 출력 또는 처리
+        # return
+    else:
+        print("요청에 실패했습니다. 상태 코드:", response.status_code)
+
+    strList = jres['response']['reportList']
+    # print(strList)
+    
+    
+    # 연속키 데이터베이스화 작업
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+
+    
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in strList:
+        # print(list)
+
+        LIST_ARTICLE_TITLE = list['docTitleSub']
+        if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+        else: LIST_ARTICLE_TITLE = list['docTitleSub']
+        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+        LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
+        
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+ 
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=firm_info['firm_name'],
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+
+    return sendMessageText
+
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -786,7 +784,7 @@ def Samsung_checkNewArticle():
     return sendMessageText
 
 def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     try:
         webpage = requests.get(TARGET_URL, verify=False)
     except:
@@ -895,7 +893,7 @@ def Sangsanginib_checkNewArticle():
     return sendMessageText
 
 def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     jres = ''
     headers = {
         "Accept": "*/*",
@@ -980,6 +978,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Sangsanginib_detail(NT_NO, CMS_CD):
+    global firm_info
     ntNo = NT_NO
     cmsCd = CMS_CD
     print('Sangsanginib_detail***********************')
@@ -1064,7 +1063,7 @@ def Shinyoung_checkNewArticle():
     return sendMessageText
 
 def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     jres = ''
     url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
     headers = {
@@ -1142,6 +1141,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Shinyoung_detail(SEQ, BBSNO):
+    global firm_info
     print('******************Shinyoung_detail***************')
     # ntNo = NT_NO
     # cmsCd = CMS_CD
@@ -1310,7 +1310,7 @@ def Miraeasset_checkNewArticle():
     return sendMessageText
 
 def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
         "Accept-Encoding": "gzip, deflate, br",
@@ -1398,116 +1398,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     return sendMessageText
 
-def Kiwoom_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-    global firm_info
-    
-
-    SEC_FIRM_ORDER = 10
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    # 키움증권 기업 분석
-    TARGET_URL_0 =  'https://bbn.kiwoom.com/research/SResearchCRListAjax'
-    # 키움증권 산업 분석
-    TARGET_URL_1 =  'https://bbn.kiwoom.com/research/SResearchCIListAjax'
-    # 키움증권 스팟 노트
-    TARGET_URL_2 =  'https://bbn.kiwoom.com/research/SResearchSNListAjax'
-    # 키움증권 미국/선진국
-    TARGET_URL_3 =  'https://bbn.kiwoom.com/research/SResearchCCListAjax'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2, TARGET_URL_3)
-
-    sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-        try:
-            sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        except:
-            if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                
-    return sendMessageText
- 
-def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
-    payload = {
-        "pageNo": 1,
-        "pageSize": 10,
-        "stdate": '20231023',
-        "eddate": GetCurrentDate("yyyymmdd"),
-        "f_keyField": '', 
-        "f_key": '',
-        "_reqAgent": 'ajax',
-        "dummyVal": 0
-    }
-
-    try:
-        webpage = requests.post(TARGET_URL,data=payload)
-        # print(webpage.text)
-        jres = json.loads(webpage.text)
-    except:
-        return True
-        
-    if jres['totalCount'] == 0 : return ''
-
-    # print(jres['researchList'])
-    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-
-    # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for list in jres['researchList']:
-        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-        # print(list)
-        # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
-        LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
-        LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
-        LIST_ARTICLE_TITLE = list['titl']
-
-        # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
-
-        sendMessageText += save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print(LIST_ARTICLE_URL)
-            print(LIST_ARTICLE_TITLE)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
-
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-                
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
-
-    return sendMessageText
-
 def Hmsec_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1544,7 +1434,7 @@ def Hmsec_checkNewArticle():
     return sendMessageText
  
 def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     payload = {"curPage":1}
 
     jres = ''
@@ -1623,6 +1513,116 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     return sendMessageText
 
+def Kiwoom_checkNewArticle():
+    global ARTICLE_BOARD_ORDER
+    global SEC_FIRM_ORDER
+    global firm_info
+    
+
+    SEC_FIRM_ORDER = 10
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    # 키움증권 기업 분석
+    TARGET_URL_0 =  'https://bbn.kiwoom.com/research/SResearchCRListAjax'
+    # 키움증권 산업 분석
+    TARGET_URL_1 =  'https://bbn.kiwoom.com/research/SResearchCIListAjax'
+    # 키움증권 스팟 노트
+    TARGET_URL_2 =  'https://bbn.kiwoom.com/research/SResearchSNListAjax'
+    # 키움증권 미국/선진국
+    TARGET_URL_3 =  'https://bbn.kiwoom.com/research/SResearchCCListAjax'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2, TARGET_URL_3)
+
+    sendMessageText = ''
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        try:
+            sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+        except:
+            if len(sendMessageText) > 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
+                sendMessageText = ''
+                
+    return sendMessageText
+ 
+def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+    global firm_info
+    payload = {
+        "pageNo": 1,
+        "pageSize": 10,
+        "stdate": '20231023',
+        "eddate": GetCurrentDate("yyyymmdd"),
+        "f_keyField": '', 
+        "f_key": '',
+        "_reqAgent": 'ajax',
+        "dummyVal": 0
+    }
+
+    try:
+        webpage = requests.post(TARGET_URL,data=payload)
+        # print(webpage.text)
+        jres = json.loads(webpage.text)
+    except:
+        return True
+        
+    if jres['totalCount'] == 0 : return ''
+
+    # print(jres['researchList'])
+    # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+
+    # 연속키 데이터베이스화 작업
+    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+
+    nNewArticleCnt = 0
+    sendMessageText = ''
+    # JSON To List
+    for list in jres['researchList']:
+        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+        # print(list)
+        # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
+        LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
+        LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
+        LIST_ARTICLE_TITLE = list['titl']
+
+        # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+
+        sendMessageText += save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=firm_info['firm_name'],
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            nNewArticleCnt += 1 # 새로운 게시글 수
+            print(LIST_ARTICLE_URL)
+            print(LIST_ARTICLE_TITLE)
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
+            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
+            sendMessageText = ''
+            nNewArticleCnt = 0
+
+    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        return
+                
+    print('**************')
+    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
+    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+        print(sendMessageText)
+
+
+    return sendMessageText
+
 def Koreainvestment_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -1654,7 +1654,7 @@ def Koreainvestment_selenium_checkNewArticle():
     return sendMessageText
 
 def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -1738,6 +1738,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
+    global firm_info
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
     params = string.split(",")
     print(len(params),params)
@@ -1775,6 +1776,7 @@ def Koreainvestment_GET_LIST_ARTICLE_URL(string):
 
 
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
+    global firm_info
     filename = urllib.parse.quote(filename)
     filepath = filepath
     
@@ -1904,7 +1906,7 @@ def DAOL_checkNewArticle():
  
 # JSON API 타입
 def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     # URL을 파싱하여 주소와 쿼리 파라미터를 추출
     parsed_url = urlparse.urlparse(TARGET_URL)
 
