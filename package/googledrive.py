@@ -15,50 +15,23 @@ def calculate_md5(file_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
-def file_exists(drive, file_name, file_md5, folder_id):
-    query = f"'{folder_id}' in parents and name='{file_name}' and trashed=false"
-    results = drive.files().list(q=query, spaces='drive', fields='files(id, name, md5Checksum)').execute()
+def strip_date_from_filename(filename):
+    parts = filename.split('_', 1)
+    return parts[1] if len(parts) > 1 else filename
+
+def file_exists(drive, file_name_without_date, folder_id):
+    query = f"'{folder_id}' in parents and name contains '{file_name_without_date}' and trashed=false"
+    results = drive.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
     items = results.get('files', [])
     for item in items:
-        if item.get('md5Checksum') == file_md5:
+        if file_name_without_date in item.get('name'):
             return item['id']
     return None
 
-def delete_duplicate_files(drive, folder_id):
-    query = f"'{folder_id}' in parents and trashed=false"
-    results = drive.files().list(q=query, spaces='drive', fields='files(id, name, md5Checksum, createdTime, modifiedTime)').execute()
-    items = results.get('files', [])
-    
-    md5_dict = {}
-    for item in items:
-        file_md5 = item.get('md5Checksum')
-        if file_md5:
-            if file_md5 in md5_dict:
-                existing_item = md5_dict[file_md5]
-                existing_time = existing_item['createdTime']
-                current_time = item['createdTime']
-                # 최신 파일을 삭제하는 조건
-                if current_time > existing_time:
-                    print(f"Deleting duplicate file: {item['name']} ({item['id']})")
-                    drive.files().delete(fileId=item['id']).execute()
-                else:
-                    print(f"Deleting duplicate file: {existing_item['name']} ({existing_item['id']})")
-                    drive.files().delete(fileId=existing_item['id']).execute()
-                    md5_dict[file_md5] = item
-            else:
-                md5_dict[file_md5] = item
-
 def upload(*args):
-    # 현재 모듈의 파일 경로를 가져옵니다.
     current_file_path = os.path.abspath(__file__)
-
-    # __main__ 모듈의 경로를 가져옵니다.
     main_module_path = sys.modules['__main__'].__file__
-
-    # 절대 경로로 변환합니다.
     main_module_path = os.path.abspath(main_module_path)
-    
-    # 프로젝트 경로로 이동 
     main_module_path = os.path.dirname(main_module_path)
 
     print("메인 파일 경로:", main_module_path)
@@ -86,9 +59,10 @@ def upload(*args):
     for f in uploadfiles:
         fname = f
         file_md5 = calculate_md5(fname)
-        existing_file_id = file_exists(drive, fname, file_md5, folderId)
+        file_name_without_date = strip_date_from_filename(fname)
+        existing_file_id = file_exists(drive, file_name_without_date, folderId)
         if existing_file_id:
-            print(f"File '{fname}' already exists in folder ID '{folderId}' with the same content. Upload canceled.")
+            print(f"File with similar name '{file_name_without_date}' already exists in folder ID '{folderId}'. Upload canceled.")
             continue
 
         metadata = {'name': fname, 'parents': [folderId], 'mimeType': None}
@@ -99,13 +73,16 @@ def upload(*args):
             print('uploadFileId %s' % res.get('id'))
             uploadFileId = res.get('id')
 
-    googleDriveUrl = 'https://drive.google.com/file/d/'
-    googleDriveViewerUrl = 'https://drive.google.com/u/0/uc?id='
-    googleDriveUrl += uploadFileId
-    googleDriveViewerUrl += uploadFileId
-    # print(f'google drive URL {googleDriveUrl}')
-    print(f'google driveViewer URL {googleDriveViewerUrl}')
-    return googleDriveViewerUrl
+    if uploadFileId:
+        googleDriveUrl = 'https://drive.google.com/file/d/'
+        googleDriveViewerUrl = 'https://drive.google.com/u/0/uc?id='
+        googleDriveUrl += uploadFileId
+        googleDriveViewerUrl += uploadFileId
+        print(f'google driveViewer URL {googleDriveViewerUrl}')
+        return googleDriveViewerUrl
+    else:
+        print('No new file uploaded.')
+        return None
 
 if __name__ == "__main__":
     action = sys.argv[1]  # 'upload' or 'delete_duplicates'
@@ -122,7 +99,5 @@ if __name__ == "__main__":
 
     if action == 'upload' and file_name:
         upload(file_name)
-    elif action == 'delete_duplicates':
-        delete_duplicate_files(drive, folder_id)
     else:
         print("Invalid action or missing file name for upload.")
