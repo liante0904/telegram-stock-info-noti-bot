@@ -64,7 +64,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
             return format_message(new_data)
     else:
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
-        return ''
+        return None
 
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
