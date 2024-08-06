@@ -441,7 +441,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     listR = []
     while True:
         
-        print('************************************')
         try:
             webpage = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
@@ -981,7 +980,6 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     global firm_info
     ntNo = NT_NO
     cmsCd = CMS_CD
-    print('Sangsanginib_detail***********************')
     url = "https://www.sangsanginib.com/notice/getNoticeDetail"
     headers = {
         "Accept": "*/*",
@@ -1142,7 +1140,6 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 def Shinyoung_detail(SEQ, BBSNO):
     global firm_info
-    print('******************Shinyoung_detail***************')
     # ntNo = NT_NO
     # cmsCd = CMS_CD
     # POST 요청에 사용할 URL
@@ -1168,11 +1165,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200:
-        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
-        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('devPass:', response.text)
-    else:
+    if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     
     # 서버에서 반환한 응답 확인 및 새로운 쿠키가 있다면 세션에 추가
@@ -1210,11 +1203,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200:
-        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
-        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('checkAuth', response.text)
-    else:
+    if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/downloadFilePath"
@@ -1224,7 +1213,6 @@ def Shinyoung_detail(SEQ, BBSNO):
         'SEQ': SEQ,
         'BBSNO': BBSNO
     }
-    print(data)
     # 추가할 request header
     headers = {
         "Accept": "text/plain, */*; q=0.01",
@@ -1741,11 +1729,7 @@ def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     global firm_info
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
     params = string.split(",")
-    print(len(params),params)
-    print('###############')
-    for i in params:
-        print(i)
-    print('###############')
+
     
     # 문자열에서 필요한 정보 추출
     category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
