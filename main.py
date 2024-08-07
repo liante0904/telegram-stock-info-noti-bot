@@ -156,17 +156,16 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############\n\n')
 
 
-    # 이번 주의 첫 날 (월요일)과 마지막 날 (일요일)을 계산
+    # 현재 날짜
     today = datetime.date.today()
-    start_of_week = today - datetime.timedelta(days=today.weekday())  # 이번 주 월요일
-    end_of_week = start_of_week + datetime.timedelta(days=6)          # 이번 주 일요일
+    # 7일 전 날짜 계산
+    seven_days_ago = today - datetime.timedelta(days=7)
 
 
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
 
-        # print(list.select('td')[3].get_text())
         date = list.select('td')[3].get_text()
         list = list.select('a')
         # print(list[0].text)
@@ -184,9 +183,9 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
             continue
 
-        # 이번 주 이내의 게시물만 처리
-        if post_date_obj < start_of_week:
-            print(f"게시물 날짜 {POST_DATE}가 이번 주 이전이므로 중단합니다. => 속도 개선을 위한 처리")
+        # 7일 이내의 게시물만 처리
+        if post_date_obj < seven_days_ago:
+            print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
             break
 
         item = LS_detail(LIST_ARTICLE_URL, date)
@@ -489,8 +488,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 응답 확인
     if response.status_code == 200:
         jres = response.json()
-        # print(jres)  # 데이터 출력 또는 처리
-        # return
     else:
         print("요청에 실패했습니다. 상태 코드:", response.status_code)
 
@@ -1027,13 +1024,9 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     }
 
     response = requests.post(url, headers=headers, data=data)
-    if response.status_code == 200: pass
-        # print(response.text)
-    else:
+    if response.status_code != 200:
         print("Failed to fetch data.")
     
-    # print(json.loads(response.text))
-    # print('**********JSON!!!!!')
     jres = json.loads(response.text)
     # print('##############11111',jres)
     jres = jres['file'][0] #PDF
@@ -1162,7 +1155,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     return sendMessageText
 
 def Shinyoung_detail(SEQ, BBSNO):
-    print('******************Shinyoung_detail***************')
+    # print('******************Shinyoung_detail***************')
     # ntNo = NT_NO
     # cmsCd = CMS_CD
     # POST 요청에 사용할 URL
@@ -1284,7 +1277,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     #     encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
     #     url += '?' + encoded_params
 
-    print('*******************완성된 URL',url)
+    # print('*******************완성된 URL',url)
     return url
 
 def Miraeasset_checkNewArticle():
@@ -1680,11 +1673,11 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # 링크 엘리먼트 찾기
     link_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[2]')
 
-    for title, link in zip(title_elements, link_elements):
-        # 제목 출력
-        print("제목:", title.text)
-        # onClick 프로퍼티값(링크) 출력
-        print("링크:", link.get_attribute("onclick"))
+    # for title, link in zip(title_elements, link_elements):
+    #     # 제목 출력
+    #     print("제목:", title.text)
+    #     # onClick 프로퍼티값(링크) 출력
+    #     print("링크:", link.get_attribute("onclick"))
     
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1971,10 +1964,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print('*' *40)
 
     # 응답 처리
-    if response.status_code == 200:
-        print("요청이 성공했습니다.")
-        # print("응답 내용:", response.text)
-    else:
+    if response.status_code != 200:
         print("요청이 실패했습니다.")
         print("상태 코드:", response.status_code)
     
@@ -2249,7 +2239,7 @@ def GetCurrentDate(*args):
     pattern= pattern.replace('DD', DATE_SPLIT[2])
 
 
-    print('입력', args[0], '최종', pattern)
+    # print('입력', args[0], '최종', pattern)
     return pattern
     
 # 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
@@ -2315,12 +2305,12 @@ def extract_and_decode_url(url):
     Returns:
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
-    print(url)
+    # print(url)
     url = url.replace('&amp;', '&')
     # URL 파싱
     parsed_url = urlparse.urlparse(url)
     
-    print(url)
+    # print(url)
     # 쿼리 문자열 파싱
     query_params = urlparse.parse_qs(parsed_url.query)
     
