@@ -156,9 +156,16 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     print('############\n\n')
 
 
+    # 이번 주의 첫 날 (월요일)과 마지막 날 (일요일)을 계산
+    today = datetime.date.today()
+    start_of_week = today - datetime.timedelta(days=today.weekday())  # 이번 주 월요일
+    end_of_week = start_of_week + datetime.timedelta(days=6)          # 이번 주 일요일
+
+
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
+
         # print(list.select('td')[3].get_text())
         date = list.select('td')[3].get_text()
         list = list.select('a')
@@ -167,6 +174,20 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
         LIST_ARTICLE_TITLE = list[0].get_text()
         LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
+        POST_DATE = date.strip()
+        # print(POST_DATE)
+
+        # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
+        try:
+            post_date_obj = datetime.datetime.strptime(POST_DATE, '%Y.%m.%d').date()
+        except ValueError as e:
+            print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
+            continue
+
+        # 이번 주 이내의 게시물만 처리
+        if post_date_obj < start_of_week:
+            print(f"게시물 날짜 {POST_DATE}가 이번 주 이전이므로 중단합니다. => 속도 개선을 위한 처리")
+            break
 
         item = LS_detail(LIST_ARTICLE_URL, date)
         # print(item)
