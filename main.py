@@ -1188,11 +1188,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200:
-        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
-        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('devPass:', response.text)
-    else:
+    if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     
     # 서버에서 반환한 응답 확인 및 새로운 쿠키가 있다면 세션에 추가
@@ -1230,11 +1226,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200:
-        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
-        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        print('checkAuth', response.text)
-    else:
+    if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/downloadFilePath"
@@ -1244,7 +1236,7 @@ def Shinyoung_detail(SEQ, BBSNO):
         'SEQ': SEQ,
         'BBSNO': BBSNO
     }
-    print(data)
+    # print(data)
     # 추가할 request header
     headers = {
         "Accept": "text/plain, */*; q=0.01",
@@ -1270,12 +1262,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     response = session.post(url, data=data, headers=headers)
 
     # 응답의 내용 확인
-    if response.status_code == 200: pass
-        # 여기에 크롤링할 내용을 처리하는 코드를 작성하세요.
-        # response.text를 사용하여 HTML을 분석하거나, 필요한 데이터를 추출하세요.
-        # print('최종파일')
-        # print(response.text)
-    else:
+    if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
         # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
@@ -1760,11 +1747,11 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
     params = string.split(",")
-    print(len(params),params)
-    print('###############')
-    for i in params:
-        print(i)
-    print('###############')
+    # print(len(params),params)
+    # print('###############')
+    # for i in params:
+    #     print(i)
+    # print('###############')
     
     # 문자열에서 필요한 정보 추출
     category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
