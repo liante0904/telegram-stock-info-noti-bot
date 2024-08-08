@@ -1002,7 +1002,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Sangsanginib_detail(NT_NO, CMS_CD):
     ntNo = NT_NO
     cmsCd = CMS_CD
-    print('Sangsanginib_detail***********************')
+    # print('Sangsanginib_detail***********************')
     url = "https://www.sangsanginib.com/notice/getNoticeDetail"
     headers = {
         "Accept": "*/*",
@@ -1055,7 +1055,7 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
         url += '?' + encoded_params
     
-    print('*******************완성된 URL',url)
+    print(url)
     return url
 
 def Shinyoung_checkNewArticle():
@@ -1442,7 +1442,7 @@ def Kiwoom_checkNewArticle():
     return sendMessageText
  
 def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
+    global firm_info
     payload = {
         "pageNo": 1,
         "pageSize": 10,
@@ -1747,11 +1747,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
     params = string.split(",")
-    # print(len(params),params)
-    # print('###############')
-    # for i in params:
-    #     print(i)
-    # print('###############')
     
     # 문자열에서 필요한 정보 추출
     category = "category1="+params[0].strip() +"&"+ "category2=" + params[1].strip()
@@ -1882,14 +1877,6 @@ def DAOL_checkNewArticle():
     TARGET_URL_11 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S05&web=0' 
     TARGET_URL_12 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S06&web=0' 
 
-    # TARGET_URL   = 'https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true'
-    # TARGET_URL     = ''
-    
-    # KB증권 기업분석
-    # TARGET_URL_1 = ''
-    # https://www.daolsecurities.com/research/article/common.jspx?rGubun=I01&sctrGubun=I02&web=0
-    # https://www.daolsecurities.com/research/article/common.jspx?cmd=list&templet-bypass=true
-    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6
                         , TARGET_URL_7, TARGET_URL_8, TARGET_URL_9, TARGET_URL_10, TARGET_URL_11,TARGET_URL_12)
@@ -1971,26 +1958,14 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print('*' *40)
 
     # 응답 처리
-    if response.status_code == 200:
-        print("요청이 성공했습니다.")
-        # print("응답 내용:", response.text)
-    else:
+    if response.status_code != 200:
         print("요청이 실패했습니다.")
         print("상태 코드:", response.status_code)
     
     
-    # print('=' *40)
-    # print('======>',soupList[FIRST_ARTICLE_INDEX])
-    # print('======>',soupList[FIRST_ARTICLE_INDEX]['title'])
-    # print('======>',soupList[FIRST_ARTICLE_INDEX].attrs['href'])
-    # print('=' *40)
-
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
    
-    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('############\n\n')
-
-
+    
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
@@ -2044,16 +2019,10 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     return sendMessageText
 
-
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-async def sendDocument(ATTACH_FILE_NAME): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendDocument(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, document = open(ATTACH_FILE_NAME, 'rb'))
 
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
@@ -2367,9 +2336,6 @@ def main():
     global TEST_SEND_YN
     global SEND_YN
 
-    # 쉘 파라미터 가져오기
-    try: strArgs = sys.argv[1]
-    except: strArgs = ''
 
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
@@ -2414,17 +2380,6 @@ def main():
     
     GetSecretKey()
 
-    print(GetCurrentDate('YYYYMMDD'),GetCurrentDay())
-    
-    if  strArgs : 
-        
-        sendMessageText = ''
-
-        # googledrive.upload("/home/ubuntu/test/telegram-stock-info-noti-bot/test.pdf")
-
-    #print(GetCurrentDate('YYYY/HH/MM') , GetCurrentTime())
-    TimeHourMin = int(GetCurrentTime('HHMM'))
-    TimeHour = int(GetCurrentTime('HH'))
     
     sendMessageText = ''
     

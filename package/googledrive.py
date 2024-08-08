@@ -7,6 +7,7 @@ from httplib2 import Http
 from oauth2client import file, client, tools
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
+FOLDER_ID = '1jn8tAPBc2OIK3jvDzyOr9NUBghZEn7Nb'
 
 def calculate_md5(file_path):
     hash_md5 = hashlib.md5()
@@ -35,37 +36,39 @@ def upload(*args):
     main_module_path = os.path.dirname(main_module_path)
 
     print("메인 파일 경로:", main_module_path)
-    print('********************')
-    strFileName = ''
+    # print('********************')
 
-    print(args[0])
-    print(os.path.join(main_module_path, 'storage.json'))
+    # print(args[0])
+    # print(os.path.join(main_module_path, 'storage.json'))
+
     store = file.Storage(os.path.join(main_module_path, 'storage.json'))
     creds = store.get()
     drive = build('drive', 'v3', http=creds.authorize(Http()))
+
+    strFileName = ''
     if args[0].isspace(): 
         print('fileName is space')
         return 
     else: 
         strFileName = args[0]
 
-    print('********************')
+    # print('********************')
     print(f'FileName: {strFileName}')
 
     uploadfiles = (strFileName,)
-    folderId = '1jn8tAPBc2OIK3jvDzyOr9NUBghZEn7Nb'
+    
     uploadFileId = ''
 
     for f in uploadfiles:
         fname = f
         file_md5 = calculate_md5(fname)
         file_name_without_date = strip_date_from_filename(fname)
-        existing_file_id = file_exists(drive, file_name_without_date, folderId)
+        existing_file_id = file_exists(drive, file_name_without_date, FOLDER_ID)
         if existing_file_id:
-            print(f"File with similar name '{file_name_without_date}' already exists in folder ID '{folderId}'. Upload canceled.")
+            print(f"File with similar name '{file_name_without_date}' already exists in folder ID '{FOLDER_ID}'. Upload canceled.")
             continue
 
-        metadata = {'name': fname, 'parents': [folderId], 'mimeType': None}
+        metadata = {'name': fname, 'parents': [FOLDER_ID], 'mimeType': None}
         media = MediaFileUpload(fname)
         res = drive.files().create(body=metadata, media_body=media).execute()
         if res:
@@ -74,9 +77,9 @@ def upload(*args):
             uploadFileId = res.get('id')
 
     if uploadFileId:
-        googleDriveUrl = 'https://drive.google.com/file/d/'
+        # googleDriveUrl = 'https://drive.google.com/file/d/'
         googleDriveViewerUrl = 'https://drive.google.com/u/0/uc?id='
-        googleDriveUrl += uploadFileId
+        # googleDriveUrl += uploadFileId
         googleDriveViewerUrl += uploadFileId
         print(f'google driveViewer URL {googleDriveViewerUrl}')
         return googleDriveViewerUrl
