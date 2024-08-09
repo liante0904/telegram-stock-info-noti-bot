@@ -204,13 +204,17 @@ def get_unsent_main_ch_data_to_local_json(filename):
     messages = []
     current_message = ""
     previous_firm_nm = None
+    first_record = True  # 첫 번째 레코드인지 여부를 추적
 
     for item in unsent_data:
         firm_nm = item['FIRM_NM']
         message_part = format_message(item)
-        
-        # 회사명이 변경되면 새로운 회사명을 추가
-        if firm_nm != previous_firm_nm:
+
+        # 첫 번째 레코드 처리
+        if first_record:
+            current_message += f"●{firm_nm}\n"
+            first_record = False
+        elif firm_nm != previous_firm_nm:
             if previous_firm_nm is not None:
                 current_message += "\n"
             current_message += f"\n●{firm_nm}\n"
@@ -227,6 +231,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         messages.append(current_message)
 
     return messages
+
 
 def update_main_ch_send_yn_to_y(file_path, target_date=None):
     directory = os.path.dirname(file_path)
