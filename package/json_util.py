@@ -171,22 +171,22 @@ def get_unsent_main_ch_data_to_local_json(filename):
 
     additional_firms = set()
 
-    # filename에 따른 추가적인 FIRM_NM 목록 가져오기
-    if 'hankyungconsen_research.json' in filename:
-        naver_research_path = 'json/naver_research.json'
-        if os.path.exists(naver_research_path) and os.path.getsize(naver_research_path) > 0:
-            with open(naver_research_path, 'r', encoding='utf-8') as json_file:
-                naver_data = json.load(json_file)
-                additional_firms.update(item["FIRM_NM"] for item in naver_data)
-                print(f"\n추가된 naver_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+    # # filename에 따른 추가적인 FIRM_NM 목록 가져오기
+    # if 'hankyungconsen_research.json' in filename:
+    #     naver_research_path = 'json/naver_research.json'
+    #     if os.path.exists(naver_research_path) and os.path.getsize(naver_research_path) > 0:
+    #         with open(naver_research_path, 'r', encoding='utf-8') as json_file:
+    #             naver_data = json.load(json_file)
+    #             additional_firms.update(item["FIRM_NM"] for item in naver_data)
+    #             print(f"\n추가된 naver_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
 
-    elif 'naver_research.json' in filename:
-        hankyungconsen_research_path = 'json/hankyungconsen_research.json'
-        if os.path.exists(hankyungconsen_research_path) and os.path.getsize(hankyungconsen_research_path) > 0:
-            with open(hankyungconsen_research_path, 'r', encoding='utf-8') as json_file:
-                hankyungconsen_data = json.load(json_file)
-                additional_firms.update(item["FIRM_NM"] for item in hankyungconsen_data)
-                print(f"\n추가된 hankyungconsen_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
+    # elif 'naver_research.json' in filename:
+    #     hankyungconsen_research_path = 'json/hankyungconsen_research.json'
+    #     if os.path.exists(hankyungconsen_research_path) and os.path.getsize(hankyungconsen_research_path) > 0:
+    #         with open(hankyungconsen_research_path, 'r', encoding='utf-8') as json_file:
+    #             hankyungconsen_data = json.load(json_file)
+    #             additional_firms.update(item["FIRM_NM"] for item in hankyungconsen_data)
+    #             print(f"\n추가된 hankyungconsen_research의 FIRM_NM 목록: {additional_firms}")  # 디버깅 로그 추가
 
     # 추가된 목록을 sent_firms에 합치기
     sent_firms.update(additional_firms)
