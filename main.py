@@ -153,7 +153,6 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     # print('연속키:', NXT_KEY) # 주소
-    print('############\n\n')
 
 
     # 현재 날짜
@@ -214,7 +213,7 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -413,7 +412,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -536,7 +535,7 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -585,7 +584,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     listR = []
     while True:
         
-        print('************************************')
         try:
             webpage = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
@@ -625,13 +623,11 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     # print('연속URL:', NXT_KEY) # 주소
-    print('############\n\n')
     
 
     nNewArticleCnt = 0
     sendMessageText = ''
     for list in soupList:
-        print('*******************************')
         # print(list)
 
         BOARD_NM            = list['rshPprSerCdNm']
@@ -665,7 +661,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -760,7 +755,6 @@ def HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
             
-    print('**************')
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -826,7 +820,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('############\n\n')
 
 
     nNewArticleCnt = 0
@@ -869,7 +862,7 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -988,7 +981,7 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -1146,7 +1139,7 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -1334,7 +1327,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    print('############\n\n')
 
     # 게시물 정보 파싱
     for index, post in enumerate(soupList):
@@ -1390,7 +1382,7 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -1500,7 +1492,7 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -1615,7 +1607,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -1718,7 +1710,7 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -2004,7 +1996,7 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
                 
-    print('**************')
+    
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
@@ -2068,7 +2060,7 @@ def DownloadFile(URL, FILE_NAME):
 
             
     r = googledrive.upload(str(ATTACH_FILE_NAME))
-    print('********************')
+    
     print(f'main URL {r}')
     return r
 
@@ -2121,7 +2113,7 @@ def DownloadFile_wget(URL, FILE_NAME):
 
     wget.download(url=URL, out=ATTACH_FILE_NAME)
     r = googledrive.upload(str(ATTACH_FILE_NAME))
-    print('********************')
+    
     print(f'main URL {r}')
     return r
 
@@ -2158,8 +2150,8 @@ def GetSendMessageTitle():
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentTime(*args):
     pattern = ''
-    for pattern in args:
-        print(pattern)
+    # for pattern in args:
+    #     print(pattern)
     
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
@@ -2184,7 +2176,7 @@ def GetCurrentTime(*args):
         TIME = TIME.replace(":", "")
     else:
         TIME = time_now[11:].strip()
-    print(TIME)
+    # print(TIME)
     return TIME
 
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
