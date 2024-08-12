@@ -214,6 +214,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         if first_record:
             current_message += f"●{firm_nm}\n"
             first_record = False
+            previous_firm_nm = firm_nm
         elif firm_nm != previous_firm_nm:
             if previous_firm_nm is not None:
                 current_message += "\n"
