@@ -477,15 +477,15 @@ def main():
     LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
     print('LOG_FULLFILENAME', LOG_FULLFILENAME)
 
-    # 로깅 설정 추가
-    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
-                        format='%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]', force=True)
+    # # 로깅 설정 추가
+    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
+    #                     format='%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]', force=True)
 
-    # 콘솔 핸들러 추가
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]'))
-    logging.getLogger().addHandler(console_handler)
+    # # 콘솔 핸들러 추가
+    # console_handler = logging.StreamHandler()
+    # console_handler.setLevel(logging.DEBUG)
+    # console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]'))
+    # logging.getLogger().addHandler(console_handler)
 
     # 디버그 메시지 출력
     print("LOG_FULLFILENAME", LOG_FULLFILENAME)
