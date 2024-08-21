@@ -182,6 +182,7 @@ def keyword_select(keyword):
 
 # 명령 실행
 if args.action == 'table' or args.action is None:
+    rename_table("hankyungconsen", "hankyungconsen_research")
     print_tables()
 elif args.action == 'insert':
     insert_data()
