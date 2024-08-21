@@ -20,7 +20,7 @@ cursor = conn.cursor()
 # JSON 파일 리스트와 대응되는 테이블 이름
 json_files = {
     "data_main_daily_send.json": "data_main_daily_send",
-    "hankyungconsen_research.json": "hankyungconsen",
+    "hankyungconsen_research.json": "hankyungconsen_research",  # 테이블명 변경
     "naver_research.json": "naver_research"
 }
 
@@ -41,8 +41,16 @@ def print_tables():
     else:
         print("No tables found in the database.")
 
+def rename_table(old_name, new_name):
+    """테이블 이름을 변경합니다."""
+    cursor.execute(f'ALTER TABLE {old_name} RENAME TO {new_name}')
+    print(f"Renamed table '{old_name}' to '{new_name}'.")
+
 def insert_data():
     """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
+    # 테이블 이름 변경
+    rename_table("hankyungconsen", "hankyungconsen_research")
+
     for json_file, table_name in json_files.items():
         json_file_path = os.path.join(json_dir, json_file)
         print(json_file_path)
