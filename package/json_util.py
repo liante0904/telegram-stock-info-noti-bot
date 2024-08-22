@@ -105,7 +105,7 @@ def format_message(data_list):
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
-def format_message_sql(data_list):
+def format_message_sql(data_list): 
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
     formatted_messages = []
 
