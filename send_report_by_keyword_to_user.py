@@ -106,6 +106,7 @@ for user_id, keywords in data.items():
         r = fetch_data(keyword=keyword, user_id=user_id_str)
         print('===>',r)
 
+        message = ''
         # # 전송할 메시지 생성 및 발송
         if r:
             message = f"=====알림 키워드 : {entry['keyword']}=====\n\n"
