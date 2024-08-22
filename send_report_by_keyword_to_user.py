@@ -9,7 +9,7 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from package.json_util import format_message, format_message_sql
 from package.SecretKey import SecretKey
-from package.json_to_sqlite import fetch_data, update_data
+from package.json_to_sqlite import fetch_data, update_data, insert_data
 
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
@@ -72,24 +72,26 @@ def update_send_user(data, user_id):
             item['SEND_USER'] = [user_id]
     return data
 
-# 경로 설정
-base_path = './json'
-main_file = os.path.join(base_path, 'data_main_daily_send.json')
-other_files = [
-    os.path.join(base_path, 'hankyungconsen_research.json'),
-    os.path.join(base_path, 'naver_research.json')
-]
+# # 경로 설정
+# base_path = './json'
+# main_file = os.path.join(base_path, 'data_main_daily_send.json')
+# other_files = [
+#     os.path.join(base_path, 'hankyungconsen_research.json'),
+#     os.path.join(base_path, 'naver_research.json')
+# ]
 
-# JSON 데이터 읽기
-main_data = read_json_file(main_file)
-other_data_sources = [read_json_file(filepath) for filepath in other_files]
+# # JSON 데이터 읽기
+# main_data = read_json_file(main_file)
+# other_data_sources = [read_json_file(filepath) for filepath in other_files]
 
-# 오늘 날짜의 데이터만 필터링
-main_data_today = filter_today_data(main_data)
-other_data_sources_today = [filter_today_data(data) for data in other_data_sources]
+# # 오늘 날짜의 데이터만 필터링
+# main_data_today = filter_today_data(main_data)
+# other_data_sources_today = [filter_today_data(data) for data in other_data_sources]
 
-# 중복 데이터 제거 및 병합
-merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
+# # 중복 데이터 제거 및 병합
+# merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
+
+insert_data()
 
 # 상위 폴더 기준 파일 경로 설정
 relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
@@ -109,7 +111,7 @@ for user_id, keywords in data.items():
         message = ''
         # # 전송할 메시지 생성 및 발송
         if r:
-            message = f"=====알림 키워드 : {entry['keyword']}=====\n\n"
+            message = f"=====알림 키워드 : {entry['keyword']}=====\n"
             message += format_message_sql(r)
             print('여기==>', message)  # 메시지 발송 전에 출력 (디버깅 용도)
 
