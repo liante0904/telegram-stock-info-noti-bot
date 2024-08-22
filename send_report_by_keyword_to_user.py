@@ -91,7 +91,6 @@ def update_send_user(data, user_id):
 # # 중복 데이터 제거 및 병합
 # merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
 
-insert_data()
 
 # 상위 폴더 기준 파일 경로 설정
 relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
@@ -151,7 +150,3 @@ for user_id, keywords in data.items():
         #             if item['FIRM_NM'] == updated_item['FIRM_NM']:
         #                 if 'SEND_USER' in updated_item:
         #                     item['SEND_USER'] = updated_item['SEND_USER']
-
-# # 수정된 데이터를 저장
-# with open(main_file, 'w', encoding='utf-8') as file:
-#     json.dump(main_data, file, ensure_ascii=False, indent=4)
