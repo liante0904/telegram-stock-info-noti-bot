@@ -86,9 +86,11 @@ def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         LIST_ARTICLE_URL = NAVER_Report_parseURL(research['endUrl'])
         LIST_ARTICLE_TITLE = research['title']
         if ARTICLE_BOARD_ORDER == 0:
-            LIST_ARTICLE_TITLE = research['itemName'] + ": " + LIST_ARTICLE_TITLE  # 기업분석
+            if research['itemName']+":" not in LIST_ARTICLE_TITLE : 
+                LIST_ARTICLE_TITLE = research['itemName'] + ": " + LIST_ARTICLE_TITLE  # 기업분석
         else:
-            LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
+            if research['category']+":" not in LIST_ARTICLE_TITLE : 
+                LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
 
         # Use the imported save_data_to_local_json function with filename parameter
         new_article_message = save_data_to_local_json(
