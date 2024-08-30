@@ -162,4 +162,6 @@ requirements.txt_bak
 naver_*.json
 *.json
 token.*
-token.pickle
+*.pickle
+*.db
+*.*Zone.Identifier
