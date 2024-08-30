@@ -29,6 +29,7 @@ parser = argparse.ArgumentParser(description="SQLite Database Management Script"
 parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select','fetch', 'keyword_select'], help="Action to perform")
 parser.add_argument('name', nargs='?', help="Table name for the action")
 args = parser.parse_args()
+ 
 
 def fetch_data(date=None, keyword=None, user_id=None):
     """특정 테이블에서 데이터를 조회하고, 파라미터가 포함된 실제 쿼리를 출력합니다.
@@ -90,7 +91,6 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     conn.close()
     return results
-
 
 
 def update_data(date=None, keyword=None, user_ids=None):
