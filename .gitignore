@@ -161,4 +161,7 @@ requirements.txt_bak
 .vscode/settings.json
 naver_*.json
 *.json
-testcode/*
+token.*
+*.pickle
+*.db
+*.*Zone.Identifier
