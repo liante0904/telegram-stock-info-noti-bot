@@ -281,6 +281,8 @@ def LS_detail(ARTICLE_URL, date):
 
     return item
 
+
+
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
@@ -417,6 +419,7 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
 
     return sendMessageText
+
 
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -702,6 +705,7 @@ def HANA_checkNewArticle():
         # 글로벌 기업분석
         'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=3'
     ]
+
 
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
