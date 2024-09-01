@@ -697,8 +697,15 @@ def HANA_checkNewArticle():
         # 하나금융 포트폴리오
         'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=3',
         # 하나금융 투자정보
-        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=4'
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=2&cid=4',
+        # 글로벌 투자전략
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=1',
+        # 글로벌 산업분석
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=2',
+        # 글로벌 기업분석
+        'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=3'
     ]
+
 
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
