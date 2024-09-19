@@ -712,6 +712,7 @@ def HANA_checkNewArticle():
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
+            time.sleep(0.5)
         except Exception as e:
             if len(sendMessageText) > 3500:
                 print(f"발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n{sendMessageText}")
