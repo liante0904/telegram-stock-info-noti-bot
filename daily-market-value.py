@@ -35,16 +35,23 @@ def extract_data(element):
             index_range_value_str = index_range_tag.get_text(strip=True).replace(",", "")
             index_range_value = float(index_range_value_str)
 
+            previous_close = 0.0
+            rate_of_change = 0.0
+
+            # 등락폭에 따라 전일 종가 계산 및 등락률 계산
             if class_name == 'stock-down':
-                #previous_close = index_value + index_range_value
-                index_range = f"📉 || -{index_range_value:.2f}"#(전일 {previous_close:.2f})
+                previous_close = index_value + index_range_value
+                rate_of_change = (index_range_value / previous_close) * 100
+                index_range = f"📉 || -{index_range_value:.2f} (-{rate_of_change:.2f}%)"
             elif class_name == 'stock-up':
-                #previous_close = index_value - index_range_value
-                index_range = f"📈 || +{index_range_value:.2f}"#(전일 {previous_close:.2f})"
+                previous_close = index_value - index_range_value
+                rate_of_change = (index_range_value / previous_close) * 100
+                index_range = f"📈 || +{index_range_value:.2f} (+{rate_of_change:.2f}%)"
 
         return f"======={index_name}=======\n {index_value:.2f}{index_range}"
     else:
         return "Element not found"
+
 
 def main():
     print(common.GetCurrentDate('YYYYMMDD'), common.GetCurrentDay())
