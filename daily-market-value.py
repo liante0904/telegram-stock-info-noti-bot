@@ -35,16 +35,23 @@ def extract_data(element):
             index_range_value_str = index_range_tag.get_text(strip=True).replace(",", "")
             index_range_value = float(index_range_value_str)
 
+            previous_close = 0.0
+            rate_of_change = 0.0
+
+            # 등락폭에 따라 전일 종가 계산 및 등락률 계산
             if class_name == 'stock-down':
                 previous_close = index_value + index_range_value
-                index_range = f" / -{index_range_value:.2f} 하락 (전일 {previous_close:.2f})"
+                rate_of_change = (index_range_value / previous_close) * 100
+                index_range = f"📉 || -{index_range_value:.2f} (-{rate_of_change:.2f}%)"
             elif class_name == 'stock-up':
                 previous_close = index_value - index_range_value
-                index_range = f" / +{index_range_value:.2f} 상승 (전일 {previous_close:.2f})"
+                rate_of_change = (index_range_value / previous_close) * 100
+                index_range = f"📈 || +{index_range_value:.2f} (+{rate_of_change:.2f}%)"
 
-        return f"{index_name}: {index_value:.2f}{index_range}"
+        return f"======={index_name}=======\n {index_value:.2f}{index_range}"
     else:
         return "Element not found"
+
 
 def main():
     print(common.GetCurrentDate('YYYYMMDD'), common.GetCurrentDay())
@@ -68,7 +75,8 @@ def main():
         per_value = item.select_one("div.index_cate.per span.index_value").get_text(strip=True)
         pbr_value = item.select_one("div.index_cate.pbr span.index_value").get_text(strip=True)
         roe_value = item.select_one("div.index_cate.roe span.index_value").get_text(strip=True)
-        valuation_data.append(f"{market_name} / PER: {per_value}, PBR: {pbr_value}, ROE: {roe_value}")
+        msg = f"======={market_name}=======\nPER: {per_value} || PBR: {pbr_value} || ROE: {roe_value}"
+        valuation_data.append(msg)
 
     # 마켓 밸류에이션 날짜 정보 추출
     rDate_element = soup.select_one('div.data.valuation div.header > p')
@@ -76,13 +84,13 @@ def main():
 
     # 메시지 구성
     sendMessageText += "\n\n" + "* ●" + '마켓밸류에이션*  ' + '_' + rDate + '일자 기준_' + "\n \n"
-    sendMessageText += "*오늘의 주요 지수*\n"
+    sendMessageText += "*오늘의 주요 지수*\n\n"
     for data in indices_data:
-        sendMessageText += data + "\n"
+        sendMessageText += data + "\n\n"
 
-    sendMessageText += "\n*마켓 밸류에이션*\n"
+    sendMessageText += "\n\n*마켓 밸류에이션*\n\n"
     for data in valuation_data:
-        sendMessageText += data + "\n"
+        sendMessageText += data + "\n\n"
 
     print(sendMessageText)
 

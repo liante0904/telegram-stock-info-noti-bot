@@ -3,7 +3,13 @@ import sqlite3
 import os
 import argparse
 from datetime import datetime
+import asyncio
+import sys
+import os
+# 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from package.json_util import format_message_sql
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
 
@@ -26,10 +32,9 @@ json_files = {
 
 # 명령행 인자 파서 설정
 parser = argparse.ArgumentParser(description="SQLite Database Management Script")
-parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select','fetch', 'keyword_select'], help="Action to perform")
+parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily'], help="Action to perform")
 parser.add_argument('name', nargs='?', help="Table name for the action")
 args = parser.parse_args()
- 
 
 def fetch_data(date=None, keyword=None, user_id=None):
     """특정 테이블에서 데이터를 조회하고, 파라미터가 포함된 실제 쿼리를 출력합니다.
@@ -91,6 +96,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     conn.close()
     return results
+
 
 
 def update_data(date=None, keyword=None, user_ids=None):
@@ -289,6 +295,48 @@ def keyword_select(keyword):
     print(formatted_message)
     return formatted_message
 
+
+def daily_select_data(date_str=None):
+    """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다。"""
+    if date_str is None:
+        # date_str가 없으면 현재 날짜 사용
+        query_date = datetime.now().strftime('%Y-%m-%d')
+    else:
+        # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
+        query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+
+    # SQL 쿼리 실행
+    # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
+    query = f"""
+    SELECT 
+        FIRM_NM, 
+        ARTICLE_TITLE, 
+        ATTACH_URL AS ARTICLE_URL, 
+        SAVE_TIME, 
+        SEND_USER 
+    FROM 
+        data_main_daily_send 
+    WHERE 
+        DATE(SAVE_TIME) = '{query_date}'
+    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME    
+    """
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    # 컬럼 이름 추출
+    columns = [desc[0] for desc in cursor.description]
+    
+    # row 데이터를 dict로 변환
+    results = [dict(zip(columns, row)) for row in rows]
+
+    # 결과 출력 및 반환
+    # print("Queried Data:", results)
+    r = format_message_sql(rows)
+    print('='*30)
+    print(r)
+    return results
+
+
 # 명령 실행
 if args.action == 'table' or args.action is None:
     print_tables()
@@ -305,5 +353,7 @@ elif args.action == 'keyword_select':
     else:
         print("Error: 'keyword_select' action requires a keyword argument.")
 
+elif args.action == 'daily':
+    daily_select_data(args.name)
 # 연결 종료
 conn.close()
