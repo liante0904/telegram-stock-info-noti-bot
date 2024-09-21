@@ -43,7 +43,6 @@ from requests import get  # to make GET request
 
 #################### global 변수 정리 ###################################
 ############공용 상수############
-firm_info                                           = ""
 # secrets 
 SECRETS                                             = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -57,8 +56,6 @@ SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 # 이모지
-EMOJI_FIRE = u'\U0001F525'
-EMOJI_PICK = u'\U0001F449'
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
@@ -69,7 +66,6 @@ FIRST_ARTICLE_INDEX = 0
 def LS_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
     
     
     SEC_FIRM_ORDER = 0
@@ -255,8 +251,6 @@ def LS_detail(ARTICLE_URL, date):
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
@@ -360,8 +354,6 @@ def ShinHanInvest_checkNewArticle():
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 4
     ARTICLE_BOARD_ORDER = 0
@@ -446,8 +438,6 @@ def KB_checkNewArticle():
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
@@ -539,8 +529,6 @@ def NHQV_checkNewArticle():
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
@@ -608,8 +596,6 @@ def HANA_checkNewArticle():
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 5
     ARTICLE_BOARD_ORDER = 0
@@ -652,7 +638,6 @@ def Samsung_checkNewArticle():
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
-
         nNewArticleCnt = 0
         
         for list in soupList:
@@ -683,8 +668,6 @@ def Samsung_checkNewArticle():
 def Sangsanginib_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 6
     ARTICLE_BOARD_ORDER = 0
@@ -823,8 +806,6 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
 def Shinyoung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 7
     ARTICLE_BOARD_ORDER = 0
@@ -1019,7 +1000,6 @@ def Shinyoung_detail(SEQ, BBSNO):
 def Miraeasset_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
     
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
@@ -1104,8 +1084,6 @@ def Miraeasset_checkNewArticle():
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
@@ -1180,8 +1158,6 @@ def Kiwoom_checkNewArticle():
 def Hmsec_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 9
     ARTICLE_BOARD_ORDER = 0
@@ -1262,8 +1238,6 @@ def Hmsec_checkNewArticle():
 def Koreainvestment_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 13
     ARTICLE_BOARD_ORDER = 0
@@ -1450,8 +1424,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 14
     ARTICLE_BOARD_ORDER = 0
