@@ -189,21 +189,19 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         item = LS_detail(LIST_ARTICLE_URL, date)
         # print(item)
-        LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
-        LIST_ARTICLE_TITLE = item['LIST_ARTICLE_FILE_NAME']
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
+            attach_url=item['LIST_ARTICLE_URL'],
+            article_title=item['LIST_ARTICLE_TITLE']
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수 
+            print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
             print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
+            DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -276,6 +274,9 @@ def LS_detail(ARTICLE_URL, date):
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
 
+    # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
+    # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
+    # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
     # print('*********확인용**************')
 
     return item
