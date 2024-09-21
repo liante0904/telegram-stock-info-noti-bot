@@ -236,9 +236,10 @@ def get_firm_info(sec_firm_order, article_board_order):
 
 
 class FirmInfo:
-    def __init__(self):
-        self.SEC_FIRM_ORDER = 0
-        self.ARTICLE_BOARD_ORDER = 0
+    def __init__(self, sec_firm_order=0, article_board_order=0):
+        # 생성자에서 인자값을 받아 초기화
+        self.SEC_FIRM_ORDER = sec_firm_order
+        self.ARTICLE_BOARD_ORDER = article_board_order
     
     def get_firm_name(self):
         if 0 <= self.SEC_FIRM_ORDER < len(firm_names):
