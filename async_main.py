@@ -57,7 +57,6 @@ def Sangsanginib_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
     global firm_info
-    
 
     SEC_FIRM_ORDER = 6
     ARTICLE_BOARD_ORDER = 0
@@ -74,114 +73,85 @@ def Sangsanginib_checkNewArticle():
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
     sendMessageText = ''
-    # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-        try:
-            sendMessageText += Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-            time.sleep(1)
-        except:
-            if len(sendMessageText) > 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                
-    return sendMessageText
-
-def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
-
-    jres = ''
-    headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
     cmsCd = ["CM0078","CM0338","CM0079"]
     
-    data = {
-        "pageNum": "1",
-        "src": "all",
-        "cmsCd": cmsCd[ARTICLE_BOARD_ORDER],
-        "rowNum": "10",
-        "startRow": "0",
-        "sdt": "",
-        "edt": ""
-    }
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = get_firm_info(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER)
+        headers = {
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+        
+        data = {
+            "pageNum": "1",
+            "src": "all",
+            "cmsCd": cmsCd[ARTICLE_BOARD_ORDER],
+            "rowNum": "10",
+            "startRow": "0",
+            "sdt": "",
+            "edt": ""
+        }
 
-    try:
-        webpage = requests.post(TARGET_URL, headers=headers, data=data, timeout=5)
-        # print(webpage.text)
-        jres = json.loads(webpage.text)
-        # print(jres)
-    except requests.exceptions.Timeout:
-        print("요청이 타임아웃되었습니다.")
-        # return False
-    except requests.exceptions.RequestException as e:
-        print(f"요청 중 오류 발생: {e}")
-        # return False
-    except json.JSONDecodeError as e:
-        print(f"JSON 파싱 오류: {e}")
-        # return False
-    
+        try:
+            webpage = requests.post(TARGET_URL, headers=headers, data=data, timeout=5)
+            jres = json.loads(webpage.text)
+        except requests.exceptions.Timeout:
+            print("요청이 타임아웃되었습니다.")
+            continue
+        except requests.exceptions.RequestException as e:
+            print(f"요청 중 오류 발생: {e}")
+            continue
+        except json.JSONDecodeError as e:
+            print(f"JSON 파싱 오류: {e}")
+            continue
+        
+        # 연속키 데이터베이스화 작업
+        firm_info = get_firm_info(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER)
+        
+        nNewArticleCnt = 0
+        # JSON To List
+        for list in jres[0]['getNoticeList']:
+            LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
+            LIST_ARTICLE_TITLE = list['TITLE']
 
-    # 연속키 데이터베이스화 작업
-    
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+            sendMessageText += save_data_to_local_json(
+                filename='./json/data_main_daily_send.json',
+                sec_firm_order=SEC_FIRM_ORDER,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm=firm_info['firm_name'],
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE
+            )
+            if sendMessageText:
+                nNewArticleCnt += 1 # 새로운 게시글 수
+                print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
+                print('LIST_ARTICLE_TITLE', LIST_ARTICLE_TITLE)
+                DownloadFile(URL=LIST_ARTICLE_URL, FILE_NAME=LIST_ARTICLE_TITLE + '.pdf')
+            if len(sendMessageText) >= 3500:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
+                sendMessageText = ''
+                nNewArticleCnt = 0
 
-    
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for list in jres[0]['getNoticeList']:
-        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-        # print('list***************** \n',list)
-        # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
-        # LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
-        # print('cmsCd[ARTICLE_BOARD_ORDER]',cmsCd[ARTICLE_BOARD_ORDER])
-        # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
-
-        LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
-        LIST_ARTICLE_TITLE = list['TITLE']
-
-        sendMessageText += save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
-
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
+        if nNewArticleCnt == 0 or len(sendMessageText) == 0:
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            return
                 
-    
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
+        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}')
+        if nNewArticleCnt > 0 or len(sendMessageText) > 0:
+            print(sendMessageText)
 
     return sendMessageText
 
 def Sangsanginib_detail(NT_NO, CMS_CD):
-    time.sleep(1)
+    time.sleep(2)
     ntNo = NT_NO
     cmsCd = CMS_CD
     print('Sangsanginib_detail***********************')
