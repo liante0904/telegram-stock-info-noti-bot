@@ -274,9 +274,6 @@ def LS_detail(ARTICLE_URL, date):
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
 
-    # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
-    # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
-    # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
     # print('*********확인용**************')
 
     return item
