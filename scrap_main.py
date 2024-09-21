@@ -24,13 +24,6 @@ from selenium.webdriver.support import expected_conditions as EC
 
 #################### global 변수 정리 ###################################
 ############공용 상수############
-# secrets 
-SECRETS                                             = ""
-TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
-TELEGRAM_CHANNEL_ID_REPORT_ALARM                    = ""
-TELEGRAM_CHANNEL_ID_TEST                            = ""
-TELEGRAM_USER_ID_DEV                                = ""
-BASE_PATH                                           = ""
 
 # LOOP 인덱스 변수
 SEC_FIRM_ORDER = 0 # 증권사 순번
@@ -1604,48 +1597,6 @@ def GetCurrentDay(*args):
     DATE_SPLIT = DATE.split("-")
     return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
-def GetSecretKey(*args):
-    global SECRETS # 시크릿 키
-    global TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
-    global TELEGRAM_CHANNEL_ID_REPORT_ALARM
-    global TELEGRAM_CHANNEL_ID_TODAY_REPORT
-    global TELEGRAM_CHANNEL_ID_TEST
-    global TELEGRAM_USER_ID_DEV
-    global BASE_PATH
-    
-
-    SECRETS = ''
-    # current_file_path = os.path.abspath(__file__)
-
-    # __main__ 모듈의 경로를 가져옵니다.
-    main_module_path = sys.modules['__main__'].__file__
-
-    # 절대 경로로 변환합니다.
-    main_module_path = os.path.abspath(main_module_path)
-    
-    # 프로젝트 경로로 이동 
-    BASE_PATH =os.path.dirname(main_module_path)
-    print('BASE_PATH', BASE_PATH)
-    if os.path.isfile(os.path.join(BASE_PATH, 'secrets.json')): # 로컬 개발 환경
-        with open((os.path.join(BASE_PATH, 'secrets.json'))) as f:
-            SECRETS = json.loads(f.read())
-    #SECRETS = ''
-    #print(os.getcwd())
-    #if os.path.isfile(os.path.join(os.getcwd(), 'secrets.json')): # 로컬 개발 환경
-    #    with open("secrets.json") as f:
-    #        SECRETS = json.loads(f.read())        
-        TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   SECRETS['TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET']
-        TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   SECRETS['TELEGRAM_CHANNEL_ID_REPORT_ALARM']
-        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   SECRETS['TELEGRAM_CHANNEL_ID_TODAY_REPORT']
-        TELEGRAM_CHANNEL_ID_TEST                    =   SECRETS['TELEGRAM_CHANNEL_ID_TEST']
-        TELEGRAM_USER_ID_DEV                        =   SECRETS['TELEGRAM_USER_ID_DEV']
-    else: # 서버 배포 환경(heroku)
-        TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET      =   os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-        TELEGRAM_CHANNEL_ID_REPORT_ALARM            =   os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-        TELEGRAM_CHANNEL_ID_TODAY_REPORT            =   os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-        TELEGRAM_CHANNEL_ID_TEST                    =   os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
-        TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
-
 # KB증권 암호화 해제
 def KB_decode_url(url):
     """
@@ -1705,11 +1656,6 @@ def GetCurrentDate_NH():
     return next_monday.strftime('%Y%m%d')
 
 def main():
-    global SEC_FIRM_ORDER  # 증권사 순번
-    global TEST_SEND_YN
-    global SEND_YN
-
-
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
 
@@ -1751,7 +1697,6 @@ def main():
     # logging.debug('이것은 디버그 메시지입니다.')
     
     
-    GetSecretKey()
     
     # check functions 리스트
     check_functions = [
