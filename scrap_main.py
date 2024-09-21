@@ -1,23 +1,17 @@
 # -*- coding:utf-8 -*- 
-import gc
 import os
 import sys
 import datetime
 from pytz import timezone
-import telegram
 import requests
 import time
 import json
 import re
-import asyncio
-import wget
 import urllib.parse as urlparse
 import urllib.request
 import base64
-from typing import List
 from bs4 import BeautifulSoup
 
-from package import googledrive
 from package.firm_info import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
 
@@ -28,22 +22,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from requests import get  # to make GET request
-
-# 로직 설명
-# 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
-#   - checkNewArticle -> parse -> downloadFile -> Send 
-# 2. 연속키의 경우 현재 .key로 저장
-#   - 추후 heroku db로 처리 예정(MySQL)
-#   - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
-# 3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
-# 4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
-#   - 어떻게 구분지을지 생각해봐야함
-# 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
-
 #################### global 변수 정리 ###################################
 ############공용 상수############
-firm_info                                           = ""
 # secrets 
 SECRETS                                             = ""
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET              = ""
@@ -57,8 +37,6 @@ SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 # 이모지
-EMOJI_FIRE = u'\U0001F525'
-EMOJI_PICK = u'\U0001F449'
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
@@ -69,7 +47,6 @@ FIRST_ARTICLE_INDEX = 0
 def LS_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
     
     
     SEC_FIRM_ORDER = 0
@@ -255,8 +232,6 @@ def LS_detail(ARTICLE_URL, date):
 def ShinHanInvest_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
@@ -360,8 +335,6 @@ def ShinHanInvest_checkNewArticle():
 def KB_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 4
     ARTICLE_BOARD_ORDER = 0
@@ -446,8 +419,6 @@ def KB_checkNewArticle():
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
@@ -539,8 +510,6 @@ def NHQV_checkNewArticle():
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
@@ -608,8 +577,6 @@ def HANA_checkNewArticle():
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 5
     ARTICLE_BOARD_ORDER = 0
@@ -652,7 +619,6 @@ def Samsung_checkNewArticle():
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
-
         nNewArticleCnt = 0
         
         for list in soupList:
@@ -683,8 +649,6 @@ def Samsung_checkNewArticle():
 def Sangsanginib_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 6
     ARTICLE_BOARD_ORDER = 0
@@ -823,8 +787,6 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
 def Shinyoung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 7
     ARTICLE_BOARD_ORDER = 0
@@ -1019,7 +981,6 @@ def Shinyoung_detail(SEQ, BBSNO):
 def Miraeasset_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
     
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
@@ -1104,8 +1065,6 @@ def Miraeasset_checkNewArticle():
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
@@ -1180,8 +1139,6 @@ def Kiwoom_checkNewArticle():
 def Hmsec_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 9
     ARTICLE_BOARD_ORDER = 0
@@ -1262,8 +1219,6 @@ def Hmsec_checkNewArticle():
 def Koreainvestment_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER = 13
     ARTICLE_BOARD_ORDER = 0
@@ -1450,8 +1405,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 def DAOL_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
-    global firm_info
-    
 
     SEC_FIRM_ORDER      = 14
     ARTICLE_BOARD_ORDER = 0
