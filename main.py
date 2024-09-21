@@ -213,7 +213,6 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if nNewArticleCnt == 0  or len(sendMessageText) == 0:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
-                
     
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
