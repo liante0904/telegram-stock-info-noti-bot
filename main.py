@@ -199,9 +199,10 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수 
-            print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
+            LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+            LIST_ARTICLE_TITLE = item['LIST_ARTICLE_FILE_NAME']
+            # DownloadFile(URL = , FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
