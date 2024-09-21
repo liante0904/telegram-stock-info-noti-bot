@@ -232,3 +232,62 @@ def get_firm_info(sec_firm_order, article_board_order):
         "board_name": board_name,
         "label_name": label_name
     }
+
+
+
+class FirmInfo:
+    def __init__(self):
+        self.SEC_FIRM_ORDER = 0
+        self.ARTICLE_BOARD_ORDER = 0
+    
+    def get_firm_name(self):
+        if 0 <= self.SEC_FIRM_ORDER < len(firm_names):
+            return firm_names[self.SEC_FIRM_ORDER]
+        else:
+            return ""
+    
+    def get_board_name(self):
+        if 0 <= self.SEC_FIRM_ORDER < len(board_names) and 0 <= self.ARTICLE_BOARD_ORDER < len(board_names[self.SEC_FIRM_ORDER]):
+            return board_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
+        else:
+            return ""
+    
+    def get_label_name(self):
+        if 0 <= self.SEC_FIRM_ORDER < len(label_names) and 0 <= self.ARTICLE_BOARD_ORDER < len(label_names[self.SEC_FIRM_ORDER]):
+            return label_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
+        else:
+            return ""
+    
+    def set_sec_firm_order(self, sec_firm_order):
+        self.SEC_FIRM_ORDER = sec_firm_order
+    
+    def set_article_board_order(self, article_board_order):
+        self.ARTICLE_BOARD_ORDER = article_board_order
+        
+    def get_state(self):
+        return {
+            "SEC_FIRM_ORDER": self.SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER": self.ARTICLE_BOARD_ORDER,
+            "FIRM_NAME":firm_names[self.SEC_FIRM_ORDER],
+            "BOARD_NAME":board_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER],
+            "LABEL_NAME":label_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
+        }
+# 테스트 코드
+if __name__ == "__main__":
+    firm_info = FirmInfo()
+    print(firm_info.get_state())
+    # 증권사 이름 출력
+    print(firm_info.get_firm_name())  # LS증권
+    
+    # 게시판 이름 출력
+    print(firm_info.get_board_name())  # 이슈브리프
+    
+    # 라벨 이름 출력
+    print(firm_info.get_label_name())  # ""
+    
+    # 상태값 변경 후 출력
+    firm_info.set_sec_firm_order(1)
+    firm_info.set_article_board_order(2)
+    print(firm_info.get_firm_name())  # 신한증권
+    print(firm_info.get_board_name())  # 스몰캡
+    print(firm_info.get_label_name())  # ""
