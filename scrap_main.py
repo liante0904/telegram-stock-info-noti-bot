@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*- 
+import gc
 import os
 import sys
 import datetime
-import logging
 from pytz import timezone
 import telegram
 import requests
@@ -97,7 +97,7 @@ def LS_checkNewArticle():
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7)
 
     ## EBEST만 로직 변경 테스트
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -150,7 +150,7 @@ def LS_checkNewArticle():
 
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         for list in soupList:
 
             date = list.select('td')[3].get_text()
@@ -177,37 +177,18 @@ def LS_checkNewArticle():
 
             item = LS_detail(LIST_ARTICLE_URL, date)
             # print(item)
-            sendMessageText += save_data_to_local_json(
+            LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+            LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
+            
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
-                attach_url=item['LIST_ARTICLE_URL'],
-                article_title=item['LIST_ARTICLE_TITLE']
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수 
-                LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
-                LIST_ARTICLE_TITLE = item['LIST_ARTICLE_FILE_NAME']
-                # DownloadFile(URL = , FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
-
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            
+    return nNewArticleCnt
     
 def LS_detail(ARTICLE_URL, date):
     global ATTACH_FILE_NAME
@@ -299,7 +280,7 @@ def ShinHanInvest_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2,TARGET_URL_3)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -348,7 +329,7 @@ def ShinHanInvest_checkNewArticle():
 
         
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         # JSON To List
         for list in jres['list']:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
@@ -364,37 +345,15 @@ def ShinHanInvest_checkNewArticle():
                 print("에러 발생:", e)
                 LIST_ARTICLE_URL = list['f3']
                 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-                print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
-
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+    
+    return nNewArticleCnt
 
 
 # JSON API 타입
@@ -419,7 +378,7 @@ def KB_checkNewArticle():
 
     # TARGET_URL_TUPLE = (TARGET_URL_0)
     
-    sendMessageText = ''
+    
 
     # 요청 헤더
     headers = {
@@ -461,7 +420,7 @@ def KB_checkNewArticle():
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
-    sendMessageText = ''
+    
     # JSON To List
     for list in strList:
         # print(list)
@@ -470,40 +429,19 @@ def KB_checkNewArticle():
         if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
         else: LIST_ARTICLE_TITLE = list['docTitleSub']
         LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-        LIST_ARTICLE_URL = extract_and_decode_url(LIST_ARTICLE_URL)
+        LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
         
         # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
  
-        sendMessageText += save_data_to_local_json(
+        if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
-
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-                
+            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def NHQV_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -520,7 +458,7 @@ def NHQV_checkNewArticle():
     # NH투자증권 오늘의 레포트
     TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
     
-    sendMessageText = ''
+    
     
     payload = {
         "trName": "H3211",
@@ -548,7 +486,7 @@ def NHQV_checkNewArticle():
             return True
         
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-        
+        if nNewArticleCnt == 0: return None
         strList = jres['H3211']['H3211OutBlock2']
         listR = listR + strList
         
@@ -577,7 +515,7 @@ def NHQV_checkNewArticle():
     
 
     nNewArticleCnt = 0
-    sendMessageText = ''
+    
     for list in soupList:
         # print(list)
 
@@ -587,37 +525,16 @@ def NHQV_checkNewArticle():
 
         # print('NXT_KEY',NXT_KEY)
         
-        sendMessageText += save_data_to_local_json(
+
+        if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print('BOARD_NM',BOARD_NM)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
+            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-                
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def HANA_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -658,7 +575,7 @@ def HANA_checkNewArticle():
     ]
 
 
-    sendMessageText = ''
+    
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
@@ -673,41 +590,20 @@ def HANA_checkNewArticle():
 
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
             LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
             # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
-            
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print(LIST_ARTICLE_TITLE)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
-
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
                 
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-            # sendMessageText = GetSendMessageTitle() + sendMessageText
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Samsung_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -729,7 +625,7 @@ def Samsung_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -758,7 +654,7 @@ def Samsung_checkNewArticle():
 
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong').text
             a_href = list.select_one('#content > section.bbsLstWrap > ul > li > a').attrs['href']
@@ -773,37 +669,16 @@ def Samsung_checkNewArticle():
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
 
-            # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Sangsanginib_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -825,7 +700,7 @@ def Sangsanginib_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -867,7 +742,7 @@ def Sangsanginib_checkNewArticle():
 
         
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         # JSON To List
         for list in jres[0]['getNoticeList']:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
@@ -880,37 +755,15 @@ def Sangsanginib_checkNewArticle():
             LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
             LIST_ARTICLE_TITLE = list['TITLE']
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-                print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Sangsanginib_detail(NT_NO, CMS_CD):
     ntNo = NT_NO
@@ -980,7 +833,7 @@ def Shinyoung_checkNewArticle():
     # 신영증권 리서치
     TARGET_URL = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
 
-    sendMessageText = ''
+    
     
 
     jres = ''
@@ -1019,7 +872,7 @@ def Shinyoung_checkNewArticle():
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
-    sendMessageText = ''
+    
     # JSON To List
     for list in jres['rows']:
         # print('list***************** \n',list)
@@ -1027,37 +880,15 @@ def Shinyoung_checkNewArticle():
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
 
-        sendMessageText += save_data_to_local_json(
+        if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-            nNewArticleCnt = 0
+            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-                
-    
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Shinyoung_detail(SEQ, BBSNO):
     # print('******************Shinyoung_detail***************')
@@ -1200,7 +1031,7 @@ def Miraeasset_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1248,7 +1079,7 @@ def Miraeasset_checkNewArticle():
         # soupList = posts
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one(".subject a").text
             LIST_ARTICLE_URL = "없음"
@@ -1258,38 +1089,17 @@ def Miraeasset_checkNewArticle():
                 # ATTACH_URL = LIST_ARTICLE_URL
                 LIST_ARTICLE_TITLE = list.select_one(".subject a").find_all(string=True)
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
-                # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
                 # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Kiwoom_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1313,7 +1123,7 @@ def Kiwoom_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2, TARGET_URL_3)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1345,7 +1155,7 @@ def Kiwoom_checkNewArticle():
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         # JSON To List
         for list in jres['researchList']:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
@@ -1355,40 +1165,17 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
             LIST_ARTICLE_TITLE = list['titl']
 
-            # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print(LIST_ARTICLE_URL)
-                print(LIST_ARTICLE_TITLE)
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Hmsec_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1411,7 +1198,7 @@ def Hmsec_checkNewArticle():
     TARGET_URL_2 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=8'
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1440,7 +1227,7 @@ def Hmsec_checkNewArticle():
 
         
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         # JSON To List
         for list in jres['data_list']:
             # print(list)
@@ -1462,37 +1249,15 @@ def Hmsec_checkNewArticle():
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print('LIST_ATTACHMENT_URL : ',LIST_ATTACHMENT_URL,'\nLIST_ARTICLE_URL : ',LIST_ARTICLE_URL, '\nLIST_ARTICLE_TITLE: ',LIST_ARTICLE_TITLE,'\nREG_DATE :', REG_DATE)
-                print('SERIAL_NO:',SERIAL_NO)
-                DownloadFile_wget(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Koreainvestment_selenium_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -1510,7 +1275,7 @@ def Koreainvestment_selenium_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
-    sendMessageText = ''
+    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -1543,7 +1308,7 @@ def Koreainvestment_selenium_checkNewArticle():
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         
         # List
         for title, link in zip(title_elements, link_elements):
@@ -1553,35 +1318,14 @@ def Koreainvestment_selenium_checkNewArticle():
             LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-                print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
-                DownloadFile_wget(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
-
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
 
 
         # # 링크와 제목 출력
@@ -1594,8 +1338,7 @@ def Koreainvestment_selenium_checkNewArticle():
 
         # 브라우저 닫기
         driver.quit()
-
-    return sendMessageText
+    return nNewArticleCnt
 
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     string = string.replace("javascript:prePdfFileView2(", "").replace("&amp;", "&").replace(")", "").replace("(", "").replace("'", "")
@@ -1735,7 +1478,7 @@ def DAOL_checkNewArticle():
                         , TARGET_URL_7, TARGET_URL_8, TARGET_URL_9, TARGET_URL_10, TARGET_URL_11,TARGET_URL_12)
     
     
-    sendMessageText = ''
+    
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         # URL GET
@@ -1808,7 +1551,7 @@ def DAOL_checkNewArticle():
     
         
         nNewArticleCnt = 0
-        sendMessageText = ''
+        
         for list in soupList:
             # print(list)
             LIST_ARTICLE_TITLE = list['title']
@@ -1827,181 +1570,17 @@ def DAOL_checkNewArticle():
             # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
             # print('NXT_KEY='+NXT_KEY)
             # ATTACH_URL = LIST_ARTICLE_URL
-            # DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
-            sendMessageText += save_data_to_local_json(
+            if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
-            if sendMessageText:
-                nNewArticleCnt += 1 # 새로운 게시글 수
-                DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-            if len(sendMessageText) >= 3500:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-                sendMessageText = ''
-                nNewArticleCnt = 0
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
-        if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-            print('최신 게시글이 채널에 발송 되어 있습니다.')
-            return
-                    
-        
-        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-        if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-            print(sendMessageText)
-
-
-    return sendMessageText
-
-async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-# URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
-def DownloadFile(URL, FILE_NAME):
-    global ATTACH_FILE_NAME
-    print("DownloadFile()",URL, FILE_NAME)
-
-    BOARD_NM = ''
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-    # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
-    CONVERT_URL = URL 
-    for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
-        # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
-        # 1. 주소에서 한글 문자를 판별
-        # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-        # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
-        if ord('가') <= ord(c) <= ord('힣'): 
-            c_encode = c.encode('euc-kr')
-            CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-
-    if URL != CONVERT_URL: 
-        print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
-        print("CONVERT_URL", CONVERT_URL)
-        URL = CONVERT_URL
-
-    # 파일명 지정
-    # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
-    # 날짜-대분류-소분류-제목-증권사.pdf
-    # TODO 종목명 추가
-    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
-    print('FILE_NAME 확장자 제거 ,', FILE_NAME)
-    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + firm_info['firm_name']
-    # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
-    MAX_FILE_NAME_LENGTH = 240
-    if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
-    FILE_NAME += '.pdf'
-    # if '.pdf' not in FILE_NAME : FILE_NAME = FILE_NAME + '.pdf'
-
-    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
-    print('convert URL:',URL)
-    print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
-
-    if os.path.exists(ATTACH_FILE_NAME):
-        print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
-        return None
-    
-    with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
-        response = get(URL, verify=False)     # get request
-        file.write(response.content) # write to file
-
-            
-    r = googledrive.upload(str(ATTACH_FILE_NAME))
-    
-    print(f'main URL {r}')
-    return r
-
-# wget을 이용하여 파일 다운로드 => 추후 다 변경할수도?
-def DownloadFile_wget(URL, FILE_NAME):
-    global ATTACH_FILE_NAME
-    print("DownloadFile_wget()",URL, FILE_NAME)
-
-
-    BOARD_NM = ''
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-    # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
-    CONVERT_URL = URL 
-    for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
-        # 코드셋 기준 파이썬:UTF-8 . 교보증권:EUC-KR
-        # 1. 주소에서 한글 문자를 판별
-        # 2. 해당 문자를 EUC-KR로 변환후 URL 인코딩
-        # print("##",c , "##", ord('가') <= ord(c) <= ord('힣') )
-        if ord('가') <= ord(c) <= ord('힣'): 
-            c_encode = c.encode('euc-kr')
-            CONVERT_URL = CONVERT_URL.replace(c, urlparse.quote(c_encode) )
-
-    if URL != CONVERT_URL: 
-        print("기존 URL에 한글이 포함되어 있어 인코딩처리함")
-        print("CONVERT_URL", CONVERT_URL)
-        URL = CONVERT_URL
-
-    # 파일명 지정
-    # 날짜 종목 제목 증권사 결국 이 순이 젤 좋아보이네
-    # 날짜-대분류-소분류-제목-증권사.pdf
-    # TODO 종목명 추가
-    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "") # 확장자 제거 후 시작
-    print('FILE_NAME 확장자 제거 ,', FILE_NAME)
-    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "") # 날짜 제거 후 시작
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + firm_info['firm_name']
-
-    # 파일명 길이 체크 후, 길면 자르고, 확장자 붙여 마무리함
-    MAX_FILE_NAME_LENGTH = 240
-    if len(FILE_NAME)  > MAX_FILE_NAME_LENGTH : FILE_NAME = FILE_NAME[0:MAX_FILE_NAME_LENGTH]
-    FILE_NAME += '.pdf'
-    # if '.pdf' not in FILE_NAME : FILE_NAME = FILE_NAME + '.pdf'
-
-    ATTACH_FILE_NAME = re.sub('[\/:*?"<>|]','',FILE_NAME) # 저장할 파일명 : 파일명으로 사용할수 없는 문자 삭제 변환
-    print('convert URL:',URL)
-    print('convert ATTACH_FILE_NAME:',ATTACH_FILE_NAME)
-
-    if os.path.exists(ATTACH_FILE_NAME):
-        print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
-        return None
-
-    wget.download(url=URL, out=ATTACH_FILE_NAME)
-    r = googledrive.upload(str(ATTACH_FILE_NAME))
-    
-    print(f'main URL {r}')
-    return r
-
-
-# 실제 전송할 메시지 작성 
-# 유형   : Markdown
-# Paran  : ARTICLE_TITLE -> 레포트 제목  , ATTACH_URL -> 레포트 URL(PDF)
-def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
-    
-    sendMessageText = ''
-
-    # save_to_local_json(sec_firm_order=SEC_FIRM_ORDER, article_board_order=ARTICLE_BOARD_ORDER, firm_nm=FIRM_NM, attach_url=ATTACH_URL, article_title=ARTICLE_TITLE)
-    sendMessageText = save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
-            attach_url=ATTACH_URL,
-            article_title=ARTICLE_TITLE
-    )
-    
-    return sendMessageText
-    
-# 타이틀 생성 
-# : 게시판 이름 삭제
-def GetSendMessageTitle(): 
-    
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-    # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
-    SendMessageTitle = "\n\n" + " ●"+  firm_info['firm_name'] + "\n" 
-    
-    return SendMessageTitle
+    return nNewArticleCnt
 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
 def GetCurrentTime(*args):
@@ -2115,7 +1694,7 @@ def GetSecretKey(*args):
         TELEGRAM_USER_ID_DEV                        =   os.environ.get('TELEGRAM_USER_ID_DEV')
 
 # KB증권 암호화 해제
-def extract_and_decode_url(url):
+def KB_decode_url(url):
     """
     주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
 
@@ -2220,9 +1799,6 @@ def main():
     
     
     GetSecretKey()
-
-    
-    sendMessageText = ''
     
     # check functions 리스트
     check_functions = [
@@ -2243,17 +1819,11 @@ def main():
 
     for check_function in check_functions:
         print(f"{check_function.__name__} => 새 게시글 정보 확인")
-        r = check_function()
-        print('======>',r)
-        if r:
-            sendMessageText += GetSendMessageTitle() + r
-            if len(sendMessageText) > 3500 : 
-                asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-                sendMessageText = ''
-    
-    if len(sendMessageText) > 0:
-        asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-        sendMessageText = ''
+        cnt = check_function() 
+        if cnt:
+            print(f"{check_function.__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
+        else:
+            print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
 
 if __name__ == "__main__":
     main()
