@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*- 
 import os
+import gc
 import sys
 import datetime
 from pytz import timezone
@@ -38,10 +39,6 @@ FIRST_ARTICLE_INDEX = 0
 #################### global 변수 정리 끝###################################
 
 def LS_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-    
-    
     SEC_FIRM_ORDER = 0
     ARTICLE_BOARD_ORDER = 0
 
@@ -84,11 +81,11 @@ def LS_checkNewArticle():
         }
     
         try:
-            webpage = requests.get(TARGET_URL, verify=False, headers=headers)
+            response = requests.get(TARGET_URL, verify=False, headers=headers)
         except:
             return 0
         # HTML parse
-        soup = BeautifulSoup(webpage.content, "html.parser")
+        soup = BeautifulSoup(response.content, "html.parser")
         soupList = soup.select('#contents > table > tbody > tr')
 
         # print(soupList[0])
@@ -143,8 +140,9 @@ def LS_checkNewArticle():
 
             item = LS_detail(LIST_ARTICLE_URL, date)
             # print(item)
-            LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
-            LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
+            if item:
+                LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+                LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -154,11 +152,16 @@ def LS_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
     return nNewArticleCnt
     
 def LS_detail(ARTICLE_URL, date):
     global ATTACH_FILE_NAME
     global LIST_ARTICLE_TITLE
+    item = {}  # 빈 딕셔너리로 초기화
     ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
     # print('LS_downloadFile')
     # print(date)
@@ -167,11 +170,11 @@ def LS_detail(ARTICLE_URL, date):
     time.sleep(0.5)
     try:
         # print(ARTICLE_URL)
-        webpage = requests.get(ARTICLE_URL, verify=False)
+        response = requests.get(ARTICLE_URL, verify=False)
     except:
-        return 0
+        return item
     # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
+    soup = BeautifulSoup(response.content, "html.parser")
     # print(soup)
     # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
     table = soup.select_one('#contents > table')
@@ -180,13 +183,13 @@ def LS_detail(ARTICLE_URL, date):
     LIST_ARTICLE_TITLE = trs[0].select_one('td').text
     
     # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
+    attachFileCode = BeautifulSoup(response.content, "html.parser").select_one('.attach > a')['href']
     
     ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
     
     # 첨부파일 이름
-    LIST_ARTICLE_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    LIST_ARTICLE_FILE_NAME = BeautifulSoup(response.content, "html.parser").select_one('.attach > a').get_text()
+    ATTACH_FILE_NAME = BeautifulSoup(response.content, "html.parser").select_one('.attach > a').get_text()
     # print(ATTACH_FILE_NAME)
     # param1 
     URL_PARAM = date
@@ -204,7 +207,7 @@ def LS_detail(ARTICLE_URL, date):
     ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
     ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
 
-    item = {}  # 빈 딕셔너리로 초기화
+    
     item['LIST_ARTICLE_URL'] = ATTACH_URL
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
@@ -216,11 +219,9 @@ def LS_detail(ARTICLE_URL, date):
 
     return item
 
-
-
 def ShinHanInvest_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
@@ -312,13 +313,18 @@ def ShinHanInvest_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 
 # JSON API 타입
 def KB_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER      = 4
     ARTICLE_BOARD_ORDER = 0
@@ -369,8 +375,8 @@ def KB_checkNewArticle():
     else:
         print("요청에 실패했습니다. 상태 코드:", response.status_code)
 
-    strList = jres['response']['reportList']
-    # print(strList)
+    soupList = jres['response']['reportList']
+    # print(soupList)
     
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
@@ -378,7 +384,7 @@ def KB_checkNewArticle():
     nNewArticleCnt = 0
     
     # JSON To List
-    for list in strList:
+    for list in soupList:
         # print(list)
 
         LIST_ARTICLE_TITLE = list['docTitleSub']
@@ -397,11 +403,16 @@ def KB_checkNewArticle():
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def NHQV_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
@@ -428,12 +439,12 @@ def NHQV_checkNewArticle():
     while True:
         
         try:
-            webpage = requests.post(TARGET_URL,
+            response = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
                                                         'Accept':'application/json, text/javascript, */*; q=0.01'},
                                     data=payload)
-            # print(webpage.text)
-            jres = json.loads(webpage.text)
+            # print(response.text)
+            jres = json.loads(response.text)
             # print(jres)
             
         except:
@@ -483,11 +494,16 @@ def NHQV_checkNewArticle():
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def HANA_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
@@ -526,13 +542,13 @@ def HANA_checkNewArticle():
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
-            webpage = requests.get(TARGET_URL, verify=False)
+            response = requests.get(TARGET_URL, verify=False)
             time.sleep(0.5)
         except:
             return 0
 
         # HTML parse
-        soup = BeautifulSoup(webpage.content, "html.parser")
+        soup = BeautifulSoup(response.content, "html.parser")
         soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
         nNewArticleCnt = 0
@@ -549,12 +565,14 @@ def HANA_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
                 
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Samsung_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER = 5
     ARTICLE_BOARD_ORDER = 0
 
@@ -574,12 +592,12 @@ def Samsung_checkNewArticle():
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
-            webpage = requests.get(TARGET_URL, verify=False)
+            response = requests.get(TARGET_URL, verify=False)
         except:
             return 0
 
         # HTML parse
-        soup = BeautifulSoup(webpage.content, "html.parser")
+        soup = BeautifulSoup(response.content, "html.parser")
         soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
         try:
@@ -619,12 +637,14 @@ def Samsung_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Sangsanginib_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER = 6
     ARTICLE_BOARD_ORDER = 0
 
@@ -667,9 +687,9 @@ def Sangsanginib_checkNewArticle():
         }
 
         try:
-            webpage = requests.post(TARGET_URL, headers=headers, data=data)
-            # print(webpage.text)
-            jres = json.loads(webpage.text)
+            response = requests.post(TARGET_URL, headers=headers, data=data)
+            # print(response.text)
+            jres = json.loads(response.text)
             # print(jres)
         except:
             return 0
@@ -700,6 +720,11 @@ def Sangsanginib_checkNewArticle():
                 firm_nm=firm_info['firm_name'],
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
 
     return nNewArticleCnt
 
@@ -759,8 +784,8 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     return url
 
 def Shinyoung_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER = 7
     ARTICLE_BOARD_ORDER = 0
@@ -773,7 +798,7 @@ def Shinyoung_checkNewArticle():
     
 
     jres = ''
-    url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
+    # url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
     headers = {
         "Accept": "text/plain, */*; q=0.01",
         "Accept-Encoding": "gzip, deflate, br",
@@ -791,12 +816,12 @@ def Shinyoung_checkNewArticle():
     }
 
     try:
-        webpage = requests.post(TARGET_URL, headers=headers, data=data)
-        if webpage.status_code == 200:
-            # print(webpage.text)  # 응답 내용 출력
-            jres = json.loads(webpage.text)
+        response = requests.post(TARGET_URL, headers=headers, data=data)
+        if response.status_code == 200:
+            # print(response.text)  # 응답 내용 출력
+            jres = json.loads(response.text)
         else:
-            print("Failed to fetch page:", webpage.status_code)
+            print("Failed to fetch page:", response.status_code)
             return True
     except Exception as e:
         print("An error occurred:", str(e))
@@ -823,6 +848,11 @@ def Shinyoung_checkNewArticle():
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
 
     return nNewArticleCnt
 
@@ -953,8 +983,8 @@ def Shinyoung_detail(SEQ, BBSNO):
     return url
 
 def Miraeasset_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
     
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
@@ -1034,12 +1064,14 @@ def Miraeasset_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soup
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Kiwoom_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
 
@@ -1073,9 +1105,9 @@ def Kiwoom_checkNewArticle():
         }
 
         try:
-            webpage = requests.post(TARGET_URL,data=payload)
-            # print(webpage.text)
-            jres = json.loads(webpage.text)
+            response = requests.post(TARGET_URL,data=payload)
+            # print(response.text)
+            jres = json.loads(response.text)
         except:
             return 0
             
@@ -1109,12 +1141,14 @@ def Kiwoom_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Hmsec_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER = 9
     ARTICLE_BOARD_ORDER = 0
 
@@ -1139,9 +1173,9 @@ def Hmsec_checkNewArticle():
 
         jres = ''
         try:
-            webpage = requests.post(url=TARGET_URL ,data=payload , headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-            # print(webpage.text)
-            jres = json.loads(webpage.text)
+            response = requests.post(url=TARGET_URL ,data=payload , headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
+            # print(response.text)
+            jres = json.loads(response.text)
         except:
             return 0
             
@@ -1188,12 +1222,14 @@ def Hmsec_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Koreainvestment_selenium_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER = 13
     ARTICLE_BOARD_ORDER = 0
 
@@ -1267,6 +1303,12 @@ def Koreainvestment_selenium_checkNewArticle():
 
         # 브라우저 닫기
         driver.quit()
+        
+    # 메모리 정리
+    # del soup
+    # del response
+    gc.collect()
+
     return nNewArticleCnt
 
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
@@ -1377,8 +1419,8 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
     return url
 
 def DAOL_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
+
+
 
     SEC_FIRM_ORDER      = 14
     ARTICLE_BOARD_ORDER = 0
@@ -1505,6 +1547,11 @@ def DAOL_checkNewArticle():
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
+    # 메모리 정리
+    del soup, soupList
+    del response
+    gc.collect()
+
     return nNewArticleCnt
 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
@@ -1562,7 +1609,6 @@ def GetCurrentDate(*args):
     pattern= pattern.replace('dd', DATE_SPLIT[2])
     pattern= pattern.replace('DD', DATE_SPLIT[2])
 
-
     # print('입력', args[0], '최종', pattern)
     return pattern
     
@@ -1587,12 +1633,10 @@ def KB_decode_url(url):
     Returns:
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
-    # print(url)
     url = url.replace('&amp;', '&')
     # URL 파싱
     parsed_url = urlparse.urlparse(url)
     
-    # print(url)
     # 쿼리 문자열 파싱
     query_params = urlparse.parse_qs(parsed_url.query)
     
@@ -1674,8 +1718,6 @@ def main():
     # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     # logging.debug('이것은 디버그 메시지입니다.')
-    
-    
     
     # check functions 리스트
     check_functions = [
