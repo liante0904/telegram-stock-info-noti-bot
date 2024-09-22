@@ -86,7 +86,7 @@ def LS_checkNewArticle():
         try:
             webpage = requests.get(TARGET_URL, verify=False, headers=headers)
         except:
-            return True
+            return 0
         # HTML parse
         soup = BeautifulSoup(webpage.content, "html.parser")
         soupList = soup.select('#contents > table > tbody > tr')
@@ -105,8 +105,6 @@ def LS_checkNewArticle():
         # except IndexError:
             # print('IndexError')
 
-
-        
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -118,11 +116,9 @@ def LS_checkNewArticle():
         # 7일 전 날짜 계산
         seven_days_ago = today - datetime.timedelta(days=7)
 
-
         nNewArticleCnt = 0
         
         for list in soupList:
-
             date = list.select('td')[3].get_text()
             list = list.select('a')
             # print(list[0].text)
@@ -143,7 +139,7 @@ def LS_checkNewArticle():
             # 7일 이내의 게시물만 처리
             if post_date_obj < seven_days_ago:
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
-                continue
+                break
 
             item = LS_detail(LIST_ARTICLE_URL, date)
             # print(item)
@@ -168,12 +164,12 @@ def LS_detail(ARTICLE_URL, date):
     # print(date)
     ATTACH_BASE_URL = 'https://www.ls-sec.co.kr/_bt_lib/util/download.jsp?dataType='
     
-    time.sleep(0.1)
+    time.sleep(0.5)
     try:
         # print(ARTICLE_URL)
         webpage = requests.get(ARTICLE_URL, verify=False)
     except:
-        return True
+        return 0
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
     # print(soup)
@@ -283,23 +279,18 @@ def ShinHanInvest_checkNewArticle():
         try:
             jres = json.loads(response.read().decode('utf-8'))
         except:
-            return True
+            return 0
 
-        # strList = jres['list']
-        # print(strList[0])
-        # print(strList[0]['f0'],strList[0]['f1'])
-        # print(l[0]['f0'])
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-
+        soupList = jres['list']
         # 연속키 데이터베이스화 작업
         
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
-        
         nNewArticleCnt = 0
         
         # JSON To List
-        for list in jres['list']:
+        for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print(list)
 
@@ -381,7 +372,6 @@ def KB_checkNewArticle():
     strList = jres['response']['reportList']
     # print(strList)
     
-    
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
@@ -447,7 +437,7 @@ def NHQV_checkNewArticle():
             # print(jres)
             
         except:
-            return True
+            return 0
         
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
         if nNewArticleCnt == 0: return None
@@ -472,11 +462,9 @@ def NHQV_checkNewArticle():
     BOARD_NM            = listR[0]['rshPprSerCdNm']
    
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     # print('연속URL:', NXT_KEY) # 주소
-    
 
     nNewArticleCnt = 0
     
@@ -486,9 +474,6 @@ def NHQV_checkNewArticle():
         BOARD_NM            = list['rshPprSerCdNm']
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
         LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
-
-        # print('NXT_KEY',NXT_KEY)
-        
 
         if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
@@ -544,12 +529,11 @@ def HANA_checkNewArticle():
             webpage = requests.get(TARGET_URL, verify=False)
             time.sleep(0.5)
         except:
-            return True
+            return 0
 
         # HTML parse
         soup = BeautifulSoup(webpage.content, "html.parser")
         soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
-
 
         nNewArticleCnt = 0
         
@@ -592,7 +576,7 @@ def Samsung_checkNewArticle():
         try:
             webpage = requests.get(TARGET_URL, verify=False)
         except:
-            return True
+            return 0
 
         # HTML parse
         soup = BeautifulSoup(webpage.content, "html.parser")
@@ -605,10 +589,9 @@ def Samsung_checkNewArticle():
             a_href = a_href.split("'")
             a_href = a_href[1]
         except:
-            return ''
+            return 0
 
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
@@ -628,7 +611,6 @@ def Samsung_checkNewArticle():
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
 
-            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)                
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
@@ -690,18 +672,17 @@ def Sangsanginib_checkNewArticle():
             jres = json.loads(webpage.text)
             # print(jres)
         except:
-            return True
+            return 0
         
 
+        soupList = jres[0]['getNoticeList']
         # 연속키 데이터베이스화 작업
-        
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
         
         nNewArticleCnt = 0
         
         # JSON To List
-        for list in jres[0]['getNoticeList']:
+        for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print('list***************** \n',list)
             # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
@@ -822,14 +803,14 @@ def Shinyoung_checkNewArticle():
         return True
 
     # print(jres['rows'])
-
+    soupList = jres['rows']
     # 연속키 데이터베이스화 작업
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     
     # JSON To List
-    for list in jres['rows']:
+    for list in soupList:
         # print('list***************** \n',list)
         # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
@@ -1096,20 +1077,21 @@ def Kiwoom_checkNewArticle():
             # print(webpage.text)
             jres = json.loads(webpage.text)
         except:
-            return True
+            return 0
             
         if jres['totalCount'] == 0 : return ''
 
         # print(jres['researchList'])
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-
+        
+        soupList = jres['researchList']
         # 연속키 데이터베이스화 작업
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         nNewArticleCnt = 0
         
         # JSON To List
-        for list in jres['researchList']:
+        for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print(list)
             # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
@@ -1161,7 +1143,7 @@ def Hmsec_checkNewArticle():
             # print(webpage.text)
             jres = json.loads(webpage.text)
         except:
-            return ''
+            return 0
             
         # print(jres['data_list'])
         
@@ -1171,15 +1153,14 @@ def Hmsec_checkNewArticle():
         # print('REG_DATE:',REG_DATE)
         # print('FILE_NAME:',FILE_NAME)
 
+        soupList = jres['data_list']
         # 연속키 데이터베이스화 작업
-        
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
         
         nNewArticleCnt = 0
         
         # JSON To List
-        for list in jres['data_list']:
+        for list in soupList:
             # print(list)
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
             LIST_ATTACHMENT_URL = 'https://www.hmsec.com/documents/research/{}' 
@@ -1492,9 +1473,7 @@ def DAOL_checkNewArticle():
             print("요청이 실패했습니다.")
             print("상태 코드:", response.status_code)
         
-        
         firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-    
         
         nNewArticleCnt = 0
         
@@ -1718,6 +1697,7 @@ def main():
     for check_function in check_functions:
         print(f"{check_function.__name__} => 새 게시글 정보 확인")
         cnt = check_function() 
+        time.sleep(1)
         if cnt:
             print(f"{check_function.__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
         else:
