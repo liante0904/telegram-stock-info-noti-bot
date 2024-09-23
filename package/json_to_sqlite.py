@@ -322,6 +322,7 @@ def daily_select_data(date_str=None):
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
+        AND MAIN_CH_SEND_YN != 'Y'
     ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME    
     """
     cursor.execute(query)
@@ -333,7 +334,28 @@ def daily_select_data(date_str=None):
     
     return rows
 
-# 명령 실행
+def daily_update_data(fetched_rows):
+    # 업데이트할 쿼리 문자열을 작성합니다.
+    update_query = """
+        UPDATE data_main_daily_send
+        SET 
+            MAIN_CH_SEND_YN = 'Y'
+        WHERE 
+            id = %s  -- id를 기준으로 업데이트
+    """
+
+    # rows에서 데이터를 읽어와 업데이트합니다.
+    for row in fetched_rows:
+        id, firm_nm, article_title, article_url, save_time, send_user = row
+        
+        # 업데이트 쿼리를 실행합니다.
+        cursor.execute(update_query, (firm_nm, article_title, article_url, save_time, send_user, id))
+
+    # 명령 실행
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
 if args.action == 'table' or args.action is None:
     print_tables()
 elif args.action == 'insert':
