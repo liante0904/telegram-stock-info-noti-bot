@@ -6,7 +6,7 @@ from datetime import datetime
 import sys
 import os
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
@@ -148,6 +148,7 @@ def update_data(date=None, keyword=None, user_ids=None):
         print(f"{cursor.rowcount} rows updated in {table}.")
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 def print_tables():
@@ -184,7 +185,9 @@ def insert_data():
                 ))
     print("Data inserted successfully.")
     conn.commit()
-
+    cursor.close()
+    conn.close()
+    
 def select_data(table=None):
     """특정 테이블 또는 모든 테이블의 데이터를 조회합니다."""
     if table:
@@ -198,7 +201,10 @@ def select_data(table=None):
         rows = cursor.fetchall()
         for row in rows:
             print(row)
-
+            
+    cursor.close()
+    conn.close()
+    
 def format_message(data_list):
     """데이터를 포맷팅하여 문자열로 반환합니다."""
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
@@ -319,7 +325,11 @@ def daily_select_data(date_str=None):
     """
     cursor.execute(query)
     rows = cursor.fetchall()
-
+    print(rows)
+    
+    cursor.close()
+    conn.close()
+    
     return rows
 
 # 명령 실행
@@ -340,5 +350,3 @@ elif args.action == 'keyword_select':
 
 elif args.action == 'daily':
     daily_select_data(args.name)
-# 연결 종료
-conn.close()
