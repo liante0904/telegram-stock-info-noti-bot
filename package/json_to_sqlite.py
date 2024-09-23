@@ -251,6 +251,55 @@ def format_message(data_list):
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
+
+def convert_sql_to_telegram_messages(fetched_rows):
+    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
+    formatted_messages = []
+    message_chunk = ""  # 현재 메시지 조각
+    message_limit = 3500  # 텔레그램 메시지 제한
+
+    # 특정 FIRM_NM을 제외할 리스트
+    EXCLUDED_FIRMS = {"네이버", "조선비즈"}
+    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
+
+    for row in fetched_rows:
+        # 첫 번째 요소인 id는 무시하고, 나머지를 FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER로 할당
+        id, FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER = row
+
+        sendMessageText = ""
+
+        # 'FIRM_NM'이 존재하는 경우에만 포함
+        if FIRM_NM:
+            if FIRM_NM not in EXCLUDED_FIRMS:
+                if FIRM_NM != last_firm_nm:
+                    # 메시지가 3500자를 넘으면 추가된 메시지들을 배열에 저장하고 새로 시작
+                    if len(message_chunk) + len(sendMessageText) > message_limit:
+                        formatted_messages.append(message_chunk.strip())
+                        message_chunk = ""  # 새로 시작
+
+                    sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                    last_firm_nm = FIRM_NM
+
+        # 게시글 제목(굵게)
+        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+        # 원문 링크
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+
+        # 메시지가 3500자를 넘지 않도록 쌓음
+        if len(message_chunk) + len(sendMessageText) > message_limit:
+            # 이전 chunk를 저장하고 새로운 chunk 시작
+            formatted_messages.append(message_chunk.strip())
+            message_chunk = sendMessageText
+        else:
+            message_chunk += sendMessageText
+
+    # 마지막 남은 메시지도 저장
+    if message_chunk:
+        formatted_messages.append(message_chunk.strip())
+
+    return formatted_messages
+
+
 def keyword_select(keyword):
     """특정 키워드가 포함된 기사 제목을 가진 데이터를 조회하고, 특정 조건에 따라 필터링합니다."""
     today = datetime.now().strftime('%Y-%m-%d')  # 오늘 날짜를 'YYYY-MM-DD' 형식으로 저장
@@ -309,6 +358,7 @@ def daily_select_data(date_str=None):
     # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
     query = f"""
     SELECT 
+        id,
         FIRM_NM, 
         ARTICLE_TITLE, 
         ATTACH_URL AS ARTICLE_URL, 
@@ -323,18 +373,15 @@ def daily_select_data(date_str=None):
     cursor.execute(query)
     rows = cursor.fetchall()
 
-    # 컬럼 이름 추출
-    columns = [desc[0] for desc in cursor.description]
     
-    # row 데이터를 dict로 변환
-    results = [dict(zip(columns, row)) for row in rows]
-
     # 결과 출력 및 반환
     # print("Queried Data:", results)
-    r = format_message_sql(rows)
+    formatted_messages = convert_sql_to_telegram_messages(rows)
     print('='*30)
-    print(r)
-    return results
+    for message in formatted_messages:
+        print(message)
+        
+    return formatted_messages
 
 
 # 명령 실행
