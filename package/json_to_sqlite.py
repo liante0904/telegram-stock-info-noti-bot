@@ -173,7 +173,7 @@ def insert_data():
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, SAVE_TIME
+                        ATTACH_URL, ARTICLE_TITLE, MAIN_CH_SEND_YN, SAVE_TIME
                     ) VALUES (?, ?, ?, ?, ?, ?)
                 ''', (
                     entry["SEC_FIRM_ORDER"],
@@ -181,6 +181,7 @@ def insert_data():
                     entry["FIRM_NM"],
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
+                    ' ',
                     entry["SAVE_TIME"]
                 ))
     print("Data inserted successfully.")
