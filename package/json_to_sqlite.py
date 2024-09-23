@@ -19,8 +19,9 @@ json_dir = os.path.join(script_dir, 'json')
 
 # SQLite 데이터베이스 연결
 conn = sqlite3.connect(db_path)
+print(conn)
 cursor = conn.cursor()
-
+print(cursor)
 # JSON 파일 리스트와 대응되는 테이블 이름
 json_files = {
     "data_main_daily_send.json": "data_main_daily_send",
@@ -299,8 +300,16 @@ def keyword_select(keyword):
     print(formatted_message)
     return formatted_message
 
-def daily_select_data(date_str=None):
-    """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다。"""
+def daily_select_data(date_str=None, type=None):
+    # SQLite 데이터베이스 연결
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
+    
+    # 'type' 파라미터가 필수임을 확인
+    if type not in ['send', 'download']:
+        raise ValueError("Invalid type. Must be 'send' or 'download'.")
+
     if date_str is None:
         # date_str가 없으면 현재 날짜 사용
         query_date = datetime.now().strftime('%Y-%m-%d')
@@ -308,7 +317,12 @@ def daily_select_data(date_str=None):
         # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
         query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
 
-    # SQL 쿼리 실행
+    # 쿼리 타입에 따라 조건을 다르게 설정
+    if type == 'send':
+        query_condition = "MAIN_CH_SEND_YN != 'Y'"
+    elif type == 'download':
+        query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+
     # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
     query = f"""
     SELECT 
@@ -322,9 +336,11 @@ def daily_select_data(date_str=None):
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
-        AND MAIN_CH_SEND_YN != 'Y'
-    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME    
+        AND {query_condition}
+    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
     """
+    
+    # SQL 쿼리 실행
     cursor.execute(query)
     rows = cursor.fetchall()
     print(rows)
@@ -334,27 +350,50 @@ def daily_select_data(date_str=None):
     
     return rows
 
-def daily_update_data(fetched_rows):
-    # 업데이트할 쿼리 문자열을 작성합니다.
-    update_query = """
-        UPDATE data_main_daily_send
-        SET 
-            MAIN_CH_SEND_YN = 'Y'
-        WHERE 
-            id = %s  -- id를 기준으로 업데이트
-    """
+def daily_update_data(fetched_rows, type):
+    # SQLite 데이터베이스 연결
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    """데이터를 업데이트합니다. type에 따라 업데이트 쿼리가 달라집니다."""
+    
+    # 'type' 파라미터가 필수임을 확인
+    if type not in ['send', 'download']:
+        raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
+    # 업데이트할 쿼리 문자열을 작성합니다.
+    if type == 'send':
+        update_query = """
+            UPDATE data_main_daily_send
+            SET 
+                MAIN_CH_SEND_YN = 'Y'
+            WHERE 
+                id = ?  -- id를 기준으로 업데이트
+        """
+    elif type == 'download':
+        update_query = """
+            UPDATE data_main_daily_send
+            SET 
+                DOWNLOAD_STATUS_YN = 'Y'
+            WHERE 
+                id = ?  -- id를 기준으로 업데이트
+        """
+    
     # rows에서 데이터를 읽어와 업데이트합니다.
     for row in fetched_rows:
         id, firm_nm, article_title, article_url, save_time, send_user = row
         
+        # 쿼리와 파라미터를 출력합니다.
+        print(f"Executing query: {update_query}")
+        print(f"With parameters: {(id,)}")
+        
         # 업데이트 쿼리를 실행합니다.
-        cursor.execute(update_query, (firm_nm, article_title, article_url, save_time, send_user, id))
-
+        cursor.execute(update_query, (id,))
+    
     # 명령 실행
     conn.commit()
     cursor.close()
     conn.close()
+
     
 if args.action == 'table' or args.action is None:
     print_tables()
