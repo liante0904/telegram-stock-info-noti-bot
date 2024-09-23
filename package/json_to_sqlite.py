@@ -263,12 +263,8 @@ def convert_sql_to_telegram_messages(fetched_rows):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for row in fetched_rows:
-        # row는 딕셔너리 형식으로 받아옴
-        FIRM_NM = row.get('FIRM_NM')
-        ARTICLE_TITLE = row.get('ARTICLE_TITLE')
-        ARTICLE_URL = row.get('ARTICLE_URL')
-        SAVE_TIME = row.get('SAVE_TIME')
-        SEND_USER = row.get('SEND_USER')
+        # 첫 번째 요소인 id는 무시하고, 나머지를 FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER로 할당
+        id, FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER = row
 
         sendMessageText = ""
 
@@ -362,6 +358,7 @@ def daily_select_data(date_str=None):
     # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
     query = f"""
     SELECT 
+        id,
         FIRM_NM, 
         ARTICLE_TITLE, 
         ATTACH_URL AS ARTICLE_URL, 
@@ -381,9 +378,9 @@ def daily_select_data(date_str=None):
     # print("Queried Data:", results)
     formatted_messages = convert_sql_to_telegram_messages(rows)
     print('='*30)
+
     for message in formatted_messages:
-        print(message)
-    return message
+        print(message)  # 텔레그램 발송 함수
 
 
 # 명령 실행
