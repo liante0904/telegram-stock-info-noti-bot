@@ -378,8 +378,9 @@ def daily_select_data(date_str=None):
     # print("Queried Data:", results)
     formatted_messages = convert_sql_to_telegram_messages(rows)
     print('='*30)
-    print(r)
-    return results
+
+    for message in formatted_messages:
+        print(message)  # 텔레그램 발송 함수
 
 
 # 명령 실행
