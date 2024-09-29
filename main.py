@@ -199,9 +199,10 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         )
         if sendMessageText:
             nNewArticleCnt += 1 # 새로운 게시글 수 
-            print('LIST_ARTICLE_URL', LIST_ARTICLE_URL)
-            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
-            DownloadFile(URL = item['LIST_ARTICLE_URL'], FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
+            LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+            LIST_ARTICLE_TITLE = item['LIST_ARTICLE_FILE_NAME']
+            # DownloadFile(URL = , FILE_NAME = item['LIST_ARTICLE_FILE_NAME'] +'.pdf')
+            DownloadFile(URL = LIST_ARTICLE_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
@@ -212,7 +213,6 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     if nNewArticleCnt == 0  or len(sendMessageText) == 0:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         return
-                
     
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
@@ -262,7 +262,7 @@ def LS_detail(ARTICLE_URL, date):
 
     # print('인코딩전:',ATTACH_FILE_NAME)
     # URL 인코딩
-    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME)
+    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME, safe='[]')
     # print('인코딩:',ATTACH_URL_FILE_NAME)
 
     # https://www.ls-sec.co.kr/upload/EtwBoardData/B202405/%5BLS%20ELECTRIC_기업이슈_240524☆%5D성종화_1840_이슈브리프_LS%20ELECTRIC.pdf
@@ -273,7 +273,7 @@ def LS_detail(ARTICLE_URL, date):
     item['LIST_ARTICLE_URL'] = ATTACH_URL
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
-
+    print(item)
     # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
     # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
     # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
