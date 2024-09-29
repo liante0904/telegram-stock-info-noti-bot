@@ -6,7 +6,6 @@ import logging
 import time
 import json
 import asyncio
-import pymysql.cursors
 import urllib.request
 
 from package.common import *
@@ -26,10 +25,6 @@ from package.SecretKey import SecretKey
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
-
-# pymysql 변수
-conn    = ''
-cursor  = ''
 
 # 게시판 URL
 BOARD_URL = ''
