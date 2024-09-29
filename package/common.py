@@ -9,7 +9,6 @@ import time
 import json
 import re
 import asyncio
-import pymysql.cursors
 import urllib.parse as urlparse
 import urllib.request
 
@@ -43,10 +42,6 @@ INTERVAL_INIT_TIME = 1
 
 # 게시글 갱신 시간
 REFRESH_TIME = 60 * 20 # 20분
-
-# pymysql 변수
-conn    = ''
-cursor  = ''
 
 # 연속키URL
 NXT_KEY = ''
@@ -570,8 +565,6 @@ def isNxtKey(*args):
     global SEND_YN
     global SEND_TIME_TERM
     global TODAY_SEND_YN
-    global conn
-    global cursor
 
     print('isNxtKey')
 
