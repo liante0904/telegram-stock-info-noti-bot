@@ -1,5 +1,30 @@
+import asyncio
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from package.sqlite_util import convert_sql_to_telegram_messages
+from package.telegram_util import sendMessage
+
+def daily_report(type):
+    if type == 'send':
+        rows = daily_select_data(type)
+        formatted_messages = convert_sql_to_telegram_messages(rows)
+        print('='*30)
+
+        # TODO SEND
+        for message in formatted_messages:
+            print(message)  # 텔레그램 발송 함수
+            asyncio.run(sendMessage(message))
+        # TOTO UPDATE
+        r = daily_update_data(fetched_rows=rows, type=type)
+        if r: print('성공')
+
+    elif type == 'download':
+        rows = daily_select_data(type='download')
+        print(rows)
+        # TOTO FILE DOWNLOAD PROCESS
+        if rows:
+            # TOTO UPDATE
+            r = daily_update_data(fetched_rows=rows, type='download')
+            if r: print('성공')
 
 def main():
     rows = daily_select_data(type='send')
@@ -9,6 +34,7 @@ def main():
     # TODO SEND
     for message in formatted_messages:
         print(message)  # 텔레그램 발송 함수
+        asyncio.run(sendMessage(message))
     
     # TOTO UPDATE
     r = daily_update_data(fetched_rows=rows, type='send')

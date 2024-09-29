@@ -341,6 +341,9 @@ def daily_select_data(date_str=None, type=None):
     """
     
     # SQL 쿼리 실행
+    print('='*30)
+    print(query)
+    print('='*30)
     cursor.execute(query)
     rows = cursor.fetchall()
     print(rows)
