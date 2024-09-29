@@ -3,8 +3,11 @@ import sqlite3
 import os
 import argparse
 from datetime import datetime
+import sys
+import os
+# 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from package.json_util import format_message_sql
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
 
@@ -16,8 +19,9 @@ json_dir = os.path.join(script_dir, 'json')
 
 # SQLite 데이터베이스 연결
 conn = sqlite3.connect(db_path)
+print(conn)
 cursor = conn.cursor()
-
+print(cursor)
 # JSON 파일 리스트와 대응되는 테이블 이름
 json_files = {
     "data_main_daily_send.json": "data_main_daily_send",
@@ -31,9 +35,10 @@ parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', '
 parser.add_argument('name', nargs='?', help="Table name for the action")
 args = parser.parse_args()
 
+
 def fetch_data(date=None, keyword=None, user_id=None):
     """특정 테이블에서 데이터를 조회하고, 파라미터가 포함된 실제 쿼리를 출력합니다.
-    
+
     :param date: 조회일자. 'YYYYMMDD' 또는 'YYMMDD' 형식도 지원하며, 없을 경우 오늘 날짜를 사용합니다.
     :param keyword: 필수 파라미터로, ARTICLE_TITLE을 검색합니다.
     :param user_id: 조회 시 제외할 사용자 ID.
@@ -92,8 +97,6 @@ def fetch_data(date=None, keyword=None, user_id=None):
     conn.close()
     return results
 
-
-
 def update_data(date=None, keyword=None, user_ids=None):
     """특정 키워드와 날짜를 기준으로 여러 테이블의 데이터를 업데이트하며, 파라미터가 포함된 실제 쿼리를 출력합니다.
     
@@ -146,6 +149,7 @@ def update_data(date=None, keyword=None, user_ids=None):
         print(f"{cursor.rowcount} rows updated in {table}.")
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 def print_tables():
@@ -170,7 +174,7 @@ def insert_data():
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, SAVE_TIME
+                        ATTACH_URL, ARTICLE_TITLE, MAIN_CH_SEND_YN, SAVE_TIME
                     ) VALUES (?, ?, ?, ?, ?, ?)
                 ''', (
                     entry["SEC_FIRM_ORDER"],
@@ -178,11 +182,14 @@ def insert_data():
                     entry["FIRM_NM"],
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
+                    ' ',
                     entry["SAVE_TIME"]
                 ))
     print("Data inserted successfully.")
     conn.commit()
-
+    cursor.close()
+    conn.close()
+    
 def select_data(table=None):
     """특정 테이블 또는 모든 테이블의 데이터를 조회합니다."""
     if table:
@@ -196,7 +203,10 @@ def select_data(table=None):
         rows = cursor.fetchall()
         for row in rows:
             print(row)
-
+            
+    cursor.close()
+    conn.close()
+    
 def format_message(data_list):
     """데이터를 포맷팅하여 문자열로 반환합니다."""
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
@@ -290,9 +300,16 @@ def keyword_select(keyword):
     print(formatted_message)
     return formatted_message
 
+def daily_select_data(date_str=None, type=None):
+    # SQLite 데이터베이스 연결
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
+    
+    # 'type' 파라미터가 필수임을 확인
+    if type not in ['send', 'download']:
+        raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
-def daily_select_data(date_str=None):
-    """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다。"""
     if date_str is None:
         # date_str가 없으면 현재 날짜 사용
         query_date = datetime.now().strftime('%Y-%m-%d')
@@ -300,10 +317,16 @@ def daily_select_data(date_str=None):
         # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
         query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
 
-    # SQL 쿼리 실행
+    # 쿼리 타입에 따라 조건을 다르게 설정
+    if type == 'send':
+        query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
+    elif type == 'download':
+        query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+
     # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
     query = f"""
     SELECT 
+        id,
         FIRM_NM, 
         ARTICLE_TITLE, 
         ATTACH_URL AS ARTICLE_URL, 
@@ -313,26 +336,68 @@ def daily_select_data(date_str=None):
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
-    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME    
+        AND {query_condition}
+    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
     """
+    
+    # SQL 쿼리 실행
+    print('='*30)
+    print(query)
+    print('='*30)
     cursor.execute(query)
     rows = cursor.fetchall()
-
-    # 컬럼 이름 추출
-    columns = [desc[0] for desc in cursor.description]
+    print(rows)
     
-    # row 데이터를 dict로 변환
-    results = [dict(zip(columns, row)) for row in rows]
+    cursor.close()
+    conn.close()
+    
+    return rows
 
-    # 결과 출력 및 반환
-    # print("Queried Data:", results)
-    r = format_message_sql(rows)
-    print('='*30)
-    print(r)
-    return results
+def daily_update_data(fetched_rows, type):
+    # SQLite 데이터베이스 연결
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    """데이터를 업데이트합니다. type에 따라 업데이트 쿼리가 달라집니다."""
+    
+    # 'type' 파라미터가 필수임을 확인
+    if type not in ['send', 'download']:
+        raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
+    # 업데이트할 쿼리 문자열을 작성합니다.
+    if type == 'send':
+        update_query = """
+            UPDATE data_main_daily_send
+            SET 
+                MAIN_CH_SEND_YN = 'Y'
+            WHERE 
+                id = ?  -- id를 기준으로 업데이트
+        """
+    elif type == 'download':
+        update_query = """
+            UPDATE data_main_daily_send
+            SET 
+                DOWNLOAD_STATUS_YN = 'Y'
+            WHERE 
+                id = ?  -- id를 기준으로 업데이트
+        """
+    
+    # rows에서 데이터를 읽어와 업데이트합니다.
+    for row in fetched_rows:
+        id, firm_nm, article_title, article_url, save_time, send_user = row
+        
+        # 쿼리와 파라미터를 출력합니다.
+        print(f"Executing query: {update_query}")
+        print(f"With parameters: {(id,)}")
+        
+        # 업데이트 쿼리를 실행합니다.
+        cursor.execute(update_query, (id,))
+    
+    # 명령 실행
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-# 명령 실행
+    
 if args.action == 'table' or args.action is None:
     print_tables()
 elif args.action == 'insert':
@@ -350,5 +415,3 @@ elif args.action == 'keyword_select':
 
 elif args.action == 'daily':
     daily_select_data(args.name)
-# 연결 종료
-conn.close()
