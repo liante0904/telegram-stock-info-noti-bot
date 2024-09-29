@@ -319,7 +319,7 @@ def daily_select_data(date_str=None, type=None):
 
     # 쿼리 타입에 따라 조건을 다르게 설정
     if type == 'send':
-        query_condition = "MAIN_CH_SEND_YN != 'Y'"
+        query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
     elif type == 'download':
         query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
 
@@ -341,6 +341,9 @@ def daily_select_data(date_str=None, type=None):
     """
     
     # SQL 쿼리 실행
+    print('='*30)
+    print(query)
+    print('='*30)
     cursor.execute(query)
     rows = cursor.fetchall()
     print(rows)
