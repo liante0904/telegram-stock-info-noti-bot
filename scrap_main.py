@@ -30,12 +30,8 @@ from selenium.webdriver.support import expected_conditions as EC
 SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
-# 이모지
-
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
-
-
 #################### global 변수 정리 끝###################################
 
 def LS_checkNewArticle():
@@ -220,9 +216,6 @@ def LS_detail(ARTICLE_URL, date):
     return item
 
 def ShinHanInvest_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
 
@@ -320,12 +313,8 @@ def ShinHanInvest_checkNewArticle():
 
     return nNewArticleCnt
 
-
 # JSON API 타입
 def KB_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER      = 4
     ARTICLE_BOARD_ORDER = 0
 
@@ -410,10 +399,44 @@ def KB_checkNewArticle():
 
     return nNewArticleCnt
 
+# KB증권 암호화 해제
+def KB_decode_url(url):
+    """
+    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
+
+    Parameters:
+    url (str): URL 문자열
+
+    Returns:
+    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
+    """
+    url = url.replace('&amp;', '&')
+    # URL 파싱
+    parsed_url = urlparse.urlparse(url)
+    
+    # 쿼리 문자열 파싱
+    query_params = urlparse.parse_qs(parsed_url.query)
+    
+    # id와 url 추출
+    id_value = query_params.get('id', [None])[0]
+    encoded_url = query_params.get('url', [None])[0]
+    
+    if id_value is None or encoded_url is None:
+        print('Invalid URL: id or url is missing')
+        return "Invalid URL: id or url is missing"
+    
+    # Base64 디코딩
+    try:
+        # '&amp;'를 '&'로 변환
+        encoded_url = encoded_url.replace('&amp;', '&')
+        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
+    except Exception as e:
+        return f"Error decoding url: {e}"
+    
+    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
+    return decoded_url
+
 def NHQV_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
 
@@ -501,10 +524,27 @@ def NHQV_checkNewArticle():
 
     return nNewArticleCnt
 
+
+# 전용 현재일자 (주말인 경우 월요일)
+def GetCurrentDate_NH():
+    # 한국 표준시(KST) 시간대를 설정합니다.
+    tz_kst = timezone('Asia/Seoul')
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    now_kst = now_utc.astimezone(tz_kst)
+
+    # 현재 요일을 구합니다. (월요일=0, 일요일=6)
+    current_weekday = now_kst.weekday()
+
+    if current_weekday == 5:  # 오늘이 토요일인 경우
+        next_monday = now_kst + datetime.timedelta(days=2)
+    elif current_weekday == 6:  # 오늘이 일요일인 경우
+        next_monday = now_kst + datetime.timedelta(days=1)
+    else:
+        next_monday = now_kst  # 오늘이 월요일~금요일인 경우 현재 일자 반환
+
+    return next_monday.strftime('%Y%m%d')
+
 def HANA_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
 
@@ -784,18 +824,13 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     return url
 
 def Shinyoung_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER = 7
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
+
     # 신영증권 리서치
     TARGET_URL = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
-
-    
-    
 
     jres = ''
     # url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
@@ -983,9 +1018,6 @@ def Shinyoung_detail(SEQ, BBSNO):
     return url
 
 def Miraeasset_checkNewArticle():
-
-
-    
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
 
@@ -1342,7 +1374,6 @@ def Koreainvestment_GET_LIST_ARTICLE_URL(string):
     
     return new_url
 
-
 def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmitdate, air_yn, kor_yn, special_yn):
     filename = urllib.parse.quote(filename)
     filepath = filepath
@@ -1419,9 +1450,6 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
     return url
 
 def DAOL_checkNewArticle():
-
-
-
     SEC_FIRM_ORDER      = 14
     ARTICLE_BOARD_ORDER = 0
 
@@ -1589,7 +1617,6 @@ def GetCurrentTime(*args):
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 # 'yyyymmdd'
 def GetCurrentDate(*args):
-
     time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
 
     DATE = time_now[:10].strip()
@@ -1622,62 +1649,6 @@ def GetCurrentDay(*args):
     DATE_SPLIT = DATE.split("-")
     return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
-# KB증권 암호화 해제
-def KB_decode_url(url):
-    """
-    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
-
-    Parameters:
-    url (str): URL 문자열
-
-    Returns:
-    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
-    """
-    url = url.replace('&amp;', '&')
-    # URL 파싱
-    parsed_url = urlparse.urlparse(url)
-    
-    # 쿼리 문자열 파싱
-    query_params = urlparse.parse_qs(parsed_url.query)
-    
-    # id와 url 추출
-    id_value = query_params.get('id', [None])[0]
-    encoded_url = query_params.get('url', [None])[0]
-    
-    if id_value is None or encoded_url is None:
-        print('Invalid URL: id or url is missing')
-        return "Invalid URL: id or url is missing"
-    
-    # Base64 디코딩
-    try:
-        # '&amp;'를 '&'로 변환
-        encoded_url = encoded_url.replace('&amp;', '&')
-        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
-    except Exception as e:
-        return f"Error decoding url: {e}"
-    
-    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
-    return decoded_url
-
-# 전용 현재일자 (주말인 경우 월요일)
-def GetCurrentDate_NH():
-    # 한국 표준시(KST) 시간대를 설정합니다.
-    tz_kst = timezone('Asia/Seoul')
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    now_kst = now_utc.astimezone(tz_kst)
-
-    # 현재 요일을 구합니다. (월요일=0, 일요일=6)
-    current_weekday = now_kst.weekday()
-
-    if current_weekday == 5:  # 오늘이 토요일인 경우
-        next_monday = now_kst + datetime.timedelta(days=2)
-    elif current_weekday == 6:  # 오늘이 일요일인 경우
-        next_monday = now_kst + datetime.timedelta(days=1)
-    else:
-        next_monday = now_kst  # 오늘이 월요일~금요일인 경우 현재 일자 반환
-
-    return next_monday.strftime('%Y%m%d')
-
 def main():
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
@@ -1688,9 +1659,6 @@ def main():
     # log 디렉토리가 존재하지 않으면 생성
     if not os.path.exists(LOG_PATH):
         os.makedirs(LOG_PATH)
-        print("LOG_PATH 디렉토리 생성됨:", LOG_PATH)
-    else:
-        print("LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
 
     # log 디렉토리 경로
     LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
@@ -1698,11 +1666,7 @@ def main():
     # daily log 디렉토리가 존재하지 않으면 생성
     if not os.path.exists(LOG_PATH):
         os.makedirs(LOG_PATH)
-        print("daily LOG_PATH 디렉토리 생성됨:", LOG_PATH)
-    else:
-        print("daily LOG_PATH 디렉토리 이미 존재함:", LOG_PATH)
 
-    
     # 현재 스크립트의 이름 가져오기
     script_filename = os.path.basename(__file__)
     script_name = script_filename.split('.')
