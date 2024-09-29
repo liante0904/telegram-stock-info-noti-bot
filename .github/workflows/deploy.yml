@@ -51,7 +51,14 @@ jobs:
           echo "Current directory: $(pwd)"
           git fetch --all && git reset --hard origin/master
           git pull origin master
-          source venv/bin/activate
+
+          # pyenv 가상환경 활성화
+          echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> $GITHUB_ENV
+          echo 'eval "$(pyenv init --path)"' >> $GITHUB_ENV
+          echo 'eval "$(pyenv init -)"' >> $GITHUB_ENV
+          echo 'eval "$(pyenv virtualenv-init -)"' >> $GITHUB_ENV
+          pyenv activate pyenv  # 사용할 가상환경 이름
+
           # setup.sh 스크립트 실행
           if [ -f setup.sh ]; then
             echo "Running setup.sh in $PROJECT_DIR..."
