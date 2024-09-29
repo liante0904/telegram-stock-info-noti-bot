@@ -25,7 +25,7 @@ def daily_report(report_type):
         'send' 또는 'download' 중 하나를 지정합니다.
     """
     if report_type == 'send':
-        rows = daily_select_data(report_type)
+        rows = daily_select_data(type=report_type)
         formatted_messages = convert_sql_to_telegram_messages(rows)
         print('=' * 30)
 
