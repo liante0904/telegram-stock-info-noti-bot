@@ -262,7 +262,7 @@ def LS_detail(ARTICLE_URL, date):
 
     # print('인코딩전:',ATTACH_FILE_NAME)
     # URL 인코딩
-    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME)
+    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME, safe='[]')
     # print('인코딩:',ATTACH_URL_FILE_NAME)
 
     # https://www.ls-sec.co.kr/upload/EtwBoardData/B202405/%5BLS%20ELECTRIC_기업이슈_240524☆%5D성종화_1840_이슈브리프_LS%20ELECTRIC.pdf
@@ -273,7 +273,7 @@ def LS_detail(ARTICLE_URL, date):
     item['LIST_ARTICLE_URL'] = ATTACH_URL
     item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
-
+    print(item)
     # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
     # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
     # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
