@@ -188,7 +188,7 @@ def insert_data():
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
                         ATTACH_URL, ARTICLE_TITLE, MAIN_CH_SEND_YN, SAVE_TIME
-                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     entry["SEC_FIRM_ORDER"],
                     entry["ARTICLE_BOARD_ORDER"],
