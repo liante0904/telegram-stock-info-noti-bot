@@ -147,7 +147,6 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # except IndexError:
         # print('IndexError')
 
-
     
     firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
