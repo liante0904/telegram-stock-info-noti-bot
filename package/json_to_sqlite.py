@@ -5,8 +5,21 @@ import argparse
 from datetime import datetime
 import sys
 import os
-# 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from dotenv import load_dotenv
+# 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+load_dotenv()  # .env 파일의 환경 변수를 로드합니다
+env = os.getenv('ENV')
+print(env)
+if env == 'production':
+    PROJECT_DIR = os.getenv('PROJECT_DIR')
+    HOME_DIR    = os.getenv('HOME_DIR')
+    JSON_DIR    = os.getenv('JSON_DIR')
+else:
+    PROJECT_DIR = os.getenv('PROJECT_DIR')
+    HOME_DIR    = os.getenv('HOME_DIR')
+    JSON_DIR    = os.getenv('JSON_DIR')
+
 
 # 데이터베이스 파일 경로
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
@@ -166,7 +179,7 @@ def print_tables():
 def insert_data():
     """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
     for json_file, table_name in json_files.items():
-        json_file_path = os.path.join(json_dir, json_file)
+        json_file_path = os.path.join(JSON_DIR, json_file)
         print(json_file_path)
         with open(json_file_path, 'r', encoding='utf-8') as file:
             data = json.load(file)
