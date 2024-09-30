@@ -32,22 +32,13 @@ json_dir = os.path.join(script_dir, 'json')
 
 # SQLite 데이터베이스 연결
 conn = sqlite3.connect(db_path)
-print(conn)
 cursor = conn.cursor()
-print(cursor)
 # JSON 파일 리스트와 대응되는 테이블 이름
 json_files = {
     "data_main_daily_send.json": "data_main_daily_send",
     "hankyungconsen_research.json": "hankyungconsen_research",
     "naver_research.json": "naver_research"
 }
-
-# 명령행 인자 파서 설정
-parser = argparse.ArgumentParser(description="SQLite Database Management Script")
-parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily'], help="Action to perform")
-parser.add_argument('name', nargs='?', help="Table name for the action")
-args = parser.parse_args()
-
 
 def fetch_data(date=None, keyword=None, user_id=None):
     """특정 테이블에서 데이터를 조회하고, 파라미터가 포함된 실제 쿼리를 출력합니다.
@@ -412,6 +403,12 @@ def daily_update_data(fetched_rows, type):
 
 
 def main():
+
+    # 명령행 인자 파서 설정
+    parser = argparse.ArgumentParser(description="SQLite Database Management Script")
+    parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily'], help="Action to perform")
+    parser.add_argument('name', nargs='?', help="Table name for the action")
+    args = parser.parse_args()
     if args.action == 'table' or args.action is None:
         print_tables()
     elif args.action == 'insert':
