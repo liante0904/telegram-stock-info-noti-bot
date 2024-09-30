@@ -398,7 +398,7 @@ def daily_update_data(fetched_rows, type):
     conn.close()
 
 
-def main(fetched_rows, type):
+def main():
     if args.action == 'table' or args.action is None:
         print_tables()
     elif args.action == 'insert':
