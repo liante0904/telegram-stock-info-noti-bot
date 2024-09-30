@@ -397,21 +397,25 @@ def daily_update_data(fetched_rows, type):
     cursor.close()
     conn.close()
 
-    
-if args.action == 'table' or args.action is None:
-    print_tables()
-elif args.action == 'insert':
-    insert_data()
-elif args.action == 'select':
-    select_data(args.name)
-elif args.action == 'fetch':
-    print(args.name)
-    fetch_data(date='2024-08-21', keyword=args.name)
-elif args.action == 'keyword_select':
-    if args.name:
-        keyword_select(args.name)
-    else:
-        print("Error: 'keyword_select' action requires a keyword argument.")
 
-elif args.action == 'daily':
-    daily_select_data(args.name)
+def main(fetched_rows, type):
+    if args.action == 'table' or args.action is None:
+        print_tables()
+    elif args.action == 'insert':
+        insert_data()
+    elif args.action == 'select':
+        select_data(args.name)
+    elif args.action == 'fetch':
+        print(args.name)
+        fetch_data(date='2024-08-21', keyword=args.name)
+    elif args.action == 'keyword_select':
+        if args.name:
+            keyword_select(args.name)
+        else:
+            print("Error: 'keyword_select' action requires a keyword argument.")
+
+    elif args.action == 'daily':
+        daily_select_data(args.name)
+        
+if __name__ == "__main__":
+    main()
