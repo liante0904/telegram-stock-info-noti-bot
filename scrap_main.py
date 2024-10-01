@@ -15,8 +15,9 @@ import urllib.request
 import base64
 from bs4 import BeautifulSoup
 
-from package.firm_info import *
-from package.json_util import save_data_to_local_json  # import the function from json_util
+from package.firm_info import get_firm_info
+from package.json_util import save_data_to_local_json # import the function from json_util
+from package.json_to_sqlite import insert_data
 
 # selenium
 from selenium import webdriver
@@ -1693,7 +1694,7 @@ def main():
     # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
     # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     # logging.debug('이것은 디버그 메시지입니다.')
-    
+    insert_data()
     # check functions 리스트
     check_functions = [
         LS_checkNewArticle,
@@ -1717,6 +1718,8 @@ def main():
         time.sleep(1)
         if cnt:
             print(f"{check_function.__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
+            insert_data()
+            
         else:
             print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
 
