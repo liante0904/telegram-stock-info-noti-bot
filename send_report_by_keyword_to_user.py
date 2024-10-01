@@ -13,7 +13,6 @@ from package.json_to_sqlite import fetch_data, update_data, insert_data
 
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 # 텔레그램 메시지 발송 함수
 async def sendMessage(sendMessageText, chat_id=None):

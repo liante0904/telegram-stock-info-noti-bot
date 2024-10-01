@@ -1,84 +1,59 @@
 import os
-import json
-import sys
+from dotenv import load_dotenv
+
+
+# 현재 파일 기준으로 상위 디렉토리에 있는 .env 파일 경로 설정
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(base_dir, '.env')
+load_dotenv(dotenv_path=env_path)
+
+# 환경 변수 사용
+env = os.getenv('ENV')
 
 class SecretKey:
     def __init__(self):
-        self.SECRETS = ''
-        self.ORACLECLOUD_MYSQL_DATABASE_URL = None
-        self.TELEGRAM_BOT_INFO = None
-        self.TELEGRAM_BOT_INFO1 = None
-        self.CLEARDB_DATABASE_URL = None
-        self.CLEARDB_DATABASE_URL_BEFORE = None
-        self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = None
-        self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET = None
-        self.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = None
-        self.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS = None
-        self.TELEGRAM_CHANNEL_ID_ITOOZA = None
-        self.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT = None
-        self.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM = None
-        self.TELEGRAM_CHANNEL_ID_REPORT_ALARM = None
-        self.TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM = None
-        self.TELEGRAM_CHANNEL_ID_TODAY_REPORT = None
-        self.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN = None
-        self.TELEGRAM_CHANNEL_ID_TEST = None
-        self.TELEGRAM_USER_ID_DEV = None
-        self.IS_DEV = False
-        self.BASE_PATH = ''
+        load_dotenv()  # .env 파일의 환경 변수를 로드합니다
+        
+        # 기본 경로 변수들
+        self.BASE_PATH = os.getenv('BASE_PATH', '')  
+        self.PROJECT_DIR = os.getenv('PROJECT_DIR', '')
+        self.HOME_DIR = os.getenv('HOME_DIR', '')
+        self.JSON_DIR = os.getenv('JSON_DIR', '')
 
-    def load_secrets(self):
-        main_module_path = sys.modules['__main__'].__file__
-        main_module_path = os.path.abspath(main_module_path)
-        self.BASE_PATH = os.path.dirname(main_module_path)
-        print('BASE_PATH', self.BASE_PATH)
+        # 데이터베이스 URL
+        self.ORACLECLOUD_MYSQL_DATABASE_URL = os.getenv('ORACLECLOUD_MYSQL_DATABASE_URL')
+        self.CLEARDB_DATABASE_URL = os.getenv('CLEARDB_DATABASE_URL')
+        self.CLEARDB_DATABASE_URL_BEFORE = os.getenv('CLEARDB_DATABASE_URL_BEFORE')
 
-        if os.path.isfile(os.path.join(self.BASE_PATH, 'secrets.json')):
-            # 로컬 개발 환경
-            with open(os.path.join(self.BASE_PATH, 'secrets.json')) as f:
-                self.SECRETS = json.loads(f.read())
-                self._load_secrets_from_file()
-                self.IS_DEV = True
-        else:
-            # 서버 배포 환경 (예: Heroku)
-            self._load_secrets_from_env()
-            self.IS_DEV = False
+        # Telegram 봇 정보
+        self.TELEGRAM_BOT_INFO = os.getenv('TELEGRAM_BOT_INFO')
+        self.TELEGRAM_BOT_INFO1 = os.getenv('TELEGRAM_BOT_INFO1')
 
-    def _load_secrets_from_file(self):
-        self.ORACLECLOUD_MYSQL_DATABASE_URL = self.SECRETS.get('ORACLECLOUD_MYSQL_DATABASE_URL')
-        self.TELEGRAM_BOT_INFO = self.SECRETS.get('TELEGRAM_BOT_INFO')
-        self.TELEGRAM_BOT_INFO1 = self.SECRETS.get('TELEGRAM_BOT_INFO1')
-        self.CLEARDB_DATABASE_URL = self.SECRETS.get('CLEARDB_DATABASE_URL')
-        self.CLEARDB_DATABASE_URL_BEFORE = self.SECRETS.get('CLEARDB_DATABASE_URL_BEFORE')
-        self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = self.SECRETS.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-        self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET = self.SECRETS.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-        self.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = self.SECRETS.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
-        self.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS = self.SECRETS.get('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
-        self.TELEGRAM_CHANNEL_ID_ITOOZA = self.SECRETS.get('TELEGRAM_CHANNEL_ID_ITOOZA')
-        self.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT = self.SECRETS.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
-        self.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM = self.SECRETS.get('TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_REPORT_ALARM = self.SECRETS.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM = self.SECRETS.get('TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_TODAY_REPORT = self.SECRETS.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-        self.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN = self.SECRETS.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
-        self.TELEGRAM_CHANNEL_ID_TEST = self.SECRETS.get('TELEGRAM_CHANNEL_ID_TEST')
-        self.TELEGRAM_USER_ID_DEV = self.SECRETS.get('TELEGRAM_USER_ID_DEV')
+        # Telegram 봇 토큰 및 채널 ID
+        self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+        self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
+        self.TELEGRAM_BOT_TOKEN_PROD = os.getenv('TELEGRAM_BOT_TOKEN_PROD')
 
-    def _load_secrets_from_env(self):
-        self.ORACLECLOUD_MYSQL_DATABASE_URL = os.environ.get('ORACLECLOUD_MYSQL_DATABASE_URL')
-        self.TELEGRAM_BOT_INFO = os.environ.get('TELEGRAM_BOT_INFO')
-        self.TELEGRAM_BOT_INFO1 = os.environ.get('TELEGRAM_BOT_INFO1')
-        self.CLEARDB_DATABASE_URL = os.environ.get('CLEARDB_DATABASE_URL')
-        self.CLEARDB_DATABASE_URL_BEFORE = os.environ.get('CLEARDB_DATABASE_URL_BEFORE')
-        self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = os.environ.get('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-        self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET = os.environ.get('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-        self.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
-        self.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS = os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
-        self.TELEGRAM_CHANNEL_ID_ITOOZA = os.environ.get('TELEGRAM_CHANNEL_ID_ITOOZA')
-        self.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT = os.environ.get('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
-        self.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM = os.environ.get('TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.environ.get('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM = os.environ.get('TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM')
-        self.TELEGRAM_CHANNEL_ID_TODAY_REPORT = os.environ.get('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
-        self.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN = os.environ.get('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
-        self.TELEGRAM_CHANNEL_ID_TEST = os.environ.get('TELEGRAM_CHANNEL_ID_TEST')
-        self.TELEGRAM_USER_ID_DEV = os.environ.get('TELEGRAM_USER_ID_DEV')
+        # Telegram 채널 ID
+        self.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
+        self.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
+        self.TELEGRAM_CHANNEL_ID_ITOOZA = os.getenv('TELEGRAM_CHANNEL_ID_ITOOZA')
+        self.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT = os.getenv('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
+        self.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM')
+        self.TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
+        self.TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_DAILY_WEEKLY_REPORT_ALARM')
+        self.TELEGRAM_CHANNEL_ID_TODAY_REPORT = os.getenv('TELEGRAM_CHANNEL_ID_TODAY_REPORT')
+        self.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN = os.getenv('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
+        self.TELEGRAM_CHANNEL_ID_TEST = os.getenv('TELEGRAM_CHANNEL_ID_TEST')
+
+        # 개발자 Telegram ID
+        self.TELEGRAM_USER_ID_DEV = os.getenv('TELEGRAM_USER_ID_DEV')
+
+
+    def print_env_info(self):
+        print(f"환경: {'개발' if self.IS_DEV else '프로덕션'}")
+        print(f"BASE_PATH: {self.BASE_PATH}")
+        print(f"PROJECT_DIR: {self.PROJECT_DIR}")
+        print(f"HOME_DIR: {self.HOME_DIR}")
+        print(f"JSON_DIR: {self.JSON_DIR}")
+        print(f"Telegram 봇 토큰: {self.TELEGRAM_BOT_TOKEN_PROD}")

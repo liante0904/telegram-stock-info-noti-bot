@@ -51,7 +51,6 @@ BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER

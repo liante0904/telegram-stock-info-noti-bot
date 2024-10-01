@@ -8,7 +8,6 @@ import datetime
 import time
 import json
 import asyncio
-import pymysql.cursors
 from typing import List
 from bs4 import BeautifulSoup
 import urllib.request
@@ -37,7 +36,6 @@ SEC_FIRM_ORDER = 0 # 증권사 순번
 ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 JSON_FILE_NAME = './json/naver_research.json'
 ############ global 변수 끝 ############

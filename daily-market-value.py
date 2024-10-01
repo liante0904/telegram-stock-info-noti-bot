@@ -10,14 +10,11 @@ from package.SecretKey import SecretKey
 import package.common as common
 
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 async def sendMessage(sendMessageText):
     bot = telegram.Bot(token=SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     return await bot.sendMessage(chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text=sendMessageText, disable_web_page_preview=True, parse_mode="Markdown")
 
-def GetSendChatId():
-    return SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM
 
 def extract_data(element):
     if element:

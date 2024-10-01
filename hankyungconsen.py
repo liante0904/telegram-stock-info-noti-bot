@@ -19,7 +19,6 @@ ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 #################### global 변수 정리 끝###################################
 
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 JSON_FILE_NAME = './json/hankyungconsen_research.json'
 

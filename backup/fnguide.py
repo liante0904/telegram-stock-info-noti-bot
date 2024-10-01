@@ -11,8 +11,6 @@ import ssl
 import json
 import re
 import asyncio
-import pymysql
-import pymysql.cursors
 from typing import List
 from bs4 import BeautifulSoup
 import urllib.parse as urlparse
