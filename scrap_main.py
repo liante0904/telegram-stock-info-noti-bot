@@ -5,6 +5,8 @@ import sys
 import datetime
 from pytz import timezone
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 import time
 import json
 import re
@@ -724,13 +726,24 @@ def Sangsanginib_checkNewArticle():
             "edt": ""
         }
 
+        # 세션 객체 생성
+        session = requests.Session()
+
+        # Retry 설정 (5번까지 재시도, backoff_factor는 재시도 간 대기 시간을 설정)
+        retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+
+        # HTTPAdapter에 Retry 설정 적용
+        adapter = HTTPAdapter(max_retries=retries)
+        session.mount('http://', adapter)
+        session.mount('https://', adapter)
+
         try:
-            response = requests.post(TARGET_URL, headers=headers, data=data)
+            response = session.post(TARGET_URL, headers=headers, data=data, timeout=2)
             # print(response.text)
             jres = json.loads(response.text)
             # print(jres)
-        except:
-            return 0
+        except requests.exceptions.RequestException as e:
+            print(f"재시도 후에도 에러가 발생했습니다: {e}")
         
 
         soupList = jres[0]['getNoticeList']
