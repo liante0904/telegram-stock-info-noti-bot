@@ -42,11 +42,11 @@ def daily_report(report_type):
         rows = daily_select_data(type='download')
         print(rows)
 
-        # 파일 다운로드 처리
-        if rows:
-            r = daily_update_data(fetched_rows=rows, type='download')
-            if r: 
-                print('성공')
+        # # 파일 다운로드 처리
+        # if rows:
+        #     r = daily_update_data(fetched_rows=rows, type='download')
+        #     if r: 
+        #         print('성공')
 
 def main():
     # 발송될 내역
