@@ -6,25 +6,9 @@ import asyncio
 import urllib.request
 import json
 from urllib.parse import urlencode, urlunparse
+from package.SecretKey import SecretKey
 
-from dotenv import load_dotenv
-load_dotenv()  # .env 파일의 환경 변수를 로드합니다
-env = os.getenv('ENV')
-print(env)
-if env == 'production':
-    TELEGRAM_BOT_TOKEN_PROD                 = os.getenv('TELEGRAM_BOT_TOKEN_PROD')
-    TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET  = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-    TELEGRAM_CHANNEL_ID_REPORT_ALARM        = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-    PROJECT_DIR                             = os.getenv('PROJECT_DIR')
-    HOME_DIR                                = os.getenv('HOME_DIR')
-    JSON_DIR                                = os.getenv('JSON_DIR')
-else:
-    TELEGRAM_BOT_TOKEN_PROD                 = os.getenv('TELEGRAM_BOT_TOKEN_PROD')
-    TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET  = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-    TELEGRAM_CHANNEL_ID_REPORT_ALARM        = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-    PROJECT_DIR                             = os.getenv('PROJECT_DIR')
-    HOME_DIR                                = os.getenv('HOME_DIR')
-    JSON_DIR                                = os.getenv('JSON_DIR')
+SECRET_KEY = SecretKey()
 
 def NAVER_52weekPrice_check():
     requests.packages.urllib3.disable_warnings()
@@ -119,8 +103,8 @@ def convert_stock_url(naver_url):
     return fnguide_url
  
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
-    bot = telegram.Bot(token = TELEGRAM_BOT_TOKEN_PROD)
-    return await bot.sendMessage(chat_id = TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_PROD)
+    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 if __name__ == "__main__":
     print("NAVER_52weekPrice_check()=> 새 게시글 정보 확인")  # 0
