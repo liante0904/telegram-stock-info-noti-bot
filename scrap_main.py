@@ -307,7 +307,6 @@ def ShinHanInvest_checkNewArticle():
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
     # 메모리 정리
-    del soup
     del response
     gc.collect()
 
@@ -518,7 +517,6 @@ def NHQV_checkNewArticle():
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
-    del soup
     del response
     gc.collect()
 
