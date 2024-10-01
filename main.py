@@ -6,6 +6,8 @@ import logging
 from pytz import timezone
 import telegram
 import requests
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 import time
 import json
 import re
@@ -936,14 +938,24 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         "sdt": "",
         "edt": ""
     }
+    
+    # 세션 객체 생성
+    session = requests.Session()
 
+    # Retry 설정 (5번까지 재시도, backoff_factor는 재시도 간 대기 시간을 설정)
+    retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+
+    # HTTPAdapter에 Retry 설정 적용
+    adapter = HTTPAdapter(max_retries=retries)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
     try:
-        webpage = requests.post(TARGET_URL, headers=headers, data=data)
+        webpage = session.post(TARGET_URL, headers=headers, data=data, timeout=2)
         # print(webpage.text)
         jres = json.loads(webpage.text)
         # print(jres)
-    except:
-        return True
+    except requests.exceptions.RequestException as e:
+        print(f"재시도 후에도 에러가 발생했습니다: {e}")
     
 
     # 연속키 데이터베이스화 작업
@@ -2020,6 +2032,21 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
 # URL에 파일명을 사용할때 한글이 포함된 경우 인코딩처리 로직 추가 
 def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
+
+
+    # 세션 객체 생성
+    session = requests.Session()
+
+    # Retry 설정
+    retries = Retry(total=5, backoff_factor=0.3, status_forcelist=[500, 502, 503, 504])
+
+    # HTTPAdapter에 Retry 설정 적용
+    adapter = HTTPAdapter(max_retries=retries)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+
+    
     print("DownloadFile()",URL, FILE_NAME)
 
     BOARD_NM = ''
@@ -2062,10 +2089,17 @@ def DownloadFile(URL, FILE_NAME):
         print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
         return None
     
-    with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
-        response = get(URL, verify=False)     # get request
-        file.write(response.content) # write to file
+    # with open(ATTACH_FILE_NAME, "wb")as file:  # open in binary mode
+    #     response = get(URL, verify=False)     # get request
+    #     file.write(response.content) # write to file
 
+    try:
+        with open(ATTACH_FILE_NAME, "wb") as file:  # 바이너리 모드로 파일 열기
+            response = session.get(URL, verify=False)  # get 요청
+            file.write(response.content)  # 파일에 쓰기
+        print(f"파일 다운로드 완료: {ATTACH_FILE_NAME}")
+    except requests.exceptions.RequestException as e:
+        print(f"요청 중 에러가 발생했습니다: {e}")
             
     r = googledrive.upload(str(ATTACH_FILE_NAME))
     
