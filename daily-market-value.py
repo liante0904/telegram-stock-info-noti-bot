@@ -1,13 +1,11 @@
 # -*- coding:utf-8 -*- 
-import sys
 import telegram
 import requests
 import asyncio
 from bs4 import BeautifulSoup
 
-from package.common import *
 from package.SecretKey import SecretKey
-import package.common as common
+from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 
 SECRET_KEY = SecretKey()
 
@@ -51,7 +49,7 @@ def extract_data(element):
 
 
 def main():
-    print(common.GetCurrentDate('YYYYMMDD'), common.GetCurrentDay())
+    print(GetCurrentDate('YYYYMMDD'), GetCurrentDay())
     sendMessageText = ''
     url = 'https://itooza.com/'
     
