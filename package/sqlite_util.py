@@ -23,7 +23,8 @@ def convert_sql_to_telegram_messages(fetched_rows):
                         formatted_messages.append(message_chunk.strip())
                         message_chunk = ""  # 새로 시작
 
-                    sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                    # 새 메시지 조각의 첫 줄에 FIRM_NM 추가
+                    message_chunk += "\n\n" + "●" + FIRM_NM + "\n"
                     last_firm_nm = FIRM_NM
 
         # 게시글 제목(굵게)
@@ -35,7 +36,8 @@ def convert_sql_to_telegram_messages(fetched_rows):
         if len(message_chunk) + len(sendMessageText) > message_limit:
             # 이전 chunk를 저장하고 새로운 chunk 시작
             formatted_messages.append(message_chunk.strip())
-            message_chunk = sendMessageText
+            # 새 메시지 조각의 첫 줄에 FIRM_NM 추가
+            message_chunk = "\n\n" + "●" + FIRM_NM + "\n" + sendMessageText
         else:
             message_chunk += sendMessageText
 
@@ -44,4 +46,3 @@ def convert_sql_to_telegram_messages(fetched_rows):
         formatted_messages.append(message_chunk.strip())
 
     return formatted_messages
-
