@@ -6,12 +6,11 @@ import logging
 import time
 import json
 import asyncio
-import pymysql.cursors
 import urllib.request
 
-from package.common import *
+# from package.common import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
-
+from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 from package.SecretKey import SecretKey
 
 # 로직 설명
@@ -26,10 +25,6 @@ from package.SecretKey import SecretKey
 # 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
-
-# pymysql 변수
-conn    = ''
-cursor  = ''
 
 # 게시판 URL
 BOARD_URL = ''
@@ -56,7 +51,6 @@ BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
@@ -477,15 +471,15 @@ def main():
     LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
     print('LOG_FULLFILENAME', LOG_FULLFILENAME)
 
-    # 로깅 설정 추가
-    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
-                        format='%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]', force=True)
+    # # 로깅 설정 추가
+    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
+    #                     format='%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]', force=True)
 
-    # 콘솔 핸들러 추가
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]'))
-    logging.getLogger().addHandler(console_handler)
+    # # 콘솔 핸들러 추가
+    # console_handler = logging.StreamHandler()
+    # console_handler.setLevel(logging.DEBUG)
+    # console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s [%(filename)s:%(lineno)d]'))
+    # logging.getLogger().addHandler(console_handler)
 
     # 디버그 메시지 출력
     print("LOG_FULLFILENAME", LOG_FULLFILENAME)
