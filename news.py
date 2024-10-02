@@ -8,9 +8,9 @@ import json
 import asyncio
 import urllib.request
 
-from package.common import *
+# from package.common import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
-
+from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 from package.SecretKey import SecretKey
 
 # 로직 설명
