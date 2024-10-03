@@ -26,24 +26,29 @@ def daily_report(report_type):
     """
     if report_type == 'send':
         rows = daily_select_data(type=report_type)
-        formatted_messages = convert_sql_to_telegram_messages(rows)
-        print('=' * 30)
+        if rows:
+            formatted_messages = convert_sql_to_telegram_messages(rows)
+            print('=' * 30)
 
-        # 메시지 발송
-        for message in formatted_messages:
-            print(f"메시지 발송 중: {message}")
-            asyncio.run(sendMessage(message))
-        # 데이터 업데이트
-        r = daily_update_data(fetched_rows=rows, type=report_type)
-        if r: 
-            print('성공')
+            # 메시지 발송
+            for message in formatted_messages:
+                print(f"메시지 발송 중: {message}")
+                asyncio.run(sendMessage(message))
+            # 데이터 업데이트
+            r = daily_update_data(fetched_rows=rows, type=report_type)
+            if r: 
+                print('성공')
 
     elif report_type == 'download':
-        rows = daily_select_data(type='download')
-        print(rows)
+        rows = daily_select_data(date_str='20241002',type='download')
+        # print(rows)
 
-        # # 파일 다운로드 처리
-        # if rows:
+        # 파일 다운로드 처리
+        if rows:
+            print('*'*30)
+            for row in rows:
+                print(row)
+                break
         #     r = daily_update_data(fetched_rows=rows, type='download')
         #     if r: 
         #         print('성공')
@@ -51,6 +56,6 @@ def daily_report(report_type):
 def main():
     # 발송될 내역
     daily_report(report_type='send')
-    daily_report(report_type='download')
+    # daily_report(report_type='download')
 if __name__ == "__main__":
     main()
