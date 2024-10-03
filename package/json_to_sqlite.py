@@ -307,6 +307,8 @@ def keyword_select(keyword):
 def daily_select_data(date_str=None, type=None):
     # SQLite 데이터베이스 연결
     conn = sqlite3.connect(db_path)
+    # 커서의 row_factory를 sqlite3.Row로 설정
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
     
@@ -350,6 +352,9 @@ def daily_select_data(date_str=None, type=None):
     print('='*30)
     cursor.execute(query)
     rows = cursor.fetchall()
+    # rows를 dict 형태로 변환
+    rows = [dict(row) for row in rows]
+
     print(rows)
     
     cursor.close()
@@ -387,14 +392,14 @@ def daily_update_data(fetched_rows, type):
     
     # rows에서 데이터를 읽어와 업데이트합니다.
     for row in fetched_rows:
-        id, firm_nm, article_title, article_url, save_time, send_user = row
+        print(row)
         
         # 쿼리와 파라미터를 출력합니다.
         print(f"Executing query: {update_query}")
-        print(f"With parameters: {(id,)}")
+        print(f"With parameters: {(row['id'],)}")
         
         # 업데이트 쿼리를 실행합니다.
-        cursor.execute(update_query, (id,))
+        cursor.execute(update_query, (row['id'],))
     
     # 명령 실행
     conn.commit()
