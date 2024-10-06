@@ -1,24 +1,18 @@
 # -*- coding:utf-8 -*- 
-import os
 import sys
-from pytz import timezone
 import telegram
 import requests
-import datetime
 import time
 import json
 import asyncio
-from typing import List
 from bs4 import BeautifulSoup
 import urllib.request
 
-from package import googledrive
 from models.SecretKey import SecretKey
 from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 
 # import secretkey
 
-from requests import get  # to make GET request
 
 # 로직 설명
 # 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
@@ -58,76 +52,72 @@ def NAVER_Report_checkNewArticle():
 
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-        time.sleep(1)
 
-# JSON API 타입
-def NAVER_Report_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
+        request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+        response = urllib.request.urlopen(request)
+        rescode = response.getcode()
 
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
+        if rescode != 200 :return print("네이버 레포트 접속이 원활하지 않습니다 ")
 
-    if rescode != 200 :return print("네이버 레포트 접속이 원활하지 않습니다 ")
-
-    try: jres = json.loads(response.read().decode('utf-8'))
-    except: return True
-    
-    jres = jres['result']
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    brokerName = jres[0]['brokerName']
-    first_article_processed = False
-
-    for research in jres:
-        LIST_ARTICLE_URL = NAVER_Report_parseURL(research['endUrl'])
-        LIST_ARTICLE_TITLE = research['title']
-        if ARTICLE_BOARD_ORDER == 0:
-            if research['itemName']+":" not in LIST_ARTICLE_TITLE : 
-                LIST_ARTICLE_TITLE = research['itemName'] + ": " + LIST_ARTICLE_TITLE  # 기업분석
-        else:
-            if research['category']+":" not in LIST_ARTICLE_TITLE : 
-                LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
-
-        # Use the imported save_data_to_local_json function with filename parameter
-        new_article_message = save_data_to_local_json(
-            filename=JSON_FILE_NAME,
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=research['brokerName'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
+        try: jres = json.loads(response.read().decode('utf-8'))
+        except: return True
         
-        if new_article_message:
-            nNewArticleCnt += 1  # 새로운 게시글 수
-            print(LIST_ARTICLE_URL)
-            print(LIST_ARTICLE_TITLE)
+        jres = jres['result']
+
+        nNewArticleCnt = 0
+        sendMessageText = ''
+        brokerName = jres[0]['brokerName']
+        first_article_processed = False
+
+        for research in jres:
+            LIST_ARTICLE_URL = NAVER_Report_parseURL(research['endUrl'])
+            LIST_ARTICLE_TITLE = research['title']
+            if ARTICLE_BOARD_ORDER == 0:
+                if research['itemName']+":" not in LIST_ARTICLE_TITLE : 
+                    LIST_ARTICLE_TITLE = research['itemName'] + ": " + LIST_ARTICLE_TITLE  # 기업분석
+            else:
+                if research['category']+":" not in LIST_ARTICLE_TITLE : 
+                    LIST_ARTICLE_TITLE = research['category'] + ": " + LIST_ARTICLE_TITLE  # 산업분석
+
+            # Use the imported save_data_to_local_json function with filename parameter
+            new_article_message = save_data_to_local_json(
+                filename=JSON_FILE_NAME,
+                sec_firm_order=SEC_FIRM_ORDER,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm=research['brokerName'],
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE
+            )
             
-            if not first_article_processed or brokerName != research['brokerName']:
-                sendMessageText += "\n" + "●" + research['brokerName'] + "\n"
-                brokerName = research['brokerName']  # 회사명 키 변경
-                first_article_processed = True
+            if new_article_message:
+                nNewArticleCnt += 1  # 새로운 게시글 수
+                print(LIST_ARTICLE_URL)
+                print(LIST_ARTICLE_TITLE)
+                
+                if not first_article_processed or brokerName != research['brokerName']:
+                    sendMessageText += "\n" + "●" + research['brokerName'] + "\n"
+                    brokerName = research['brokerName']  # 회사명 키 변경
+                    first_article_processed = True
 
-            sendMessageText += new_article_message
+                sendMessageText += new_article_message
 
-        if len(sendMessageText) >= 3000:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            if len(sendMessageText) >= 3000:
+                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+                print(sendMessageText)
+                sendText(GetSendMessageTitle() + sendMessageText)
+                nNewArticleCnt = 0
+                sendMessageText = ''
+
+        if nNewArticleCnt == 0 or len(sendMessageText) == 0:
+            print('최신 게시글이 채널에 발송 되어 있습니다.')
+            return
+
+        print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
+        if nNewArticleCnt > 0 or len(sendMessageText) > 0:
             print(sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
-            nNewArticleCnt = 0
+            sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
-    if nNewArticleCnt == 0 or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText) {len(sendMessageText)}')
-    if nNewArticleCnt > 0 or len(sendMessageText) > 0:
-        print(sendMessageText)
-        sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
-        sendMessageText = ''
 
 def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     strUrl = ''
@@ -146,7 +136,7 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
+    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 async def sendMessageToMain(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -156,17 +146,7 @@ async def sendMessageToMain(sendMessageText): #실행시킬 함수명 임의지�
 
 # 가공없이 텍스트를 발송합니다.
 def sendText(sendMessageText): 
-    global CHAT_ID
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
     return asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-def GetSendChatId():
-    SendMessageChatId = 0
-    return SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM
 
 # 타이틀 생성 
 # : 게시판 이름 삭제
