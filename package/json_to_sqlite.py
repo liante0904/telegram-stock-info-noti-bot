@@ -153,8 +153,6 @@ def update_data(date=None, keyword=None, user_ids=None):
         print(f"{cursor.rowcount} rows updated in {table}.")
 
     conn.commit()
-    cursor.close()
-    conn.close()
 
 def print_tables():
     """데이터베이스에 존재하는 테이블 목록을 출력합니다."""
@@ -169,6 +167,8 @@ def print_tables():
 
 def insert_data():
     """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
+    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
+
     for json_file, table_name in json_files.items():
         json_file_path = os.path.join(JSON_DIR, json_file)
         print(json_file_path)
@@ -189,11 +189,11 @@ def insert_data():
                     ' ',
                     entry["SAVE_TIME"]
                 ))
-    print("Data inserted successfully.")
-    conn.commit()
-    cursor.close()
-    conn.close()
     
+    conn.commit()
+    print("Data inserted successfully.")
+    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
+
 def select_data(table=None):
     """특정 테이블 또는 모든 테이블의 데이터를 조회합니다."""
     if table:
@@ -208,8 +208,6 @@ def select_data(table=None):
         for row in rows:
             print(row)
             
-    cursor.close()
-    conn.close()
     
 def format_message(data_list):
     """데이터를 포맷팅하여 문자열로 반환합니다."""
@@ -357,9 +355,6 @@ def daily_select_data(date_str=None, type=None):
 
     print(rows)
     
-    cursor.close()
-    conn.close()
-    
     return rows
 
 
@@ -428,6 +423,15 @@ def daily_update_data(fetched_rows, type):
 
     # 변경 사항 저장 및 커넥션 닫기
     conn.commit()
+
+def open_db_connection():
+    """SQLite 데이터베이스에 연결하고 커서를 반환합니다."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    return conn, cursor
+
+def close_db_connection(conn, cursor):
+    """데이터베이스 연결과 커서를 종료합니다."""
     cursor.close()
     conn.close()
 
@@ -456,6 +460,9 @@ def main():
 
     elif args.action == 'daily':
         daily_select_data(args.name)
+
+cursor.close()
+conn.close()
         
 if __name__ == "__main__":
     main()
