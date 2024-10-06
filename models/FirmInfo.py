@@ -1,4 +1,4 @@
-# package/FirmInfo.py
+# models/FirmInfo.py
 
 # 증권사 이름만 담긴 배열 (100 미만)
 firm_names = [

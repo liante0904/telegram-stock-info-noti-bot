@@ -15,7 +15,7 @@ import urllib.request
 import base64
 from bs4 import BeautifulSoup
 
-from package.FirmInfo import FirmInfo
+from models.FirmInfo import FirmInfo
 from package.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
 from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime

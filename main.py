@@ -20,7 +20,7 @@ from typing import List
 from bs4 import BeautifulSoup
 
 from package import googledrive
-from package.FirmInfo import *
+from models.FirmInfo import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
 from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 
