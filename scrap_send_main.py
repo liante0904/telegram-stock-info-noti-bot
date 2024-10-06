@@ -1,7 +1,7 @@
 import asyncio
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from utils.sqlite_util import convert_sql_to_telegram_messages
-from package.telegram_util import sendMessage
+from utils.telegram_util import sendMessage
 from utils.file_util import download_file_wget
 
 def daily_report(report_type):
