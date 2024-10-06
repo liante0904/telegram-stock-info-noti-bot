@@ -9,7 +9,7 @@ import asyncio
 import urllib.request
 
 # from package.common import *
-from package.json_util import save_data_to_local_json  # import the function from json_util
+from utils.json_util import save_data_to_local_json  # import the function from json_util
 from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 from models.SecretKey import SecretKey
 

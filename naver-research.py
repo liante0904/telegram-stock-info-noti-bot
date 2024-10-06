@@ -14,7 +14,7 @@ import urllib.request
 
 from package import googledrive
 from models.SecretKey import SecretKey
-from package.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
+from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 
 # import secretkey
 
