@@ -17,7 +17,7 @@ import urllib.parse as urlparse
 import urllib.request
 
 from package import googledrive
-from package.common import *
+# from package.common import *
 # TEST 
 # from package import herokuDB
 # from package.herokuDB import *
