@@ -1624,7 +1624,7 @@ def main():
         HANA_checkNewArticle,
         KB_checkNewArticle,
         Samsung_checkNewArticle,
-        # Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        Sangsanginib_checkNewArticle, # 주석 처리된 부분
         Shinyoung_checkNewArticle,
         Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
