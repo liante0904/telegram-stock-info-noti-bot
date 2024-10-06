@@ -1,6 +1,7 @@
 import asyncio
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from package.sqlite_util import convert_sql_to_telegram_messages
+from package.file_util import download_file_wget
 from package.telegram_util import sendMessage
 
 def daily_report(report_type):
@@ -47,15 +48,20 @@ def daily_report(report_type):
         if rows:
             print('*'*30)
             for row in rows:
-                print(row)
-                break
-        #     r = daily_update_data(fetched_rows=rows, type='download')
-        #     if r: 
-        #         print('성공')
+                # 파일 다운로드 시 성공 여부 반환 (성공 시 True, 실패 시 False)
+                download_success = download_file_wget(report_info_row=row)
+                
+                if download_success:
+                    # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
+                    # update_download_status_in_db(row)  # DB에 다운로드 완료 상태로 업데이트
+                    r = daily_update_data(report_info_row=row, type='download')
+                else:
+                    print(f"파일 다운로드 실패: {row['file_name']}")  # 실패한 파일 로그 출력
+
 
 def main():
     # 발송될 내역
     daily_report(report_type='send')
-    # daily_report(report_type='download')
+    daily_report(report_type='download')
 if __name__ == "__main__":
     main()
