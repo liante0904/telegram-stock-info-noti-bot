@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from models.FirmInfo import FirmInfo
 from utils.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
-from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
+from utils.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 
 # selenium
 from selenium import webdriver
