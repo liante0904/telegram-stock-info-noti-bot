@@ -362,7 +362,22 @@ def daily_select_data(date_str=None, type=None):
     
     return rows
 
+
 def daily_update_data(fetched_rows, type):
+    """
+    데이터베이스의 데이터를 업데이트하는 함수입니다.
+    
+    Args:
+        fetched_rows (list[dict] or dict): 'send' 타입일 경우에는 업데이트할 여러 행의 리스트를 전달하고, 
+                                           'download' 타입일 경우에는 단일 행의 딕셔너리를 전달합니다.
+        type (str): 업데이트 유형을 지정합니다. 'send' 또는 'download' 중 하나를 선택해야 합니다.
+                    'send'는 여러 행을 업데이트하고, 'download'는 단일 행을 업데이트합니다.
+    
+    Raises:
+        ValueError: 'type'이 'send' 또는 'download'가 아닌 경우 예외를 발생시킵니다.
+    
+    """
+    
     # SQLite 데이터베이스 연결
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -372,7 +387,7 @@ def daily_update_data(fetched_rows, type):
     if type not in ['send', 'download']:
         raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
-    # 업데이트할 쿼리 문자열을 작성합니다.
+    # 'send' 타입에 대한 업데이트 처리
     if type == 'send':
         update_query = """
             UPDATE data_main_daily_send
@@ -381,6 +396,18 @@ def daily_update_data(fetched_rows, type):
             WHERE 
                 id = ?  -- id를 기준으로 업데이트
         """
+        # 여러 건의 데이터를 업데이트
+        for row in fetched_rows:
+            print(f"Row data: {row}")
+            
+            # 쿼리와 파라미터를 출력
+            print(f"Executing query: {update_query}")
+            print(f"With parameters: {(row['id'],)}")
+            
+            # 업데이트 쿼리 실행
+            cursor.execute(update_query, (row['id'],))
+
+    # 'download' 타입에 대한 업데이트 처리
     elif type == 'download':
         update_query = """
             UPDATE data_main_daily_send
@@ -389,19 +416,17 @@ def daily_update_data(fetched_rows, type):
             WHERE 
                 id = ?  -- id를 기준으로 업데이트
         """
-    
-    # rows에서 데이터를 읽어와 업데이트합니다.
-    for row in fetched_rows:
-        print(row)
+        # 단일 행 데이터 업데이트
+        print(f"Single row for download: {fetched_rows}")
         
         # 쿼리와 파라미터를 출력합니다.
         print(f"Executing query: {update_query}")
-        print(f"With parameters: {(row['id'],)}")
+        print(f"With parameters: {(fetched_rows['id'],)}")
         
-        # 업데이트 쿼리를 실행합니다.
-        cursor.execute(update_query, (row['id'],))
-    
-    # 명령 실행
+        # 업데이트 쿼리 실행
+        cursor.execute(update_query, (fetched_rows['id'],))
+
+    # 변경 사항 저장 및 커넥션 닫기
     conn.commit()
     cursor.close()
     conn.close()
