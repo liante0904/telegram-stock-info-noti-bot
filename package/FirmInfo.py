@@ -1,4 +1,4 @@
-# package/firm_info.py
+# package/FirmInfo.py
 
 # 증권사 이름만 담긴 배열 (100 미만)
 firm_names = [
@@ -236,11 +236,19 @@ def get_firm_info(sec_firm_order, article_board_order):
 
 
 class FirmInfo:
-    def __init__(self, sec_firm_order=0, article_board_order=0):
-        # 생성자에서 인자값을 받아 초기화
-        self.SEC_FIRM_ORDER = sec_firm_order
-        self.ARTICLE_BOARD_ORDER = article_board_order
-    
+    def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
+        """
+        FirmInfo 클래스의 생성자.
+        - 기존 인스턴스(firm_info)를 받아 복사할 수 있음.
+        - 아니면 새로 sec_firm_order와 article_board_order 값을 받아 생성 가능.
+        """
+        if firm_info:  # 복사 생성자
+            self.SEC_FIRM_ORDER = firm_info.SEC_FIRM_ORDER
+            self.ARTICLE_BOARD_ORDER = firm_info.ARTICLE_BOARD_ORDER
+        else:  # 새로운 인스턴스를 생성
+            self.SEC_FIRM_ORDER = sec_firm_order
+            self.ARTICLE_BOARD_ORDER = article_board_order
+            
     def get_firm_name(self):
         if 0 <= self.SEC_FIRM_ORDER < len(firm_names):
             return firm_names[self.SEC_FIRM_ORDER]
