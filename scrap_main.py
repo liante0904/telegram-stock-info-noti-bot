@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 from models.FirmInfo import FirmInfo
 from utils.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
-from utils.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
+from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
 # selenium
 from selenium import webdriver
@@ -685,16 +685,17 @@ def Sangsanginib_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
         jres = ''
+        # 요청 헤더 설정
         headers = {
             "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "ko",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://www.sangsanginib.com",
+            "Referer": "https://www.sangsanginib.com/research/enterpriseReport/enterpriseReportMobView",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
         }
+
         cmsCd = ["CM0078","CM0338","CM0079"]
         
         data = {
@@ -706,12 +707,17 @@ def Sangsanginib_checkNewArticle():
             "sdt": "",
             "edt": ""
         }
-
+        # 쿠키 설정 (사전 형태로 쿠키 추가)
+        cookies = {
+            "SSISTOCK_JSESSIONID": "F63EB7BB0166E9ECA5988FF541287E07",
+            "_ga": "GA1.1.467249692.1728208332",
+            "_ga_BTXL5GSB67": "GS1.1.1728208331.1.1.1728208338.53.0.0"
+        }
         # 세션 객체 생성
         session = requests.Session()
 
         # Retry 설정 (5번까지 재시도, backoff_factor는 재시도 간 대기 시간을 설정)
-        retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+        retries = Retry(total=10, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
 
         # HTTPAdapter에 Retry 설정 적용
         adapter = HTTPAdapter(max_retries=retries)
@@ -719,14 +725,14 @@ def Sangsanginib_checkNewArticle():
         session.mount('https://', adapter)
 
         try:
-            response = session.post(TARGET_URL, headers=headers, data=data, timeout=2)
+            response = session.post(TARGET_URL, headers=headers, data=data, timeout=2, cookies=cookies)
             # print(response.text)
             jres = json.loads(response.text)
             # print(jres)
         except requests.exceptions.RequestException as e:
             print(f"재시도 후에도 에러가 발생했습니다: {e}")
+            return 0
         
-
         soupList = jres[0]['getNoticeList']
         
         nNewArticleCnt = 0
@@ -1618,7 +1624,7 @@ def main():
         HANA_checkNewArticle,
         KB_checkNewArticle,
         Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        # Sangsanginib_checkNewArticle, # 주석 처리된 부분
         Shinyoung_checkNewArticle,
         Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
