@@ -41,7 +41,7 @@ def daily_report(report_type):
                 print('성공')
 
     elif report_type == 'download':
-        rows = daily_select_data(date_str='20241002',type='download')
+        rows = daily_select_data(type='download')
         # print(rows)
 
         # 파일 다운로드 처리
@@ -54,7 +54,7 @@ def daily_report(report_type):
                 if download_success:
                     # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
                     # update_download_status_in_db(row)  # DB에 다운로드 완료 상태로 업데이트
-                    r = daily_update_data(report_info_row=row, type='download')
+                    r = daily_update_data(fetched_rows=row, type='download')
                 else:
                     print(f"파일 다운로드 실패: {row['file_name']}")  # 실패한 파일 로그 출력
 
