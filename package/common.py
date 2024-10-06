@@ -377,92 +377,6 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     print(jres)
     return jres
 
-    # 연속키 데이터베이스화 작업
-    # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-    if dbResult: # 1
-        # 연속키가 존재하는 경우
-        print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
-
-    else: # 0
-        # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
-        print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
-
-
-    # 연속키 체크
-    r = isNxtKey(FIRST_ARTICLE_TITLE)
-    if SEND_YN == 'Y' : r = ''
-    if r: 
-        print('*****최신 게시글이 채널에 발송 되어 있습니다. 연속키 == 첫 게시물****')
-        return ''
-    
-
-    nNewArticleCnt = 0
-    sendMessageText = ''
-    # JSON To List
-    for stockPlus in jres:
-        LIST_ARTICLE_URL = stockPlus['url'].strip()
-        LIST_ARTICLE_TITLE = stockPlus['title'].strip()
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName'].strip()
-        if ( NXT_KEY != LIST_ARTICLE_TITLE or NXT_KEY == '' or TEST_SEND_YN == 'Y' ) and SEND_YN == 'Y':
-            nNewArticleCnt += 1 # 새로운 게시글 수
-            if len(sendMessageText) < 3500:
-                if LIST_ARTICLE_WRITER_NAME == '증권플러스': sendMessageText += GetSendMessageText(INDEX = nNewArticleCnt ,ARTICLE_BOARD_NAME = '',ARTICLE_TITLE = LIST_ARTICLE_TITLE, ARTICLE_URL = LIST_ARTICLE_URL)                
-                # print(sendMessageText)
-            else:
-                print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-                nNewArticleCnt = 0
-                sendMessageText = ''
-
-        elif SEND_YN == 'N':
-            print('###점검중 확인요망###')
-        else:
-            if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-                print('최신 게시글이 채널에 발송 되어 있습니다.')
-            else:
-                print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
-
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
-            return True
-
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
-    return True
-
-# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
-def GetCurrentTime(*args):
-    pattern = ''
-    for pattern in args:
-        print(pattern)
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    TIME = time_now[11:].strip()
-    TIME_SPLIT = TIME.split(":")
-
-    if pattern == '':
-        TIME = time_now[11:].strip()
-    elif pattern == 'HH' or pattern == 'hh':
-        TIME = TIME_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        TIME = TIME_SPLIT[1]
-    elif pattern == 'SS' or pattern == 'ss':
-        TIME = TIME_SPLIT[2]
-    elif pattern == 'HH:MM' or pattern == 'hh:mm':
-        TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
-    elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
-        TIME = TIME
-    elif pattern == 'HHMM' or pattern == 'hhmm':
-        TIME = TIME_SPLIT[0] + TIME_SPLIT[1]
-    elif pattern == 'HHMMSS' or pattern == 'hhmmss':
-        TIME = TIME.replace(":", "")
-    else:
-        TIME = time_now[11:].strip()
-    print(TIME)
-    return TIME
 
 def SetSleepTimeKey(*args):
     try: nSleepCntKey = args[0]
@@ -495,28 +409,6 @@ def GetSleepTimeKey(*args):
         file.close()                     # 파일 객체 닫기
         return SLEEP_KEY
 
-def SetSleepTime(*args):
-    nSleepCntKey = GetSleepTimeKey()
-    nSleepCntKey = int(nSleepCntKey)
-    while nSleepCntKey < INTERVAL_TIME: 
-        nSleepCntKey += 1
-        SetSleepTimeKey(nSleepCntKey)
-        sys.exit(0)
-        
-    SetSleepTimeKey(0)
-    
-    return True
-# 증권사명을 가져옵니다. 
-def GetFirmName(*args):
-    strFirmName = ''
-    try :
-        strFirmName = FIRM_NM
-    except :
-        print('GetFirmName except')
-        strFirmName = ''
-        
-    return strFirmName
-
 # 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
 # 'yyyymmdd'
 def GetCurrentDate(*args):
@@ -546,28 +438,3 @@ def GetCurrentDate(*args):
 
     print('최종', pattern)
     return pattern  
-# 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
-def GetCurrentDay(*args):
-    daylist = ['월', '화', '수', '목', '금', '토', '일']
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-    return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
-
-# 첫 게시글과 연속키 일치 여부를 판별 
-# 일치(TRUE)=> 새 게시물이 모두 전송되어 있음
-# 불일치(FALSE)=> 새 게시물이 게시되어 전송함
-def isNxtKey(*args):
-    global NXT_KEY
-    global TEST_SEND_YN
-    global SEND_YN
-    global SEND_TIME_TERM
-    global TODAY_SEND_YN
-
-    print('isNxtKey')
-
-    print('input ', args[0] , ' \nNXT_KEY ', NXT_KEY)
-    if SEND_YN == 'N' or args[0] in NXT_KEY: return True
-    else: return False

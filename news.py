@@ -10,44 +10,16 @@ import urllib.request
 
 # from package.common import *
 from utils.json_util import save_data_to_local_json  # import the function from json_util
-from utils.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
+from utils.date_util import GetCurrentDate, GetCurrentDay
 from models.SecretKey import SecretKey
 
-# 로직 설명
-# 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)
-#   - checkNewArticle -> parse -> downloadFile -> Send 
-# 2. 연속키의 경우 현재 .key로 저장
-#   - 추후 heroku db로 처리 예정(MySQL)
-#   - DB연결이 안되는 경우, Key로 처리할수 있도록 예외처리 반영
-# 3. 최초 조회되는 게시판 혹은 Key값이 없는 경우 메세지를 발송하지 않음.
-# 4. 테스트와 운영을 구분하여 텔레그램 발송 채널 ID 구분 로직 추가
-#   - 어떻게 구분지을지 생각해봐야함
-# 5. 메시지 발송 방법 변경 (봇 to 사용자 -> 채널에 발송)
 
 ############공용 상수############
-
-# 게시판 URL
-BOARD_URL = ''
-# 첫번째URL 
-# SendAddText 글로벌 변수
-SEND_ADD_MESSAGE_TEXT = ''
-# LOOP 인덱스 변수
-SEC_FIRM_ORDER = 0 # 증권사 순번
-ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 # 이모지
 EMOJI_FIRE = u'\U0001F525'
 EMOJI_PICK = u'\U0001F449'
 
-# 연속키용 상수
-FIRST_ARTICLE_INDEX = 0
-
-# 메세지 전송용 레포트 제목(말줄임표 사용 증권사)
-LIST_ARTICLE_TITLE = ''
-
-#################### global 변수 정리 ###################################
-FIRM_NM = ''
-BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
 SECRET_KEY = SecretKey()
@@ -69,10 +41,6 @@ def ChosunBizBot_checkNewArticle():
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
     
     # 조선Biz Cbot API JSON 크롤링
-    ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL)
- 
-# 증권플러스 뉴스 JSON API 타입
-def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     response = urllib.request.urlopen(request)
     rescode = response.getcode()
@@ -83,13 +51,10 @@ def ChosunBizBot_StockPlusJSONparse(ARTICLE_BOARD_ORDER, TARGET_URL):
     except:
         return True
 
-    jres = jres['newsItems']
-    
-
     nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
-    for stockPlus in jres:
+    for stockPlus in jres['newsItems']:
         LIST_ARTICLE_URL = stockPlus['url']
         LIST_ARTICLE_TITLE = stockPlus['title']
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
@@ -213,26 +178,6 @@ def NAVERNews_checkNewArticle_1():
     
     NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
 
-# JSON API 타입
-def remove_duplicates(a_data, b_data):
-    try:
-        # b_data를 set으로 변환하여 중복 제거에 사용할 수 있게 함
-        b_set = {json.dumps(item, sort_keys=True) for item in b_data['newsList']}
-    except KeyError as e:
-        print(f"KeyError in b_data: {e}")
-        print(f"b_data: {json.dumps(b_data, indent=4, ensure_ascii=False)}")
-        raise
-
-    try:
-        # a_data에서 b_data와 중복되지 않는 항목만 선택
-        result = [item for item in a_data['newsList'] if json.dumps(item, sort_keys=True) not in b_set]
-    except KeyError as e:
-        print(f"KeyError in a_data: {e}")
-        print(f"a_data: {json.dumps(a_data, indent=4, ensure_ascii=False)}")
-        raise
-    
-    return result
-
 def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     logging.debug('NAVERNews_parse_1')
@@ -348,10 +293,26 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
             sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ""
 
-async def sendAlertMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True)
+
+# JSON API 타입
+def remove_duplicates(a_data, b_data):
+    try:
+        # b_data를 set으로 변환하여 중복 제거에 사용할 수 있게 함
+        b_set = {json.dumps(item, sort_keys=True) for item in b_data['newsList']}
+    except KeyError as e:
+        print(f"KeyError in b_data: {e}")
+        print(f"b_data: {json.dumps(b_data, indent=4, ensure_ascii=False)}")
+        raise
+
+    try:
+        # a_data에서 b_data와 중복되지 않는 항목만 선택
+        result = [item for item in a_data['newsList'] if json.dumps(item, sort_keys=True) not in b_set]
+    except KeyError as e:
+        print(f"KeyError in a_data: {e}")
+        print(f"a_data: {json.dumps(a_data, indent=4, ensure_ascii=False)}")
+        raise
+    
+    return result
 
 async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     global CHAT_ID
@@ -368,26 +329,6 @@ def sendText(sendMessageText):
     asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
-# 인자 텍스트를 더해가며 발송합니다. 
-# 더해진 텍스트가 텔레그램 제한인 3500자를 넘어가면 발송처리하고 초기화합니다
-# 두번째 인자는 첫번째 인자 텍스트를 앞으로 더할지 뒤로 더할지 결정합니다. (F: 앞, B: 뒤에 텍스트를 더합니다)
-# 인자를 결정하지 않은 경우 텍스트를 뒤로 붙이도록 설정
-# 두번째 파라미터가 Y인 경우 길이와 상관없이 발송처리(집계된 데이터 발송용)
-def sendAddText(sendMessageText, sendType='N'): 
-    global SEND_ADD_MESSAGE_TEXT
-
-    SEND_ADD_MESSAGE_TEXT += sendMessageText
-    print('sendType ', sendType)
-    print('sendMessageText ',sendMessageText)
-    print('SEND_ADD_MESSAGE_TEXT ', SEND_ADD_MESSAGE_TEXT)
-
-    if len(SEND_ADD_MESSAGE_TEXT) > 3500 or ( sendType == 'Y' and len(SEND_ADD_MESSAGE_TEXT) > 0 ) :
-        print("sendAddText() (실제 발송요청)\n", SEND_ADD_MESSAGE_TEXT)
-        sendText(SEND_ADD_MESSAGE_TEXT)
-        SEND_ADD_MESSAGE_TEXT = ''
-
-    return ''
-
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
     # 실제 전송할 메시지 작성
     sendMessageText = ''
@@ -401,7 +342,6 @@ def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
 
     return sendMessageText
 
-    
 # 타이틀 생성 
 # : 게시판 이름 삭제
 def GetSendMessageTitle(): 
