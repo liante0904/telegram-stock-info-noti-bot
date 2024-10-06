@@ -4,7 +4,7 @@ import re
 import subprocess
 from package import googledrive
 from package.date_util import GetCurrentDate
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
 

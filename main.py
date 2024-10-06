@@ -33,7 +33,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from requests import get  # to make GET request
 
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
 

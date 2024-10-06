@@ -11,7 +11,7 @@ import urllib.request
 # from package.common import *
 from package.json_util import save_data_to_local_json  # import the function from json_util
 from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 
 # 로직 설명
 # 1. Main()-> 각 회사별 함수를 통해 반복 (추후 함수명 일괄 변경 예정)

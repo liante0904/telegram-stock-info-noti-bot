@@ -4,7 +4,7 @@ import requests
 import asyncio
 from bs4 import BeautifulSoup
 
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 from package.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
 
 SECRET_KEY = SecretKey()

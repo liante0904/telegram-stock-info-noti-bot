@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 from package.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 # from package.common import *
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 
 ############공용 상수############
 # sleep key

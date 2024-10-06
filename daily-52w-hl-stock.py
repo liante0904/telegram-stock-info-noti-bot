@@ -6,7 +6,7 @@ import asyncio
 import urllib.request
 import json
 from urllib.parse import urlencode, urlunparse
-from package.SecretKey import SecretKey
+from models.SecretKey import SecretKey
 
 SECRET_KEY = SecretKey()
 

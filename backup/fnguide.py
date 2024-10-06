@@ -21,7 +21,7 @@ from package.common import *
 # TEST 
 # from package import herokuDB
 # from package.herokuDB import *
-from package import SecretKey
+from models.SecretKey import SecretKey
 # from package.common import *
 # import secretkey
 
