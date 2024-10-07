@@ -7,13 +7,12 @@ from datetime import datetime
 
 # 프로젝트 내부 모듈 경로 추가
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from package.json_util import format_message, format_message_sql
-from package.SecretKey import SecretKey
-from package.json_to_sqlite import fetch_data, update_data, insert_data
+from utils.json_util import format_message_sql
+from models.SecretKey import SecretKey
+from package.json_to_sqlite import fetch_data, update_data
 
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
-SECRET_KEY.load_secrets()
 
 # 텔레그램 메시지 발송 함수
 async def sendMessage(sendMessageText, chat_id=None):
