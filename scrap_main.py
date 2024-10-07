@@ -15,9 +15,10 @@ import urllib.request
 import base64
 from bs4 import BeautifulSoup
 
-from package.firm_info import get_firm_info
-from package.json_util import save_data_to_local_json # import the function from json_util
+from models.FirmInfo import FirmInfo
+from utils.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
+from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
 # selenium
 from selenium import webdriver
@@ -29,9 +30,6 @@ from selenium.webdriver.support import expected_conditions as EC
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
-# LOOP 인덱스 변수
-SEC_FIRM_ORDER = 0 # 증권사 순번
-ARTICLE_BOARD_ORDER = 0 # 게시판 순번
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
@@ -64,10 +62,13 @@ def LS_checkNewArticle():
 
     ## EBEST만 로직 변경 테스트
     
+
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "Accept-Encoding": "gzip, deflate, br",
@@ -100,8 +101,6 @@ def LS_checkNewArticle():
         # try:
         # except IndexError:
             # print('IndexError')
-
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
         # print('연속키:', NXT_KEY) # 주소
@@ -147,7 +146,7 @@ def LS_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
@@ -156,67 +155,59 @@ def LS_checkNewArticle():
     del response
     gc.collect()
     return nNewArticleCnt
-    
+
 def LS_detail(ARTICLE_URL, date):
-    global ATTACH_FILE_NAME
-    global LIST_ARTICLE_TITLE
-    item = {}  # 빈 딕셔너리로 초기화
+    
     ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
-    # print('LS_downloadFile')
-    # print(date)
-    ATTACH_BASE_URL = 'https://www.ls-sec.co.kr/_bt_lib/util/download.jsp?dataType='
     
-    time.sleep(0.5)
+    item = {}  # 빈 딕셔너리로 초기화
+    
+    time.sleep(0.1)
+    
     try:
-        # print(ARTICLE_URL)
-        response = requests.get(ARTICLE_URL, verify=False)
+        webpage = requests.get(ARTICLE_URL, verify=False)
     except:
-        return item
+        return True
+    
     # HTML parse
-    soup = BeautifulSoup(response.content, "html.parser")
-    # print(soup)
-    # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
-    table = soup.select_one('#contents > table')
-    tbody = table.select_one('tbody')
+    soup = BeautifulSoup(webpage.content, "html.parser")
+    
+    # 게시글 제목
     trs = soup.select('tr')
-    LIST_ARTICLE_TITLE = trs[0].select_one('td').text
+    item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
     
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(response.content, "html.parser").select_one('.attach > a')['href']
-    
-    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
     
     # 첨부파일 이름
-    LIST_ARTICLE_FILE_NAME = BeautifulSoup(response.content, "html.parser").select_one('.attach > a').get_text()
-    ATTACH_FILE_NAME = BeautifulSoup(response.content, "html.parser").select_one('.attach > a').get_text()
-    # print(ATTACH_FILE_NAME)
-    # param1 
+    item['LIST_ARTICLE_FILE_NAME'] = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    
+    # 첨부파일 URL 조립 예시  
+    # => https://www.ls-sec.co.kr/upload/EtwBoardData/B202410/20241002_한국 9월 소비자물가.pdf
+    
+    # B포스팅 월
     URL_PARAM = date
-    # print('???>',URL_PARAM)
     URL_PARAM = URL_PARAM.split('.')
-    # print('발간일',URL_PARAM)
-    URL_PARAM = 'B' + URL_PARAM[0] + URL_PARAM[1]
+    URL_PARAM_0 = 'B' + URL_PARAM[0] + URL_PARAM[1]
 
-    # print('인코딩전:',ATTACH_FILE_NAME)
-    # URL 인코딩
-    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME, safe='[]')
-    # print('인코딩:',ATTACH_URL_FILE_NAME)
-
-    # https://www.ls-sec.co.kr/upload/EtwBoardData/B202405/%5BLS%20ELECTRIC_기업이슈_240524☆%5D성종화_1840_이슈브리프_LS%20ELECTRIC.pdf
-    ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-    ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
 
     
-    item['LIST_ARTICLE_URL'] = ATTACH_URL
-    item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
-    item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
-
-    # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
-    # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
-    # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
+    ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+    ATTACH_URL = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+    
+    # URL 인코딩 => 사파리 한글처리 
+    item['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+    
+    
+    # item['LIST_ARTICLE_URL'] = ATTACH_URL
+    # item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
+    # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
+    # print(item)
     # print('*********확인용**************')
 
     return item
+    
 
 def ShinHanInvest_checkNewArticle():
     SEC_FIRM_ORDER      = 1
@@ -241,10 +232,12 @@ def ShinHanInvest_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2,TARGET_URL_3)
 
-    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
 
         # 변동되는 파라미터 
         board_name = TARGET_URL
@@ -280,10 +273,7 @@ def ShinHanInvest_checkNewArticle():
 
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
         soupList = jres['list']
-        # 연속키 데이터베이스화 작업
         
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
         nNewArticleCnt = 0
         
         # JSON To List
@@ -305,7 +295,7 @@ def ShinHanInvest_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
@@ -325,15 +315,11 @@ def KB_checkNewArticle():
     
     # KB증권 오늘의 레포트
     TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
-    # KB증권 기업분석
-    # TARGET_URL_1 = ''
     
-    # TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1)
-
-    # TARGET_URL_TUPLE = (TARGET_URL_0)
-    
-    
-
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER
+    )
     # 요청 헤더
     headers = {
         "Accept": "application/json, text/javascript, */*; q=0.01",
@@ -369,9 +355,6 @@ def KB_checkNewArticle():
     soupList = jres['response']['reportList']
     # print(soupList)
     
-    # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
     nNewArticleCnt = 0
     
     # JSON To List
@@ -390,7 +373,7 @@ def KB_checkNewArticle():
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
+            firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
@@ -448,7 +431,10 @@ def NHQV_checkNewArticle():
     # NH투자증권 오늘의 레포트
     TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
     
-    
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER
+    )
     
     payload = {
         "trName": "H3211",
@@ -497,8 +483,6 @@ def NHQV_checkNewArticle():
 
     BOARD_NM            = listR[0]['rshPprSerCdNm']
    
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-    
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     # print('연속URL:', NXT_KEY) # 주소
 
@@ -515,7 +499,7 @@ def NHQV_checkNewArticle():
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
+            firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -525,33 +509,13 @@ def NHQV_checkNewArticle():
 
     return nNewArticleCnt
 
-
-# 전용 현재일자 (주말인 경우 월요일)
-def GetCurrentDate_NH():
-    # 한국 표준시(KST) 시간대를 설정합니다.
-    tz_kst = timezone('Asia/Seoul')
-    now_utc = datetime.datetime.now(datetime.timezone.utc)
-    now_kst = now_utc.astimezone(tz_kst)
-
-    # 현재 요일을 구합니다. (월요일=0, 일요일=6)
-    current_weekday = now_kst.weekday()
-
-    if current_weekday == 5:  # 오늘이 토요일인 경우
-        next_monday = now_kst + datetime.timedelta(days=2)
-    elif current_weekday == 6:  # 오늘이 일요일인 경우
-        next_monday = now_kst + datetime.timedelta(days=1)
-    else:
-        next_monday = now_kst  # 오늘이 월요일~금요일인 경우 현재 일자 반환
-
-    return next_monday.strftime('%Y%m%d')
-
 def HANA_checkNewArticle():
     SEC_FIRM_ORDER = 3
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URLS = [
+    TARGET_URL_TUPLE = [
         # 하나금융 Daily
         'https://www.hanaw.com/main/research/research/list.cmd?pid=4&cid=1',
         # 하나금융 산업 분석
@@ -579,9 +543,11 @@ def HANA_checkNewArticle():
     ]
 
 
-    
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         try:
             response = requests.get(TARGET_URL, verify=False)
             time.sleep(0.5)
@@ -602,7 +568,7 @@ def HANA_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
                 
@@ -631,7 +597,10 @@ def Samsung_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         try:
             response = requests.get(TARGET_URL, verify=False)
         except:
@@ -649,8 +618,6 @@ def Samsung_checkNewArticle():
             a_href = a_href[1]
         except:
             return 0
-
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
@@ -674,7 +641,7 @@ def Samsung_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -703,18 +670,22 @@ def Sangsanginib_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         jres = ''
+        # 요청 헤더 설정
         headers = {
             "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Accept-Language": "ko",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "X-Requested-With": "XMLHttpRequest",
+            "Origin": "https://www.sangsanginib.com",
+            "Referer": "https://www.sangsanginib.com/research/enterpriseReport/enterpriseReportMobView",
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
         }
+
         cmsCd = ["CM0078","CM0338","CM0079"]
         
         data = {
@@ -726,12 +697,17 @@ def Sangsanginib_checkNewArticle():
             "sdt": "",
             "edt": ""
         }
-
+        # 쿠키 설정 (사전 형태로 쿠키 추가)
+        cookies = {
+            "SSISTOCK_JSESSIONID": "F63EB7BB0166E9ECA5988FF541287E07",
+            "_ga": "GA1.1.467249692.1728208332",
+            "_ga_BTXL5GSB67": "GS1.1.1728208331.1.1.1728208338.53.0.0"
+        }
         # 세션 객체 생성
         session = requests.Session()
 
         # Retry 설정 (5번까지 재시도, backoff_factor는 재시도 간 대기 시간을 설정)
-        retries = Retry(total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+        retries = Retry(total=10, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
 
         # HTTPAdapter에 Retry 설정 적용
         adapter = HTTPAdapter(max_retries=retries)
@@ -739,17 +715,15 @@ def Sangsanginib_checkNewArticle():
         session.mount('https://', adapter)
 
         try:
-            response = session.post(TARGET_URL, headers=headers, data=data, timeout=2)
+            response = session.post(TARGET_URL, headers=headers, data=data, timeout=2, cookies=cookies)
             # print(response.text)
             jres = json.loads(response.text)
             # print(jres)
         except requests.exceptions.RequestException as e:
             print(f"재시도 후에도 에러가 발생했습니다: {e}")
+            return 0
         
-
         soupList = jres[0]['getNoticeList']
-        # 연속키 데이터베이스화 작업
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         
         nNewArticleCnt = 0
         
@@ -769,7 +743,7 @@ def Sangsanginib_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -844,8 +818,13 @@ def Shinyoung_checkNewArticle():
     # 신영증권 리서치
     TARGET_URL = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
 
-    jres = ''
+    
     # url = "https://www.shinyoung.com/Common/selectPaging/research_shinyoungData"
+    
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER
+    )
     headers = {
         "Accept": "text/plain, */*; q=0.01",
         "Accept-Encoding": "gzip, deflate, br",
@@ -861,7 +840,8 @@ def Shinyoung_checkNewArticle():
         "rows": "10",
         "page": "1"
     }
-
+    
+    jres = ''
     try:
         response = requests.post(TARGET_URL, headers=headers, data=data)
         if response.status_code == 200:
@@ -876,8 +856,6 @@ def Shinyoung_checkNewArticle():
 
     # print(jres['rows'])
     soupList = jres['rows']
-    # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     
@@ -892,7 +870,7 @@ def Shinyoung_checkNewArticle():
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info['firm_name'],
+            firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -1043,8 +1021,10 @@ def Miraeasset_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Accept-Encoding": "gzip, deflate, br",
@@ -1064,9 +1044,6 @@ def Miraeasset_checkNewArticle():
         # 첫 번째 레코드의 제목을 바로 담습니다.
         soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
 
-        # 연속키 데이터베이스화 작업
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-        
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
         # 게시물 정보 파싱
@@ -1104,7 +1081,7 @@ def Miraeasset_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -1135,7 +1112,10 @@ def Kiwoom_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
 
         payload = {
             "pageNo": 1,
@@ -1161,8 +1141,6 @@ def Kiwoom_checkNewArticle():
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
         
         soupList = jres['researchList']
-        # 연속키 데이터베이스화 작업
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
         nNewArticleCnt = 0
         
@@ -1181,7 +1159,7 @@ def Kiwoom_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -1211,8 +1189,10 @@ def Hmsec_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         payload = {"curPage":1}
 
         jres = ''
@@ -1232,8 +1212,6 @@ def Hmsec_checkNewArticle():
         # print('FILE_NAME:',FILE_NAME)
 
         soupList = jres['data_list']
-        # 연속키 데이터베이스화 작업
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         
         nNewArticleCnt = 0
         
@@ -1262,7 +1240,7 @@ def Hmsec_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -1287,7 +1265,10 @@ def Koreainvestment_selenium_checkNewArticle():
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
 
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--headless")
@@ -1313,9 +1294,6 @@ def Koreainvestment_selenium_checkNewArticle():
         #     # onClick 프로퍼티값(링크) 출력
         #     print("링크:", link.get_attribute("onclick"))
         
-        # 연속키 데이터베이스화 작업
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-
         nNewArticleCnt = 0
         
         
@@ -1331,7 +1309,7 @@ def Koreainvestment_selenium_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
@@ -1489,9 +1467,11 @@ def DAOL_checkNewArticle():
     
     
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
         # URL GET
-
         # URL을 파싱하여 주소와 쿼리 파라미터를 추출
         parsed_url = urlparse.urlparse(TARGET_URL)
 
@@ -1555,8 +1535,6 @@ def DAOL_checkNewArticle():
             print("요청이 실패했습니다.")
             print("상태 코드:", response.status_code)
         
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
-        
         nNewArticleCnt = 0
         
         for list in soupList:
@@ -1583,7 +1561,7 @@ def DAOL_checkNewArticle():
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info['firm_name'],
+                firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
@@ -1593,73 +1571,6 @@ def DAOL_checkNewArticle():
     gc.collect()
 
     return nNewArticleCnt
-
-# 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
-def GetCurrentTime(*args):
-    pattern = ''
-    # for pattern in args:
-    #     print(pattern)
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    TIME = time_now[11:].strip()
-    TIME_SPLIT = TIME.split(":")
-
-    if pattern == '':
-        TIME = time_now[11:].strip()
-    elif pattern == 'HH' or pattern == 'hh':
-        TIME = TIME_SPLIT[0]
-    elif pattern == 'MM' or pattern == 'mm':
-        TIME = TIME_SPLIT[1]
-    elif pattern == 'SS' or pattern == 'ss':
-        TIME = TIME_SPLIT[2]
-    elif pattern == 'HH:MM' or pattern == 'hh:mm':
-        TIME = TIME_SPLIT[0] + ":" + TIME_SPLIT[1]
-    elif pattern == 'HH:MM:SS' or pattern == 'hh:mm:ss':
-        TIME = TIME
-    elif pattern == 'HHMM' or pattern == 'hhmm':
-        TIME = TIME_SPLIT[0] + TIME_SPLIT[1]
-    elif pattern == 'HHMMSS' or pattern == 'hhmmss':
-        TIME = TIME.replace(":", "")
-    else:
-        TIME = time_now[11:].strip()
-    # print(TIME)
-    return TIME
-
-# 한국 시간 (timezone('Asia/Seoul')) 날짜 정보를 구합니다.
-# 'yyyymmdd'
-def GetCurrentDate(*args):
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-
-    pattern = ''
-    # r = ['y','m','d','Y','M','D']    
-    if not args:
-        pattern= ''.join(DATE_SPLIT) 
-    else: pattern = args[0]
-    # if ['y','m','d','Y','M','D'] not in pattern :  return ''.join(DATE_SPLIT)
-
-    pattern= pattern.replace('yyyy', DATE_SPLIT[0])
-    pattern= pattern.replace('YYYY', DATE_SPLIT[0])
-    pattern= pattern.replace('mm', DATE_SPLIT[1])
-    pattern= pattern.replace('MM', DATE_SPLIT[1])
-    pattern= pattern.replace('dd', DATE_SPLIT[2])
-    pattern= pattern.replace('DD', DATE_SPLIT[2])
-
-    # print('입력', args[0], '최종', pattern)
-    return pattern
-    
-# 한국 시간 (timezone('Asia/Seoul')) 요일 정보를 구합니다.
-def GetCurrentDay(*args):
-    daylist = ['월', '화', '수', '목', '금', '토', '일']
-    
-    time_now = str(datetime.datetime.now(timezone('Asia/Seoul')))[:19] # 밀리세컨즈 제거
-
-    DATE = time_now[:10].strip()
-    DATE_SPLIT = DATE.split("-")
-    return daylist[datetime.date(int(DATE_SPLIT[0]),int(DATE_SPLIT[1]),int(DATE_SPLIT[2])).weekday()]
 
 def main():
     # 사용자의 홈 디렉토리 가져오기
