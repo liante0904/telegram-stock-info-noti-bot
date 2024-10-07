@@ -9,19 +9,21 @@ from models.SecretKey import SecretKey
 SECRET_KEY = SecretKey()
 
 
+# 로그 파일 경로는 환경 변수로부터 가져옵니다
+LOG_FILE = os.getenv('LOG_FILE', '/default/path/to/logfile.log')
 
 # 한글 인코딩 처리 및 wget으로 다운로드
 def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     """
-    Downloads a file from the given URL and saves it with the given file name.
+    파일을 주어진 URL에서 다운로드하고 지정된 파일 이름으로 저장합니다.
     
-    Parameters:
-    report_info_row (dict): Dictionary containing report information.
-    URL (str): The URL to download the file from.
-    FILE_NAME (str): The name of the file to save.
+    매개변수:
+    report_info_row (dict): 보고서 정보가 담긴 딕셔너리.
+    URL (str): 파일을 다운로드할 URL.
+    FILE_NAME (str): 저장할 파일 이름.
     
-    Returns:
-    bool: True if the file is downloaded successfully or already exists, False otherwise.
+    반환:
+    bool: 파일이 성공적으로 다운로드되거나 이미 존재하는 경우 True, 그렇지 않으면 False.
     """
     print("download_file_wget()", URL, FILE_NAME)
 
@@ -48,7 +50,10 @@ def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
 
     # 파일이 이미 존재하는지 확인
     if os.path.exists(ATTACH_FILE_NAME):
-        print(f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다.")
+        log_message = f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다."
+        print(log_message)
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(log_message + '\n')
         return True  # 파일이 이미 존재하므로 성공으로 처리
 
     # wget 명령어 생성 및 실행
@@ -62,13 +67,19 @@ def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     # r = googledrive.upload(str(ATTACH_FILE_NAME))
     # print(f'main URL {r}')
     # return r
-    
+
     try:
-        result = subprocess.run(wget_command, check=True)
-        print(f"파일 다운로드 완료: {ATTACH_FILE_NAME}")
+        result = subprocess.run(wget_command, check=True, text=True, capture_output=True)
+        log_message = f"파일 다운로드 완료: {ATTACH_FILE_NAME}"
+        print(log_message)
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(log_message + '\n')
+            log_file.write(result.stdout + '\n')  # 성공 시 출력도 로그에 기록
         return True  # 파일 다운로드 성공 시 True 반환
     except subprocess.CalledProcessError as e:
-        print(f"wget 다운로드 실패: {e}")
+        error_message = f"wget 다운로드 실패: {e}"
+        print(error_message)
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(error_message + '\n')
+            log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
         return False  # 다운로드 실패 시 False 반환
-    
-
