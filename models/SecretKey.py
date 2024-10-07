@@ -22,17 +22,13 @@ class SecretKey:
 
         # 데이터베이스 URL
         self.ORACLECLOUD_MYSQL_DATABASE_URL = os.getenv('ORACLECLOUD_MYSQL_DATABASE_URL')
-        self.CLEARDB_DATABASE_URL = os.getenv('CLEARDB_DATABASE_URL')
-        self.CLEARDB_DATABASE_URL_BEFORE = os.getenv('CLEARDB_DATABASE_URL_BEFORE')
 
         # Telegram 봇 정보
         self.TELEGRAM_BOT_INFO = os.getenv('TELEGRAM_BOT_INFO')
-        self.TELEGRAM_BOT_INFO1 = os.getenv('TELEGRAM_BOT_INFO1')
 
         # Telegram 봇 토큰 및 채널 ID
         self.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
         self.TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_MAGIC_FORMULA_SECRET')
-        self.TELEGRAM_BOT_TOKEN_PROD = os.getenv('TELEGRAM_BOT_TOKEN_PROD')
 
         # Telegram 채널 ID
         self.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
