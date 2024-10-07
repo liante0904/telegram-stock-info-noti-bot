@@ -220,63 +220,59 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 def LS_detail(ARTICLE_URL, date):
     global ATTACH_FILE_NAME
     global LIST_ARTICLE_TITLE
+    
+    item = {}  # 빈 딕셔너리로 초기화
+    
     ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
     # print('LS_downloadFile')
     # print(date)
-    ATTACH_BASE_URL = 'https://www.ls-sec.co.kr/_bt_lib/util/download.jsp?dataType='
     
     time.sleep(0.1)
+    
     try:
-        # print(ARTICLE_URL)
         webpage = requests.get(ARTICLE_URL, verify=False)
     except:
         return True
+    
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
-    # print(soup)
-    # 게시글 제목(게시판 리스트의 제목은 짤려서 본문 제목 사용)
-    table = soup.select_one('#contents > table')
-    tbody = table.select_one('tbody')
+    
+    # 게시글 제목
     trs = soup.select('tr')
-    LIST_ARTICLE_TITLE = trs[0].select_one('td').text
+    item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
     
-    # 첨부파일 URL
-    attachFileCode = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a')['href']
-    
-    ATTACH_URL = attachFileCode.replace('Javascript:download("', ATTACH_BASE_URL).replace('")', '').replace('https', 'http')
     
     # 첨부파일 이름
-    LIST_ARTICLE_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
-    # print(ATTACH_FILE_NAME)
-    # param1 
+    item['LIST_ARTICLE_FILE_NAME'] = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    
+    
+    # 첨부파일 URL 조립 예시  
+    # => https://www.ls-sec.co.kr/upload/EtwBoardData/B202410/20241002_한국 9월 소비자물가.pdf
+    
+    # B포스팅 월
     URL_PARAM = date
-    # print('???>',URL_PARAM)
     URL_PARAM = URL_PARAM.split('.')
-    # print('발간일',URL_PARAM)
-    URL_PARAM = 'B' + URL_PARAM[0] + URL_PARAM[1]
+    URL_PARAM_0 = 'B' + URL_PARAM[0] + URL_PARAM[1]
 
-    # print('인코딩전:',ATTACH_FILE_NAME)
-    # URL 인코딩
-    ATTACH_URL_FILE_NAME = urllib.parse.quote(ATTACH_FILE_NAME, safe='[]')
-    # print('인코딩:',ATTACH_URL_FILE_NAME)
+    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
 
-    # https://www.ls-sec.co.kr/upload/EtwBoardData/B202405/%5BLS%20ELECTRIC_기업이슈_240524☆%5D성종화_1840_이슈브리프_LS%20ELECTRIC.pdf
+    
     ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-    ATTACH_URL = ATTACH_URL.format(URL_PARAM, ATTACH_URL_FILE_NAME)
-
-    item = {}  # 빈 딕셔너리로 초기화
-    item['LIST_ARTICLE_URL'] = ATTACH_URL
-    item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
-    item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
-    print(item)
-    # print("item['LIST_ARTICLE_URL']", item['LIST_ARTICLE_URL'])
-    # print("item['LIST_ARTICLE_FILE_NAME']", item['LIST_ARTICLE_FILE_NAME'])
-    # print("item['LIST_ARTICLE_TITLE']", item['LIST_ARTICLE_TITLE'])
+    ATTACH_URL = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+    
+    # URL 인코딩 => 사파리 한글처리 
+    item['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+    
+    
+    # item['LIST_ARTICLE_URL'] = ATTACH_URL
+    # item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
+    # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
+    # print(item)
     # print('*********확인용**************')
 
     return item
-
 
 
 def ShinHanInvest_checkNewArticle():
@@ -2194,12 +2190,11 @@ def extract_and_decode_url(url):
     Returns:
     str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
     """
-    # print(url)
     url = url.replace('&amp;', '&')
+    
     # URL 파싱
     parsed_url = urlparse.urlparse(url)
     
-    # print(url)
     # 쿼리 문자열 파싱
     query_params = urlparse.parse_qs(parsed_url.query)
     
