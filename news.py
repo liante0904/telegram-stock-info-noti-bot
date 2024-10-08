@@ -1,19 +1,14 @@
 # -*- coding:utf-8 -*- 
 import os
-import telegram
 import requests
-import logging
-import time
 import json
 import asyncio
 import aiohttp
-import urllib
-import urllib.request
 
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
+from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
-
 
 ############공용 상수############
 
@@ -25,6 +20,8 @@ EMOJI_PICK = u'\U0001F449'
 
 SECRET_KEY = SecretKey()
 
+token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+
 async def fetch(session, url):
     async with session.get(url, headers={'User-Agent': 'Mozilla/5.0'}) as response:
         if response.status != 200:
@@ -33,9 +30,6 @@ async def fetch(session, url):
         return await response.json()
     
 async def ChosunBizBot_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 995
     ARTICLE_BOARD_ORDER = 995
 
@@ -65,7 +59,6 @@ async def ChosunBizBot_checkNewArticle():
         if jres is None:
             return
 
-    nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
     for stockPlus in jres['newsItems']:
@@ -82,7 +75,6 @@ async def ChosunBizBot_checkNewArticle():
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
             print()
             print(LIST_ARTICLE_URL)
             print(LIST_ARTICLE_TITLE)
@@ -92,41 +84,34 @@ async def ChosunBizBot_checkNewArticle():
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            await sendText(GetSendMessageTitle() + sendMessageText)
-            nNewArticleCnt = 0
+            await sendMarkDownText(token=token,
+                           chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                           sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-    
-    print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
-        print(sendMessageText)
-        await sendText(GetSendMessageTitle() + sendMessageText)
 
+    print('**************')
+    print(f'len(sendMessageText){len(sendMessageText)}' )
+    if sendMessageText:
+        print(sendMessageText)
+        await sendMarkDownText(token=token,
+                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+    else:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+            
     return sendMessageText
 
 async def NAVERNews_checkNewArticle_0():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 998
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 실시간 속보
-    TARGET_URL_0 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
+    TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
-    await NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL_0)
-
-# JSON API 타입
-async def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
-
-    print('NAVERNews_parse_0')
-    
+    # 동기 호출     
     # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
     # # 검색 요청 및 처리
     # response = urllib.request.urlopen(request)
@@ -139,21 +124,18 @@ async def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
     # except:
     #     return True
 
+    # 비동기 호출 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
         if jres is None:
             return    
 
-    
     jres = jres['result']
-    category = 'flashnews'
 
-
-    nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
-        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
+        LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/flashnews/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit']
 
         sendMessageText += save_data_to_local_json(
@@ -165,42 +147,37 @@ async def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
             print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            await sendText(GetSendMessageTitle() + sendMessageText)
-            nNewArticleCnt = 0
+            await sendMarkDownText(token=token,
+                                    chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
+                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    print(f'len(sendMessageText){len(sendMessageText)}' )
+    if sendMessageText:
         print(sendMessageText)
-        await sendText(GetSendMessageTitle() + sendMessageText)
-
+        await sendMarkDownText(token=token,
+                                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
+                                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+    else:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        
     return sendMessageText
 
 async def NAVERNews_checkNewArticle_1():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 998
     ARTICLE_BOARD_ORDER = 1
 
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 많이 본 뉴스
-    TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
+    TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
     
-    await NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
-
-async def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # logging.debug('NAVERNews_parse_1')
     # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
@@ -306,72 +283,34 @@ async def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
         for news in filtered_jres:
             LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
             LIST_ARTICLE_TITLE = news['tit']
-            sendMessageText += GetSendMessageText(INDEX=0, ARTICLE_BOARD_NAME='', ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
+            sendMessageText += GetSendMessageText(ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
 
             # 메시지 길이가 3500을 넘으면 출력하고 초기화
             if len(sendMessageText) > 3500:
                 print(sendMessageText)
-                await sendText(GetSendMessageTitle() + sendMessageText)
+                await sendMarkDownText(token=token,
+                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
+                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
                 sendMessageText = ""
 
         # 마지막으로 남은 메시지가 있으면 출력
         if sendMessageText:
             print(sendMessageText)
-            await sendText(GetSendMessageTitle() + sendMessageText)
+            await sendMarkDownText(token=token,
+                                    chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
+                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ""
 
-
-# JSON API 타입
-def remove_duplicates(a_data, b_data):
-    try:
-        # b_data를 set으로 변환하여 중복 제거에 사용할 수 있게 함
-        b_set = {json.dumps(item, sort_keys=True) for item in b_data['newsList']}
-    except KeyError as e:
-        print(f"KeyError in b_data: {e}")
-        print(f"b_data: {json.dumps(b_data, indent=4, ensure_ascii=False)}")
-        raise
-
-    try:
-        # a_data에서 b_data와 중복되지 않는 항목만 선택
-        result = [item for item in a_data['newsList'] if json.dumps(item, sort_keys=True) not in b_set]
-    except KeyError as e:
-        print(f"KeyError in a_data: {e}")
-        print(f"a_data: {json.dumps(a_data, indent=4, ensure_ascii=False)}")
-        raise
-    
-    return result
-
-async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
-    global CHAT_ID
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
-# 가공없이 텍스트를 발송합니다.
-async def sendText(sendMessageText): 
-    global CHAT_ID
-
-    #생성한 텔레그램 봇 정보(@ebest_noti_bot)
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    await sendMessage(sendMessageText) #봇 실행하는 코드
-    time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
-
-def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
-    # 실제 전송할 메시지 작성
-    sendMessageText = ''
-    # 발신 게시판 종류
-    # if INDEX == 1:
-    #     sendMessageText += GetSendMessageTitle() + "\n"
-    # 게시글 제목(굵게)
-    sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+# 본문 생성
+def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
+    sendMessageText = "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n\n" 
 
     return sendMessageText
 
 # 타이틀 생성 
-# : 게시판 이름 삭제
-def GetSendMessageTitle(): 
+def GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER): 
     SendMessageTitle = ""
     msgFirmName = ""
     
@@ -386,22 +325,7 @@ def GetSendMessageTitle():
     
     return SendMessageTitle
 
-def GetSendChatId():
-    SendMessageChatId = 0
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
-            SendMessageChatId = SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
-        else:
-            SendMessageChatId = SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 995:
-            SendMessageChatId = SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    
-    # SendMessageChatId = SECRET_KEY.TELEGRAM_CHANNEL_ID_TEST
-    return SendMessageChatId
- 
 async def main():
-    global SEC_FIRM_ORDER  # 증권사 순번
-
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
 
@@ -430,13 +354,13 @@ async def main():
     script_name = script_filename.split('.')[0]
     print('script_filename', script_filename)
 
-    # log 파일명
-    LOG_FILENAME = GetCurrentDate('YYYYMMDD') + '_' + script_name + ".dbg"
-    print('__file__', __file__, LOG_FILENAME)
+    # # log 파일명
+    # LOG_FILENAME = GetCurrentDate('YYYYMMDD') + '_' + script_name + ".dbg"
+    # print('__file__', __file__, LOG_FILENAME)
 
-    # log 전체경로
-    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-    print('LOG_FULLFILENAME', LOG_FULLFILENAME)
+    # # log 전체경로
+    # LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    # print('LOG_FULLFILENAME', LOG_FULLFILENAME)
 
     # # 로깅 설정 추가
     # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG,
@@ -460,7 +384,6 @@ async def main():
     await NAVERNews_checkNewArticle_0(); 
     print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
     await NAVERNews_checkNewArticle_1(); 
-
 
 if __name__ == '__main__':
     asyncio.run(main())
