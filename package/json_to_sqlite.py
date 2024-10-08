@@ -178,18 +178,19 @@ def insert_data():
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, MAIN_CH_SEND_YN, SAVE_TIME
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, SAVE_TIME
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     entry["SEC_FIRM_ORDER"],
                     entry["ARTICLE_BOARD_ORDER"],
                     entry["FIRM_NM"],
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
+                    entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
                     ' ',
                     entry["SAVE_TIME"]
                 ))
-    
+
     conn.commit()
     print("Data inserted successfully.")
     close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기

@@ -1241,7 +1241,8 @@ def Hmsec_checkNewArticle():
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
+                attach_url=LIST_ATTACHMENT_URL,
+                article_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -1608,19 +1609,19 @@ def main():
     insert_data()
     # check functions 리스트
     check_functions = [
-        LS_checkNewArticle,
-        ShinHanInvest_checkNewArticle,
-        NHQV_checkNewArticle,
-        HANA_checkNewArticle,
-        KB_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle, # 주석 처리된 부분
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
+        # LS_checkNewArticle,
+        # ShinHanInvest_checkNewArticle,
+        # NHQV_checkNewArticle,
+        # HANA_checkNewArticle,
+        # KB_checkNewArticle,
+        # Samsung_checkNewArticle,
+        # # Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        # Shinyoung_checkNewArticle,
+        # Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
-        Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle
+        # Kiwoom_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle,
+        # DAOL_checkNewArticle
     ]
 
     for check_function in check_functions:

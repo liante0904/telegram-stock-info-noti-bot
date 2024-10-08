@@ -2,15 +2,18 @@
 import os
 import re
 import subprocess
-from package import googledrive
-from utils.date_util import GetCurrentDate
+# from package.googledrive import *
+from date_util import GetCurrentDate
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.SecretKey import SecretKey
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
 
 
 # 로그 파일 경로는 환경 변수로부터 가져옵니다
-LOG_FILE = os.getenv('LOG_FILE', '/default/path/to/logfile.log')
+LOG_FILE = os.getenv('LOG_FILE', '~/log/logfile.log')
 
 # 한글 인코딩 처리 및 wget으로 다운로드
 def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
@@ -28,7 +31,8 @@ def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     print("download_file_wget()", URL, FILE_NAME)
 
     BOARD_NM = ''
-    URL = report_info_row['ARTICLE_URL']
+    URL = report_info_row['ATTACH_URL'] if report_info_row['ATTACH_URL'] else report_info_row['ARTICLE_URL']
+
     FILE_NAME = report_info_row['ARTICLE_TITLE']
     FIRM_NAME = report_info_row['FIRM_NM']
 
@@ -83,3 +87,37 @@ def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
             log_file.write(error_message + '\n')
             log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
         return False  # 다운로드 실패 시 False 반환
+    
+def main():
+    URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf&sync=true&fileType=URL&filePath=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf'
+    ATTACH_FILE_NAME = '241007__자동차 산업 - 2024년 9월 현대차그룹 글로벌 도매 판매 _현대차증권.pdf'
+    # wget 명령어 생성 및 실행
+    wget_command = [
+        'wget', '--user-agent="Mozilla/5.0"', '-O', ATTACH_FILE_NAME, URL,
+        '--max-redirect=10', '--retry-connrefused', '--waitretry=5',
+        '--read-timeout=20', '--timeout=15', '--tries=5', '--no-check-certificate'
+    ]
+
+    # # 구글 드라이브에 업로드
+    # r = googledrive.upload(str(ATTACH_FILE_NAME))
+    # print(f'main URL {r}')
+    # return r
+
+    try:
+        result = subprocess.run(wget_command, check=True, text=True, capture_output=True)
+        log_message = f"파일 다운로드 완료: {ATTACH_FILE_NAME}"
+        print(log_message)
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(log_message + '\n')
+            log_file.write(result.stdout + '\n')  # 성공 시 출력도 로그에 기록
+        return True  # 파일 다운로드 성공 시 True 반환
+    except subprocess.CalledProcessError as e:
+        error_message = f"wget 다운로드 실패: {e}"
+        print(error_message)
+        with open(LOG_FILE, 'a') as log_file:
+            log_file.write(error_message + '\n')
+            log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
+        return False  # 다운로드 실패 시 False 반환
+    
+if __name__ == "__main__":
+    main()

@@ -6,7 +6,7 @@ import argparse
 # 전역 변수로 필터링할 증권사 목록 정의
 EXCLUDED_FORWARD_REPORT_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권"}
 
-def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, send_users=None, main_ch_send_yn="N"):
+def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, send_users=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
 
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
@@ -28,6 +28,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         "FIRM_NM": firm_nm,
         "ATTACH_URL": attach_url,
         "ARTICLE_TITLE": article_title,
+        "ARTICLE_URL": article_url,
         "SEND_USER": send_users,
         "MAIN_CH_SEND_YN": main_ch_send_yn,
         "SAVE_TIME": current_time
