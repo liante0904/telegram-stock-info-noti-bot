@@ -20,6 +20,9 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # `send_users`가 None이면 빈 배열로 초기화합니다.
     if send_users is None:
         send_users = []
+    # `article_url`가 None이면 attach_url로 대체합니다. (임시 추후변경)
+    if article_url is None:
+        article_url = attach_url
     
     # 새 데이터를 딕셔너리로 저장합니다.
     new_data = {
