@@ -1609,19 +1609,19 @@ def main():
     insert_data()
     # check functions 리스트
     check_functions = [
-        # LS_checkNewArticle,
-        # ShinHanInvest_checkNewArticle,
-        # NHQV_checkNewArticle,
-        # HANA_checkNewArticle,
-        # KB_checkNewArticle,
-        # Samsung_checkNewArticle,
-        # # Sangsanginib_checkNewArticle, # 주석 처리된 부분
-        # Shinyoung_checkNewArticle,
-        # Miraeasset_checkNewArticle,
+        LS_checkNewArticle,
+        ShinHanInvest_checkNewArticle,
+        NHQV_checkNewArticle,
+        HANA_checkNewArticle,
+        KB_checkNewArticle,
+        Samsung_checkNewArticle,
+        Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        Shinyoung_checkNewArticle,
+        Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
-        # Kiwoom_checkNewArticle,
-        # Koreainvestment_selenium_checkNewArticle,
-        # DAOL_checkNewArticle
+        Kiwoom_checkNewArticle,
+        Koreainvestment_selenium_checkNewArticle,
+        DAOL_checkNewArticle
     ]
 
     for check_function in check_functions:
