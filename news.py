@@ -6,9 +6,10 @@ import logging
 import time
 import json
 import asyncio
+import aiohttp
+import urllib
 import urllib.request
 
-# from package.common import *
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from models.SecretKey import SecretKey
@@ -24,7 +25,14 @@ EMOJI_PICK = u'\U0001F449'
 
 SECRET_KEY = SecretKey()
 
-def ChosunBizBot_checkNewArticle():
+async def fetch(session, url):
+    async with session.get(url, headers={'User-Agent': 'Mozilla/5.0'}) as response:
+        if response.status != 200:
+            print(f"{url} 접속이 원활하지 않습니다 ")
+            return None
+        return await response.json()
+    
+async def ChosunBizBot_checkNewArticle():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -41,15 +49,21 @@ def ChosunBizBot_checkNewArticle():
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
     
     # 조선Biz Cbot API JSON 크롤링
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
+    
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
 
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except:
-        return True
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
+
+    async with aiohttp.ClientSession() as session:
+        jres = await fetch(session, TARGET_URL)
+        if jres is None:
+            return
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -78,7 +92,7 @@ def ChosunBizBot_checkNewArticle():
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            await sendText(GetSendMessageTitle() + sendMessageText)
             nNewArticleCnt = 0
             sendMessageText = ''
 
@@ -90,11 +104,11 @@ def ChosunBizBot_checkNewArticle():
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
+        await sendText(GetSendMessageTitle() + sendMessageText)
 
     return sendMessageText
 
-def NAVERNews_checkNewArticle_0():
+async def NAVERNews_checkNewArticle_0():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -106,23 +120,31 @@ def NAVERNews_checkNewArticle_0():
     # 네이버 실시간 속보
     TARGET_URL_0 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
-    NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL_0)
+    await NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL_0)
 
 # JSON API 타입
-def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
+async def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     print('NAVERNews_parse_0')
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    # 검색 요청 및 처리
-    response = urllib.request.urlopen(request)
-    rescode = response.getcode()
-    if rescode != 200:
-        return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+    
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # # 검색 요청 및 처리
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200:
+    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except:
-        return True
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
+
+    async with aiohttp.ClientSession() as session:
+        jres = await fetch(session, TARGET_URL)
+        if jres is None:
+            return    
+
+    
     jres = jres['result']
     category = 'flashnews'
 
@@ -149,7 +171,7 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            await sendText(GetSendMessageTitle() + sendMessageText)
             nNewArticleCnt = 0
             sendMessageText = ''
 
@@ -160,11 +182,11 @@ def NAVERNews_parse_0(ARTICLE_BOARD_ORDER, TARGET_URL):
     print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
     if nNewArticleCnt > 0  or len(sendMessageText) > 0:
         print(sendMessageText)
-        sendText(GetSendMessageTitle() + sendMessageText)
+        await sendText(GetSendMessageTitle() + sendMessageText)
 
     return sendMessageText
 
-def NAVERNews_checkNewArticle_1():
+async def NAVERNews_checkNewArticle_1():
     global ARTICLE_BOARD_ORDER
     global SEC_FIRM_ORDER
 
@@ -176,29 +198,34 @@ def NAVERNews_checkNewArticle_1():
     # 네이버 많이 본 뉴스
     TARGET_URL_1 = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=ranknews'
     
-    NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
+    await NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL_1)
 
-def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
+async def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
 
-    logging.debug('NAVERNews_parse_1')
-    request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    # 검색 요청 및 처리
-    try:
-        response = urllib.request.urlopen(request)
-    except Exception as e:
-        print(f"Error during request to {TARGET_URL}: {e}")
-        return
+    # logging.debug('NAVERNews_parse_1')
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # # 검색 요청 및 처리
+    # try:
+    #     response = urllib.request.urlopen(request)
+    # except Exception as e:
+    #     print(f"Error during request to {TARGET_URL}: {e}")
+    #     return
 
-    rescode = response.getcode()
-    if rescode != 200:
-        return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+    # rescode = response.getcode()
+    # if rescode != 200:
+    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
 
-    try:
-        jres = json.loads(response.read().decode('utf-8'))
-    except Exception as e:
-        print(f"Error loading JSON from response: {e}")
-        return True
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except Exception as e:
+    #     print(f"Error loading JSON from response: {e}")
+    #     return True
 
+    async with aiohttp.ClientSession() as session:
+        jres = await fetch(session, TARGET_URL)
+        if jres is None:
+            return
+        
     try:
         jres = jres['result']
     except KeyError as e:
@@ -206,7 +233,7 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
         print(f"jres: {json.dumps(jres, indent=4, ensure_ascii=False)}")
         return True
 
-    logging.debug(jres)
+    # logging.debug(jres)
 
     directory = './json'
 
@@ -234,8 +261,8 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
             if 'newsList' not in saved_jres:
                 print("Key 'newsList' not found in saved_jres, initializing with empty list")
                 saved_jres['newsList'] = []
-            logging.debug(saved_jres)
-            logging.debug(jres)
+            # logging.debug(saved_jres)
+            # logging.debug(jres)
 
             # 중복 제거 로직 추가
             try:
@@ -284,13 +311,13 @@ def NAVERNews_parse_1(ARTICLE_BOARD_ORDER, TARGET_URL):
             # 메시지 길이가 3500을 넘으면 출력하고 초기화
             if len(sendMessageText) > 3500:
                 print(sendMessageText)
-                sendText(GetSendMessageTitle() + sendMessageText)
+                await sendText(GetSendMessageTitle() + sendMessageText)
                 sendMessageText = ""
 
         # 마지막으로 남은 메시지가 있으면 출력
         if sendMessageText:
             print(sendMessageText)
-            sendText(GetSendMessageTitle() + sendMessageText)
+            await sendText(GetSendMessageTitle() + sendMessageText)
             sendMessageText = ""
 
 
@@ -320,7 +347,7 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
     return await bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
 
 # 가공없이 텍스트를 발송합니다.
-def sendText(sendMessageText): 
+async def sendText(sendMessageText): 
     global CHAT_ID
 
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
@@ -372,7 +399,7 @@ def GetSendChatId():
     # SendMessageChatId = SECRET_KEY.TELEGRAM_CHANNEL_ID_TEST
     return SendMessageChatId
  
-def main():
+async def main():
     global SEC_FIRM_ORDER  # 증권사 순번
 
     # 사용자의 홈 디렉토리 가져오기
@@ -422,14 +449,18 @@ def main():
     # logging.getLogger().addHandler(console_handler)
 
     # 디버그 메시지 출력
-    print("LOG_FULLFILENAME", LOG_FULLFILENAME)
-    logging.debug('이것은 디버그 메시지입니다.')
+    # print("LOG_FULLFILENAME", LOG_FULLFILENAME)
+    # logging.debug('이것은 디버그 메시지입니다.')
     
     print(GetCurrentDay())
     
-    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  ChosunBizBot_checkNewArticle(); 
-    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_0(); 
-    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); NAVERNews_checkNewArticle_1(); 
+    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
+    await ChosunBizBot_checkNewArticle(); 
+    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
+    await NAVERNews_checkNewArticle_0(); 
+    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
+    await NAVERNews_checkNewArticle_1(); 
 
-if __name__ == "__main__":
-	main()
+
+if __name__ == '__main__':
+    asyncio.run(main())
