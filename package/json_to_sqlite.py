@@ -334,7 +334,8 @@ def daily_select_data(date_str=None, type=None):
         id,
         FIRM_NM, 
         ARTICLE_TITLE, 
-        ATTACH_URL AS ARTICLE_URL, 
+        ARTICLE_URL,
+        ATTACH_URL, 
         SAVE_TIME, 
         SEND_USER 
     FROM 
