@@ -23,6 +23,6 @@ async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
 
 # 가공없이 텍스트를 발송합니다.
 async def sendMarkDownText(token, chat_id, sendMessageText): 
-    await time.sleep(1)
+    time.sleep(1)
     bot = telegram.Bot(token = token)
     await bot.sendMessage(chat_id = chat_id, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
