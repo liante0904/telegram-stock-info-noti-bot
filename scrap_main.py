@@ -1241,7 +1241,8 @@ def Hmsec_checkNewArticle():
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
+                attach_url=LIST_ATTACHMENT_URL,
+                article_url=LIST_ARTICLE_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리

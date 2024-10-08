@@ -1598,7 +1598,8 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
+            attach_url=LIST_ATTACHMENT_URL,
+            article_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
@@ -2099,7 +2100,7 @@ def DownloadFile(URL, FILE_NAME):
 # wget을 이용하여 파일 다운로드 => 추후 다 변경할수도?
 def DownloadFile_wget(URL, FILE_NAME):
     global ATTACH_FILE_NAME
-    print("DownloadFile_wget()",URL, FILE_NAME)
+    print("DownloadFile_wget()")
 
 
     BOARD_NM = ''
@@ -2260,14 +2261,14 @@ def main():
     # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     # logging.debug('이것은 디버그 메시지입니다.')
 
-    # __main__ 모듈의 경로를 가져옵니다.
-    main_module_path = sys.modules['__main__'].__file__
+    # # __main__ 모듈의 경로를 가져옵니다.
+    # main_module_path = sys.modules['__main__'].__file__
 
-    # 절대 경로로 변환합니다.
-    main_module_path = os.path.abspath(main_module_path)
+    # # 절대 경로로 변환합니다.
+    # main_module_path = os.path.abspath(main_module_path)
     
-    # 프로젝트 경로로 이동 
-    BASE_PATH =os.path.dirname(main_module_path)
+    # # 프로젝트 경로로 이동 
+    # BASE_PATH =os.path.dirname(main_module_path)
         
     sendMessageText = ''
     
