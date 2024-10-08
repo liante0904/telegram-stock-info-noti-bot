@@ -353,7 +353,7 @@ async def sendText(sendMessageText):
     #생성한 텔레그램 봇 정보(@ebest_noti_bot)
     bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-    asyncio.run(sendMessage(sendMessageText)) #봇 실행하는 코드
+    await sendMessage(sendMessageText) #봇 실행하는 코드
     time.sleep(1) # 모바일 알림을 받기 위해 8초 텀을 둠(loop 호출시)
 
 def GetSendMessageText(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL):
