@@ -1598,7 +1598,8 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
+            attach_url=LIST_ATTACHMENT_URL,
+            article_url=LIST_ARTICLE_URL,
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
