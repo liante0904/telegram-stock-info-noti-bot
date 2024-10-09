@@ -30,9 +30,6 @@ async def fetch(session, url):
         return await response.json()
     
 async def ChosunBizBot_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 995
     ARTICLE_BOARD_ORDER = 995
 
@@ -62,7 +59,6 @@ async def ChosunBizBot_checkNewArticle():
         if jres is None:
             return
 
-    nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
     for stockPlus in jres['newsItems']:
@@ -79,7 +75,6 @@ async def ChosunBizBot_checkNewArticle():
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
             print()
             print(LIST_ARTICLE_URL)
             print(LIST_ARTICLE_TITLE)
@@ -92,28 +87,22 @@ async def ChosunBizBot_checkNewArticle():
             await sendMarkDownText(token=token,
                            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
                            sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
-            nNewArticleCnt = 0
             sendMessageText = ''
 
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
-    
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    print(f'len(sendMessageText){len(sendMessageText)}' )
+    if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
                 sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
-
+    else:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+            
     return sendMessageText
 
 async def NAVERNews_checkNewArticle_0():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 998
     ARTICLE_BOARD_ORDER = 0
 
@@ -141,10 +130,8 @@ async def NAVERNews_checkNewArticle_0():
         if jres is None:
             return    
 
-    
     jres = jres['result']
 
-    nNewArticleCnt = 0
     sendMessageText = ''
     # JSON To List
     for news in jres['newsList']:
@@ -160,7 +147,6 @@ async def NAVERNews_checkNewArticle_0():
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
-            nNewArticleCnt += 1 # 새로운 게시글 수
             print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
             print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         if len(sendMessageText) >= 3500:
@@ -169,26 +155,21 @@ async def NAVERNews_checkNewArticle_0():
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
                                     sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
-            nNewArticleCnt = 0
             sendMessageText = ''
 
-    if nNewArticleCnt == 0  or len(sendMessageText) == 0:
-        print('최신 게시글이 채널에 발송 되어 있습니다.')
-        return
     print('**************')
-    print(f'nNewArticleCnt {nNewArticleCnt} len(sendMessageText){len(sendMessageText)}' )
-    if nNewArticleCnt > 0  or len(sendMessageText) > 0:
+    print(f'len(sendMessageText){len(sendMessageText)}' )
+    if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
                                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
                                 sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
-
+    else:
+        print('최신 게시글이 채널에 발송 되어 있습니다.')
+        
     return sendMessageText
 
 async def NAVERNews_checkNewArticle_1():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-
     SEC_FIRM_ORDER      = 998
     ARTICLE_BOARD_ORDER = 1
 
