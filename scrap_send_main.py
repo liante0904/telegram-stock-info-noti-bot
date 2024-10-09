@@ -1,10 +1,14 @@
-import asyncio
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from utils.sqlite_util import convert_sql_to_telegram_messages
-from utils.telegram_util import sendMessage
+from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
+from utils.telegram_util import sendMarkDownText
+from models.SecretKey import SecretKey
 
-def daily_report(report_type):
+SECRET_KEY = SecretKey()
+token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+
+async def daily_report(report_type):
     """
     매일 보고서를 처리하는 함수입니다.
 
@@ -32,9 +36,11 @@ def daily_report(report_type):
             print('=' * 30)
 
             # 메시지 발송
-            for message in formatted_messages:
-                print(f"메시지 발송 중: {message}")
-                asyncio.run(sendMessage(message))
+            for sendMessageText in formatted_messages:
+                print(f"메시지 발송 중: {sendMessageText}")
+                await sendMarkDownText(token=token,
+                        chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+                        sendMessageText=sendMessageText)
             # 데이터 업데이트
             r = daily_update_data(fetched_rows=rows, type=report_type)
             if r: 
