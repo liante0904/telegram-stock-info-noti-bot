@@ -1,83 +1,81 @@
+# telegram-stock-info-noti-bot
 
-# Automated Stock News Fetcher
+## 환경 설정 
 
-This project fetches the latest stock market articles from various financial institutions' websites and sends them via a bot. Each institution has its own parsing function, and all follow a similar structure.
-
-## How It Works
-
-The script loops through multiple institutions (each with their own website and article structure) and checks for new articles. If any new article is found, the content is processed and sent via a bot (such as a messaging bot like Telegram). If the message exceeds 3500 characters, it sends the content in parts to avoid exceeding message length limits.
-
-### Key Functions
-
-- **Main loop**: The script runs through each financial institution's check function and fetches the latest articles.
-- **Article parsing**: Each institution has its own parsing logic to extract new articles from their website.
-- **Message Sending**: If new articles are found, the bot sends the articles to a defined recipient or channel. Messages are sent asynchronously.
-
-### Institutions Covered
-- LS
-- ShinHanInvest
-- NHQV
-- HANA
-- KB
-- Samsung
-- Sangsanginib (currently commented out)
-- Shinyoung
-- Miraeasset
-- Hmsec
-- Kiwoom
-- Koreainvestment
-- DAOL
-
-### Example Function: NHQV_checkNewArticle
-
-```python
-def NHQV_checkNewArticle():
-    global ARTICLE_BOARD_ORDER
-    global SEC_FIRM_ORDER
-    global firm_info
-
-    SEC_FIRM_ORDER = 2
-    ARTICLE_BOARD_ORDER = 0
-    requests.packages.urllib3.disable_warnings()
-
-    TARGET_URL = 'https://m.nhqv.com/research/commonTr.json'
-    sendMessageText = ''
-
-    try:
-        sendMessageText += NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
-    except:
-        if len(sendMessageText) > 3500:
-            print("Partial message sent due to size limit.")
-            asyncio.run(sendMessage(GetSendMessageTitle() + sendMessageText))
-            sendMessageText = ''
-
-    return sendMessageText
+```
+pip install -r requirements.txt 
 ```
 
-Each institution's function follows the same structure:
-1. Set global variables for `SEC_FIRM_ORDER` and `ARTICLE_BOARD_ORDER`.
-2. Define the target URL.
-3. Call the parsing function for that institution.
-4. If a message exceeds the length limit, send it in parts.
+## 프로그램 용도
+1. main.py
+- 각 증권사 리서치 자료를 직접접속하여 새로운 리서치 자료를 텔레그램 채널로 발송
 
-### Message Sending and Article Download
-The bot ensures that the messages are sent in chunks if they are too long, and articles are downloaded as PDFs where applicable.
+2. news.py 
+- 네이버 리서츠의 실시간 뉴스, 가장 많이 본 뉴스를 텔레그램 채널로 발송
 
-### Usage
-To run the script, ensure all required dependencies are installed, then execute:
+3. hankyungconsen.py
+- 한경컨센서스의 리서치자료를 텔레그램 채널로 발송
 
-```bash
-python3 main.py
+4. naver-research.py
+- 네이버 리서츠의 리서치자료를 텔레그램 채널로 발송
+
+5. daily-52w-hl-stock.py  
+- 네이버 증권의 52주 신고, 신저가 목록을 텔레그램 채널로 발송
+
+6. daily-market-value.py 
+- 아이투자의 마켓벨류에이션을 텔레그램 채널로 발송
+
+## 코드 사용법
 ```
+python3 main.py 
+python3 news.py
 
-The main function will handle the fetching and message sending automatically.
+...
+```
+## 발송 증권사(main.py 기준)
+- LS증권
+- 신한증권
+- NH투자증권
+- 하나증권
+- KB증권
+- 삼성증권
+- 상상인증권
+- 신영증권
+- 미래에셋증권
+- 현대차증권
+- 키움증권
+- 한국투자증권
+- 다올투자증권
 
-### Requirements
-- Python 3.10.12
-- Required libraries: `requests`, `asyncio`, `json`, `selenium`
+## 개요 
 
-### Future Enhancements
-- Implement error handling for network issues.
-- Add more financial institutions.
-- Optimize message sending for batch processing.
+2021년 텔레그램을 통해 
+
+이베스트 투자증권(현 LS증권) 
+
+리서치 자료를 실시간보고 싶어 만들었습니다.
+
+
+
+오랫동안 telegram-ebestnotibot로 
+
+유지되다가 시간이 흐르다보니 
+
+각 증권사에서 텔레그램 채널을 운영하기도 하고
+
+
+저도 GPT를 활용하기도 하다보니
+
+한경, 네이버 리서치, 네이버 뉴스
+
+52주 신고, 신저가 알림 등이 추가 되었습니다.
+
+리서치 자료의 저작권은 
+각 증권사에게 있으므로
+
+개인적인 사용외에 어떠한 상업적 이용도 할 수 없으며
+
+언제든지 발송을 중단시키거나 
+제재가 가능하므로 책임은 각 당사자에게 있습니다.
+
 
