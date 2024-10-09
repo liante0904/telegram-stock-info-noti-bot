@@ -1,6 +1,5 @@
 import os
 import sys
-import hashlib
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from httplib2 import Http
