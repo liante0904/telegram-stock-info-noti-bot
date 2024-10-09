@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*- 
-import telegram
 import requests
 import urllib.request
 import json

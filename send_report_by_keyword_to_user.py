@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import telegram
 import asyncio
 from datetime import datetime
 
