@@ -7,7 +7,7 @@ from datetime import datetime
 
 # 프로젝트 내부 모듈 경로 추가
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from utils.json_util import format_message_sql
+from utils.sqlite_util import format_message_sql
 from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
 from package.json_to_sqlite import fetch_data, update_data
