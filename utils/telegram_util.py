@@ -1,19 +1,5 @@
 import time
-import os
 import telegram
-from dotenv import load_dotenv
-
-load_dotenv()  # .env 파일의 환경 변수를 로드합니다
-env = os.getenv('ENV')
-print(env)
-
-if env == 'production':
-    TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-    TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
-    
-else:
-    TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-    TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
 
 # 가공없이 텍스트를 발송합니다.
 async def sendMarkDownText(token, chat_id, sendMessageText): 
