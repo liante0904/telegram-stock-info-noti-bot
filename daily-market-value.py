@@ -1,18 +1,13 @@
 # -*- coding:utf-8 -*- 
-import telegram
 import requests
-import asyncio
 from bs4 import BeautifulSoup
 
 from models.SecretKey import SecretKey
-from utils.date_util import GetCurrentDate, GetCurrentDate_NH, GetCurrentDay, GetCurrentTime
+from utils.date_util import GetCurrentDate, GetCurrentDay
+from utils.telegram_util import sendMarkDownText
 
 SECRET_KEY = SecretKey()
-
-async def sendMessage(sendMessageText):
-    bot = telegram.Bot(token=SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text=sendMessageText, disable_web_page_preview=True, parse_mode="Markdown")
-
+token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
 def extract_data(element):
     if element:
@@ -48,7 +43,7 @@ def extract_data(element):
         return "Element not found"
 
 
-def main():
+async def main():
     print(GetCurrentDate('YYYYMMDD'), GetCurrentDay())
     sendMessageText = ''
     url = 'https://itooza.com/'
@@ -78,7 +73,8 @@ def main():
     rDate = rDate_element.get_text() if rDate_element else "날짜 정보 없음"
 
     # 메시지 구성
-    sendMessageText += "\n\n" + "* ●" + '마켓밸류에이션*  ' + '_' + rDate + '일자 기준_' + "\n \n"
+    sendMessageText += "\n\n" + "* ●" + '마켓밸류에이션*  '
+    sendMessageText += "\n\n" + "* ●" + rDate + '일자 기준_' + "\n \n"
     sendMessageText += "*오늘의 주요 지수*\n\n"
     for data in indices_data:
         sendMessageText += data + "\n\n"
@@ -88,8 +84,10 @@ def main():
         sendMessageText += data + "\n\n"
 
     print(sendMessageText)
-
-    if len(sendMessageText) > 0: asyncio.run(sendMessage(sendMessageText))
+    if sendMessageText:
+        await sendMarkDownText(token=token,
+                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+                sendMessageText=sendMessageText)
 
 if __name__ == "__main__":
     main()

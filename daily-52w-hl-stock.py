@@ -1,16 +1,16 @@
 # -*- coding:utf-8 -*- 
-import os
 import telegram
 import requests
-import asyncio
 import urllib.request
 import json
 from urllib.parse import urlencode, urlunparse
 from models.SecretKey import SecretKey
+from utils.telegram_util import sendMarkDownText
 
 SECRET_KEY = SecretKey()
+token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
-def NAVER_52weekPrice_check():
+async def NAVER_52weekPrice_check():
     requests.packages.urllib3.disable_warnings()
 
     # 네이버 증권 URL과 제목을 묶어서 리스트로 관리
@@ -33,7 +33,9 @@ def NAVER_52weekPrice_check():
             # 3500자 이상이면 중간 발송
             if len(sendMessageText) > 3500:
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다. \n", sendMessageText)
-                asyncio.run(sendMessage(sendMessageText))  # 봇 실행
+                await sendMarkDownText(token=token,
+                        chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+                        sendMessageText=sendMessageText)
                 sendMessageText = ''  # 발송 후 초기화
 
         except Exception as e:
@@ -41,7 +43,9 @@ def NAVER_52weekPrice_check():
     
     # 반복문 종료 후 sendMessageText에 남은 값이 있으면 발송
     if sendMessageText:
-        asyncio.run(sendMessage(sendMessageText))  # 봇 실행
+        await sendMarkDownText(token=token,
+        chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+        sendMessageText=sendMessageText)
 
     return sendMessageText
 
@@ -102,10 +106,6 @@ def convert_stock_url(naver_url):
     
     return fnguide_url
  
-async def sendMessage(sendMessageText): #실행시킬 함수명 임의지정
-    bot = telegram.Bot(token = SECRET_KEY.TELEGRAM_BOT_TOKEN_PROD)
-    return await bot.sendMessage(chat_id = SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM, text = sendMessageText, disable_web_page_preview = True, parse_mode = "Markdown")
-
 if __name__ == "__main__":
     print("NAVER_52weekPrice_check()=> 새 게시글 정보 확인")  # 0
     NAVER_52weekPrice_check()

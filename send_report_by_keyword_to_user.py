@@ -8,19 +8,13 @@ from datetime import datetime
 # 프로젝트 내부 모듈 경로 추가
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from utils.json_util import format_message_sql
+from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
 from package.json_to_sqlite import fetch_data, update_data
 
 # 비밀키 불러오기
 SECRET_KEY = SecretKey()
-
-# 텔레그램 메시지 발송 함수
-async def sendMessage(sendMessageText, chat_id=None):
-    if chat_id is None:
-        return 
-
-    bot = telegram.Bot(token=SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
-    return await bot.sendMessage(chat_id=chat_id, text=sendMessageText, disable_web_page_preview=True, parse_mode="Markdown")
+token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
 # 파일 경로를 현재 디렉토리 기준으로 얻는 함수
 def get_file_path(relative_path):
@@ -90,33 +84,36 @@ def update_send_user(data, user_id):
 # # 중복 데이터 제거 및 병합
 # merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
 
+async def main():
+    # 상위 폴더 기준 파일 경로 설정
+    relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
+    file_path = get_file_path(relative_path)
+    data = read_json_file(file_path)
 
-# 상위 폴더 기준 파일 경로 설정
-relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
-file_path = get_file_path(relative_path)
-data = read_json_file(file_path)
+    # 사용자 ID를 기준으로 데이터를 순회
+    for user_id, keywords in data.items():
+        user_id_str = str(user_id)  # 사용자 ID를 문자열로 변환
+        print(f"User ID: {user_id_str}")
+        for entry in keywords:
+            keyword = entry['keyword']
+            print(f"알림 키워드 : {keyword}")
+            r = fetch_data(keyword=keyword, user_id=user_id_str)
+            print('===>',r)
 
-# 사용자 ID를 기준으로 데이터를 순회
-for user_id, keywords in data.items():
-    user_id_str = str(user_id)  # 사용자 ID를 문자열로 변환
-    print(f"User ID: {user_id_str}")
-    for entry in keywords:
-        keyword = entry['keyword']
-        print(f"알림 키워드 : {keyword}")
-        r = fetch_data(keyword=keyword, user_id=user_id_str)
-        print('===>',r)
+            message = ''
+            # # 전송할 메시지 생성 및 발송
+            if r:
+                message = f"=====알림 키워드 : {entry['keyword']}=====\n"
+                message += format_message_sql(r)
+                print('여기==>', message)  # 메시지 발송 전에 출력 (디버깅 용도)
 
-        message = ''
-        # # 전송할 메시지 생성 및 발송
-        if r:
-            message = f"=====알림 키워드 : {entry['keyword']}=====\n"
-            message += format_message_sql(r)
-            print('여기==>', message)  # 메시지 발송 전에 출력 (디버깅 용도)
-
-        # 전송할 메시지 생성 및 발송
-        if message:
-            asyncio.run(sendMessage(message, user_id_str))
-            update_data(keyword=keyword, user_ids= user_id_str)
+            # 전송할 메시지 생성 및 발송
+            if message:
+                # asyncio.run(sendMessage(message, user_id_str))
+                await sendMarkDownText(token=token,
+                chat_id=user_id_str,
+                sendMessageText=message)
+                update_data(keyword=keyword, user_ids= user_id_str)
 
         # # 키워드로 필터링
         # keyword_filtered_data = filter_by_keyword(merged_data, keyword)
@@ -149,3 +146,5 @@ for user_id, keywords in data.items():
         #             if item['FIRM_NM'] == updated_item['FIRM_NM']:
         #                 if 'SEND_USER' in updated_item:
         #                     item['SEND_USER'] = updated_item['SEND_USER']
+if __name__ == '__main__':
+    asyncio.run(main())
