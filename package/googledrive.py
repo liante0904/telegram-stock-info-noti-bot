@@ -5,9 +5,13 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from httplib2 import Http
 from oauth2client import file, client, tools
+from models.SecretKey import SecretKey
+
+SECRET_KEY = SecretKey()
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
-FOLDER_ID = '1jn8tAPBc2OIK3jvDzyOr9NUBghZEn7Nb'
+FOLDER_ID = SECRET_KEY.GOOGLE_DRIVE_FOLDER_ID
+
 
 def calculate_md5(file_path):
     hash_md5 = hashlib.md5()
