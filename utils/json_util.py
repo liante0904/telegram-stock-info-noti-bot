@@ -106,41 +106,6 @@ def format_message(data_list):
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
-def format_message_sql(data_list): 
-    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-    formatted_messages = []
-
-    # 특정 FIRM_NM을 제외할 리스트
-    EXCLUDED_FIRMS = {"네이버", "조선비즈"}
-
-    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
-
-    for data in data_list:
-        FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER = data
-
-        sendMessageText = ""
-        
-        # 'FIRM_NM'이 존재하는 경우에만 포함
-        if FIRM_NM:
-            if FIRM_NM not in EXCLUDED_FIRMS:
-                if FIRM_NM != last_firm_nm:
-                    sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                    last_firm_nm = FIRM_NM
-        
-        # 게시글 제목(굵게)
-        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-        # 원문 링크
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-
-        # SEND_USER 값을 표시하고 싶다면 여기에 추가
-        # sendMessageText += "발송 사용자: " + SEND_USER + "\n"
-
-        formatted_messages.append(sendMessageText)
-    
-    # 모든 메시지를 하나의 문자열로 결합
-    return "\n".join(formatted_messages)
-
-
 def update_json_with_main_ch_send_yn(file_path):
     directory = os.path.dirname(file_path)
 
