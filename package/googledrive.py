@@ -12,14 +12,6 @@ SECRET_KEY = SecretKey()
 SCOPES = ['https://www.googleapis.com/auth/drive']
 FOLDER_ID = SECRET_KEY.GOOGLE_DRIVE_FOLDER_ID
 
-
-def calculate_md5(file_path):
-    hash_md5 = hashlib.md5()
-    with open(file_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
-
 def strip_date_from_filename(filename):
     parts = filename.split('_', 1)
     return parts[1] if len(parts) > 1 else filename
@@ -65,7 +57,6 @@ def upload(*args):
 
     for f in uploadfiles:
         fname = f
-        file_md5 = calculate_md5(fname)
         file_name_without_date = strip_date_from_filename(fname)
         existing_file_id = file_exists(drive, file_name_without_date, FOLDER_ID)
         if existing_file_id:
