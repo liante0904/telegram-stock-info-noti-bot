@@ -44,6 +44,9 @@ class SecretKey:
 
         # 개발자 Telegram ID
         self.TELEGRAM_USER_ID_DEV = os.getenv('TELEGRAM_USER_ID_DEV')
+        
+        # Google Drive
+        self.GOOGLE_DRIVE_FOLDER_ID = os.getenv('GOOGLE_DRIVE_FOLDER_ID')
 
 
     def print_env_info(self):
