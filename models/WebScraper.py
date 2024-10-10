@@ -25,8 +25,7 @@ class WebScraper:
         elif self.firm_info.SEC_FIRM_ORDER == 1:
             # 회사 1번에 맞는 헤더 설정
             return {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                "User-Agent": "Mozilla/5.0"
             }
         elif self.firm_info.SEC_FIRM_ORDER == 2:
             # 회사 2번에 맞는 헤더 설정 (예시)
@@ -61,6 +60,70 @@ class WebScraper:
             # 기본 CSS 선택자 (그 외의 경우)
             return '#defaultContent > div > table > tbody > tr'
 
+    def _parse_list_item(self, soup_list):
+        """
+        SEC_FIRM_ORDER 값에 따라 각기 다른 방식으로 리스트 데이터를 파싱하는 메서드
+        :param soup_list: BeautifulSoup으로 파싱된 리스트 데이터
+        :return: 파싱된 데이터를 포함하는 리스트
+        """
+        result = []
+
+        if self.firm_info.SEC_FIRM_ORDER == 0:
+            # SEC_FIRM_ORDER가 0일 때 처리 (제공된 코드 기반)
+            for item in soup_list:
+                date = item.select('td')[3].get_text()
+                list_links = item.select('a')
+
+                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list_links[0]['href'].replace("amp;", "")
+                LIST_ARTICLE_TITLE = list_links[0].get_text()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]") + 1:].strip()
+                POST_DATE = date.strip()
+
+                result.append({
+                    'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+                    'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+                    'POST_DATE': POST_DATE
+                })
+
+        elif self.firm_info.SEC_FIRM_ORDER == 1:
+            pass
+            # # 회사 1번에 대한 파싱 로직 (추가적인 파싱 로직 필요)
+            # for item in soup_list:
+            #     # 예시: 리스트의 첫 번째 링크와 날짜 가져오기
+            #     date = item.select('td')[2].get_text()  # 다른 칸의 데이터를 가져올 수도 있음
+            #     list_links = item.select('a')
+
+            #     LIST_ARTICLE_URL = 'https://www.company1.com' + list_links[0]['href']
+            #     LIST_ARTICLE_TITLE = list_links[0].get_text().strip()
+            #     POST_DATE = date.strip()
+
+            #     result.append({
+            #         'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+            #         'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+            #         'POST_DATE': POST_DATE
+            #     })
+
+        elif self.firm_info.SEC_FIRM_ORDER == 2:
+            # 회사 2번에 대한 파싱 로직 (추가적인 파싱 로직 필요)
+            for item in soup_list:
+                # 예시: 리스트의 제목과 링크 가져오기
+                list_links = item.select('a')
+                date = item.select('td')[1].get_text()
+
+                LIST_ARTICLE_URL = 'https://www.company2.com' + list_links[0]['href']
+                LIST_ARTICLE_TITLE = list_links[0].get_text().strip()
+                POST_DATE = date.strip()
+
+                result.append({
+                    'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+                    'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+                    'POST_DATE': POST_DATE
+                })
+
+        # 필요한 경우 다른 SEC_FIRM_ORDER에 대한 로직 추가 가능
+
+        return result
+    
     def Get(self, params=None):
         """
         GET 요청을 통해 데이터를 가져오는 메서드
@@ -84,8 +147,14 @@ class WebScraper:
         css_selector = self._get_css_selector()
         soup_list = soup.select(css_selector)
 
-        return soup_list
+        # SEC_FIRM_ORDER에 따른 파싱 로직 적용
+        result = self._parse_list_item(soup_list)
+        return result
 
+    def GetJson(self, params=None):
+        response = requests.get(self.target_url, headers=self.headers, params=params)
+        return response.json()
+    
     def Post(self, data=None):
         """
         POST 요청을 통해 데이터를 가져오는 메서드
@@ -108,6 +177,10 @@ class WebScraper:
 
         return soup_list
 
+    def PostJson(self, params=None):
+        response = requests.post(self.target_url, headers=self.headers, params=params)
+        return response.json()
+    
     def parse_table(self, soup_list):
         """
         파싱된 테이블 리스트를 처리하는 메서드

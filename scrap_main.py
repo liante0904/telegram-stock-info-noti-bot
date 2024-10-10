@@ -72,21 +72,6 @@ def LS_checkNewArticle():
         
         # HTML parse
         soupList = scraper.Get()
-        
-        # soup = BeautifulSoup(response.content, "html.parser")
-        # soupList = soup.select('#contents > table > tbody > tr')
-
-        print(soupList)
-        for list in soupList:
-            print(list)
-        # ARTICLE_BOARD_NAME =  BOARD_NM 
-        # try:
-        # except IndexError:
-            # print('IndexError')
-
-        # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-        # print('연속키:', NXT_KEY) # 주소
-
 
         # 현재 날짜
         today = datetime.date.today()
@@ -199,18 +184,15 @@ def ShinHanInvest_checkNewArticle():
 
     # 신한증권 국내산업분석
     TARGET_URL_0 = 'giindustry'
-    # 'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgiindustry%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
     
     # 신한증권 국내기업분석
     TARGET_URL_1 = 'gicompanyanalyst'
-    #'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
 
     # 신한증권 국내스몰캡
     TARGET_URL_2 = 'giresearchIPO'
     
     # 신한증권 해외주식
     TARGET_URL_3 = 'foreignstock'
-    #'https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp?url=/mobile/json.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param1=Q1&param2=+&param3=&param4=%2Fmobile%2Fjson.list.do%3FboardName%3Dgicompanyanalyst%26curPage%3D1&param5=Q&param6=99999&param7=&type=bbs2'
     
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1,TARGET_URL_2,TARGET_URL_3)
 
@@ -236,28 +218,19 @@ def ShinHanInvest_checkNewArticle():
 
         # URL 구성
         base_url = "https://open2.shinhaninvest.com/phone/asset/module/getbbsdata.jsp"
-        url = (f"{base_url}?url=/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
+        TARGET_URL = (f"{base_url}?url=/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
             f"&param1={param1}&param2={param2}&param3={param3}&param4={param4}&param5={param5}"
             f"&param6={param6}&param7={param7}&type={type_param}")
 
 
-        # print('신한 request URL:', url)
-        request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        #검색 요청 및 처리
-        response = urllib.request.urlopen(request)
-        rescode = response.getcode()
-        if rescode != 200 :return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
+        # HTML parse
+        jres = scraper.GetJson()
 
-        try:
-            jres = json.loads(response.read().decode('utf-8'))
-        except:
-            return 0
-
-        # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
         soupList = jres['list']
-        
+
         nNewArticleCnt = 0
-        
         # JSON To List
         for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
@@ -282,126 +255,10 @@ def ShinHanInvest_checkNewArticle():
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
     # 메모리 정리
-    del response
+    del scraper
     gc.collect()
 
     return nNewArticleCnt
-
-# JSON API 타입
-def KB_checkNewArticle():
-    SEC_FIRM_ORDER      = 4
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    
-    # KB증권 오늘의 레포트
-    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
-    
-    firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
-    )
-    # 요청 헤더
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-        "Connection": "keep-alive",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-    }
-
-    # 요청 payload 데이터
-    payload = {
-        "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": GetCurrentDate("YYYYMMDD"),
-        "registdateTo": GetCurrentDate("YYYYMMDD"),
-        "templateid": "",
-        "lowTempId": "",
-        "folderid": "", #"37,38,186",
-        "callGbn": "RCLIST"
-    }
-
-    # POST 요청 보내기
-    response = requests.post(TARGET_URL, headers=headers, json=payload)
-
-    # 응답 확인
-    if response.status_code == 200:
-        jres = response.json()
-    else:
-        print("요청에 실패했습니다. 상태 코드:", response.status_code)
-
-    soupList = jres['response']['reportList']
-    # print(soupList)
-    
-    nNewArticleCnt = 0
-    
-    # JSON To List
-    for list in soupList:
-        # print(list)
-
-        LIST_ARTICLE_TITLE = list['docTitleSub']
-        if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        else: LIST_ARTICLE_TITLE = list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-        LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
-        
-        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
- 
-        if save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info.get_firm_name(),
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
-    
-    # 메모리 정리
-    del soupList
-    del response
-    gc.collect()
-
-    return nNewArticleCnt
-
-# KB증권 암호화 해제
-def KB_decode_url(url):
-    """
-    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
-
-    Parameters:
-    url (str): URL 문자열
-
-    Returns:
-    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
-    """
-    url = url.replace('&amp;', '&')
-    # URL 파싱
-    parsed_url = urlparse.urlparse(url)
-    
-    # 쿼리 문자열 파싱
-    query_params = urlparse.parse_qs(parsed_url.query)
-    
-    # id와 url 추출
-    id_value = query_params.get('id', [None])[0]
-    encoded_url = query_params.get('url', [None])[0]
-    
-    if id_value is None or encoded_url is None:
-        print('Invalid URL: id or url is missing')
-        return "Invalid URL: id or url is missing"
-    
-    # Base64 디코딩
-    try:
-        # '&amp;'를 '&'로 변환
-        encoded_url = encoded_url.replace('&amp;', '&')
-        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
-    except Exception as e:
-        return f"Error decoding url: {e}"
-    
-    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
-    return decoded_url
 
 def NHQV_checkNewArticle():
     SEC_FIRM_ORDER = 2
@@ -560,6 +417,122 @@ def HANA_checkNewArticle():
     gc.collect()
 
     return nNewArticleCnt
+
+# JSON API 타입
+def KB_checkNewArticle():
+    SEC_FIRM_ORDER      = 4
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+
+    
+    # KB증권 오늘의 레포트
+    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
+    
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER
+    )
+    # 요청 헤더
+    headers = {
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Connection": "keep-alive",
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest"
+    }
+
+    # 요청 payload 데이터
+    payload = {
+        "pageNo": 1,
+        "pageSize": 60,
+        "registdateFrom": GetCurrentDate("YYYYMMDD"),
+        "registdateTo": GetCurrentDate("YYYYMMDD"),
+        "templateid": "",
+        "lowTempId": "",
+        "folderid": "", #"37,38,186",
+        "callGbn": "RCLIST"
+    }
+
+    # POST 요청 보내기
+    response = requests.post(TARGET_URL, headers=headers, json=payload)
+
+    # 응답 확인
+    if response.status_code == 200:
+        jres = response.json()
+    else:
+        print("요청에 실패했습니다. 상태 코드:", response.status_code)
+
+    soupList = jres['response']['reportList']
+    # print(soupList)
+    
+    nNewArticleCnt = 0
+    
+    # JSON To List
+    for list in soupList:
+        # print(list)
+
+        LIST_ARTICLE_TITLE = list['docTitleSub']
+        if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
+        else: LIST_ARTICLE_TITLE = list['docTitleSub']
+        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
+        LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
+        
+        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+ 
+        if save_data_to_local_json(
+            filename='./json/data_main_daily_send.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm=firm_info.get_firm_name(),
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+    
+    # 메모리 정리
+    del soupList
+    del response
+    gc.collect()
+
+    return nNewArticleCnt
+
+# KB증권 암호화 해제
+def KB_decode_url(url):
+    """
+    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
+
+    Parameters:
+    url (str): URL 문자열
+
+    Returns:
+    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
+    """
+    url = url.replace('&amp;', '&')
+    # URL 파싱
+    parsed_url = urlparse.urlparse(url)
+    
+    # 쿼리 문자열 파싱
+    query_params = urlparse.parse_qs(parsed_url.query)
+    
+    # id와 url 추출
+    id_value = query_params.get('id', [None])[0]
+    encoded_url = query_params.get('url', [None])[0]
+    
+    if id_value is None or encoded_url is None:
+        print('Invalid URL: id or url is missing')
+        return "Invalid URL: id or url is missing"
+    
+    # Base64 디코딩
+    try:
+        # '&amp;'를 '&'로 변환
+        encoded_url = encoded_url.replace('&amp;', '&')
+        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
+    except Exception as e:
+        return f"Error decoding url: {e}"
+    
+    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
+    return decoded_url
 
 def Samsung_checkNewArticle():
     SEC_FIRM_ORDER = 5
@@ -1655,16 +1628,8 @@ def Leading_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
         
-        scraper = ''
-        try:
-            scraper = WebScraper(TARGET_URL, firm_info)
-            # response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
-        except requests.exceptions.RequestException as e:
-            print("웹 페이지에 접속하는 중 오류가 발생했습니다:", e)
-        
+        scraper = WebScraper(TARGET_URL, firm_info)
         soupList = scraper.Get()
-        print('='*40)
-        # print(soupList[0])
         
         nNewArticleCnt = 0
         # soupList에서 게시물 정보 파싱
@@ -1739,7 +1704,7 @@ def main():
     insert_data()
     # check functions 리스트
     check_functions = [
-        LS_checkNewArticle,
+        # LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
         NHQV_checkNewArticle,
         HANA_checkNewArticle,
