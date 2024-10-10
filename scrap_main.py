@@ -1588,19 +1588,9 @@ def TOSSinvest_checkNewArticle():
             # print(list)
             LIST_ARTICLE_TITLE = list['title']
             LIST_ARTICLE_URL   =  list['files'][0]['filePath']
+            DOWNLOAD_URL = LIST_ARTICLE_URL
             print(LIST_ARTICLE_TITLE)
             print(LIST_ARTICLE_URL)
-            return 
-            parts = LIST_ARTICLE_URL.split(',')
-            if len(parts) != 3:
-                return "잘못된 입력 형식입니다."
-            
-            path = parts[0].split("'")[1]
-            filename = parts[1].split("'")[1]
-            research_id = parts[2].split(")")[0]
-            
-            LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
-            DOWNLOAD_URL = LIST_ARTICLE_URL
 
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -1612,7 +1602,7 @@ def TOSSinvest_checkNewArticle():
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
-    del soup, soupList
+    del jres, soupList
     del response
     gc.collect()
 
