@@ -1555,6 +1555,87 @@ def DAOL_checkNewArticle():
 
     return nNewArticleCnt
 
+
+def TOSSinvest_checkNewArticle():
+    SEC_FIRM_ORDER      = 15
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+ 
+    # 다올투자증권 산업분석
+    TARGET_URL_0  = 'https://docs-api.tossinvest.com/api/v1/post/search?categoryId=138&searchTitleKeyword=&page=0&size=10&type=INVESTMENT_INFO'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0,)
+    
+    
+    
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
+
+        # 헤더 설정
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        }
+
+        jres = ''
+        response = requests.get(TARGET_URL, headers=headers)
+        # 응답 확인
+        if response.status_code == 200:
+            jres = response.json()
+        else:
+            print("요청에 실패했습니다. 상태 코드:", response.status_code)
+            response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
+        
+        # HTML parse
+        soupList = jres['result']['list']
+        
+        print('*' *40)
+        print(soupList)
+        print(len(soupList))
+        
+        print('*' *40)
+        
+        nNewArticleCnt = 0
+        for list in soupList:
+            # print(list)
+            LIST_ARTICLE_TITLE = list['title']
+            LIST_ARTICLE_URL   =  list['files'][0]['filePath']
+            print(LIST_ARTICLE_TITLE)
+            print(LIST_ARTICLE_URL)
+            return 
+            parts = LIST_ARTICLE_URL.split(',')
+            if len(parts) != 3:
+                return "잘못된 입력 형식입니다."
+            
+            path = parts[0].split("'")[1]
+            filename = parts[1].split("'")[1]
+            research_id = parts[2].split(")")[0]
+            
+            LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
+        
+            # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
+            # print('NXT_KEY='+NXT_KEY)
+            # ATTACH_URL = LIST_ARTICLE_URL
+            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+
+            if save_data_to_local_json(
+                filename='./json/data_main_daily_send.json',
+                sec_firm_order=SEC_FIRM_ORDER,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm=firm_info.get_firm_name(),
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+
+    # 메모리 정리
+    del soup, soupList
+    del response
+    gc.collect()
+
+    return nNewArticleCnt
+
 def main():
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
@@ -1603,7 +1684,8 @@ def main():
         Hmsec_checkNewArticle,
         Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle
+        DAOL_checkNewArticle,
+        # TOSSinvest_checkNewArticle,
     ]
 
     for check_function in check_functions:
