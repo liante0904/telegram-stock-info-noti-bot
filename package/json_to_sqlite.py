@@ -76,7 +76,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     for table in tables:
         query_parts.append(f"""
-            SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, SAVE_TIME, SEND_USER
+            SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, DOWNLOAD_URL SAVE_TIME, SEND_USER
             FROM {table}
             WHERE ARTICLE_TITLE LIKE '%{keyword}%' 
               AND DATE(SAVE_TIME) = '{date}'
@@ -178,8 +178,8 @@ def insert_data():
                 cursor.execute(f'''
                     INSERT OR IGNORE INTO {table_name} (
                         SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, SAVE_TIME
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     entry["SEC_FIRM_ORDER"],
                     entry["ARTICLE_BOARD_ORDER"],
@@ -187,7 +187,8 @@ def insert_data():
                     entry["ATTACH_URL"],
                     entry["ARTICLE_TITLE"],
                     entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-                    ' ',
+                    ' ', # MAIN_CH_SEND_YN
+                    entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
                     entry["SAVE_TIME"]
                 ))
 
