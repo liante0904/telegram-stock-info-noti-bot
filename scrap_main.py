@@ -71,8 +71,9 @@ def LS_checkNewArticle():
         scraper = WebScraper(TARGET_URL, firm_info)
         
         # HTML parse
-        soupList = scraper.Get()
+        soup = scraper.Get()
 
+        soupList = soup.select('#contents > table > tbody > tr')
         # 현재 날짜
         today = datetime.date.today()
         # 7일 전 날짜 계산
@@ -104,9 +105,10 @@ def LS_checkNewArticle():
                 break
 
             item = LS_detail(LIST_ARTICLE_URL, date)
-            # print(item)
+            print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+                DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
                 LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
             if save_data_to_local_json(
@@ -115,11 +117,12 @@ def LS_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
     # 메모리 정리
     del soup
-    del response
+    # del response
     gc.collect()
     return nNewArticleCnt
 
@@ -245,13 +248,15 @@ def ShinHanInvest_checkNewArticle():
             except Exception as e:
                 print("에러 발생:", e)
                 LIST_ARTICLE_URL = list['f3']
-                
+            
+            DOWNLOAD_URL = LIST_ARTICLE_URL
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
     # 메모리 정리
@@ -333,13 +338,14 @@ def NHQV_checkNewArticle():
         BOARD_NM            = list['rshPprSerCdNm']
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
         LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
-
+        DOWNLOAD_URL    = LIST_ARTICLE_URL
         if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
+            download_url=DOWNLOAD_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -402,13 +408,14 @@ def HANA_checkNewArticle():
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
             LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-            # LIST_ATTACT_FILE_NAME = list.select_one('div.con > ul > li:nth-child(5)> div > a').text
+            DOWNLOAD_URL    = LIST_ARTICLE_URL
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
                 
     # 메모리 정리
@@ -479,8 +486,7 @@ def KB_checkNewArticle():
         else: LIST_ARTICLE_TITLE = list['docTitleSub']
         LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
         LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
-        
-        # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+        DOWNLOAD_URL     = LIST_ARTICLE_URL
  
         if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
@@ -488,6 +494,7 @@ def KB_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
+            download_url=DOWNLOAD_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
     
     # 메모리 정리
@@ -591,13 +598,14 @@ def Samsung_checkNewArticle():
             # 제목 가공
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
-
+            DOWNLOAD_URL       = LIST_ARTICLE_URL
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -693,13 +701,14 @@ def Sangsanginib_checkNewArticle():
 
             LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
             LIST_ARTICLE_TITLE = list['TITLE']
-
+            DOWNLOAD_URL = LIST_ARTICLE_URL
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -820,13 +829,14 @@ def Shinyoung_checkNewArticle():
         # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
-
+        DOWNLOAD_URL = LIST_ARTICLE_URL
         if save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm=firm_info.get_firm_name(),
             attach_url=LIST_ARTICLE_URL,
+            download_url=DOWNLOAD_URL,
             article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -987,15 +997,11 @@ def Miraeasset_checkNewArticle():
             "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
         }
         
-        try:
-            response = requests.get(TARGET_URL, headers=headers)
-            response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
-        except requests.exceptions.RequestException as e:
-            print("웹 페이지에 접속하는 중 오류가 발생했습니다:", e)
-
-
-        soup = BeautifulSoup(response.text, "html.parser")
+        scraper = WebScraper(TARGET_URL, firm_info)
         
+        # HTML parse
+        soup = scraper.Get()
+
         # 첫 번째 레코드의 제목을 바로 담습니다.
         soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
 
@@ -1030,7 +1036,7 @@ def Miraeasset_checkNewArticle():
                 # ATTACH_URL = LIST_ARTICLE_URL
                 LIST_ARTICLE_TITLE = list.select_one(".subject a").find_all(string=True)
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
-                # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+                DOWNLOAD_URL = LIST_ARTICLE_URL
 
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -1038,11 +1044,12 @@ def Miraeasset_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
     del soup
-    del response
+    # del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1108,7 +1115,7 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
             LIST_ARTICLE_TITLE = list['titl']
 
-            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+            DOWNLOAD_URL = LIST_ARTICLE_URL
 
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -1116,6 +1123,7 @@ def Kiwoom_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -1139,8 +1147,9 @@ def Hmsec_checkNewArticle():
     
     # 현대차증권 해외주식
     TARGET_URL_2 =  'https://www.hmsec.com/research/research_list_ajax.do?Menu_category=8'
+    
+    
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
-
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
@@ -1174,12 +1183,12 @@ def Hmsec_checkNewArticle():
         for list in soupList:
             # print(list)
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
-            LIST_ATTACHMENT_URL = 'https://www.hmsec.com/documents/research/{}' 
-            LIST_ATTACHMENT_URL = LIST_ATTACHMENT_URL.format(list['UPLOAD_FILE1'])
+            DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}' 
+            DOWNLOAD_URL = DOWNLOAD_URL.format(list['UPLOAD_FILE1'])
 
             # https://docs.hmsec.com/SynapDocViewServer/job?fid=#&sync=true&fileType=URL&filePath=#
             LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}' 
-            LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(LIST_ATTACHMENT_URL, LIST_ATTACHMENT_URL)
+            LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(DOWNLOAD_URL, DOWNLOAD_URL)
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
@@ -1196,8 +1205,9 @@ def Hmsec_checkNewArticle():
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ATTACHMENT_URL,
+                attach_url=DOWNLOAD_URL,
                 article_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -1259,7 +1269,7 @@ def Koreainvestment_selenium_checkNewArticle():
             LIST_ARTICLE_URL = link.get_attribute("onclick")
 
             LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
-            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = LIST_ARTICLE_URL)
+            DOWNLOAD_URL = LIST_ARTICLE_URL
 
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -1267,6 +1277,7 @@ def Koreainvestment_selenium_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
 
@@ -1507,7 +1518,7 @@ def DAOL_checkNewArticle():
             research_id = parts[2].split(")")[0]
             
             LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
-        
+            DOWNLOAD_URL     = LIST_ARTICLE_URL
             # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
             # print('NXT_KEY='+NXT_KEY)
             # ATTACH_URL = LIST_ARTICLE_URL
@@ -1519,6 +1530,7 @@ def DAOL_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -1588,11 +1600,7 @@ def TOSSinvest_checkNewArticle():
             research_id = parts[2].split(")")[0]
             
             LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
-        
-            # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
-            # print('NXT_KEY='+NXT_KEY)
-            # ATTACH_URL = LIST_ARTICLE_URL
-            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+            DOWNLOAD_URL = LIST_ARTICLE_URL
 
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
@@ -1600,6 +1608,7 @@ def TOSSinvest_checkNewArticle():
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
 
     # 메모리 정리
@@ -1629,12 +1638,14 @@ def Leading_checkNewArticle():
         )
         
         scraper = WebScraper(TARGET_URL, firm_info)
-        soupList = scraper.Get()
-        
+        soup = scraper.Get()
+        soupList = soup.select('#sub-container > div.table-wrap > table > tbody > tr')
+        print('='*50)
         nNewArticleCnt = 0
         # soupList에서 게시물 정보 파싱
         for list in soupList:
             # 제목 파싱
+            print('???',list)
             title_element = list.select_one("td.align-left a")  # 제목이 들어 있는 a 태그 선택
             if not title_element:  # 제목 요소가 없는 경우
                 continue  # 건너뜁니다.
@@ -1652,12 +1663,14 @@ def Leading_checkNewArticle():
             print()
             LIST_ARTICLE_TITLE = title
             LIST_ARTICLE_URL = attachment_link
+            DOWNLOAD_URL     = attachment_link
             if save_data_to_local_json(
                 filename='./json/data_main_daily_send.json',
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
                 attach_url=LIST_ARTICLE_URL,
+                download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
 
@@ -1704,7 +1717,7 @@ def main():
     insert_data()
     # check functions 리스트
     check_functions = [
-        # LS_checkNewArticle,
+        LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
         NHQV_checkNewArticle,
         HANA_checkNewArticle,
@@ -1717,8 +1730,8 @@ def main():
         Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
         DAOL_checkNewArticle,
-        # TOSSinvest_checkNewArticle,
-        # Leading_checkNewArticle,
+        TOSSinvest_checkNewArticle,
+        Leading_checkNewArticle,
     ]
 
     for check_function in check_functions:

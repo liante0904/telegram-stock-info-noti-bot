@@ -1592,7 +1592,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
         # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
         # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
-
+        DOWNLOAD_URL = LIST_ATTACHMENT_URL
         sendMessageText += save_data_to_local_json(
             filename='./json/data_main_daily_send.json',
             sec_firm_order=SEC_FIRM_ORDER,
@@ -1600,6 +1600,7 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
             firm_nm=firm_info['firm_name'],
             attach_url=LIST_ATTACHMENT_URL,
             article_url=LIST_ARTICLE_URL,
+            download_url=DOWNLOAD_URL,
             article_title=LIST_ARTICLE_TITLE
         )
         if sendMessageText:
