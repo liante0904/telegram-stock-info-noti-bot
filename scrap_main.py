@@ -1655,7 +1655,7 @@ def Leading_checkNewArticle():
             attachment_element = list.select_one("td:nth-child(4) > a")  # 'file-icon' 클래스를 가진 a 태그 선택 (리서치 File)
             attachment_link = "없음"
             if attachment_element and 'href' in attachment_element.attrs:
-                attachment_link =  f"http://www.leading.co.kr/download?{attachment_element['href']}"  # 상대 경로를 절대 경로로 변환
+                attachment_link =  f"http://www.leading.co.kr{attachment_element['href']}"  # 상대 경로를 절대 경로로 변환
             
             # 결과 출력
             print("제목:", title)
