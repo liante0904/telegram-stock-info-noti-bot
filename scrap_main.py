@@ -16,6 +16,7 @@ import base64
 from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
+from models.WebScraper import WebScraper
 from utils.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
@@ -60,43 +61,24 @@ def LS_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7)
 
-    ## EBEST만 로직 변경 테스트
-    
-
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "X-Requested-With": "XMLHttpRequest",
-        }
-    
-        try:
-            response = requests.get(TARGET_URL, verify=False, headers=headers)
-        except:
-            return 0
+
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
         # HTML parse
-        soup = BeautifulSoup(response.content, "html.parser")
-        soupList = soup.select('#contents > table > tbody > tr')
+        soupList = scraper.Get()
+        
+        # soup = BeautifulSoup(response.content, "html.parser")
+        # soupList = soup.select('#contents > table > tbody > tr')
 
-        # print(soupList[0])
-        # soupListTest = soup.select('#contents > table > tbody > tr > td.subject')
-        # r = soupListTest.select('a')
-        # print(soupListTest[0].select('a'))#[0].get_text())
-        # print(len(r))
-        # for i in r:
-        #     print(i)
-        # return 
-
+        print(soupList)
+        for list in soupList:
+            print(list)
         # ARTICLE_BOARD_NAME =  BOARD_NM 
         # try:
         # except IndexError:
@@ -1573,6 +1555,87 @@ def DAOL_checkNewArticle():
 
     return nNewArticleCnt
 
+
+def TOSSinvest_checkNewArticle():
+    SEC_FIRM_ORDER      = 15
+    ARTICLE_BOARD_ORDER = 0
+
+    requests.packages.urllib3.disable_warnings()
+ 
+    # 다올투자증권 산업분석
+    TARGET_URL_0  = 'https://docs-api.tossinvest.com/api/v1/post/search?categoryId=138&searchTitleKeyword=&page=0&size=10&type=INVESTMENT_INFO'
+
+    TARGET_URL_TUPLE = (TARGET_URL_0,)
+    
+    
+    
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
+
+        # 헤더 설정
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        }
+
+        jres = ''
+        response = requests.get(TARGET_URL, headers=headers)
+        # 응답 확인
+        if response.status_code == 200:
+            jres = response.json()
+        else:
+            print("요청에 실패했습니다. 상태 코드:", response.status_code)
+            response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
+        
+        # HTML parse
+        soupList = jres['result']['list']
+        
+        print('*' *40)
+        print(soupList)
+        print(len(soupList))
+        
+        print('*' *40)
+        
+        nNewArticleCnt = 0
+        for list in soupList:
+            # print(list)
+            LIST_ARTICLE_TITLE = list['title']
+            LIST_ARTICLE_URL   =  list['files'][0]['filePath']
+            print(LIST_ARTICLE_TITLE)
+            print(LIST_ARTICLE_URL)
+            return 
+            parts = LIST_ARTICLE_URL.split(',')
+            if len(parts) != 3:
+                return "잘못된 입력 형식입니다."
+            
+            path = parts[0].split("'")[1]
+            filename = parts[1].split("'")[1]
+            research_id = parts[2].split(")")[0]
+            
+            LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
+        
+            # print('LIST_ARTICLE_TITLE='+LIST_ARTICLE_TITLE)
+            # print('NXT_KEY='+NXT_KEY)
+            # ATTACH_URL = LIST_ARTICLE_URL
+            # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
+
+            if save_data_to_local_json(
+                filename='./json/data_main_daily_send.json',
+                sec_firm_order=SEC_FIRM_ORDER,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm=firm_info.get_firm_name(),
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+
+    # 메모리 정리
+    del soup, soupList
+    del response
+    gc.collect()
+
+    return nNewArticleCnt
+
 def main():
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
@@ -1621,7 +1684,8 @@ def main():
         Hmsec_checkNewArticle,
         Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle
+        DAOL_checkNewArticle,
+        # TOSSinvest_checkNewArticle,
     ]
 
     for check_function in check_functions:
