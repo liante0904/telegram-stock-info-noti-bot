@@ -304,7 +304,7 @@ def keyword_select(keyword):
     print(formatted_message)
     return formatted_message
 
-def daily_select_data(date_str=None, type=None):
+async def daily_select_data(date_str=None, type=None):
     # SQLite 데이터베이스 연결
     conn = sqlite3.connect(db_path)
     # 커서의 row_factory를 sqlite3.Row로 설정
@@ -361,7 +361,7 @@ def daily_select_data(date_str=None, type=None):
     return rows
 
 
-def daily_update_data(fetched_rows, type):
+async def daily_update_data(fetched_rows, type):
     """
     데이터베이스의 데이터를 업데이트하는 함수입니다.
     
