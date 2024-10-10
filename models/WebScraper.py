@@ -32,6 +32,14 @@ class WebScraper:
             return {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36"
             }
+        # elif self.firm_info.SEC_FIRM_ORDER == 8:
+        #     # 회사 2번에 맞는 헤더 설정 (예시)
+        #     return {
+        #         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        #         "Accept-Encoding": "gzip, deflate, br",
+        #         "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        #         "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+        #     }
         # ... 필요한 경우 다른 회사별 헤더 추가 가능
         else:
             # 기본적으로 SEC_FIRM_ORDER 값이 0이 아닌 경우의 기본 헤더 설정
@@ -57,8 +65,9 @@ class WebScraper:
         elif self.firm_info.SEC_FIRM_ORDER == 16:
             return '#sub-container > div.table-wrap > table > tbody > tr'
         else:
+            pass
             # 기본 CSS 선택자 (그 외의 경우)
-            return '#defaultContent > div > table > tbody > tr'
+            # return '#defaultContent > div > table > tbody > tr'
 
     def _parse_list_item(self, soup_list):
         """
@@ -119,7 +128,7 @@ class WebScraper:
                     'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
                     'POST_DATE': POST_DATE
                 })
-
+        else: return
         # 필요한 경우 다른 SEC_FIRM_ORDER에 대한 로직 추가 가능
 
         return result
@@ -142,14 +151,14 @@ class WebScraper:
 
         print('='*40)
         print('==================WebScraper Get==================' )
-        print(soup)
+        # print(soup)
         # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        css_selector = self._get_css_selector()
-        soup_list = soup.select(css_selector)
+        # css_selector = self._get_css_selector()
+        # soup_list = soup.select(css_selector)
 
-        # SEC_FIRM_ORDER에 따른 파싱 로직 적용
-        result = self._parse_list_item(soup_list)
-        return result
+        # # SEC_FIRM_ORDER에 따른 파싱 로직 적용
+        # result = self._parse_list_item(soup_list)
+        return soup
 
     def GetJson(self, params=None):
         response = requests.get(self.target_url, headers=self.headers, params=params)
@@ -172,10 +181,11 @@ class WebScraper:
         soup = BeautifulSoup(response.content, "html.parser")
 
         # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        css_selector = self._get_css_selector()
-        soup_list = soup.select(css_selector)
+        # css_selector = self._get_css_selector()
+        # soup_list = soup.select(css_selector)
 
-        return soup_list
+        # return soup_list
+        return soup
 
     def PostJson(self, params=None):
         response = requests.post(self.target_url, headers=self.headers, params=params)
