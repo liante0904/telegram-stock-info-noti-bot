@@ -55,6 +55,8 @@ class WebScraper:
             # 회사 2번에 대한 CSS 선택자 (예시)
             return '#customContent > section > div > table > tr'
         # ... 필요한 경우 다른 회사별 CSS 선택자 추가 가능
+        elif self.firm_info.SEC_FIRM_ORDER == 16:
+            return '#sub-container > div.table-wrap > table > tbody > tr'
         else:
             # 기본 CSS 선택자 (그 외의 경우)
             return '#defaultContent > div > table > tbody > tr'
@@ -75,6 +77,9 @@ class WebScraper:
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
+        print('='*40)
+        print('==================WebScraper Get==================' )
+        print(soup)
         # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
         css_selector = self._get_css_selector()
         soup_list = soup.select(css_selector)
