@@ -16,6 +16,7 @@ import base64
 from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
+from models.WebScraper import WebScraper
 from utils.json_util import save_data_to_local_json # import the function from json_util
 from package.json_to_sqlite import insert_data
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
@@ -60,43 +61,24 @@ def LS_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7)
 
-    ## EBEST만 로직 변경 테스트
-    
-
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-            "X-Requested-With": "XMLHttpRequest",
-        }
-    
-        try:
-            response = requests.get(TARGET_URL, verify=False, headers=headers)
-        except:
-            return 0
+
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
         # HTML parse
-        soup = BeautifulSoup(response.content, "html.parser")
-        soupList = soup.select('#contents > table > tbody > tr')
+        soupList = scraper.Get()
+        
+        # soup = BeautifulSoup(response.content, "html.parser")
+        # soupList = soup.select('#contents > table > tbody > tr')
 
-        # print(soupList[0])
-        # soupListTest = soup.select('#contents > table > tbody > tr > td.subject')
-        # r = soupListTest.select('a')
-        # print(soupListTest[0].select('a'))#[0].get_text())
-        # print(len(r))
-        # for i in r:
-        #     print(i)
-        # return 
-
+        print(soupList)
+        for list in soupList:
+            print(list)
         # ARTICLE_BOARD_NAME =  BOARD_NM 
         # try:
         # except IndexError:
