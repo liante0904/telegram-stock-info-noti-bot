@@ -1,4 +1,4 @@
-def convert_sql_to_telegram_messages(fetched_rows):
+async def convert_sql_to_telegram_messages(fetched_rows):
     """
     Converts fetched SQL rows into formatted Telegram messages.
     
