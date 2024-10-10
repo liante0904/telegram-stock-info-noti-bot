@@ -17,7 +17,8 @@ firm_names = [
     "",              # 12
     "한국투자증권",  # 13
     "다올투자증권",   # 14
-    "토스증권"        # 15
+    "토스증권",        # 15
+    "리딩투자증권"        # 16
 ]
 
 # 게시판 이름을 담은 2차원 배열
@@ -109,6 +110,10 @@ board_names = [
     
     # SEC_FIRM_ORDER 15
     ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
+    
+    # SEC_FIRM_ORDER 16
+    ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
+    
 ]
 
 # 라벨 이름을 담은 2차원 배열
