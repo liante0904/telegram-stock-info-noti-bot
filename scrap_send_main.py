@@ -75,6 +75,7 @@ async def daily_report(report_type):
 
 
 async def main():
+    print('===================scrap_send_main===============')
     # 발송될 내역
     await daily_report(report_type='send')
     await daily_report(report_type='download')
