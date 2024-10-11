@@ -2,6 +2,7 @@
 import os
 import gc
 import sys
+import logging
 import datetime
 from pytz import timezone
 import requests
@@ -1704,9 +1705,9 @@ def main():
     # log 전체경로
     LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
     print('LOG_FULLFILENAME',LOG_FULLFILENAME)
-    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
-    # logging.debug('이것은 디버그 메시지입니다.')
+    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    logging.debug('이것은 디버그 메시지입니다.')
     insert_data()
     # check functions 리스트
     check_functions = [
