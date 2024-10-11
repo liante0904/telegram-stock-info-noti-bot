@@ -86,7 +86,7 @@ async def ChosunBizBot_checkNewArticle():
             print(sendMessageText)
             await sendMarkDownText(token=token,
                            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                           sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                           sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
 
@@ -96,7 +96,7 @@ async def ChosunBizBot_checkNewArticle():
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText= GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
             
@@ -154,7 +154,7 @@ async def NAVERNews_checkNewArticle_0():
             print(sendMessageText)
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
     print('**************')
@@ -163,7 +163,7 @@ async def NAVERNews_checkNewArticle_0():
         print(sendMessageText)
         await sendMarkDownText(token=token,
                                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
         
@@ -283,14 +283,14 @@ async def NAVERNews_checkNewArticle_1():
         for news in filtered_jres:
             LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/' + category + '/' + news['oid'] + '/' + news['aid']
             LIST_ARTICLE_TITLE = news['tit']
-            sendMessageText += GetSendMessageText(ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
+            sendMessageText += await GetSendMessageText(ARTICLE_TITLE=LIST_ARTICLE_TITLE, ARTICLE_URL=LIST_ARTICLE_URL)
 
             # 메시지 길이가 3500을 넘으면 출력하고 초기화
             if len(sendMessageText) > 3500:
                 print(sendMessageText)
                 await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
-                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
                 sendMessageText = ""
 
         # 마지막으로 남은 메시지가 있으면 출력
@@ -298,11 +298,11 @@ async def NAVERNews_checkNewArticle_1():
             print(sendMessageText)
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
-                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ""
 
 # 본문 생성
-def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
+async def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
     sendMessageText = "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
     # 원문 링크
     sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n\n" 
@@ -310,7 +310,7 @@ def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
     return sendMessageText
 
 # 타이틀 생성 
-def GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER): 
+async def GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER): 
     SendMessageTitle = ""
     msgFirmName = ""
     
