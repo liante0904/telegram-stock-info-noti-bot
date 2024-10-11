@@ -31,6 +31,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import scrap_send_main
+import scrap_upload_pdf
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
@@ -1742,7 +1743,8 @@ def main():
 
     if totalCnt:
         asyncio.run(scrap_send_main.main())
-        
+
+    asyncio.run(scrap_upload_pdf.main())
 
 if __name__ == "__main__":
     main()
