@@ -13,6 +13,7 @@ import re
 import urllib.parse as urlparse
 import urllib.request
 import base64
+import asyncio
 from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
@@ -28,6 +29,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import scrap_send_main
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
@@ -1672,6 +1674,7 @@ def Leading_checkNewArticle():
     return nNewArticleCnt
 
 def main():
+    print('===================scrap_send===============')
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
 
@@ -1723,10 +1726,11 @@ def main():
         TOSSinvest_checkNewArticle,
         Leading_checkNewArticle,
     ]
-
+    totalCnt = 0
     for check_function in check_functions:
         print(f"{check_function.__name__} => 새 게시글 정보 확인")
         cnt = check_function() 
+        totalCnt += cnt
         time.sleep(1)
         if cnt:
             print(f"{check_function.__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
@@ -1734,6 +1738,10 @@ def main():
             
         else:
             print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
+
+    if totalCnt:
+        asyncio.run(scrap_send_main.main())
+        
 
 if __name__ == "__main__":
     main()
