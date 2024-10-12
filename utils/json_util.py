@@ -154,11 +154,20 @@ def format_message(data_list):
                         sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
                         last_firm_nm = FIRM_NM
         
-        # 게시글 제목(굵게)
+
+    # 게시글 제목이 유효한 값인지 확인
+    if ARTICLE_TITLE:
         sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-        # 원문 링크
+    else:
+        sendMessageText += ""  # 제목이 없을 경우의 처리
+
+    # 원문 링크가 유효한 값인지 확인
+    if ARTICLE_URL:
         sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-        formatted_messages.append(sendMessageText)
+    else:
+        sendMessageText += ""  # 링크가 없을 경우의 처리
+
+    formatted_messages.append(sendMessageText)
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
