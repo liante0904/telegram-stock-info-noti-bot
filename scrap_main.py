@@ -310,7 +310,7 @@ def NHQV_checkNewArticle():
             return 0
         
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-        if nNewArticleCnt == 0: return None
+        if nNewArticleCnt == 0: return 0
         strList = jres['H3211']['H3211OutBlock2']
         listR = listR + strList
         
