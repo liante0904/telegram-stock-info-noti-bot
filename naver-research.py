@@ -2,6 +2,7 @@
 import sys
 import requests
 import json
+import asyncio
 from bs4 import BeautifulSoup
 import urllib.request
 
@@ -154,4 +155,4 @@ async def main():
         update_main_ch_send_yn_to_y(JSON_FILE_NAME)
     
 if __name__ == "__main__":
-	main()
+	asyncio.run(main())
