@@ -119,8 +119,12 @@ async def save_multiple_data_to_local_json(filename, news_data_list):
         json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
 
     print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
-    return format_message(existing_data[-1]) + '\n' if existing_data else ''
-
+    
+    # existing_data가 비어 있지 않은 경우에만 마지막 데이터의 메시지를 생성합니다.
+    if existing_data:
+        return format_message(existing_data[-1]) + '\n'
+    else:
+        return ''
 
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
