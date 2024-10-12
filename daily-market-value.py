@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*- 
 import requests
+import asyncio
 from bs4 import BeautifulSoup
 
 from models.SecretKey import SecretKey
@@ -90,4 +91,4 @@ async def main():
                 sendMessageText=sendMessageText)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
