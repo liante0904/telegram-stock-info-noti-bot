@@ -5,7 +5,6 @@ import json
 import asyncio
 import aiohttp
 import logging
-import logging
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
@@ -65,16 +64,14 @@ async def ChosunBizBot_checkNewArticle():
         LIST_ARTICLE_TITLE = stockPlus['title']
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
 
-        # 중복 체크
-        if not check_for_duplicates_in_memory(existing_data, LIST_ARTICLE_URL):
-            sendMessageText += save_data_to_local_json(
-                filename='./json/ChosunBizBot.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm="조선비즈 - C-Biz봇",
-                attach_url=LIST_ARTICLE_URL,
-                article_title=LIST_ARTICLE_TITLE
-            )
+        sendMessageText += save_data_to_local_json(
+            filename='./json/ChosunBizBot.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm="조선비즈 - C-Biz봇",#firm_info['firm_name'],
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
         if sendMessageText:
             print()
             print(LIST_ARTICLE_URL)
@@ -95,7 +92,7 @@ async def ChosunBizBot_checkNewArticle():
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
@@ -153,7 +150,7 @@ async def NAVERNews_checkNewArticle_0():
             print(sendMessageText)
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
     print('**************')
@@ -162,7 +159,7 @@ async def NAVERNews_checkNewArticle_0():
         print(sendMessageText)
         await sendMarkDownText(token=token,
                                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
@@ -251,14 +248,14 @@ async def NAVERNews_checkNewArticle_1():
                 print(sendMessageText)
                 await sendMarkDownText(token=token,
                                        chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
-                                       sendMessageText=await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
+                                       sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
                 sendMessageText = ""
 
         if sendMessageText:
             print(sendMessageText)
             await sendMarkDownText(token=token,
                                    chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
-                                   sendMessageText=await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
+                                   sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ""
 
             
