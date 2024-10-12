@@ -42,16 +42,6 @@ async def ChosunBizBot_checkNewArticle():
     
     # 조선Biz Cbot API JSON 크롤링
     
-    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    # response = urllib.request.urlopen(request)
-    # rescode = response.getcode()
-    # if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
-
-    # try:
-    #     jres = json.loads(response.read().decode('utf-8'))
-    # except:
-    #     return True
-
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
         if jres is None:
@@ -107,19 +97,6 @@ async def NAVERNews_checkNewArticle_0():
     # 네이버 실시간 속보
     TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
-    # 동기 호출     
-    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    # # 검색 요청 및 처리
-    # response = urllib.request.urlopen(request)
-    # rescode = response.getcode()
-    # if rescode != 200:
-    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
-
-    # try:
-    #     jres = json.loads(response.read().decode('utf-8'))
-    # except:
-    #     return True
-
     # 비동기 호출 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
