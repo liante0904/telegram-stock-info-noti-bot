@@ -75,7 +75,7 @@ async def main():
 
     # 메시지 구성
     sendMessageText += "\n\n" + "* ●" + '마켓밸류에이션*  '
-    sendMessageText += "\n\n" + "* ●" + rDate + '일자 기준_' + "\n \n"
+    sendMessageText += "\n\n" + "* ●" + rDate + '일자 기준*' + "\n \n"
     sendMessageText += "*오늘의 주요 지수*\n\n"
     for data in indices_data:
         sendMessageText += data + "\n\n"
