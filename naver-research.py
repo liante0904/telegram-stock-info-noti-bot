@@ -2,6 +2,7 @@
 import sys
 import requests
 import json
+import asyncio
 from bs4 import BeautifulSoup
 import urllib.request
 
@@ -143,7 +144,7 @@ async def main():
         return 
 
     print("NAVER_Report_checkNewArticle()=> 새 게시글 정보 확인") # 900
-    NAVER_Report_checkNewArticle()
+    await NAVER_Report_checkNewArticle()
 
     lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
     if lists:
@@ -154,4 +155,4 @@ async def main():
         update_main_ch_send_yn_to_y(JSON_FILE_NAME)
     
 if __name__ == "__main__":
-	main()
+	asyncio.run(main())
