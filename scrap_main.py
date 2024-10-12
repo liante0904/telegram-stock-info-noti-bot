@@ -1701,17 +1701,18 @@ def main():
     print('script_filename', script_filename)
         
 
-    # requests 라이브러리의 로깅을 활성화
-    logging.getLogger("urllib3").setLevel(logging.DEBUG)
-    # log 파일명
-    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
-    print('__file__', __file__, LOG_FILENAME)
-    # log 전체경로
-    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
-    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    print("LOG_FULLFILENAME",LOG_FULLFILENAME)
-    logging.debug('이것은 디버그 메시지입니다.')
+    # # requests 라이브러리의 로깅을 활성화
+    # logging.getLogger("urllib3").setLevel(logging.DEBUG)
+    # # log 파일명
+    # LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
+    # print('__file__', __file__, LOG_FILENAME)
+    # # log 전체경로
+    # LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    # print('LOG_FULLFILENAME',LOG_FULLFILENAME)
+    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    # logging.debug('이것은 디버그 메시지입니다.')
+    
     insert_data()
     # check functions 리스트
     check_functions = [
