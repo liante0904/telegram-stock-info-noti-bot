@@ -141,7 +141,7 @@ def LS_detail(ARTICLE_URL, date):
     try:
         webpage = requests.get(ARTICLE_URL, verify=False)
     except:
-        return True
+        return item
     
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -310,7 +310,7 @@ def NHQV_checkNewArticle():
             return 0
         
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-        if nNewArticleCnt == 0: return 0
+        if nNewArticleCnt == 0: return nNewArticleCnt
         strList = jres['H3211']['H3211OutBlock2']
         listR = listR + strList
         
@@ -824,10 +824,10 @@ def Shinyoung_checkNewArticle():
             jres = json.loads(response.text)
         else:
             print("Failed to fetch page:", response.status_code)
-            return True
+            return 0
     except Exception as e:
         print("An error occurred:", str(e))
-        return True
+        return 0
 
     # print(jres['rows'])
     soupList = jres['rows']
@@ -1108,7 +1108,7 @@ def Kiwoom_checkNewArticle():
         except:
             return 0
             
-        if jres['totalCount'] == 0 : return ''
+        if jres['totalCount'] == 0 : return 0
 
         # print(jres['researchList'])
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
