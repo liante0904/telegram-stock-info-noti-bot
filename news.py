@@ -5,6 +5,7 @@ import json
 import asyncio
 import aiohttp
 import logging
+import logging
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
@@ -28,21 +29,29 @@ async def fetch(session, url):
             print(f"{url} 접속이 원활하지 않습니다 ")
             return None
         return await response.json()
-    
+
+# 조선비즈 뉴스 데이터 처리
 async def ChosunBizBot_checkNewArticle():
     SEC_FIRM_ORDER      = 995
     ARTICLE_BOARD_ORDER = 995
-
     requests.packages.urllib3.disable_warnings()
 
-    # 조선Biz Cbot API
-    # TARGET_URL = 'https://biz.chosun.com/pf/api/v3/content/fetch/story-feed?query=%7B%22excludeSections%22%3A%22%22%2C%22expandRelated%22%3Atrue%2C%22includeContentTypes%22%3A%22story%22%2C%22includeSections%22%3A%22%2Fstock%2Fc-biz_bot%22%2C%22size%22%3A20%7D&filter=%7Bcontent_elements%7B%5B%5D%2C_id%2Ccanonical_url%2Ccredits%7Bby%7B_id%2Cadditional_properties%7Boriginal%7Baffiliations%2Cbyline%7D%7D%2Cname%2Corg%2Curl%7D%7D%2Cdescription%7Bbasic%7D%2Cdisplay_date%2Cheadlines%7Bbasic%2Cmobile%7D%2Clabel%7Bshoulder_title%7Btext%2Curl%7D%7D%2Cpromo_items%7Bbasic%7B_id%2Cadditional_properties%7Bfocal_point%7Bmax%2Cmin%7D%7D%7D%2Calt_text%2Ccaption%2Ccontent_elements%7B_id%2Calignment%2Calt_text%2Ccaption%2Ccontent%2Ccredits%7Baffiliation%7Bname%7D%2Cby%7B_id%2Cbyline%2Cname%7D%7D%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%2Ccredits%7Baffiliation%7Bbyline%2Cname%7D%2Cby%7Bbyline%2Cname%7D%7D%2Cdescription%7Bbasic%7D%2Cfocal_point%7Bx%2Cy%7D%2Cheadlines%7Bbasic%7D%2Cheight%2Cpromo_items%7Bbasic%7B_id%2Cheight%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Csubtype%2Ctype%2Curl%2Cwidth%7D%7D%2CresizedUrls%7B16x9_lg%2C16x9_md%2C16x9_sm%2C16x9_xl%2C16x9_xs%2C16x9_xxl%2C1x1_lg%2C1x1_md%2C1x1_sm%2C1x1_xl%2C1x1_xs%2C1x1_xxl%7D%2Cstreams%7Bheight%2Cwidth%7D%2Csubtype%2Ctype%2Curl%2Cwebsites%2Cwidth%7D%2Clead_art%7Bduration%2Ctype%7D%7D%2Crelated_content%7Bbasic%7B_id%2Cabsolute_canonical_url%2Cheadlines%7Bbasic%2Cmobile%7D%2Creferent%7Bid%2Ctype%7D%2Ctype%7D%7D%2Csubtype%2Ctaxonomy%7Bprimary_section%7B_id%2Cname%7D%2Ctags%7Bslug%2Ctext%7D%7D%2Ctest%2Ctype%2Cwebsite_url%7D%2Ccount%2Cnext%7D&d=92&_website=chosunbiz'
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
     
     # 조선Biz 웹 크롤링 변경
     # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
     
     # 조선Biz Cbot API JSON 크롤링
+    
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
+
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -55,45 +64,45 @@ async def ChosunBizBot_checkNewArticle():
         LIST_ARTICLE_URL = stockPlus['url']
         LIST_ARTICLE_TITLE = stockPlus['title']
         LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
-        
-        sendMessageText += save_data_to_local_json(
-            filename='./json/ChosunBizBot.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm="조선비즈 - C-Biz봇",#firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
+
+        # 중복 체크
+        if not check_for_duplicates_in_memory(existing_data, LIST_ARTICLE_URL):
+            sendMessageText += save_data_to_local_json(
+                filename='./json/ChosunBizBot.json',
+                sec_firm_order=SEC_FIRM_ORDER,
+                article_board_order=ARTICLE_BOARD_ORDER,
+                firm_nm="조선비즈 - C-Biz봇",
+                attach_url=LIST_ARTICLE_URL,
+                article_title=LIST_ARTICLE_TITLE
+            )
         if sendMessageText:
             print()
             print(LIST_ARTICLE_URL)
             print(LIST_ARTICLE_TITLE)
             print(LIST_ARTICLE_WRITER_NAME)
             print()
-            
+
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            print(sendMessageText)
-            await sendMarkDownText(token=token,
-                           chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                           sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+            await sendMarkDownText(
+                token=token,
+                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText
+            )
             sendMessageText = ''
 
-
-    print('**************')
-    print(f'len(sendMessageText){len(sendMessageText)}' )
     if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText= GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
-            
-    return sendMessageText
 
+    return sendMessageText
+    
 async def NAVERNews_checkNewArticle_0():
-    SEC_FIRM_ORDER      = 998
+    SEC_FIRM_ORDER = 998
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -101,6 +110,19 @@ async def NAVERNews_checkNewArticle_0():
     # 네이버 실시간 속보
     TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
+    # 동기 호출     
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # # 검색 요청 및 처리
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200:
+    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
+
     # 비동기 호출 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -131,19 +153,19 @@ async def NAVERNews_checkNewArticle_0():
             print(sendMessageText)
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                    sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
     print('**************')
-    print(f'len(sendMessageText){len(sendMessageText)}' )
+    print(f'len(sendMessageText): {len(sendMessageText)}')
     if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
                                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                                sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
-        
+
     return sendMessageText
 
             
