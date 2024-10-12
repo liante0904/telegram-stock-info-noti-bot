@@ -1707,6 +1707,9 @@ def main():
     script_name = script_name[0]
     print('script_filename', script_filename)
         
+
+    # requests 라이브러리의 로깅을 활성화
+    logging.getLogger("urllib3").setLevel(logging.DEBUG)
     # log 파일명
     LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
     print('__file__', __file__, LOG_FILENAME)
