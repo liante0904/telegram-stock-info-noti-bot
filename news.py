@@ -38,7 +38,7 @@ async def ChosunBizBot_checkNewArticle():
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
 
     # 기존 데이터를 메모리에 로드
-    existing_data = load_existing_data_into_memory('./json/ChosunBizBot.json')
+    existing_data = await load_existing_data_into_memory('./json/ChosunBizBot.json')
 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -94,7 +94,7 @@ async def NAVERNews_checkNewArticle_0():
     TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
 
     # 기존 데이터를 메모리에 로드
-    existing_data = load_existing_data_into_memory('./json/naver_flashnews.json')
+    existing_data = await load_existing_data_into_memory('./json/naver_flashnews.json')
 
     # 비동기 호출 
     async with aiohttp.ClientSession() as session:
