@@ -5,7 +5,7 @@ import json
 import asyncio
 import aiohttp
 import logging
-from utils.json_util import save_data_to_local_json  # import the function from json_util
+from utils.json_util import save_data_to_local_json, save_multiple_data_to_local_json
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
@@ -31,16 +31,11 @@ async def fetch(session, url):
 
 # 조선비즈 뉴스 데이터 처리
 async def ChosunBizBot_checkNewArticle():
-    SEC_FIRM_ORDER      = 995
+    SEC_FIRM_ORDER = 995
     ARTICLE_BOARD_ORDER = 995
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
-    
-    # 조선Biz 웹 크롤링 변경
-    # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
-    
-    # 조선Biz Cbot API JSON 크롤링
     
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -48,45 +43,42 @@ async def ChosunBizBot_checkNewArticle():
             return
 
     sendMessageText = ''
+    data_list = []
+
     # JSON To List
     for stockPlus in jres['newsItems']:
         LIST_ARTICLE_URL = stockPlus['url']
         LIST_ARTICLE_TITLE = stockPlus['title']
-        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
 
-        sendMessageText += save_data_to_local_json(
-            filename='./json/ChosunBizBot.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm="조선비즈 - C-Biz봇",#firm_info['firm_name'],
-            attach_url=LIST_ARTICLE_URL,
-            article_title=LIST_ARTICLE_TITLE
-        )
-        if sendMessageText:
-            print()
-            print(LIST_ARTICLE_URL)
-            print(LIST_ARTICLE_TITLE)
-            print(LIST_ARTICLE_WRITER_NAME)
-            print()
+        new_data = {
+            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+            "FIRM_NM": "조선비즈 - C-Biz봇",
+            "ATTACH_URL": LIST_ARTICLE_URL,
+            "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+            "ARTICLE_URL": LIST_ARTICLE_URL,
+            "SEND_USER": [],  # 필요시 값을 추가
+            "MAIN_CH_SEND_YN": "N",
+            "DOWNLOAD_URL": LIST_ARTICLE_URL
+        }
 
-        if len(sendMessageText) >= 3500:
-            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
-            await sendMarkDownText(
-                token=token,
-                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText
-            )
-            sendMessageText = ''
+        data_list.append(new_data)
 
-    if sendMessageText:
+    # 데이터 저장
+    saved_messages = save_multiple_data_to_local_json('./json/ChosunBizBot.json', data_list)
+    
+    # 메시지 발송
+    if saved_messages:
+        sendMessageText = ''.join(saved_messages)
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     return sendMessageText
+ 
     
 async def NAVERNews_checkNewArticle_0():
     SEC_FIRM_ORDER = 998

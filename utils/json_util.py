@@ -73,6 +73,55 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
+import os
+import json
+import datetime
+
+def save_multiple_data_to_local_json(filename, data_list):
+    directory = os.path.dirname(filename)
+
+    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
+
+    # 현재 시간을 저장합니다.
+    current_time = datetime.datetime.now().isoformat()
+
+    # 기존 데이터를 읽어옵니다.
+    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+        with open(filename, 'r', encoding='utf-8') as json_file:
+            existing_data = json.load(json_file)
+    else:
+        existing_data = []
+
+    # 중복 체크를 위한 세트
+    existing_set = {(item["FIRM_NM"], item["ARTICLE_TITLE"]) for item in existing_data}
+    new_data_list = []
+
+    for new_data in data_list:
+        # 새 데이터를 딕셔너리로 저장합니다.
+        new_data["SAVE_TIME"] = current_time
+        
+        # 중복 체크 (FIRM_NM, ARTICLE_TITLE 중복 확인)
+        if (new_data["FIRM_NM"], new_data["ARTICLE_TITLE"]) not in existing_set:
+            new_data_list.append(new_data)
+            existing_set.add((new_data["FIRM_NM"], new_data["ARTICLE_TITLE"]))
+
+    if new_data_list:
+        existing_data.extend(new_data_list)
+        
+        # 업데이트된 데이터를 JSON 파일로 저장합니다.
+        with open(filename, 'w', encoding='utf-8') as json_file:
+            json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
+        
+        print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+        
+        return [format_message(data) for data in new_data_list]  # 중복되지 않은 항목의 메시지 반환
+    else:
+        print("중복된 데이터가 발견되어 저장하지 않았습니다.")
+        return []
+
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
     formatted_messages = []
