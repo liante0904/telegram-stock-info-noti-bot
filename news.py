@@ -5,7 +5,7 @@ import json
 import asyncio
 import aiohttp
 import logging
-from utils.json_util import save_data_to_local_json, save_multiple_data_to_local_json
+from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
@@ -31,56 +31,72 @@ async def fetch(session, url):
 
 # 조선비즈 뉴스 데이터 처리
 async def ChosunBizBot_checkNewArticle():
-    SEC_FIRM_ORDER = 995
+    SEC_FIRM_ORDER      = 995
     ARTICLE_BOARD_ORDER = 995
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
     
+    # 조선Biz 웹 크롤링 변경
+    # TARGET_URL = 'https://biz.chosun.com/stock/c-biz_bot/'
+    
+    # 조선Biz Cbot API JSON 크롤링
+    
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200 :return print("ChosunBizBot_StockPlusJSONparse 접속이 원활하지 않습니다 ")
+
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
+
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
         if jres is None:
             return
 
     sendMessageText = ''
-    data_list = []
-
     # JSON To List
     for stockPlus in jres['newsItems']:
         LIST_ARTICLE_URL = stockPlus['url']
         LIST_ARTICLE_TITLE = stockPlus['title']
+        LIST_ARTICLE_WRITER_NAME = stockPlus['writerName']
 
-        new_data = {
-            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-            "FIRM_NM": "조선비즈 - C-Biz봇",
-            "ATTACH_URL": LIST_ARTICLE_URL,
-            "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-            "ARTICLE_URL": LIST_ARTICLE_URL,
-            "SEND_USER": [],  # 필요시 값을 추가
-            "MAIN_CH_SEND_YN": "N",
-            "DOWNLOAD_URL": LIST_ARTICLE_URL
-        }
+        sendMessageText += save_data_to_local_json(
+            filename='./json/ChosunBizBot.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm="조선비즈 - C-Biz봇",#firm_info['firm_name'],
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            print()
+            print(LIST_ARTICLE_URL)
+            print(LIST_ARTICLE_TITLE)
+            print(LIST_ARTICLE_WRITER_NAME)
+            print()
 
-        data_list.append(new_data)
+        if len(sendMessageText) >= 3500:
+            print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            await sendMarkDownText(
+                token=token,
+                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText
+            )
+            sendMessageText = ''
 
-    # 데이터 저장
-    sendMessageText = await save_multiple_data_to_local_json(
-        filename='./json/ChosunBizBot.json',
-        news_data_list=data_list)
-    
-    # 메시지 발송
     if sendMessageText:
-        sendMessageText = ''.join(sendMessageText)
         print(sendMessageText)
         await sendMarkDownText(token=token,
                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
-                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
+                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     return sendMessageText
- 
     
 async def NAVERNews_checkNewArticle_0():
     SEC_FIRM_ORDER = 998
@@ -91,6 +107,19 @@ async def NAVERNews_checkNewArticle_0():
     # 네이버 실시간 속보
     TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
+    # 동기 호출     
+    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
+    # # 검색 요청 및 처리
+    # response = urllib.request.urlopen(request)
+    # rescode = response.getcode()
+    # if rescode != 200:
+    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
+
+    # try:
+    #     jres = json.loads(response.read().decode('utf-8'))
+    # except:
+    #     return True
+
     # 비동기 호출 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -99,35 +128,30 @@ async def NAVERNews_checkNewArticle_0():
 
     jres = jres['result']
 
-    news_data_list = []  # 뉴스 데이터를 저장할 리스트
     sendMessageText = ''
-
     # JSON To List
     for news in jres['newsList']:
         LIST_ARTICLE_URL = 'https://m.stock.naver.com/investment/news/flashnews/' + news['oid'] + '/' + news['aid']
         LIST_ARTICLE_TITLE = news['tit']
 
-        # 새로운 데이터 항목을 리스트에 추가
-        news_data_list.append({
-            "sec_firm_order": SEC_FIRM_ORDER,
-            "article_board_order": ARTICLE_BOARD_ORDER,
-            "firm_nm": "네이버 - 실시간 뉴스 속보",  # firm_info['firm_name'],
-            "attach_url": LIST_ARTICLE_URL,
-            "article_title": LIST_ARTICLE_TITLE
-        })
-
+        sendMessageText += save_data_to_local_json(
+            filename='./json/naver_flashnews.json',
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER,
+            firm_nm="네이버 - 실시간 뉴스 속보",#firm_info['firm_name'],
+            attach_url=LIST_ARTICLE_URL,
+            article_title=LIST_ARTICLE_TITLE
+        )
+        if sendMessageText:
+            print('LIST_ARTICLE_TITLE',LIST_ARTICLE_TITLE)
+            print('LIST_ARTICLE_URL',LIST_ARTICLE_URL)
         if len(sendMessageText) >= 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
+            print(sendMessageText)
             await sendMarkDownText(token=token,
                                     chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                    sendMessageText=await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
+                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
-
-    # 수집된 데이터를 저장하는 함수 호출
-    sendMessageText = await save_multiple_data_to_local_json(
-        filename='./json/naver_flashnews.json',
-        news_data_list=news_data_list
-    )
 
     print('**************')
     print(f'len(sendMessageText): {len(sendMessageText)}')
@@ -135,12 +159,11 @@ async def NAVERNews_checkNewArticle_0():
         print(sendMessageText)
         await sendMarkDownText(token=token,
                                 chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
-                                sendMessageText=await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
+                                sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     return sendMessageText
-
 
             
 # 인메모리 데이터베이스에 기존 뉴스 로드
