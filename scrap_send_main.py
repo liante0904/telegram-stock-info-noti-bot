@@ -98,7 +98,7 @@ async def daily_report(report_type, date_str=None):
 
 
 async def main(date_str):
-    date_str = format_date(date_str)  # 날짜 형식 변환
+    # date_str = format_date(date_str)  # 날짜 형식 변환
     print('===================scrap_send_main===============')
     # 발송될 내역
     await daily_report(report_type='send', date_str=date_str)
