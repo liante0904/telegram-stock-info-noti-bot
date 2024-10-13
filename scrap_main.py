@@ -1745,8 +1745,7 @@ def main():
         else:
             print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
 
-    if totalCnt:
-        asyncio.run(scrap_send_main.main())
+    asyncio.run(scrap_send_main.main())
 
     asyncio.run(scrap_upload_pdf.main())
 
