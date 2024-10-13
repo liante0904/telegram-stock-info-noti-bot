@@ -1,15 +1,22 @@
+import argparse
 import asyncio
+from datetime import datetime
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
-from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
 
 SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
-async def daily_report(report_type):
+def format_date(date_str):
+    """20241013 형식의 문자열을 2024-10-13 형식으로 변환합니다."""
+    if date_str and len(date_str) == 8:
+        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+    return None
+
+async def daily_report(report_type, date_str=None):
     """
     매일 보고서를 처리하는 함수입니다.
     
@@ -29,9 +36,11 @@ async def daily_report(report_type):
     ----------
     report_type : str
         'send' 또는 'download' 중 하나를 지정합니다.
+    date_str : str, optional
+        처리할 날짜 (형식: YYYY-MM-DD). 기본값은 None입니다.
     """
     if report_type == 'send':
-        rows = await daily_select_data(type=report_type)
+        rows = await daily_select_data(date_str=date_str, type=report_type)
         if rows:
             formatted_messages = await convert_sql_to_telegram_messages(rows)
             print('=' * 30)
@@ -50,14 +59,14 @@ async def daily_report(report_type):
 
             # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
             if send_success:
-                r = await daily_update_data(fetched_rows=rows, type=report_type)
+                r = await daily_update_data(date_str=date_str, fetched_rows=rows, type=report_type)
                 if r:
                     print('DB 업데이트 성공')
             else:
                 print('일부 메시지 발송 실패, DB 업데이트 생략')
 
     elif report_type == 'download':
-        rows = await daily_select_data(type='download')
+        rows = await daily_select_data(date_str=date_str, type='download')
         # print(rows)
 
         # 파일 다운로드 처리
@@ -69,16 +78,22 @@ async def daily_report(report_type):
                 
                 if download_success:
                     # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
-                    r = await daily_update_data(fetched_rows=row, type='download')
+                    r = await daily_update_data(date_str=date_str, fetched_rows=row, type='download')
                 else:
                     print(f"파일 다운로드 실패: {row['file_name']}")  # 실패한 파일 로그 출력
 
 
-async def main():
+async def main(date_str):
     print('===================scrap_send_main===============')
+    # 날짜 문자열 형식 변환
+    formatted_date_str = format_date(date_str)
     # 발송될 내역
-    await daily_report(report_type='send')
-    await daily_report(report_type='download')
+    await daily_report(report_type='send', date_str=formatted_date_str)
+    await daily_report(report_type='download', date_str=formatted_date_str)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='Daily report script.')
+    parser.add_argument('date', type=str, nargs='?', default=None, help='Date in YYYYMMDD format.')
+
+    args = parser.parse_args()
+    asyncio.run(main(date_str=args.date))
