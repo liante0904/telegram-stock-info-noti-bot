@@ -9,7 +9,28 @@ from models.SecretKey import SecretKey
 SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
-async def daily_report(report_type, date_str):
+def format_date(date_str):
+    """
+    날짜 형식을 변환하는 함수입니다.
+    
+    입력이 'YYYYMMDD' 형식일 경우 'YYYY-MM-DD'로 변환하고,
+    이미 'YYYY-MM-DD' 형식인 경우는 그대로 반환합니다.
+
+    매개변수:
+    ----------
+    date_str : str
+        변환할 날짜 문자열입니다.
+    
+    반환값:
+    -------
+    str
+        변환된 날짜 문자열입니다.
+    """
+    if len(date_str) == 8 and date_str.isdigit():  # 20241012 형태인지 확인
+        return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+    return date_str  # 이미 'YYYY-MM-DD'인 경우 그대로 반환
+
+async def daily_report(report_type, date_str=None):
     """
     매일 보고서를 처리하는 함수입니다.
     
@@ -77,6 +98,7 @@ async def daily_report(report_type, date_str):
 
 
 async def main(date_str):
+    date_str = format_date(date_str)  # 날짜 형식 변환
     print('===================scrap_send_main===============')
     # 발송될 내역
     await daily_report(report_type='send', date_str=date_str)
