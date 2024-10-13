@@ -9,7 +9,7 @@ from models.SecretKey import SecretKey
 SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
-async def daily_report(report_type, date_str=None):
+async def daily_report(report_type, date_str):
     """
     매일 보고서를 처리하는 함수입니다.
     
