@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-from datetime import datetime
 from package.json_to_sqlite import daily_select_data, daily_update_data
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
@@ -11,10 +10,25 @@ SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
 def format_date(date_str):
-    """20241013 형식의 문자열을 2024-10-13 형식으로 변환합니다."""
-    if date_str and len(date_str) == 8:
+    """
+    날짜 형식을 변환하는 함수입니다.
+    
+    입력이 'YYYYMMDD' 형식일 경우 'YYYY-MM-DD'로 변환하고,
+    이미 'YYYY-MM-DD' 형식인 경우는 그대로 반환합니다.
+
+    매개변수:
+    ----------
+    date_str : str
+        변환할 날짜 문자열입니다.
+    
+    반환값:
+    -------
+    str
+        변환된 날짜 문자열입니다.
+    """
+    if len(date_str) == 8 and date_str.isdigit():  # 20241012 형태인지 확인
         return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-    return None
+    return date_str  # 이미 'YYYY-MM-DD'인 경우 그대로 반환
 
 async def daily_report(report_type, date_str=None):
     """
@@ -84,16 +98,15 @@ async def daily_report(report_type, date_str=None):
 
 
 async def main(date_str):
+    date_str = format_date(date_str)  # 날짜 형식 변환
     print('===================scrap_send_main===============')
-    # 날짜 문자열 형식 변환
-    formatted_date_str = format_date(date_str)
     # 발송될 내역
-    await daily_report(report_type='send', date_str=formatted_date_str)
-    await daily_report(report_type='download', date_str=formatted_date_str)
+    await daily_report(report_type='send', date_str=date_str)
+    await daily_report(report_type='download', date_str=date_str)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily report script.')
-    parser.add_argument('date', type=str, nargs='?', default=None, help='Date in YYYYMMDD format.')
+    parser.add_argument('date', type=str, nargs='?', default=None, help='Date in YYYY-MM-DD format.')
 
     args = parser.parse_args()
     asyncio.run(main(date_str=args.date))

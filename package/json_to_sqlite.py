@@ -360,8 +360,7 @@ async def daily_select_data(date_str=None, type=None):
     
     return rows
 
-
-async def daily_update_data(fetched_rows, type):
+async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
     데이터베이스의 데이터를 업데이트하는 함수입니다.
     
@@ -381,6 +380,13 @@ async def daily_update_data(fetched_rows, type):
     cursor = conn.cursor()
     """데이터를 업데이트합니다. type에 따라 업데이트 쿼리가 달라집니다."""
     
+    if date_str is None:
+        # date_str가 없으면 현재 날짜 사용
+        query_date = datetime.now().strftime('%Y-%m-%d')
+    else:
+        # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
+        query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+
     # 'type' 파라미터가 필수임을 확인
     if type not in ['send', 'download']:
         raise ValueError("Invalid type. Must be 'send' or 'download'.")
