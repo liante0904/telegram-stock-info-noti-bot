@@ -5,7 +5,7 @@ import json
 from urllib.parse import urlencode, urlunparse
 from models.SecretKey import SecretKey
 from utils.telegram_util import sendMarkDownText
-
+import asyncio
 SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
@@ -107,4 +107,4 @@ def convert_stock_url(naver_url):
  
 if __name__ == "__main__":
     print("NAVER_52weekPrice_check()=> 새 게시글 정보 확인")  # 0
-    NAVER_52weekPrice_check()
+    asyncio.run(NAVER_52weekPrice_check())

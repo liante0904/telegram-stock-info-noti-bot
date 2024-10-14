@@ -141,7 +141,7 @@ def LS_detail(ARTICLE_URL, date):
     try:
         webpage = requests.get(ARTICLE_URL, verify=False)
     except:
-        return True
+        return item
     
     # HTML parse
     soup = BeautifulSoup(webpage.content, "html.parser")
@@ -310,7 +310,7 @@ def NHQV_checkNewArticle():
             return 0
         
         nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-        if nNewArticleCnt == 0: return None
+        if nNewArticleCnt == 0: return nNewArticleCnt
         strList = jres['H3211']['H3211OutBlock2']
         listR = listR + strList
         
@@ -824,10 +824,10 @@ def Shinyoung_checkNewArticle():
             jres = json.loads(response.text)
         else:
             print("Failed to fetch page:", response.status_code)
-            return True
+            return 0
     except Exception as e:
         print("An error occurred:", str(e))
-        return True
+        return 0
 
     # print(jres['rows'])
     soupList = jres['rows']
@@ -1108,7 +1108,7 @@ def Kiwoom_checkNewArticle():
         except:
             return 0
             
-        if jres['totalCount'] == 0 : return ''
+        if jres['totalCount'] == 0 : return 0
 
         # print(jres['researchList'])
         # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
@@ -1707,15 +1707,19 @@ def main():
     script_name = script_name[0]
     print('script_filename', script_filename)
         
-    # log 파일명
-    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
-    print('__file__', __file__, LOG_FILENAME)
-    # log 전체경로
-    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
-    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    print("LOG_FULLFILENAME",LOG_FULLFILENAME)
-    logging.debug('이것은 디버그 메시지입니다.')
+
+    # # requests 라이브러리의 로깅을 활성화
+    # logging.getLogger("urllib3").setLevel(logging.DEBUG)
+    # # log 파일명
+    # LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
+    # print('__file__', __file__, LOG_FILENAME)
+    # # log 전체경로
+    # LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    # print('LOG_FULLFILENAME',LOG_FULLFILENAME)
+    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    # logging.debug('이것은 디버그 메시지입니다.')
+    
     insert_data()
     # check functions 리스트
     check_functions = [
@@ -1748,8 +1752,7 @@ def main():
         else:
             print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
 
-    if totalCnt:
-        asyncio.run(scrap_send_main.main())
+    asyncio.run(scrap_send_main.main())
 
     asyncio.run(scrap_upload_pdf.main())
 

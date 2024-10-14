@@ -73,6 +73,59 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
+import os
+import json
+import datetime
+
+async def save_multiple_data_to_local_json(filename, news_data_list):
+    directory = os.path.dirname(filename)
+
+    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
+
+    # 기존 데이터를 읽어옵니다.
+    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+        with open(filename, 'r', encoding='utf-8') as json_file:
+            existing_data = json.load(json_file)
+    else:
+        existing_data = []
+
+    # 중복 체크 및 데이터 추가
+    for new_data in news_data_list:
+        # 기존 데이터에서 중복 여부를 확인
+        is_duplicate = any(
+            existing_item.get("FIRM_NM") == new_data.get("firm_nm") and
+            existing_item.get("ARTICLE_TITLE") == new_data.get("article_title")
+            for existing_item in existing_data
+        )
+
+        if not is_duplicate:
+            existing_data.append({
+                "SEC_FIRM_ORDER": new_data.get("sec_firm_order"),
+                "ARTICLE_BOARD_ORDER": new_data.get("article_board_order"),
+                "FIRM_NM": new_data.get("firm_nm"),
+                "ATTACH_URL": new_data.get("attach_url"),
+                "ARTICLE_TITLE": new_data.get("article_title"),
+                "SEND_USER": [],
+                "MAIN_CH_SEND_YN": "N",
+                "DOWNLOAD_URL": new_data.get("attach_url"),
+                "SAVE_TIME": datetime.datetime.now().isoformat()
+            })
+
+    # 업데이트된 데이터를 JSON 파일로 저장합니다.
+    with open(filename, 'w', encoding='utf-8') as json_file:
+        json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
+
+    print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+    
+    # existing_data가 비어 있지 않은 경우에만 마지막 데이터의 메시지를 생성합니다.
+    if existing_data:
+        return format_message(existing_data[-1]) + '\n'
+    else:
+        return ''
+
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
     formatted_messages = []
@@ -84,8 +137,8 @@ def format_message(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        ARTICLE_TITLE = data['ARTICLE_TITLE']
-        ARTICLE_URL = data['ATTACH_URL']
+        ARTICLE_TITLE = data.get('ARTICLE_TITLE','')
+        ARTICLE_URL = data.get('ATTACH_URL','')
         
         sendMessageText = ""
         
@@ -101,11 +154,20 @@ def format_message(data_list):
                         sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
                         last_firm_nm = FIRM_NM
         
-        # 게시글 제목(굵게)
+
+    # 게시글 제목이 유효한 값인지 확인
+    if ARTICLE_TITLE:
         sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-        # 원문 링크
+    else:
+        sendMessageText += ""  # 제목이 없을 경우의 처리
+
+    # 원문 링크가 유효한 값인지 확인
+    if ARTICLE_URL:
         sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-        formatted_messages.append(sendMessageText)
+    else:
+        sendMessageText += ""  # 링크가 없을 경우의 처리
+
+    formatted_messages.append(sendMessageText)
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
