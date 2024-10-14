@@ -649,7 +649,7 @@ def Sangsanginib_checkNewArticle():
             "Accept-Language": "ko",
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "Origin": "https://www.sangsanginib.com",
-            "Referer": "https://www.sangsanginib.com/research/enterpriseReport/enterpriseReportMobView",
+            "Referer": "https://www.sangsanginib.com",
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
         }
 
@@ -696,14 +696,21 @@ def Sangsanginib_checkNewArticle():
         
         # JSON To List
         for list in soupList:
-            # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-            # print('list***************** \n',list)
-            # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
-            # LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
-            # print('cmsCd[ARTICLE_BOARD_ORDER]',cmsCd[ARTICLE_BOARD_ORDER])
-            # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
-
-            LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
+            # {
+            #     "REGDT": "2024.10.14",
+            #     "STOCK_NM": "팬오션",
+            #     "FILE_YN": "Y",
+            #     "NM": "리서치센터",
+            #     "NT_NO": 3683,
+            #     "HIT": 42,
+            #     "STAR_YN": "N",
+            #     "STOCK_CD": "028670",
+            #     "TITLE": "팬오션(028670):인내가 필요한 시기"
+            # }
+            
+            #  URL 예제 : https://www.sangsanginib.com/_upload/attFile/CM0079/CM0079_3680_1.pdf
+            # LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
+            LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cmsCd[ARTICLE_BOARD_ORDER]}/{cmsCd[ARTICLE_BOARD_ORDER]}_{list['NT_NO']}_1.pdf"
             LIST_ARTICLE_TITLE = list['TITLE']
             DOWNLOAD_URL = LIST_ARTICLE_URL
             if save_data_to_local_json(
