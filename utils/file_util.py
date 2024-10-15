@@ -16,7 +16,7 @@ SECRET_KEY = SecretKey()
 LOG_FILE = os.getenv('LOG_FILE', '~/log/logfile.log')
 LOG_FILE = os.path.expanduser(LOG_FILE)  # ~ 를 홈 디렉토리로 확장
 # 한글 인코딩 처리 및 wget으로 다운로드
-def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
+async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     """
     파일을 주어진 URL에서 다운로드하고 지정된 파일 이름으로 저장합니다.
     
@@ -76,22 +76,35 @@ def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     # return r
 
     try:
+        # wget_command 리스트를 문자열로 변환
+        wget_command_str = ' '.join(wget_command)
+        
         result = subprocess.run(wget_command, check=True, text=True, capture_output=True)
-        log_message = wget_command
+        
+        # 로그 메시지에 사용할 wget_command
+        log_message = wget_command_str
         log_message += f"\n파일 다운로드 완료: {ATTACH_FILE_NAME}"
+        
         print(log_message)
+        
+        # 로그 파일에 기록
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(log_message + '\n')
             log_file.write(result.stdout + '\n')  # 성공 시 출력도 로그에 기록
+        
         return True  # 파일 다운로드 성공 시 True 반환
+
     except subprocess.CalledProcessError as e:
         error_message = f"wget 다운로드 실패: {e}"
+        
         print(error_message)
+        
+        # 에러 메시지를 로그 파일에 기록
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(error_message + '\n')
             log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
+        
         return False  # 다운로드 실패 시 False 반환
-    
 def main():
     URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf&sync=true&fileType=URL&filePath=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf'
     ATTACH_FILE_NAME = '241007__자동차 산업 - 2024년 9월 현대차그룹 글로벌 도매 판매 _현대차증권.pdf'
