@@ -108,7 +108,7 @@ def LS_checkNewArticle():
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
                 break
 
-            item = LS_detail(LIST_ARTICLE_URL, date)
+            item = LS_detail(LIST_ARTICLE_URL, date, firm_info)
             print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
@@ -120,7 +120,8 @@ def LS_checkNewArticle():
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER,
                 firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
+                article_url=DOWNLOAD_URL,
+                attach_url=DOWNLOAD_URL,
                 download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
@@ -130,21 +131,20 @@ def LS_checkNewArticle():
     gc.collect()
     return nNewArticleCnt
 
-def LS_detail(ARTICLE_URL, date):
+def LS_detail(TARGET_URL, date, firm_info):
     
-    ARTICLE_URL = ARTICLE_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
+    TARGET_URL = TARGET_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
     
     item = {}  # 빈 딕셔너리로 초기화
     
     time.sleep(0.1)
-    
-    try:
-        webpage = requests.get(ARTICLE_URL, verify=False)
-    except:
-        return item
+
+    scraper = WebScraper(TARGET_URL, firm_info)
     
     # HTML parse
-    soup = BeautifulSoup(webpage.content, "html.parser")
+    soup = scraper.Get()
+
+
     
     # 게시글 제목
     trs = soup.select('tr')
@@ -152,7 +152,7 @@ def LS_detail(ARTICLE_URL, date):
     
     
     # 첨부파일 이름
-    item['LIST_ARTICLE_FILE_NAME'] = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    item['LIST_ARTICLE_FILE_NAME'] = soup.select_one('.attach > a').get_text()
     
     # 첨부파일 URL 조립 예시  
     # => https://www.ls-sec.co.kr/upload/EtwBoardData/B202410/20241002_한국 9월 소비자물가.pdf
@@ -162,7 +162,7 @@ def LS_detail(ARTICLE_URL, date):
     URL_PARAM = URL_PARAM.split('.')
     URL_PARAM_0 = 'B' + URL_PARAM[0] + URL_PARAM[1]
 
-    ATTACH_FILE_NAME = BeautifulSoup(webpage.content, "html.parser").select_one('.attach > a').get_text()
+    ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
     ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
     URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
 
