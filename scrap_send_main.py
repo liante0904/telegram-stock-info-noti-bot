@@ -97,7 +97,7 @@ async def daily_report(report_type, date_str=None):
                     print(f"파일 다운로드 실패: {row['file_name']}")  # 실패한 파일 로그 출력
 
 
-async def main(date_str):
+async def main(date_str=None):
     # date_str = format_date(date_str)  # 날짜 형식 변환
     print('===================scrap_send_main===============')
     # 발송될 내역
