@@ -433,6 +433,38 @@ async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     # 변경 사항 저장 및 커넥션 닫기
     conn.commit()
 
+def select_data_from_single_table(table):
+    """지정한 테이블의 데이터를 조회하여 키:데이터 형태로 반환합니다."""
+    data_dict = {}  # 결과를 저장할 딕셔너리 초기화
+
+    query = f'''
+        SELECT * 
+        FROM {table} 
+        WHERE SAVE_TIME < DATE('now', '-14 days');
+    '''
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    # 결과를 키:데이터 형태로 딕셔너리에 추가
+    for row in rows:
+        # 예시로 id를 키로 사용하고, 나머지 컬럼을 리스트 형태로 저장
+        data_dict[row[0]] = {
+            "SEC_FIRM_ORDER": row[1],
+            "ARTICLE_BOARD_ORDER": row[2],
+            "FIRM_NM": row[3],
+            "ATTACH_URL": row[4],
+            "ARTICLE_TITLE": row[5],
+            "SEND_USER": row[6],
+            "MAIN_CH_SEND_YN": row[7],
+            "SAVE_TIME": row[8],
+            "DOWNLOAD_STATUS_YN": row[9],
+            "ARTICLE_URL": row[10],
+            "DOWNLOAD_URL": row[11]
+        }
+
+    return data_dict
+
+
 def open_db_connection():
     """SQLite 데이터베이스에 연결하고 커서를 반환합니다."""
     conn = sqlite3.connect(db_path)
@@ -470,8 +502,5 @@ def main():
     elif args.action == 'daily':
         daily_select_data(args.name)
 
-cursor.close()
-conn.close()
-        
 if __name__ == "__main__":
     main()

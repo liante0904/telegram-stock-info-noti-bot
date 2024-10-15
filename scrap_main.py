@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
 from utils.json_util import save_data_to_local_json # import the function from json_util
-from package.json_to_sqlite import insert_data
+from package.json_to_sqlite import insert_data, select_data_from_single_table
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
 # selenium
@@ -35,14 +35,20 @@ import scrap_upload_pdf
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
-
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
+
+# 2주 db데이터
+two_week_db = select_data_from_single_table('data_main_daily_send')
+# print(two_week_db)
+new_articles = []  # 존재하지 않는 기사들을 저장할 리스트
 #################### global 변수 정리 끝###################################
 
-def LS_checkNewArticle():
+
+async def LS_checkNewArticle():
     SEC_FIRM_ORDER = 0
     ARTICLE_BOARD_ORDER = 0
+    
 
     requests.packages.urllib3.disable_warnings()
 
@@ -75,7 +81,7 @@ def LS_checkNewArticle():
         scraper = WebScraper(TARGET_URL, firm_info)
         
         # HTML parse
-        soup = scraper.Get()
+        soup = await scraper.Get()
 
         soupList = soup.select('#contents > table > tbody > tr')
         # 현재 날짜
@@ -108,30 +114,41 @@ def LS_checkNewArticle():
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
                 break
 
-            item = LS_detail(LIST_ARTICLE_URL, date, firm_info)
+            item = await LS_detail(LIST_ARTICLE_URL, date, firm_info)
             print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
                 DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
                 LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                article_url=DOWNLOAD_URL,
-                attach_url=DOWNLOAD_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
-            
-    # 메모리 정리
-    del soup
-    # del response
-    gc.collect()
-    return nNewArticleCnt
+        # 기사 제목이 두 주 전 리스트에 존재하는지 확인
+        if await find_article_in_result(two_week_db, LIST_ARTICLE_TITLE):
+            print('존재하는 데이터')
+            continue
+        else:
+            # 존재하지 않으면 리스트에 추가
+            new_articles.append({
+                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                "FIRM_NM": firm_info.get_firm_name(),
+                "ATTACH_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+                "ARTICLE_URL": DOWNLOAD_URL,
+                "SEND_USER": [],
+                "MAIN_CH_SEND_YN": "N",
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "SAVE_TIME": datetime.datetime.now().isoformat()  # 현재 시간 저장
+            })
+            nNewArticleCnt += 1  # 새로운 게시글 수 증가
 
-def LS_detail(TARGET_URL, date, firm_info):
+    # 메모리 정리
+    del soupList
+    gc.collect()
+
+    # 존재하지 않는 기사를 JSON으로 반환
+    return json.dumps(new_articles, ensure_ascii=False, indent=4), nNewArticleCnt  # JSON 형식으로 변환하여 반환
+
+async def LS_detail(TARGET_URL, date, firm_info):
     
     TARGET_URL = TARGET_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
     
@@ -142,10 +159,8 @@ def LS_detail(TARGET_URL, date, firm_info):
     scraper = WebScraper(TARGET_URL, firm_info)
     
     # HTML parse
-    soup = scraper.Get()
+    soup = await scraper.Get()
 
-
-    
     # 게시글 제목
     trs = soup.select('tr')
     item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
@@ -183,7 +198,7 @@ def LS_detail(TARGET_URL, date, firm_info):
     return item
     
 
-def ShinHanInvest_checkNewArticle():
+async def ShinHanInvest_checkNewArticle():
     SEC_FIRM_ORDER      = 1
     ARTICLE_BOARD_ORDER = 0
 
@@ -233,7 +248,7 @@ def ShinHanInvest_checkNewArticle():
         scraper = WebScraper(TARGET_URL, firm_info)
         
         # HTML parse
-        jres = scraper.GetJson()
+        jres = await scraper.GetJson()
 
         soupList = jres['list']
 
@@ -983,7 +998,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     # print('*******************완성된 URL',url)
     return url
 
-def Miraeasset_checkNewArticle():
+async def Miraeasset_checkNewArticle():
     SEC_FIRM_ORDER = 8
     ARTICLE_BOARD_ORDER = 0
 
@@ -1011,7 +1026,7 @@ def Miraeasset_checkNewArticle():
         scraper = WebScraper(TARGET_URL, firm_info)
         
         # HTML parse
-        soup = scraper.Get()
+        soup = await scraper.Get()
 
         # 첫 번째 레코드의 제목을 바로 담습니다.
         soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
@@ -1619,7 +1634,7 @@ def TOSSinvest_checkNewArticle():
 
     return nNewArticleCnt
 
-def Leading_checkNewArticle():
+async def Leading_checkNewArticle():
     SEC_FIRM_ORDER = 16
     ARTICLE_BOARD_ORDER = 0
 
@@ -1639,7 +1654,7 @@ def Leading_checkNewArticle():
         )
         
         scraper = WebScraper(TARGET_URL, firm_info)
-        soup = scraper.Get()
+        soup = await scraper.Get()
         soupList = soup.select('#sub-container > div.table-wrap > table > tbody > tr')
         print('='*50)
         nNewArticleCnt = 0
@@ -1682,7 +1697,16 @@ def Leading_checkNewArticle():
 
     return nNewArticleCnt
 
-def main():
+
+async def find_article_in_result(result, title):
+    """결과 리스트에서 특정 제목의 기사가 있는지 확인합니다."""
+    for key, value in result.items():  # result는 딕셔너리 형태
+        if value['ARTICLE_TITLE'] == title:
+            return True  # 기사가 있는 경우 True와 해당 레코드를 반환
+    
+    return False  # 기사가 없는 경우 False와 None 반환
+
+async def main():
     print('===================scrap_send===============')
     # 사용자의 홈 디렉토리 가져오기
     HOME_PATH = os.path.expanduser("~")
@@ -1721,23 +1745,44 @@ def main():
     # logging.debug('이것은 디버그 메시지입니다.')
     
     insert_data()
+    
+    # 비동기로 실행할 함수 리스트 (LS, Sangsanginib만 비동기로 실행)
+    async_functions = [
+        LS_checkNewArticle,
+        ShinHanInvest_checkNewArticle,
+        Miraeasset_checkNewArticle,
+        Leading_checkNewArticle,
+        
+    ]
+    totalCnt = 0
+
+    # 1. 비동기 함수들 실행
+    print("비동기 함수들 실행 중 (LS, Sangsanginib)...")
+    results = await asyncio.gather(*[func() for func in async_functions])
+
+    # 결과 처리
+    for i, result in enumerate(results):
+        cnt = result
+        totalCnt += cnt
+        if cnt:
+            print(f"{async_functions[i].__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
+            insert_data()
+        else:
+            print(f"{async_functions[i].__name__} => 새 게시글 Insert 실패 혹은 없음")
+
     # check functions 리스트
     check_functions = [
-        LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
         NHQV_checkNewArticle,
         HANA_checkNewArticle,
         KB_checkNewArticle,
-        Samsung_checkNewArticle,
         Sangsanginib_checkNewArticle, # 주석 처리된 부분
         Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
         Kiwoom_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
         DAOL_checkNewArticle,
         TOSSinvest_checkNewArticle,
-        Leading_checkNewArticle,
     ]
     totalCnt = 0
     for check_function in check_functions:
@@ -1757,4 +1802,4 @@ def main():
     asyncio.run(scrap_upload_pdf.main())
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

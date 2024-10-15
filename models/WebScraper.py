@@ -133,7 +133,7 @@ class WebScraper:
 
         return result
     
-    def Get(self, params=None):
+    async def Get(self, params=None):
         """
         GET 요청을 통해 데이터를 가져오는 메서드
         :param params: 요청 시 함께 보낼 파라미터 (기본값은 None)
@@ -160,11 +160,11 @@ class WebScraper:
         # result = self._parse_list_item(soup_list)
         return soup
 
-    def GetJson(self, params=None):
+    async def GetJson(self, params=None):
         response = requests.get(self.target_url, headers=self.headers, params=params)
         return response.json()
     
-    def Post(self, data=None):
+    async def Post(self, data=None):
         """
         POST 요청을 통해 데이터를 가져오는 메서드
         :param data: 요청 시 보낼 데이터 (기본값은 None)
