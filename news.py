@@ -5,6 +5,8 @@ import json
 import asyncio
 import aiohttp
 import logging
+
+from datetime import datetime, timedelta
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
@@ -179,7 +181,7 @@ async def load_existing_data_into_memory(filename):
         print("No existing file found. Starting fresh.")
 
 # 중복 체크를 메모리 내에서 처리
-def check_for_duplicates_in_memory(jres):
+async def check_for_duplicates_in_memory(jres):
     global existing_titles
     new_unique_data = [item for item in jres['newsList'] if item.get('tit') not in existing_titles]
     # 메모리에 중복된 기사 추가
@@ -225,11 +227,15 @@ async def NAVERNews_checkNewArticle_1():
     directory = './json'
     filename = os.path.join(directory, 'naver_ranknews.json')
 
+
+    # 함수 사용 예시
+    filtered_file = filter_news_by_date(filename)  # 실제 파일 경로 입력
+
     # Load existing data into memory at the beginning
     await load_existing_data_into_memory(filename)
 
     # 중복 체크 후 새로운 데이터 필터링
-    filtered_jres = check_for_duplicates_in_memory(jres)
+    filtered_jres = await check_for_duplicates_in_memory(jres)
     
     # 신규 데이터가 있을 때만 파일에 저장
     await save_new_data_to_file(filename, filtered_jres)
@@ -258,7 +264,31 @@ async def NAVERNews_checkNewArticle_1():
                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ""
 
-            
+
+def filter_news_by_date(filename):
+    # 파일에서 JSON 데이터 읽기
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 오늘 날짜
+    today = datetime.now()
+
+    # 1주일 이내 날짜 계산
+    one_week_ago = today - timedelta(days=7)
+
+    # 뉴스 리스트 필터링
+    filtered_news_list = [
+        news for news in data['newsList']
+        if datetime.strptime(news['dt'], '%Y%m%d%H%M%S') >= one_week_ago
+    ]
+
+    # 필터링된 데이터를 원래 구조에 맞게 업데이트
+    data['newsList'] = filtered_news_list
+
+    # 필터링된 데이터를 다시 JSON 파일로 저장
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+         
 
 # 본문 생성
 async def GetSendMessageText(ARTICLE_TITLE , ARTICLE_URL):
@@ -366,11 +396,11 @@ async def main():
      
     print(GetCurrentDay())
     
-    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
-    await ChosunBizBot_checkNewArticle(); 
-    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
-    await NAVERNews_checkNewArticle_0(); 
-    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
+    # print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
+    # await ChosunBizBot_checkNewArticle(); 
+    # print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
+    # await NAVERNews_checkNewArticle_0(); 
+    # print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
     await NAVERNews_checkNewArticle_1(); 
 
 if __name__ == '__main__':
