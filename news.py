@@ -106,22 +106,15 @@ async def NAVERNews_checkNewArticle_0():
 
     requests.packages.urllib3.disable_warnings()
 
+
+    directory = './json'
+    filename = os.path.join(directory, 'naver_flashnews.json')
+
+    filter_news_by_save_time(filename)
+
     # 네이버 실시간 속보
     TARGET_URL = 'https://m.stock.naver.com/api/json/news/newsListJson.nhn?category=flashnews'
     
-    # 동기 호출     
-    # request = urllib.request.Request(TARGET_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    # # 검색 요청 및 처리
-    # response = urllib.request.urlopen(request)
-    # rescode = response.getcode()
-    # if rescode != 200:
-    #     return print("네이버 뉴스 접속이 원활하지 않습니다 ")
-
-    # try:
-    #     jres = json.loads(response.read().decode('utf-8'))
-    # except:
-    #     return True
-
     # 비동기 호출 
     async with aiohttp.ClientSession() as session:
         jres = await fetch(session, TARGET_URL)
@@ -137,7 +130,7 @@ async def NAVERNews_checkNewArticle_0():
         LIST_ARTICLE_TITLE = news['tit']
 
         sendMessageText += save_data_to_local_json(
-            filename='./json/naver_flashnews.json',
+            filename=filename,
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER,
             firm_nm="네이버 - 실시간 뉴스 속보",#firm_info['firm_name'],
@@ -166,6 +159,29 @@ async def NAVERNews_checkNewArticle_0():
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     return sendMessageText
+
+
+
+def filter_news_by_save_time(filename):
+    # 파일에서 JSON 데이터 읽기
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 오늘 날짜
+    today = datetime.now()
+
+    # 1주일 이내 날짜 계산
+    one_week_ago = today - timedelta(days=7)
+
+    # 뉴스 리스트 필터링
+    filtered_news_list = [
+        news for news in data
+        if datetime.fromisoformat(news['SAVE_TIME']) >= one_week_ago
+    ]
+
+    # 필터링된 데이터를 다시 JSON 파일로 저장
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
 
             
 # 인메모리 데이터베이스에 기존 뉴스 로드
@@ -396,11 +412,11 @@ async def main():
      
     print(GetCurrentDay())
     
-    # print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
-    # await ChosunBizBot_checkNewArticle(); 
-    # print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
-    # await NAVERNews_checkNewArticle_0(); 
-    # print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
+    print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
+    await ChosunBizBot_checkNewArticle(); 
+    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
+    await NAVERNews_checkNewArticle_0(); 
+    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
     await NAVERNews_checkNewArticle_1(); 
 
 if __name__ == '__main__':
