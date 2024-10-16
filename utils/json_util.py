@@ -1,6 +1,6 @@
 import os
 import json
-import datetime
+from datetime import datetime, timedelta
 import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
@@ -15,7 +15,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print(f"\n디렉터리 '{directory}'를 생성했습니다.")
 
     # 현재 시간을 저장합니다.
-    current_time = datetime.datetime.now().isoformat()
+    current_time = datetime.now().isoformat()
     
     # `send_users`가 None이면 빈 배열로 초기화합니다.
     if send_users is None:
@@ -73,10 +73,6 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
-import os
-import json
-import datetime
-
 async def save_multiple_data_to_local_json(filename, news_data_list):
     directory = os.path.dirname(filename)
 
@@ -111,7 +107,7 @@ async def save_multiple_data_to_local_json(filename, news_data_list):
                 "SEND_USER": [],
                 "MAIN_CH_SEND_YN": "N",
                 "DOWNLOAD_URL": new_data.get("attach_url"),
-                "SAVE_TIME": datetime.datetime.now().isoformat()
+                "SAVE_TIME": datetime.now().isoformat()
             })
 
     # 업데이트된 데이터를 JSON 파일로 저장합니다.
@@ -210,7 +206,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     # 현재 날짜를 가져옵니다.
-    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    today_str = datetime.now().strftime("%Y-%m-%d")
 
     # json 파일을 읽어옵니다.
     if os.path.exists(filename) and os.path.getsize(filename) > 0:
@@ -281,7 +277,6 @@ def get_unsent_main_ch_data_to_local_json(filename):
 
     return messages
 
-
 def update_main_ch_send_yn_to_y(file_path, target_date=None):
     directory = os.path.dirname(file_path)
 
@@ -296,7 +291,7 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
 
     # 대상 날짜를 설정합니다. 날짜를 받지 않은 경우 오늘 날짜로 설정합니다.
     if target_date is None:
-        target_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        target_date = datetime.now().strftime("%Y-%m-%d")
 
     with open(file_path, 'r', encoding='utf-8') as json_file:
         data = json.load(json_file)
@@ -311,6 +306,28 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
         json.dump(data, json_file, ensure_ascii=False, indent=4)
     
     print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
+
+
+def filter_news_by_save_time(filename):
+    # 파일에서 JSON 데이터 읽기
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 오늘 날짜
+    today = datetime.now()
+
+    # 1주일 이내 날짜 계산
+    one_week_ago = today - timedelta(days=7)
+
+    # 뉴스 리스트 필터링
+    filtered_news_list = [
+        news for news in data
+        if datetime.fromisoformat(news['SAVE_TIME']) >= one_week_ago
+    ]
+
+    # 필터링된 데이터를 다시 JSON 파일로 저장
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')

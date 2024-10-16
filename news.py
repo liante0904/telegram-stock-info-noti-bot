@@ -7,7 +7,7 @@ import aiohttp
 import logging
 
 from datetime import datetime, timedelta
-from utils.json_util import save_data_to_local_json  # import the function from json_util
+from utils.json_util import save_data_to_local_json, filter_news_by_save_time
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
@@ -165,29 +165,6 @@ async def NAVERNews_checkNewArticle_0():
         print('최신 게시글이 채널에 발송 되어 있습니다.')
 
     return sendMessageText
-
-
-
-def filter_news_by_save_time(filename):
-    # 파일에서 JSON 데이터 읽기
-    with open(filename, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    # 오늘 날짜
-    today = datetime.now()
-
-    # 1주일 이내 날짜 계산
-    one_week_ago = today - timedelta(days=7)
-
-    # 뉴스 리스트 필터링
-    filtered_news_list = [
-        news for news in data
-        if datetime.fromisoformat(news['SAVE_TIME']) >= one_week_ago
-    ]
-
-    # 필터링된 데이터를 다시 JSON 파일로 저장
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
 
             
 # 인메모리 데이터베이스에 기존 뉴스 로드
