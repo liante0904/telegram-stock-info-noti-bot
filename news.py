@@ -397,10 +397,10 @@ async def main():
     
     print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
     await ChosunBizBot_checkNewArticle(); 
-    print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
-    await NAVERNews_checkNewArticle_0(); 
-    print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
-    await NAVERNews_checkNewArticle_1(); 
+    # print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
+    # await NAVERNews_checkNewArticle_0(); 
+    # print("NAVERNews_checkNewArticle_1()=> 새 게시글 정보 확인 # 998"); 
+    # await NAVERNews_checkNewArticle_1(); 
 
 if __name__ == '__main__':
     asyncio.run(main())
