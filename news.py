@@ -37,6 +37,12 @@ async def ChosunBizBot_checkNewArticle():
     ARTICLE_BOARD_ORDER = 995
     requests.packages.urllib3.disable_warnings()
 
+
+    directory = './json'
+    filename = os.path.join(directory, 'ChosunBizBot.json')
+
+    filter_news_by_save_time(filename)
+
     TARGET_URL = 'https://mweb-api.stockplus.com/api/news_items/all_news.json?scope=latest&limit=100'
     
     # 조선Biz 웹 크롤링 변경
