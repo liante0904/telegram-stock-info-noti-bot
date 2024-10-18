@@ -329,6 +329,29 @@ def filter_news_by_save_time(filename):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
 
+
+def filter_data_by_save_time(filename):
+    # 파일에서 JSON 데이터 읽기
+    with open(filename, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    # 오늘 날짜
+    today = datetime.now()
+
+    # 1주일 이내 날짜 계산
+    one_week_ago = today - timedelta(days=7)
+
+    # 뉴스 리스트 필터링
+    filtered_news_list = [
+        news for news in data
+        if datetime.fromisoformat(news['SAVE_TIME']) >= one_week_ago
+    ]
+
+    # 필터링된 데이터를 다시 JSON 파일로 저장
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
     parser.add_argument('action', choices=['update', 'send'], help='Action to perform: update or send')
