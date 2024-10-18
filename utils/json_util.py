@@ -338,8 +338,8 @@ def filter_data_by_save_time(filename):
     # 오늘 날짜
     today = datetime.now()
 
-    # 2주일 이내 날짜 계산
-    one_week_ago = today - timedelta(days=14)
+    # 1달 이내 날짜 계산
+    one_week_ago = today - timedelta(days=30)
 
     # 뉴스 리스트 필터링
     filtered_news_list = [
