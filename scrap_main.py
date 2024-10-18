@@ -12,8 +12,8 @@ import urllib.parse as urlparse
 import urllib.request
 import base64
 import asyncio
-
 from datetime import datetime, timedelta, date
+
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
@@ -79,22 +79,22 @@ def LS_checkNewArticle():
         soup = scraper.Get()
 
         soupList = soup.select('#contents > table > tbody > tr')
+        
         # 현재 날짜
         today = date.today()
         # 7일 전 날짜 계산
         seven_days_ago = today - timedelta(days=7)
 
-        nNewArticleCnt = 0
-        
+        nNewArticleCnt = 0        
         for list in soupList:
-            date = list.select('td')[3].get_text()
+            str_date = list.select('td')[3].get_text()
             list = list.select('a')
             # print(list[0].text)
             # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
             LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
             LIST_ARTICLE_TITLE = list[0].get_text()
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-            POST_DATE = date.strip()
+            POST_DATE = str_date.strip()
             # print(POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
@@ -109,7 +109,7 @@ def LS_checkNewArticle():
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
                 break
 
-            item = LS_detail(LIST_ARTICLE_URL, date, firm_info)
+            item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
             print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
@@ -132,7 +132,7 @@ def LS_checkNewArticle():
     gc.collect()
     return nNewArticleCnt
 
-def LS_detail(TARGET_URL, date, firm_info):
+def LS_detail(TARGET_URL, str_date, firm_info):
     
     TARGET_URL = TARGET_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
     
@@ -159,7 +159,7 @@ def LS_detail(TARGET_URL, date, firm_info):
     # => https://www.ls-sec.co.kr/upload/EtwBoardData/B202410/20241002_한국 9월 소비자물가.pdf
     
     # B포스팅 월
-    URL_PARAM = date
+    URL_PARAM = str_date
     URL_PARAM = URL_PARAM.split('.')
     URL_PARAM_0 = 'B' + URL_PARAM[0] + URL_PARAM[1]
 
