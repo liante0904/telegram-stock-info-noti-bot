@@ -13,7 +13,7 @@ import urllib.request
 import base64
 import asyncio
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
@@ -80,7 +80,7 @@ def LS_checkNewArticle():
 
         soupList = soup.select('#contents > table > tbody > tr')
         # 현재 날짜
-        today = datetime.date.today()
+        today = date.today()
         # 7일 전 날짜 계산
         seven_days_ago = today - timedelta(days=7)
 
