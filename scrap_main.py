@@ -3,11 +3,8 @@ import os
 import gc
 import sys
 import logging
-import datetime
-from pytz import timezone
+
 import requests
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
 import time
 import json
 import re
@@ -15,11 +12,15 @@ import urllib.parse as urlparse
 import urllib.request
 import base64
 import asyncio
+
+from datetime import datetime, timedelta
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
-from utils.json_util import save_data_to_local_json # import the function from json_util
+from utils.json_util import save_data_to_local_json, filter_data_by_save_time
 from package.json_to_sqlite import insert_data
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
@@ -81,7 +82,7 @@ def LS_checkNewArticle():
         # 현재 날짜
         today = datetime.date.today()
         # 7일 전 날짜 계산
-        seven_days_ago = today - datetime.timedelta(days=7)
+        seven_days_ago = today - timedelta(days=7)
 
         nNewArticleCnt = 0
         
@@ -98,7 +99,7 @@ def LS_checkNewArticle():
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
             try:
-                post_date_obj = datetime.datetime.strptime(POST_DATE, '%Y.%m.%d').date()
+                post_date_obj = datetime.strptime(POST_DATE, '%Y.%m.%d').date()
             except ValueError as e:
                 print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
                 continue
@@ -1682,6 +1683,7 @@ def Leading_checkNewArticle():
 
     return nNewArticleCnt
 
+
 def main():
     print('===================scrap_send===============')
     # 사용자의 홈 디렉토리 가져오기
@@ -1721,6 +1723,14 @@ def main():
     # logging.debug('이것은 디버그 메시지입니다.')
     
     insert_data()
+
+    
+    directory = './json'
+    filename = os.path.join(directory, 'data_main_daily_send.json')
+
+    filter_data_by_save_time(filename)
+    
+    
     # check functions 리스트
     check_functions = [
         LS_checkNewArticle,
