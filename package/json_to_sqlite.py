@@ -445,11 +445,41 @@ def close_db_connection(conn, cursor):
     conn.close()
 
 
+def save_data_to_json():
+    """data_main_daily_send 테이블의 전체 데이터를 JSON 파일에 저장합니다."""
+    # JSON 파일 저장 경로 설정
+    directory = './json'
+    if not os.path.exists(directory):
+        os.makedirs(directory)  # 경로가 없다면 생성
+    filename = os.path.join(directory, 'data_main_daily_send_all.json')
+    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
+
+    # 전체 데이터 조회
+    cursor.execute("SELECT * FROM data_main_daily_send")
+    rows = cursor.fetchall()
+
+    # 컬럼 이름 가져오기
+    columns = [column[0] for column in cursor.description]
+
+    # JSON 데이터로 변환
+    json_data = []
+    for row in rows:
+        entry = {columns[i]: row[i] for i in range(len(columns))}
+        json_data.append(entry)
+
+    # JSON 파일에 저장
+    with open(filename, 'w', encoding='utf-8') as json_file:
+        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+
+    print(f"Data saved to {filename} successfully.")
+    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
+
+
 def main():
 
     # 명령행 인자 파서 설정
     parser = argparse.ArgumentParser(description="SQLite Database Management Script")
-    parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily'], help="Action to perform")
+    parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily', 'save'], help="Action to perform")
     parser.add_argument('name', nargs='?', help="Table name for the action")
     args = parser.parse_args()
     if args.action == 'table' or args.action is None:
@@ -469,6 +499,9 @@ def main():
 
     elif args.action == 'daily':
         daily_select_data(args.name)
+    elif args.action == 'save':
+        # 함수 호출하여 데이터 저장
+        save_data_to_json()
 
 cursor.close()
 conn.close()
