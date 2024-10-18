@@ -80,7 +80,7 @@ def LS_checkNewArticle():
 
         soupList = soup.select('#contents > table > tbody > tr')
         # 현재 날짜
-        today = date.today()
+        today = datetime.date.today()
         # 7일 전 날짜 계산
         seven_days_ago = today - timedelta(days=7)
 
