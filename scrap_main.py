@@ -1728,7 +1728,7 @@ def main():
     directory = './json'
     filename = os.path.join(directory, 'data_main_daily_send.json')
 
-    filter_data_by_save_time(filename)
+    # filter_data_by_save_time(filename)
     
     
     # check functions 리스트
