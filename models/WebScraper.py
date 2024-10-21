@@ -1,7 +1,8 @@
+import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
-class WebScraper:
+class SyncWebScraper:
     def __init__(self, target_url, firm_info):
         """
         WebScraper 클래스의 초기화 메서드
@@ -18,7 +19,7 @@ class WebScraper:
         :return: 적절한 헤더 딕셔너리
         """
         if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
-            # SEC_FIRM_ORDER가 0이거나 회사 정보가 없을 경우 기본 헤더 사용
+            # SEC_FIRM_ORDER가 0번에 맞는 헤더 설정
             return {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
             }
@@ -32,6 +33,31 @@ class WebScraper:
             return {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36"
             }
+        elif self.firm_info.SEC_FIRM_ORDER == 4:
+            # 회사 4번에 맞는 헤더 설정 (예시)
+            return {
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+                "Connection": "keep-alive",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        elif self.firm_info.SEC_FIRM_ORDER == 7:
+            # SEC_FIRM_ORDER가 7번일 때 Referer 추가
+            return {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Referer": "https://www.shinyoung.com/?page=10078&head=0"
+            }
+        else:
+            # 기본 Header
+            return {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+            }
+            # return {
+            #     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+            # }
         # elif self.firm_info.SEC_FIRM_ORDER == 8:
         #     # 회사 2번에 맞는 헤더 설정 (예시)
         #     return {
@@ -41,11 +67,7 @@ class WebScraper:
         #         "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
         #     }
         # ... 필요한 경우 다른 회사별 헤더 추가 가능
-        else:
-            # 기본적으로 SEC_FIRM_ORDER 값이 0이 아닌 경우의 기본 헤더 설정
-            return {
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-            }
+
 
     def _get_css_selector(self):
         """
@@ -151,17 +173,15 @@ class WebScraper:
 
         print('='*40)
         print('==================WebScraper Get==================' )
-        # print(soup)
-        # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        # css_selector = self._get_css_selector()
-        # soup_list = soup.select(css_selector)
 
-        # # SEC_FIRM_ORDER에 따른 파싱 로직 적용
-        # result = self._parse_list_item(soup_list)
         return soup
 
     def GetJson(self, params=None):
         response = requests.get(self.target_url, headers=self.headers, params=params)
+        print('='*40)
+        print('==================WebScraper GetJson==================' )
+        print('='*40)
+        print('==================WebScraper GetJson==================' )
         return response.json()
     
     def Post(self, data=None):
@@ -180,22 +200,79 @@ class WebScraper:
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        # css_selector = self._get_css_selector()
-        # soup_list = soup.select(css_selector)
+        print('='*40)
+        print('==================WebScraper Post==================' )
 
-        # return soup_list
+        print('='*40)
+        print('==================WebScraper Post==================' )
+
         return soup
 
-    def PostJson(self, params=None):
-        response = requests.post(self.target_url, headers=self.headers, params=params)
+    def PostJson(self, params=None, json=None):
+        response = requests.post(self.target_url, headers=self.headers, params=params, json=json)
+        print('='*40)
+        print('==================WebScraper PostJson==================' )
         return response.json()
-    
-    def parse_table(self, soup_list):
+
+
+class AsyncWebScraper:
+    def __init__(self, target_url, headers=None):
         """
-        파싱된 테이블 리스트를 처리하는 메서드
-        :param soup_list: BeautifulSoup으로 파싱된 테이블 리스트
-        :return: 테이블 행 데이터 출력 (예시)
+        AsyncWebScraper 클래스의 초기화 메서드
+        :param target_url: 요청할 URL
+        :param headers: 요청에 사용할 헤더 (기본값은 None)
         """
-        for row in soup_list:
-            print(f"테이블 행 데이터: {row.text}")
+        self.target_url = target_url
+        self.headers = headers or {"User-Agent": "Mozilla/5.0"}
+
+    async def Get(self, session=None, params=None):
+        """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
+        # 세션이 없으면 새 세션을 생성하여 사용
+        close_session = False
+        if session is None:
+            session = aiohttp.ClientSession()
+            close_session = True
+
+        try:
+            response = await session.get(self.target_url, headers=self.headers, params=params)
+            response.raise_for_status()
+            html = await response.text()
+            return BeautifulSoup(html, "html.parser")
+        finally:
+            if close_session:
+                await session.close()  # 세션을 닫아 메모리 누수 방지
+                
+    async def Post(self, session=None, data=None):
+        """비동기 POST 요청을 통해 데이터를 가져오는 메서드"""
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).post(self.target_url, headers=self.headers, data=data)
+            response.raise_for_status()
+            html = await response.text()
+            return BeautifulSoup(html, "html.parser")
+
+    async def GetJson(self, session=None, params=None):
+        """비동기 GET 요청을 통해 JSON 데이터를 가져오는 메서드"""
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).get(self.target_url, headers=self.headers, params=params)
+            response.raise_for_status()
+            print('=' * 40)
+            print('==================AsyncWebScraper GetJson==================')
+            return await response.json()
+
+    async def PostJson(self, session=None, params=None, json_data=None):
+        """
+        비동기 POST 요청을 통해 JSON 데이터를 가져오는 메서드.
+        :param session: aiohttp ClientSession 인스턴스 (선택적)
+        :param params: 요청 시 보낼 URL 인코딩 데이터 (기본값 None)
+        :param json_data: JSON 데이터 (기본값 None)
+        """
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).post(self.target_url, headers=self.headers, data=params, json=json_data)
+            response.raise_for_status()
+            print('=' * 40)
+            print('==================AsyncWebScraper PostJson==================')
+            return await response.json()
+
+
+
+        

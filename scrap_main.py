@@ -145,8 +145,6 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     # HTML parse
     soup = scraper.Get()
 
-
-    
     # 게시글 제목
     trs = soup.select('tr')
     item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
@@ -445,16 +443,6 @@ def KB_checkNewArticle():
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
-    # 요청 헤더
-    headers = {
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-        "Connection": "keep-alive",
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-    }
 
     # 요청 payload 데이터
     payload = {
@@ -468,14 +456,10 @@ def KB_checkNewArticle():
         "callGbn": "RCLIST"
     }
 
-    # POST 요청 보내기
-    response = requests.post(TARGET_URL, headers=headers, json=payload)
-
-    # 응답 확인
-    if response.status_code == 200:
-        jres = response.json()
-    else:
-        print("요청에 실패했습니다. 상태 코드:", response.status_code)
+    scraper = WebScraper(TARGET_URL, firm_info)
+    
+    # HTML parse
+    jres = scraper.PostJson(json=payload)
 
     soupList = jres['response']['reportList']
     # print(soupList)
@@ -504,7 +488,7 @@ def KB_checkNewArticle():
     
     # 메모리 정리
     del soupList
-    del response
+    # del response
     gc.collect()
 
     return nNewArticleCnt
@@ -568,13 +552,12 @@ def Samsung_checkNewArticle():
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-        try:
-            response = requests.get(TARGET_URL, verify=False)
-        except:
-            return 0
 
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
         # HTML parse
-        soup = BeautifulSoup(response.content, "html.parser")
+        soup = scraper.Get()
+
         soupList = soup.select('#content > section.bbsLstWrap > ul > li')
 
         try:
@@ -615,7 +598,6 @@ def Samsung_checkNewArticle():
 
     # 메모리 정리
     del soup
-    del response
     gc.collect()
 
     return nNewArticleCnt
@@ -801,34 +783,18 @@ def Shinyoung_checkNewArticle():
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
-    headers = {
-        "Accept": "text/plain, */*; q=0.01",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Referer": "https://www.shinyoung.com/?page=10078&head=0",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-    }
 
     # POST 요청을 보낼 데이터
-    data = {
+    payload = {
         "KEYWORD": "",
-        "rows": "10",
+        "rows": "50",
         "page": "1"
     }
+
+    scraper = WebScraper(TARGET_URL, firm_info)
     
-    jres = ''
-    try:
-        response = requests.post(TARGET_URL, headers=headers, data=data)
-        if response.status_code == 200:
-            # print(response.text)  # 응답 내용 출력
-            jres = json.loads(response.text)
-        else:
-            print("Failed to fetch page:", response.status_code)
-            return 0
-    except Exception as e:
-        print("An error occurred:", str(e))
-        return 0
+    # HTML parse
+    jres = scraper.PostJson(params=payload)
 
     # print(jres['rows'])
     soupList = jres['rows']
@@ -1002,12 +968,6 @@ def Miraeasset_checkNewArticle():
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
-        }
         
         scraper = WebScraper(TARGET_URL, firm_info)
         
@@ -1102,12 +1062,10 @@ def Kiwoom_checkNewArticle():
             "dummyVal": 0
         }
 
-        try:
-            response = requests.post(TARGET_URL,data=payload)
-            # print(response.text)
-            jres = json.loads(response.text)
-        except:
-            return 0
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
+        # HTML parse
+        jres = scraper.PostJson(params=payload)
             
         if jres['totalCount'] == 0 : return 0
 
@@ -1171,15 +1129,10 @@ def Hmsec_checkNewArticle():
         )
         payload = {"curPage":1}
 
-        jres = ''
-        try:
-            response = requests.post(url=TARGET_URL ,data=payload , headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36'})
-            # print(response.text)
-            jres = json.loads(response.text)
-        except:
-            return 0
-            
-        # print(jres['data_list'])
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
+        # HTML parse
+        jres = scraper.PostJson(params=payload)
         
         
         REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
@@ -1224,7 +1177,6 @@ def Hmsec_checkNewArticle():
 
     # 메모리 정리
     del soupList
-    del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1564,27 +1516,16 @@ def TOSSinvest_checkNewArticle():
 
     TARGET_URL_TUPLE = (TARGET_URL_0,)
     
-    
-    
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        # 헤더 설정
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        }
-
-        jres = ''
-        response = requests.get(TARGET_URL, headers=headers)
-        # 응답 확인
-        if response.status_code == 200:
-            jres = response.json()
-        else:
-            print("요청에 실패했습니다. 상태 코드:", response.status_code)
-            response.raise_for_status()  # 오류가 발생하면 예외를 발생시킵니다.
+        scraper = WebScraper(TARGET_URL, firm_info)
+        
+        # HTML parse
+        jres = scraper.GetJson()
         
         # HTML parse
         soupList = jres['result']['list']
@@ -1615,7 +1556,6 @@ def TOSSinvest_checkNewArticle():
 
     # 메모리 정리
     del jres, soupList
-    del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1631,7 +1571,6 @@ def Leading_checkNewArticle():
     
     TARGET_URL_TUPLE = (TARGET_URL_0, )#TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7, TARGET_URL_8)
 
-    
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
@@ -1646,8 +1585,6 @@ def Leading_checkNewArticle():
         nNewArticleCnt = 0
         # soupList에서 게시물 정보 파싱
         for list in soupList:
-            # 제목 파싱
-            print('???',list)
             title_element = list.select_one("td.align-left a")  # 제목이 들어 있는 a 태그 선택
             if not title_element:  # 제목 요소가 없는 경우
                 continue  # 건너뜁니다.
@@ -1675,8 +1612,6 @@ def Leading_checkNewArticle():
                 download_url=DOWNLOAD_URL,
                 article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
             
-
-
     # 메모리 정리
     del soupList, list
     gc.collect()
