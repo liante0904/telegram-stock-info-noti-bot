@@ -20,7 +20,6 @@ from typing import List
 from bs4 import BeautifulSoup
 
 from package import googledrive
-from models.FirmInfo import get_firm_info
 from utils.json_util import save_data_to_local_json  # import the function from json_util
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
@@ -100,7 +99,6 @@ def LS_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -147,7 +145,6 @@ def LS_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # except IndexError:
         # print('IndexError')
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
     # print('연속키:', NXT_KEY) # 주소
@@ -306,7 +303,6 @@ def ShinHanInvest_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -360,7 +356,6 @@ def ShinHanInvest_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     nNewArticleCnt = 0
@@ -487,7 +482,6 @@ def KB_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     
     
     # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -610,7 +604,6 @@ def NHQV_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     BOARD_NM            = listR[0]['rshPprSerCdNm']
    
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -701,7 +694,6 @@ def HANA_checkNewArticle():
 
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URLS):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += HANA_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
             time.sleep(0.5)
@@ -785,7 +777,6 @@ def Samsung_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -816,7 +807,6 @@ def Samsung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     except:
         return ''
 
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
 
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
@@ -893,7 +883,6 @@ def Sangsanginib_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -950,7 +939,6 @@ def Sangsanginib_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     nNewArticleCnt = 0
@@ -1114,7 +1102,6 @@ def Shinyoung_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # print(jres['rows'])
 
     # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1301,7 +1288,6 @@ def Miraeasset_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1334,7 +1320,6 @@ def Miraeasset_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
 
     # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     
     # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
@@ -1425,7 +1410,6 @@ def Kiwoom_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1462,7 +1446,6 @@ def Kiwoom_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
 
     # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1534,7 +1517,6 @@ def Hmsec_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1567,7 +1549,6 @@ def Hmsec_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
 
     # 연속키 데이터베이스화 작업
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     
     nNewArticleCnt = 0
@@ -1646,7 +1627,6 @@ def Koreainvestment_selenium_checkNewArticle():
     sendMessageText = ''
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         try:
             sendMessageText += Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
         except:
@@ -1684,7 +1664,6 @@ def Koreainvestment_selenium_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
     #     print("링크:", link.get_attribute("onclick"))
     
     # 연속키 데이터베이스화 작업
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
 
     nNewArticleCnt = 0
     sendMessageText = ''
@@ -1881,7 +1860,6 @@ def DAOL_checkNewArticle():
     
     sendMessageText = ''
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
         # URL GET
         try:
             sendMessageText += DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL)
@@ -1960,7 +1938,6 @@ def DAOL_parse(ARTICLE_BOARD_ORDER, TARGET_URL):
         print("상태 코드:", response.status_code)
     
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
    
     
     nNewArticleCnt = 0
@@ -2042,7 +2019,6 @@ def DownloadFile(URL, FILE_NAME):
     print("DownloadFile()",URL, FILE_NAME)
 
     BOARD_NM = ''
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
     CONVERT_URL = URL 
     for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
@@ -2105,7 +2081,6 @@ def DownloadFile_wget(URL, FILE_NAME):
 
 
     BOARD_NM = ''
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
     CONVERT_URL = URL 
     for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
@@ -2175,7 +2150,6 @@ def GetSendMessageText(ARTICLE_TITLE , ATTACH_URL):
 # : 게시판 이름 삭제
 def GetSendMessageTitle(): 
     
-    firm_info = get_firm_info(sec_firm_order = SEC_FIRM_ORDER, article_board_order = ARTICLE_BOARD_ORDER)
     # SendMessageTitle += "\n" + EMOJI_FIRE + msgFirmName + EMOJI_FIRE + "\n" 
     SendMessageTitle = "\n\n" + " ●"+  firm_info['firm_name'] + "\n" 
     
