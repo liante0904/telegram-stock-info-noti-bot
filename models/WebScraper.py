@@ -18,7 +18,7 @@ class WebScraper:
         :return: 적절한 헤더 딕셔너리
         """
         if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
-            # SEC_FIRM_ORDER가 0이거나 회사 정보가 없을 경우 기본 헤더 사용
+            # SEC_FIRM_ORDER가 0번에 맞는 헤더 설정
             return {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
             }
@@ -32,6 +32,31 @@ class WebScraper:
             return {
                 "User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G970F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36"
             }
+        elif self.firm_info.SEC_FIRM_ORDER == 4:
+            # 회사 4번에 맞는 헤더 설정 (예시)
+            return {
+                "Accept": "application/json, text/javascript, */*; q=0.01",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+                "Connection": "keep-alive",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36",
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        elif self.firm_info.SEC_FIRM_ORDER == 7:
+            # SEC_FIRM_ORDER가 7번일 때 Referer 추가
+            return {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Referer": "https://www.shinyoung.com/?page=10078&head=0"
+            }
+        else:
+            # 기본 Header
+            return {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+            }
+            # return {
+            #     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+            # }
         # elif self.firm_info.SEC_FIRM_ORDER == 8:
         #     # 회사 2번에 맞는 헤더 설정 (예시)
         #     return {
@@ -41,11 +66,7 @@ class WebScraper:
         #         "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
         #     }
         # ... 필요한 경우 다른 회사별 헤더 추가 가능
-        else:
-            # 기본적으로 SEC_FIRM_ORDER 값이 0이 아닌 경우의 기본 헤더 설정
-            return {
-                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
-            }
+
 
     def _get_css_selector(self):
         """
@@ -133,7 +154,7 @@ class WebScraper:
 
         return result
     
-    async def Get(self, params=None):
+    def Get(self, params=None):
         """
         GET 요청을 통해 데이터를 가져오는 메서드
         :param params: 요청 시 함께 보낼 파라미터 (기본값은 None)
@@ -160,11 +181,13 @@ class WebScraper:
         # result = self._parse_list_item(soup_list)
         return soup
 
-    async def GetJson(self, params=None):
+    def GetJson(self, params=None):
         response = requests.get(self.target_url, headers=self.headers, params=params)
+        print('='*40)
+        print('==================WebScraper GetJson==================' )
         return response.json()
     
-    async def Post(self, data=None):
+    def Post(self, data=None):
         """
         POST 요청을 통해 데이터를 가져오는 메서드
         :param data: 요청 시 보낼 데이터 (기본값은 None)
@@ -180,6 +203,9 @@ class WebScraper:
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
+        print('='*40)
+        print('==================WebScraper Post==================' )
+
         # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
         # css_selector = self._get_css_selector()
         # soup_list = soup.select(css_selector)
@@ -187,8 +213,10 @@ class WebScraper:
         # return soup_list
         return soup
 
-    def PostJson(self, params=None):
-        response = requests.post(self.target_url, headers=self.headers, params=params)
+    def PostJson(self, params=None, json=None):
+        response = requests.post(self.target_url, headers=self.headers, params=params, json=json)
+        print('='*40)
+        print('==================WebScraper PostJson==================' )
         return response.json()
     
     def parse_table(self, soup_list):
