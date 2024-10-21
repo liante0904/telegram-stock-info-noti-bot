@@ -207,43 +207,6 @@ label_names = [
      "내수"],          # ARTICLE_BOARD_ORDER 13,
 ]
 
-# 증권사 이름을 반환하는 함수
-def get_firm_name(sec_firm_order):
-    try:
-        return firm_names[sec_firm_order]
-    except IndexError:
-        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}")
-        return "Unknown Firm"
-
-# 게시판 이름을 반환하는 함수
-def get_board_name(sec_firm_order, article_board_order):
-    try:
-        return board_names[sec_firm_order][article_board_order]
-    except IndexError:
-        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}, ARTICLE_BOARD_ORDER: {article_board_order}")
-        return "Unknown Board"
-
-# 라벨 이름을 반환하는 함수
-def get_label_name(sec_firm_order, article_board_order):
-    try:
-        return label_names[sec_firm_order][article_board_order]
-    except IndexError:
-        print(f"Invalid SEC_FIRM_ORDER: {sec_firm_order}, ARTICLE_BOARD_ORDER: {article_board_order}")
-        return "Unknown Label"
-
-# 통합 정보를 반환하는 함수
-def get_firm_info(sec_firm_order, article_board_order):
-    firm_name = get_firm_name(sec_firm_order)
-    board_name = get_board_name(sec_firm_order, article_board_order)
-    label_name = get_label_name(sec_firm_order, article_board_order)
-    return {
-        "firm_name": firm_name,
-        "board_name": board_name,
-        "label_name": label_name
-    }
-
-
-
 class FirmInfo:
     def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
         """
@@ -294,18 +257,18 @@ class FirmInfo:
 if __name__ == "__main__":
     firm_info = FirmInfo()
     print(firm_info.get_state())
-    # 증권사 이름 출력
-    print(firm_info.get_firm_name())  # LS증권
+    # # 증권사 이름 출력
+    # print(firm_info.get_firm_name())  # LS증권
     
-    # 게시판 이름 출력
-    print(firm_info.get_board_name())  # 이슈브리프
+    # # 게시판 이름 출력
+    # print(firm_info.get_board_name())  # 이슈브리프
     
-    # 라벨 이름 출력
-    print(firm_info.get_label_name())  # ""
+    # # 라벨 이름 출력
+    # print(firm_info.get_label_name())  # ""
     
-    # 상태값 변경 후 출력
-    firm_info.set_sec_firm_order(1)
-    firm_info.set_article_board_order(2)
-    print(firm_info.get_firm_name())  # 신한증권
-    print(firm_info.get_board_name())  # 스몰캡
-    print(firm_info.get_label_name())  # ""
+    # # 상태값 변경 후 출력
+    # firm_info.set_sec_firm_order(1)
+    # firm_info.set_article_board_order(2)
+    # print(firm_info.get_firm_name())  # 신한증권
+    # print(firm_info.get_board_name())  # 스몰캡
+    # print(firm_info.get_label_name())  # ""
