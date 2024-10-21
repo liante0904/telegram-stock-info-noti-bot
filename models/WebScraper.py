@@ -54,7 +54,106 @@ class WebScraper:
             return {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
             }
- 
+            # return {
+            #     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.182 Safari/537.36"
+            # }
+        # elif self.firm_info.SEC_FIRM_ORDER == 8:
+        #     # 회사 2번에 맞는 헤더 설정 (예시)
+        #     return {
+        #         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        #         "Accept-Encoding": "gzip, deflate, br",
+        #         "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        #         "User-Agent": "Mozilla/5.0 (Linux; Android 13; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36"
+        #     }
+        # ... 필요한 경우 다른 회사별 헤더 추가 가능
+
+
+    def _get_css_selector(self):
+        """
+        SEC_FIRM_ORDER 값에 따라 CSS 선택자를 반환하는 메서드
+        :return: 적절한 CSS 선택자 문자열
+        """
+        if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
+            # 기본 CSS 선택자 (SEC_FIRM_ORDER가 0일 때)
+            return '#contents > table > tbody > tr'
+        elif self.firm_info.SEC_FIRM_ORDER == 1:
+            # 회사 1번에 대한 CSS 선택자
+            return '#mainContent > div > table > tbody > tr'
+        elif self.firm_info.SEC_FIRM_ORDER == 2:
+            # 회사 2번에 대한 CSS 선택자 (예시)
+            return '#customContent > section > div > table > tr'
+        # ... 필요한 경우 다른 회사별 CSS 선택자 추가 가능
+        elif self.firm_info.SEC_FIRM_ORDER == 16:
+            return '#sub-container > div.table-wrap > table > tbody > tr'
+        else:
+            pass
+            # 기본 CSS 선택자 (그 외의 경우)
+            # return '#defaultContent > div > table > tbody > tr'
+
+    def _parse_list_item(self, soup_list):
+        """
+        SEC_FIRM_ORDER 값에 따라 각기 다른 방식으로 리스트 데이터를 파싱하는 메서드
+        :param soup_list: BeautifulSoup으로 파싱된 리스트 데이터
+        :return: 파싱된 데이터를 포함하는 리스트
+        """
+        result = []
+
+        if self.firm_info.SEC_FIRM_ORDER == 0:
+            # SEC_FIRM_ORDER가 0일 때 처리 (제공된 코드 기반)
+            for item in soup_list:
+                date = item.select('td')[3].get_text()
+                list_links = item.select('a')
+
+                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list_links[0]['href'].replace("amp;", "")
+                LIST_ARTICLE_TITLE = list_links[0].get_text()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]") + 1:].strip()
+                POST_DATE = date.strip()
+
+                result.append({
+                    'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+                    'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+                    'POST_DATE': POST_DATE
+                })
+
+        elif self.firm_info.SEC_FIRM_ORDER == 1:
+            pass
+            # # 회사 1번에 대한 파싱 로직 (추가적인 파싱 로직 필요)
+            # for item in soup_list:
+            #     # 예시: 리스트의 첫 번째 링크와 날짜 가져오기
+            #     date = item.select('td')[2].get_text()  # 다른 칸의 데이터를 가져올 수도 있음
+            #     list_links = item.select('a')
+
+            #     LIST_ARTICLE_URL = 'https://www.company1.com' + list_links[0]['href']
+            #     LIST_ARTICLE_TITLE = list_links[0].get_text().strip()
+            #     POST_DATE = date.strip()
+
+            #     result.append({
+            #         'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+            #         'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+            #         'POST_DATE': POST_DATE
+            #     })
+
+        elif self.firm_info.SEC_FIRM_ORDER == 2:
+            # 회사 2번에 대한 파싱 로직 (추가적인 파싱 로직 필요)
+            for item in soup_list:
+                # 예시: 리스트의 제목과 링크 가져오기
+                list_links = item.select('a')
+                date = item.select('td')[1].get_text()
+
+                LIST_ARTICLE_URL = 'https://www.company2.com' + list_links[0]['href']
+                LIST_ARTICLE_TITLE = list_links[0].get_text().strip()
+                POST_DATE = date.strip()
+
+                result.append({
+                    'LIST_ARTICLE_URL': LIST_ARTICLE_URL,
+                    'LIST_ARTICLE_TITLE': LIST_ARTICLE_TITLE,
+                    'POST_DATE': POST_DATE
+                })
+        else: return
+        # 필요한 경우 다른 SEC_FIRM_ORDER에 대한 로직 추가 가능
+
+        return result
+    
     def Get(self, params=None):
         """
         GET 요청을 통해 데이터를 가져오는 메서드
@@ -80,6 +179,8 @@ class WebScraper:
         response = requests.get(self.target_url, headers=self.headers, params=params)
         print('='*40)
         print('==================WebScraper GetJson==================' )
+        print('='*40)
+        print('==================WebScraper GetJson==================' )
         return response.json()
     
     def Post(self, data=None):
@@ -97,6 +198,9 @@ class WebScraper:
 
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
+
+        print('='*40)
+        print('==================WebScraper Post==================' )
 
         print('='*40)
         print('==================WebScraper Post==================' )
