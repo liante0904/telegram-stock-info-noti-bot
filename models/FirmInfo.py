@@ -207,17 +207,6 @@ label_names = [
      "내수"],          # ARTICLE_BOARD_ORDER 13,
 ]
 
-# 통합 정보를 반환하는 함수
-def get_firm_info(sec_firm_order, article_board_order):
-    firm_name = get_firm_name(sec_firm_order)
-    board_name = get_board_name(sec_firm_order, article_board_order)
-    label_name = get_label_name(sec_firm_order, article_board_order)
-    return {
-        "firm_name": firm_name,
-        "board_name": board_name,
-        "label_name": label_name
-    }
-
 class FirmInfo:
     def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
         """
