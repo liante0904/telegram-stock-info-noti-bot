@@ -598,7 +598,6 @@ def Samsung_checkNewArticle():
 
     # 메모리 정리
     del soup
-    del response
     gc.collect()
 
     return nNewArticleCnt
