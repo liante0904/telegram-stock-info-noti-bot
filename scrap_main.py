@@ -128,7 +128,6 @@ def LS_checkNewArticle():
             
     # 메모리 정리
     del soup
-    # del response
     gc.collect()
     return nNewArticleCnt
 
@@ -488,7 +487,6 @@ def KB_checkNewArticle():
     
     # 메모리 정리
     del soupList
-    # del response
     gc.collect()
 
     return nNewArticleCnt
@@ -819,7 +817,6 @@ def Shinyoung_checkNewArticle():
 
     # 메모리 정리
     del soupList
-    del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1021,7 +1018,6 @@ def Miraeasset_checkNewArticle():
 
     # 메모리 정리
     del soup
-    # del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1098,7 +1094,6 @@ def Kiwoom_checkNewArticle():
 
     # 메모리 정리
     del soupList
-    del response
     gc.collect()
 
     return nNewArticleCnt
@@ -1258,8 +1253,6 @@ def Koreainvestment_selenium_checkNewArticle():
         driver.quit()
         
     # 메모리 정리
-    # del soup
-    # del response
     gc.collect()
 
     return nNewArticleCnt
