@@ -896,8 +896,7 @@ def Shinyoung_detail(SEQ, BBSNO):
         'SEQ': SEQ,
         'BBSNO': BBSNO
     }
-    # print(data)
-    # 추가할 request header
+    
     headers = {
         "Accept": "text/plain, */*; q=0.01",
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -924,25 +923,12 @@ def Shinyoung_detail(SEQ, BBSNO):
     # 응답의 내용 확인
     if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
-        # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
     jres = json.loads(response.text)
     
-    # print('************\n',jres)
-    # # 기본 URL과 쿼리 매개변수 딕셔너리
-    # https://www.shinyoung.com/files/20240216/4b64adc924e8e.pdf
     base_url = 'https://www.shinyoung.com/files/'
-    # params = {
-    #     'cmsCd': jres['CMS_CD'],
-    #     'ntNo': jres['NT_NO'],
-    #     'fNo': jres['FNO'], # PDF
-    #     'fNm': jres['FNM']
-    # }
+
     url = base_url + jres['FILEINFO']['FILEPATH']
-    # if params:
-    #     print('urlparse(params)', urlparse.urlencode(params))
-    #     encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
-    #     url += '?' + encoded_params
 
     # print('*******************완성된 URL',url)
     return url
