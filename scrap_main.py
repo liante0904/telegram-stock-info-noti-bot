@@ -896,8 +896,7 @@ def Shinyoung_detail(SEQ, BBSNO):
         'SEQ': SEQ,
         'BBSNO': BBSNO
     }
-    # print(data)
-    # 추가할 request header
+    
     headers = {
         "Accept": "text/plain, */*; q=0.01",
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -924,25 +923,12 @@ def Shinyoung_detail(SEQ, BBSNO):
     # 응답의 내용 확인
     if response.status_code != 200:
         print("요청에 실패하였습니다. 상태 코드:", response.status_code)
-        # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
     jres = json.loads(response.text)
     
-    # print('************\n',jres)
-    # # 기본 URL과 쿼리 매개변수 딕셔너리
-    # https://www.shinyoung.com/files/20240216/4b64adc924e8e.pdf
     base_url = 'https://www.shinyoung.com/files/'
-    # params = {
-    #     'cmsCd': jres['CMS_CD'],
-    #     'ntNo': jres['NT_NO'],
-    #     'fNo': jres['FNO'], # PDF
-    #     'fNm': jres['FNM']
-    # }
+
     url = base_url + jres['FILEINFO']['FILEPATH']
-    # if params:
-    #     print('urlparse(params)', urlparse.urlencode(params))
-    #     encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
-    #     url += '?' + encoded_params
 
     # print('*******************완성된 URL',url)
     return url
@@ -1612,53 +1598,47 @@ def Leading_checkNewArticle():
     return nNewArticleCnt
 
 
-def main():
-    print('===================scrap_send===============')
-    # 사용자의 홈 디렉토리 가져오기
+# 로그 디렉토리 설정 함수
+def setup_log_directory():
     HOME_PATH = os.path.expanduser("~")
+    LOG_PATH = os.path.join(HOME_PATH, "log", GetCurrentDate('YYYYMMDD'))
+    os.makedirs(LOG_PATH, exist_ok=True)
+    return LOG_PATH
 
-    # log 디렉토리 경로
-    LOG_PATH = os.path.join(HOME_PATH, "log")
-
-    # log 디렉토리가 존재하지 않으면 생성
-    if not os.path.exists(LOG_PATH):
-        os.makedirs(LOG_PATH)
-
-    # log 디렉토리 경로
-    LOG_PATH = os.path.join(LOG_PATH, GetCurrentDate('YYYYMMDD'))
-
-    # daily log 디렉토리가 존재하지 않으면 생성
-    if not os.path.exists(LOG_PATH):
-        os.makedirs(LOG_PATH)
-
+def get_script_name():
     # 현재 스크립트의 이름 가져오기
     script_filename = os.path.basename(__file__)
     script_name = script_filename.split('.')
     script_name = script_name[0]
     print('script_filename', script_filename)
-        
+    return script_name
 
-    # # requests 라이브러리의 로깅을 활성화
-    # logging.getLogger("urllib3").setLevel(logging.DEBUG)
-    # # log 파일명
-    # LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
-    # print('__file__', __file__, LOG_FILENAME)
-    # # log 전체경로
-    # LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
-    # print('LOG_FULLFILENAME',LOG_FULLFILENAME)
-    # logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    # print("LOG_FULLFILENAME",LOG_FULLFILENAME)
-    # logging.debug('이것은 디버그 메시지입니다.')
+def setup_debug_directory():
+    LOG_PATH = setup_log_directory()
+    script_name = get_script_name()
+    # requests 라이브러리의 로깅을 활성화
+    logging.getLogger("urllib3").setLevel(logging.DEBUG)
+    # log 파일명
+    LOG_FILENAME =  GetCurrentDate('YYYYMMDD')+ '_' + script_name + ".dbg"
+    print('__file__', __file__, LOG_FILENAME)
+    # log 전체경로
+    LOG_FULLFILENAME = os.path.join(LOG_PATH, LOG_FILENAME)
+    print('LOG_FULLFILENAME',LOG_FULLFILENAME)
+    logging.basicConfig(filename=LOG_FULLFILENAME, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    print("LOG_FULLFILENAME",LOG_FULLFILENAME)
+    logging.debug('이것은 디버그 메시지입니다.')
+    
+def main():
+    print('===================scrap_send===============')
+
+    # 로그 디렉토리 설정
+    setup_log_directory()
+
+    # Set Debug
+    # setup_debug_directory()
     
     insert_data()
 
-    
-    directory = './json'
-    filename = os.path.join(directory, 'data_main_daily_send.json')
-
-    # filter_data_by_save_time(filename)
-    
-    
     # check functions 리스트
     check_functions = [
         LS_checkNewArticle,
