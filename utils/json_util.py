@@ -317,7 +317,7 @@ def filter_news_by_save_time(filename):
     today = datetime.now()
 
     # 1주일 이내 날짜 계산
-    one_week_ago = today - timedelta(days=7)
+    one_week_ago = today - timedelta(days=1)
 
     # 뉴스 리스트 필터링
     filtered_news_list = [
