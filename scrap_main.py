@@ -21,7 +21,7 @@ from bs4 import BeautifulSoup
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
 from utils.json_util import save_data_to_local_json, filter_data_by_save_time
-from package.json_to_sqlite import insert_data
+from package.json_to_sqlite import insert_json_data_list
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
 # selenium
@@ -36,6 +36,7 @@ import scrap_upload_pdf
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
+json_data_list = []
 
 # 연속키용 상수
 FIRST_ARTICLE_INDEX = 0
@@ -116,15 +117,17 @@ def LS_checkNewArticle():
                 DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
                 LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                article_url=DOWNLOAD_URL,
-                attach_url=DOWNLOAD_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ARTICLE_URL":DOWNLOAD_URL,
+                "ATTACH_URL":DOWNLOAD_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
             
     # 메모리 정리
     del soup
@@ -252,14 +255,16 @@ def ShinHanInvest_checkNewArticle():
                 LIST_ARTICLE_URL = list['f3']
             
             DOWNLOAD_URL = LIST_ARTICLE_URL
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
     
     # 메모리 정리
     del scraper
@@ -341,14 +346,16 @@ def NHQV_checkNewArticle():
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
         LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
         DOWNLOAD_URL    = LIST_ARTICLE_URL
-        if save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info.get_firm_name(),
-            attach_url=LIST_ARTICLE_URL,
-            download_url=DOWNLOAD_URL,
-            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+        json_data_list.append({
+            "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+            "FIRM_NM":firm_info.get_firm_name(),
+            "ATTACH_URL":LIST_ARTICLE_URL,
+            "DOWNLOAD_URL": DOWNLOAD_URL,
+            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+            "SAVE_TIME": datetime.now().isoformat()
+        })
+            
 
     # 메모리 정리
     del response
@@ -411,14 +418,16 @@ def HANA_checkNewArticle():
             LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
             LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
             DOWNLOAD_URL    = LIST_ARTICLE_URL
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
                 
     # 메모리 정리
     del soup
@@ -476,14 +485,16 @@ def KB_checkNewArticle():
         LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
         DOWNLOAD_URL     = LIST_ARTICLE_URL
  
-        if save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info.get_firm_name(),
-            attach_url=LIST_ARTICLE_URL,
-            download_url=DOWNLOAD_URL,
-            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+        json_data_list.append({
+            "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+            "FIRM_NM":firm_info.get_firm_name(),
+            "ATTACH_URL":LIST_ARTICLE_URL,
+            "DOWNLOAD_URL": DOWNLOAD_URL,
+            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+            "SAVE_TIME": datetime.now().isoformat()
+        })
+            
     
     # 메모리 정리
     del soupList
@@ -585,14 +596,16 @@ def Samsung_checkNewArticle():
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")")+1:len(LIST_ARTICLE_TITLE)]
             DOWNLOAD_URL       = LIST_ARTICLE_URL
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soup
@@ -694,14 +707,16 @@ def Sangsanginib_checkNewArticle():
             LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cmsCd[ARTICLE_BOARD_ORDER]}/{cmsCd[ARTICLE_BOARD_ORDER]}_{list['NT_NO']}_1.pdf"
             LIST_ARTICLE_TITLE = list['TITLE']
             DOWNLOAD_URL = LIST_ARTICLE_URL
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soupList
@@ -806,14 +821,16 @@ def Shinyoung_checkNewArticle():
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
         DOWNLOAD_URL = LIST_ARTICLE_URL
-        if save_data_to_local_json(
-            filename='./json/data_main_daily_send.json',
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER,
-            firm_nm=firm_info.get_firm_name(),
-            attach_url=LIST_ARTICLE_URL,
-            download_url=DOWNLOAD_URL,
-            article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+        json_data_list.append({
+            "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+            "FIRM_NM":firm_info.get_firm_name(),
+            "ATTACH_URL":LIST_ARTICLE_URL,
+            "DOWNLOAD_URL": DOWNLOAD_URL,
+            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+            "SAVE_TIME": datetime.now().isoformat()
+        })
+            
 
     # 메모리 정리
     del soupList
@@ -993,14 +1010,16 @@ def Miraeasset_checkNewArticle():
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
                 DOWNLOAD_URL = LIST_ARTICLE_URL
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soup
@@ -1069,14 +1088,16 @@ def Kiwoom_checkNewArticle():
 
             DOWNLOAD_URL = LIST_ARTICLE_URL
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soupList
@@ -1146,15 +1167,17 @@ def Hmsec_checkNewArticle():
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=DOWNLOAD_URL,
-                article_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":DOWNLOAD_URL,
+                "ARTICLE_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soupList
@@ -1216,14 +1239,16 @@ def Koreainvestment_selenium_checkNewArticle():
             LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
             DOWNLOAD_URL = LIST_ARTICLE_URL
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
 
 
@@ -1467,14 +1492,16 @@ def DAOL_checkNewArticle():
             # ATTACH_URL = LIST_ARTICLE_URL
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del soup, soupList
@@ -1524,14 +1551,16 @@ def TOSSinvest_checkNewArticle():
             print(LIST_ARTICLE_TITLE)
             print(LIST_ARTICLE_URL)
 
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
 
     # 메모리 정리
     del jres, soupList
@@ -1582,14 +1611,16 @@ def Leading_checkNewArticle():
             LIST_ARTICLE_TITLE = title
             LIST_ARTICLE_URL = attachment_link
             DOWNLOAD_URL     = attachment_link
-            if save_data_to_local_json(
-                filename='./json/data_main_daily_send.json',
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER,
-                firm_nm=firm_info.get_firm_name(),
-                attach_url=LIST_ARTICLE_URL,
-                download_url=DOWNLOAD_URL,
-                article_title=LIST_ARTICLE_TITLE): nNewArticleCnt += 1 # 새로운 게시글 수
+            json_data_list.append({
+                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "FIRM_NM":firm_info.get_firm_name(),
+                "ATTACH_URL":LIST_ARTICLE_URL,
+                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+            
             
     # 메모리 정리
     del soupList, list
@@ -1628,17 +1659,19 @@ def setup_debug_directory():
     print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     logging.debug('이것은 디버그 메시지입니다.')
     
+# json_data_list    
 def main():
     print('===================scrap_send===============')
-
+    asyncio.run(scrap_send_main.main())    
     # 로그 디렉토리 설정
     setup_log_directory()
 
     # Set Debug
     # setup_debug_directory()
     
-    insert_data()
+    
 
+    # check functions 리스트
     # check functions 리스트
     check_functions = [
         LS_checkNewArticle,
@@ -1647,7 +1680,7 @@ def main():
         HANA_checkNewArticle,
         KB_checkNewArticle,
         Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle, # 주석 처리된 부분
+        Sangsanginib_checkNewArticle,
         Shinyoung_checkNewArticle,
         Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
@@ -1657,22 +1690,36 @@ def main():
         TOSSinvest_checkNewArticle,
         Leading_checkNewArticle,
     ]
+
+    total_data = []  # 전체 데이터를 저장할 리스트
     totalCnt = 0
+
     for check_function in check_functions:
         print(f"{check_function.__name__} => 새 게시글 정보 확인")
-        cnt = check_function() 
-        totalCnt += cnt
+        
+        # json_data_list = check_function()  # 각 함수가 반환한 json_data_list
+        check_function()
+        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+            print('=' * 40)
+            print(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+            total_data.extend(json_data_list)  # 전체 리스트에 추가
+            totalCnt += len(json_data_list)
+        
         time.sleep(1)
-        if cnt:
-            print(f"{check_function.__name__} => 새 게시글 Insert 성공 ==> {cnt}개")
-            insert_data()
-            
-        else:
-            print(f"{check_function.__name__} => 새 게시글 Insert 실패 혹은 없음 ?")
 
-    asyncio.run(scrap_send_main.main())
+    print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
+    
+    if total_data:
+        inserted_count = insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+        print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
+        print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
+        if inserted_count:
+            asyncio.run(scrap_send_main.main())
+            asyncio.run(scrap_upload_pdf.main())
 
-    asyncio.run(scrap_upload_pdf.main())
+    else:
+        print("새로운 게시글이 스크랩 실패.")
 
+        
 if __name__ == "__main__":
     main()
