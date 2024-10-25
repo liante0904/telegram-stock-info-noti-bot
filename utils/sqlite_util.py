@@ -76,8 +76,22 @@ async def convert_sql_to_telegram_messages(fetched_rows):
 
         # 게시글 제목(굵게)
         sendMessageText += "*" + row['ARTICLE_TITLE'].replace("_", " ").replace("*", "") + "*" + "\n"
-        # 원문 링크
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + row['ARTICLE_URL'] + ")" + "\n"
+
+        # URL 우선순위 설정
+        if row.get('ATTACH_URL'):
+            link_url = row['ATTACH_URL']
+        elif row.get('DOWNLOAD_URL'):
+            link_url = row['DOWNLOAD_URL']
+        elif row.get('ARTICLE_URL'):
+            link_url = row['ARTICLE_URL']
+        else:
+            link_url = "링크없음"
+
+        # 원문 링크 추가
+        if link_url == "링크없음":
+            sendMessageText += "링크없음\n"
+        else:
+            sendMessageText += EMOJI_PICK + "[링크]" + "(" + link_url + ")" + "\n"
 
         # 메시지가 3500자를 넘지 않도록 쌓음
         if len(message_chunk) + len(sendMessageText) > message_limit:
