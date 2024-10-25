@@ -1,4 +1,5 @@
 import requests
+import asyncio
 from bs4 import BeautifulSoup
 
 from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
@@ -100,7 +101,7 @@ async def main():
     sendMessageText = ''
 
     print("HankyungConsen_checkNewArticle()=> 새 게시글 정보 확인") # 12
-    HankyungConsen_checkNewArticle()
+    await HankyungConsen_checkNewArticle()
 
     lists = get_unsent_main_ch_data_to_local_json(JSON_FILE_NAME)
     if lists:
@@ -111,4 +112,4 @@ async def main():
         update_main_ch_send_yn_to_y(JSON_FILE_NAME)
 
 if __name__ == "__main__":
-	main()
+	asyncio.run(main())
