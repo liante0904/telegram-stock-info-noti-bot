@@ -1,9 +1,7 @@
 # -*- coding:utf-8 -*- 
 import os
 import gc
-import sys
 import logging
-
 import requests
 import time
 import json
@@ -1662,16 +1660,13 @@ def setup_debug_directory():
 # json_data_list    
 def main():
     print('===================scrap_send===============')
-    asyncio.run(scrap_send_main.main())    
+    
     # 로그 디렉토리 설정
     setup_log_directory()
 
     # Set Debug
     # setup_debug_directory()
-    
-    
 
-    # check functions 리스트
     # check functions 리스트
     check_functions = [
         LS_checkNewArticle,

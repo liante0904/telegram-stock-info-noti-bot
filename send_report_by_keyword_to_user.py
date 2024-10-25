@@ -64,25 +64,6 @@ def update_send_user(data, user_id):
             item['SEND_USER'] = [user_id]
     return data
 
-# # 경로 설정
-# base_path = './json'
-# main_file = os.path.join(base_path, 'data_main_daily_send.json')
-# other_files = [
-#     os.path.join(base_path, 'hankyungconsen_research.json'),
-#     os.path.join(base_path, 'naver_research.json')
-# ]
-
-# # JSON 데이터 읽기
-# main_data = read_json_file(main_file)
-# other_data_sources = [read_json_file(filepath) for filepath in other_files]
-
-# # 오늘 날짜의 데이터만 필터링
-# main_data_today = filter_today_data(main_data)
-# other_data_sources_today = [filter_today_data(data) for data in other_data_sources]
-
-# # 중복 데이터 제거 및 병합
-# merged_data = remove_duplicates(main_data_today, *other_data_sources_today)
-
 async def main():
     # 상위 폴더 기준 파일 경로 설정
     relative_path = 'telegram-stock-info-bot/report_alert_keyword.json'
@@ -114,36 +95,5 @@ async def main():
                 sendMessageText=message)
                 update_data(keyword=keyword, user_ids= user_id_str)
 
-        # # 키워드로 필터링
-        # keyword_filtered_data = filter_by_keyword(merged_data, keyword)
-
-        # # 필터링 결과 출력(SEND_USER 필터 전)
-        # print('======필터링 결과 출력(SEND_USER 필터 전)======')
-        # print(keyword_filtered_data)
-
-        # # SEND_USER로 필터링
-        # send_user_filtered_data = filter_by_send_user(keyword_filtered_data, user_id_str)
-
-        # # 필터링 결과 출력(SEND_USER 필터 후)
-        # print('======필터링 결과 출력(SEND_USER 필터 후)======')
-        # print(send_user_filtered_data)
-
-        # # 전송할 메시지 생성 및 발송
-        # if send_user_filtered_data:
-        #     message = f"=====알림 키워드 : {entry['keyword']}=====\n\n"
-        #     message += format_message(send_user_filtered_data)
-        #     print('여기==>', message)  # 메시지 발송 전에 출력 (디버깅 용도)
-        #     asyncio.run(sendMessage(message, user_id_str))
-            
-        #     # 발송된 항목에 대해서만 SEND_USER 업데이트
-        #     for item in send_user_filtered_data:
-        #         merged_data = update_send_user(merged_data, user_id_str)
-
-        #     # 기존 main_data를 유지하면서 merged_data에서 SEND_USER 정보만 업데이트
-        #     for item in main_data:
-        #         for updated_item in merged_data:
-        #             if item['FIRM_NM'] == updated_item['FIRM_NM']:
-        #                 if 'SEND_USER' in updated_item:
-        #                     item['SEND_USER'] = updated_item['SEND_USER']
 if __name__ == '__main__':
     asyncio.run(main())
