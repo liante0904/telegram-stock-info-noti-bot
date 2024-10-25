@@ -196,6 +196,49 @@ def insert_data():
     print("Data inserted successfully.")
     close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
 
+def insert_json_data_list(json_data_list, table_name):
+    """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 실패 건수를 출력합니다."""
+    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
+    
+    # 삽입 전 총 행 수를 저장합니다.
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+    initial_row_count = cursor.fetchone()[0]
+
+    # 데이터 삽입 시도
+    for entry in json_data_list:
+        cursor.execute(f'''
+            INSERT OR IGNORE INTO {table_name} (
+                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
+                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            entry["SEC_FIRM_ORDER"],
+            entry["ARTICLE_BOARD_ORDER"],
+            entry["FIRM_NM"],
+            entry["ATTACH_URL"],
+            entry["ARTICLE_TITLE"],
+            entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
+            entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
+            entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+            entry["SAVE_TIME"]
+        ))
+
+    # 커밋하고 삽입 후 총 행 수를 저장합니다.
+    conn.commit()
+    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+    final_row_count = cursor.fetchone()[0]
+
+    # 삽입된 행의 수와 실패 건수를 계산하여 출력합니다.
+    inserted_count = final_row_count - initial_row_count
+    failed_count = len(json_data_list) - inserted_count
+
+    print(f"Data inserted successfully: {inserted_count} rows.")
+    print(f"Data insert failed due to duplicates: {failed_count} rows.")
+    
+    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
+    return inserted_count
+
+
 def select_data(table=None):
     """특정 테이블 또는 모든 테이블의 데이터를 조회합니다."""
     if table:
@@ -338,7 +381,8 @@ async def daily_select_data(date_str=None, type=None):
         ARTICLE_URL,
         ATTACH_URL, 
         SAVE_TIME, 
-        SEND_USER 
+        SEND_USER,
+        MAIN_CH_SEND_YN
     FROM 
         data_main_daily_send 
     WHERE 
