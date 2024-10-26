@@ -1,6 +1,7 @@
 import os
 import sys
 import asyncio
+import re
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from httplib2 import Http
@@ -57,9 +58,13 @@ class GoogleDrive:
         
         # 비슷한 이름의 파일이 이미 존재하는지 확인
         file_name_without_date = self.strip_date_from_filename(file_name)
-        existing_file_id = self.file_exists(file_name_without_date)
+        
+        # 특수 문자 제거
+        sanitized_name = re.sub(r"[^\w\s]", "", file_name_without_date)
+        
+        existing_file_id = self.file_exists(sanitized_name)
         if existing_file_id:
-            print(f"File with similar name '{file_name_without_date}' already exists in folder ID '{self.folder_id}'. Upload canceled.")
+            print(f"File with similar name '{sanitized_name}' already exists in folder ID '{self.folder_id}'. Upload canceled.")
             return None
 
         # 파일 업로드
@@ -77,6 +82,7 @@ class GoogleDrive:
         else:
             print('Upload failed.')
             return None
+
 
 async def main(action, file_name):
     google_drive = GoogleDrive()
