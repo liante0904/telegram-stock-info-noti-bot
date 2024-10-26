@@ -18,7 +18,8 @@ firm_names = [
     "한국투자증권",  # 13
     "다올투자증권",   # 14
     "토스증권",        # 15
-    "리딩투자증권"        # 16
+    "리딩투자증권",        # 16
+    "대신증권"        # 17
 ]
 
 # 게시판 이름을 담은 2차원 배열
@@ -113,6 +114,8 @@ board_names = [
     
     # SEC_FIRM_ORDER 16
     ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
+    # SEC_FIRM_ORDER 17
+    ["리서치리포트"] # ARTICLE_BOARD_ORDER 0
     
 ]
 
@@ -205,6 +208,16 @@ label_names = [
      "산업재",         # ARTICLE_BOARD_ORDER 11,
      "금융",           # ARTICLE_BOARD_ORDER 12,
      "내수"],          # ARTICLE_BOARD_ORDER 13,
+
+    # SEC_FIRM_ORDER 14
+    [""],              # ARTICLE_BOARD_ORDER 0,
+
+    # SEC_FIRM_ORDER 15
+    [""],              # ARTICLE_BOARD_ORDER 0,
+    # SEC_FIRM_ORDER 16
+    [""],              # ARTICLE_BOARD_ORDER 0,
+    # SEC_FIRM_ORDER 17
+    [""]              # ARTICLE_BOARD_ORDER 0,
 ]
 
 class FirmInfo:
