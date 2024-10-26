@@ -11,6 +11,7 @@ import urllib.request
 import base64
 import asyncio
 import aiohttp
+import aiohttp
 from datetime import datetime, timedelta, date
 
 from urllib3.util.retry import Retry
@@ -1727,6 +1728,7 @@ async def Daeshin_checkNewArticle():
         
         # 모든 태스크 완료 대기
         await asyncio.gather(*tasks)
+        return json_data_list
 
 # 로그 디렉토리 설정 함수
 def setup_log_directory():
@@ -1770,18 +1772,18 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        LS_checkNewArticle,
+        # LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
         NHQV_checkNewArticle,
-        HANA_checkNewArticle,
-        KB_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle,
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
-        Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
-        Koreainvestment_selenium_checkNewArticle,
+        # HANA_checkNewArticle,
+        # KB_checkNewArticle,
+        # Samsung_checkNewArticle,
+        # Sangsanginib_checkNewArticle,
+        # Shinyoung_checkNewArticle,
+        # Miraeasset_checkNewArticle,
+        # Hmsec_checkNewArticle,
+        # Kiwoom_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle,
         DAOL_checkNewArticle,
         TOSSinvest_checkNewArticle,
         Leading_checkNewArticle,
@@ -1806,6 +1808,16 @@ def main():
             totalCnt += len(json_data_list)
         
         time.sleep(1)
+
+    # 비동기 함수 실행
+    for async_check_function in async_check_functions:
+        print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
+        json_data_list = asyncio.run(async_check_function())  # 비동기 함수 실행
+        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+            print('=' * 40)
+            print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+            total_data.extend(json_data_list)  # 전체 리스트에 추가
+            totalCnt += len(json_data_list)
 
     # 비동기 함수 실행
     for async_check_function in async_check_functions:
