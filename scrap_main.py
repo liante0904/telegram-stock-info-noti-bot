@@ -19,7 +19,6 @@ from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
-from utils.json_util import save_data_to_local_json, filter_data_by_save_time
 from package.json_to_sqlite import insert_json_data_list
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
@@ -95,7 +94,7 @@ def LS_checkNewArticle():
             LIST_ARTICLE_TITLE = list[0].get_text()
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
             POST_DATE = str_date.strip()
-            # print(POST_DATE)
+            # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
             try:
@@ -103,14 +102,17 @@ def LS_checkNewArticle():
             except ValueError as e:
                 print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
                 continue
-
+            
+            REG_DT = post_date_obj.strftime('%Y%m%d')
+            # print('post_date_obj',post_date_obj)
+            # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
             if post_date_obj < seven_days_ago:
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
                 break
 
             item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
-            print(item)
+            # print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
                 DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
@@ -120,6 +122,7 @@ def LS_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                "REG_DT":REG_DT,
                 "ARTICLE_URL":DOWNLOAD_URL,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
@@ -134,11 +137,8 @@ def LS_checkNewArticle():
     return nNewArticleCnt
 
 def LS_detail(TARGET_URL, str_date, firm_info):
-    
     TARGET_URL = TARGET_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
-    
     item = {}  # 빈 딕셔너리로 초기화
-    
     time.sleep(0.1)
 
     scraper = WebScraper(TARGET_URL, firm_info)
@@ -149,7 +149,6 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     # 게시글 제목
     trs = soup.select('tr')
     item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
-    
     
     # 첨부파일 이름
     item['LIST_ARTICLE_FILE_NAME'] = soup.select_one('.attach > a').get_text()
@@ -173,13 +172,11 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     # URL 인코딩 => 사파리 한글처리 
     item['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
     
-    
     # item['LIST_ARTICLE_URL'] = ATTACH_URL
     # item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
     # print(item)
     # print('*********확인용**************')
-
     return item
     
 
@@ -229,7 +226,6 @@ def ShinHanInvest_checkNewArticle():
             f"&param1={param1}&param2={param2}&param3={param3}&param4={param4}&param5={param5}"
             f"&param6={param6}&param7={param7}&type={type_param}")
 
-
         scraper = WebScraper(TARGET_URL, firm_info)
         
         # HTML parse
@@ -243,6 +239,8 @@ def ShinHanInvest_checkNewArticle():
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print(list)
 
+            REG_DT = list['f1']
+            REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
 
@@ -258,13 +256,13 @@ def ShinHanInvest_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
-    
     # 메모리 정리
     del scraper
     gc.collect()
@@ -302,7 +300,7 @@ def NHQV_checkNewArticle():
         try:
             response = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
-                                                        'Accept':'application/json, text/javascript, */*; q=0.01'},
+                                             'Accept':'application/json, text/javascript, */*; q=0.01'},
                                     data=payload)
             # print(response.text)
             jres = json.loads(response.text)
@@ -341,6 +339,9 @@ def NHQV_checkNewArticle():
     for list in soupList:
         # print(list)
 
+        REG_DT              = list['rshPprDruDtNm']
+        REG_DT              = re.sub(r"[-./]", "", REG_DT)
+        WRITER              = list['rshPprDruEmpFnm']
         BOARD_NM            = list['rshPprSerCdNm']
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
         LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
@@ -349,13 +350,14 @@ def NHQV_checkNewArticle():
             "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
             "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
             "FIRM_NM":firm_info.get_firm_name(),
+            "REG_DT":REG_DT,
+            "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
             "DOWNLOAD_URL": DOWNLOAD_URL,
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()
         })
             
-
     # 메모리 정리
     del response
     gc.collect()
@@ -395,7 +397,6 @@ def HANA_checkNewArticle():
         'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=3'
     ]
 
-
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
@@ -421,6 +422,7 @@ def HANA_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -477,17 +479,19 @@ def KB_checkNewArticle():
     for list in soupList:
         # print(list)
 
+        REG_DT              = re.sub(r"[-./]", "", list['publicDate'])
+        WRITER              = list['analystNm']
         LIST_ARTICLE_TITLE = list['docTitleSub']
         if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
         else: LIST_ARTICLE_TITLE = list['docTitleSub']
-        LIST_ARTICLE_URL = list['urlLink'].replace("wInfo=(wInfo)&", "")
-        LIST_ARTICLE_URL = KB_decode_url(LIST_ARTICLE_URL)
+        LIST_ARTICLE_URL = f"http://rdata.kbsec.com/pdf_data/{list['documentid']}.pdf"
         DOWNLOAD_URL     = LIST_ARTICLE_URL
- 
         json_data_list.append({
             "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
             "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
             "FIRM_NM":firm_info.get_firm_name(),
+            "REG_DT":REG_DT,
+            "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
             "DOWNLOAD_URL": DOWNLOAD_URL,
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -567,7 +571,7 @@ def Samsung_checkNewArticle():
         soup = scraper.Get()
 
         soupList = soup.select('#content > section.bbsLstWrap > ul > li')
-
+        # print(soupList)
         try:
             # ARTICLE_BOARD_NAME =  BOARD_NM 
             a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
@@ -599,6 +603,7 @@ def Samsung_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -703,6 +708,7 @@ def Sangsanginib_checkNewArticle():
             
             #  URL 예제 : https://www.sangsanginib.com/_upload/attFile/CM0079/CM0079_3680_1.pdf
             # LIST_ARTICLE_URL = Sangsanginib_detail(NT_NO=list['NT_NO'], CMS_CD=cmsCd[ARTICLE_BOARD_ORDER])
+            REG_DT              = re.sub(r"[-./]", "", list['REGDT'])
             LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cmsCd[ARTICLE_BOARD_ORDER]}/{cmsCd[ARTICLE_BOARD_ORDER]}_{list['NT_NO']}_1.pdf"
             LIST_ARTICLE_TITLE = list['TITLE']
             DOWNLOAD_URL = LIST_ARTICLE_URL
@@ -710,6 +716,7 @@ def Sangsanginib_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -756,9 +763,8 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         print("Failed to fetch data.")
     
     jres = json.loads(response.text)
-    # print('##############11111',jres)
     jres = jres['file'][0] #PDF
-    # print('################222222',jres) 
+    
     # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
 
     # 기본 URL과 쿼리 매개변수 딕셔너리
@@ -816,6 +822,9 @@ def Shinyoung_checkNewArticle():
     # JSON To List
     for list in soupList:
         # print('list***************** \n',list)
+        
+        REG_DT              = re.sub(r"[-./]", "", list['APPDATE'])
+        WRITER              = list['EMPNM']
         # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
@@ -824,6 +833,8 @@ def Shinyoung_checkNewArticle():
             "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
             "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
             "FIRM_NM":firm_info.get_firm_name(),
+            "REG_DT":REG_DT,
+            "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
             "DOWNLOAD_URL": DOWNLOAD_URL,
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -843,7 +854,6 @@ def Shinyoung_detail(SEQ, BBSNO):
     # cmsCd = CMS_CD
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/devPass"
-
 
     # 추가할 request header
     headers = {
@@ -876,7 +886,6 @@ def Shinyoung_detail(SEQ, BBSNO):
     #### https://www.shinyoung.com/Common/checkAuth
 
     url = "https://www.shinyoung.com/Common/checkAuth"
-
 
     # 추가할 request header
     headers = {
@@ -1013,6 +1022,7 @@ def Miraeasset_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1091,6 +1101,7 @@ def Kiwoom_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1170,6 +1181,7 @@ def Hmsec_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # # "REG_DT":REG_DT,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
@@ -1242,6 +1254,7 @@ def Koreainvestment_selenium_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1249,7 +1262,6 @@ def Koreainvestment_selenium_checkNewArticle():
             })
             
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
-
 
         # # 링크와 제목 출력
         # for link_element in link_elements:
@@ -1394,7 +1406,6 @@ def DAOL_checkNewArticle():
     TARGET_URL_11 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S05&web=0' 
     TARGET_URL_12 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S06&web=0' 
 
-
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6
                         , TARGET_URL_7, TARGET_URL_8, TARGET_URL_9, TARGET_URL_10, TARGET_URL_11,TARGET_URL_12)
     
@@ -1495,6 +1506,7 @@ def DAOL_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1552,13 +1564,13 @@ def TOSSinvest_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
-
     # 메모리 정리
     del jres, soupList
     gc.collect()
@@ -1612,6 +1624,7 @@ def Leading_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
+                # # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1698,6 +1711,7 @@ async def Daeshin_checkNewArticle():
                     "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
+                    # # "REG_DT":REG_DT,
                     "ARTICLE_URL": article_url,
                     "ATTACH_URL": attach_url,
                     "DOWNLOAD_URL": attach_url,
@@ -1923,7 +1937,6 @@ def main():
 
     print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
     
-    print(total_data)
     if total_data:
         inserted_count = insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
         print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
