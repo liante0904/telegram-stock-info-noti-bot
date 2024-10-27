@@ -94,7 +94,7 @@ def LS_checkNewArticle():
             LIST_ARTICLE_TITLE = list[0].get_text()
             LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
             POST_DATE = str_date.strip()
-            print('POST_DATE',POST_DATE)
+            # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
             try:
@@ -104,15 +104,15 @@ def LS_checkNewArticle():
                 continue
             
             REG_DT = post_date_obj.strftime('%Y%m%d')
-            print('post_date_obj',post_date_obj)
-            print('REG_DT:', REG_DT)
+            # print('post_date_obj',post_date_obj)
+            # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
             if post_date_obj < seven_days_ago:
                 print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
                 break
 
             item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
-            print(item)
+            # print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
                 DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
@@ -244,10 +244,10 @@ def ShinHanInvest_checkNewArticle():
         # JSON To List
         for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
-            print(list)
+            # print(list)
 
             REG_DT = list['f1']
-            REG_DT = datetime.strptime(REG_DT, '%Y%m%d').date()
+            REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
 
@@ -344,10 +344,10 @@ def NHQV_checkNewArticle():
     nNewArticleCnt = 0
     
     for list in soupList:
-        print(list)
+        # print(list)
 
         REG_DT              = list['rshPprDruDtNm']
-        REG_DT              = datetime.strptime(REG_DT, '%Y%m%d').date()
+        REG_DT              = re.sub(r"[-./]", "", REG_DT)
         WRITER              = list['rshPprDruEmpFnm']
         BOARD_NM            = list['rshPprSerCdNm']
         LIST_ARTICLE_TITLE = list['rshPprTilCts']
