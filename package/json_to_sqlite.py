@@ -208,7 +208,7 @@ def insert_json_data_list(json_data_list, table_name):
     for entry in json_data_list:
         cursor.execute(f'''
             INSERT OR IGNORE INTO {table_name} (
-                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT
+                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                 ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL,SAVE_TIME 
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
