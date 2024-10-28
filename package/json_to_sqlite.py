@@ -197,20 +197,22 @@ def insert_data():
     close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
 
 def insert_json_data_list(json_data_list, table_name):
-    """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 실패 건수를 출력합니다."""
+    """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
     conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
-    
-    # 삽입 전 총 행 수를 저장합니다.
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    initial_row_count = cursor.fetchone()[0]
 
-    # 데이터 삽입 시도
+    # 삽입 및 업데이트 건수 초기화
+    inserted_count = 0
+    updated_count = 0
+
+    # 데이터 삽입 및 업데이트 시도
     for entry in json_data_list:
         cursor.execute(f'''
-            INSERT OR IGNORE INTO {table_name} (
-                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT
-                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL,SAVE_TIME 
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO {table_name} (
+                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(ATTACH_URL) DO UPDATE SET
+                REG_DT = excluded.REG_DT  -- ATTACH_URL 중복 시 REG_DT 업데이트
         ''', (
             entry["SEC_FIRM_ORDER"],
             entry["ARTICLE_BOARD_ORDER"],
@@ -224,20 +226,20 @@ def insert_json_data_list(json_data_list, table_name):
             entry["SAVE_TIME"]
         ))
 
-    # 커밋하고 삽입 후 총 행 수를 저장합니다.
+        # 삽입 또는 업데이트 확인
+        if cursor.rowcount == 1:
+            inserted_count += 1  # 새로 삽입된 경우
+        else:
+            updated_count += 1  # 업데이트된 경우
+
+    # 커밋하고 결과 출력
     conn.commit()
-    cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-    final_row_count = cursor.fetchone()[0]
-
-    # 삽입된 행의 수와 실패 건수를 계산하여 출력합니다.
-    inserted_count = final_row_count - initial_row_count
-    failed_count = len(json_data_list) - inserted_count
-
     print(f"Data inserted successfully: {inserted_count} rows.")
-    print(f"Data insert failed due to duplicates: {failed_count} rows.")
+    print(f"Data updated successfully: {updated_count} rows.")
     
     close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
-    return inserted_count
+    return inserted_count, updated_count
+
 
 
 def select_data(table=None):
