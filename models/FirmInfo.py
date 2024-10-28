@@ -19,7 +19,8 @@ firm_names = [
     "다올투자증권",   # 14
     "토스증권",        # 15
     "리딩투자증권",        # 16
-    "대신증권"        # 17
+    "대신증권",        # 17
+    "IM증권"        # 18
 ]
 
 # 게시판 이름을 담은 2차원 배열
@@ -115,7 +116,14 @@ board_names = [
     # SEC_FIRM_ORDER 16
     ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
     # SEC_FIRM_ORDER 17
-    ["리서치리포트"] # ARTICLE_BOARD_ORDER 0
+    ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
+    # SEC_FIRM_ORDER 18
+    ["기업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+     "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+     "투자전략",      # ARTICLE_BOARD_ORDER 3,
+     "경제분석",       # ARTICLE_BOARD_ORDER 4,
+     "채권분석"]       # ARTICLE_BOARD_ORDER 5,
     
 ]
 
@@ -217,7 +225,16 @@ label_names = [
     # SEC_FIRM_ORDER 16
     [""],              # ARTICLE_BOARD_ORDER 0,
     # SEC_FIRM_ORDER 17
-    [""]              # ARTICLE_BOARD_ORDER 0,
+    [""],              # ARTICLE_BOARD_ORDER 0,
+    # SEC_FIRM_ORDER 18
+    ["기업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+     "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+     "투자전략",      # ARTICLE_BOARD_ORDER 3,
+     "경제분석",       # ARTICLE_BOARD_ORDER 4,
+     "채권분석"]       # ARTICLE_BOARD_ORDER 5,
+
+
 ]
 
 class FirmInfo:
