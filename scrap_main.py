@@ -1087,7 +1087,8 @@ def Kiwoom_checkNewArticle():
         
         # JSON To List
         for list in soupList:
-            # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
+            # {'pageNo': None, 'pageSize': 15, 'totalCount': None, 'startRow': None, 'endRow': None, 'f_key': None, 'f_keyField': None, 'rnum': 0, 'sqno': 5153, 'titl': '키움 음식료 Weekly (10/21)', 'expl': '위클리', 'workId': '박상준 외1명', 'workEmail': None, 'readCnt': 320, 'makeDt': '2024.10.21', 'attaFile': '1729407876549.pdf', 'attaFileName': 'Kiwoom FB Weekly_241021.pdf', 'ivstOpin': None, 'wingsSqno': None, 'relItemList': None, 'tpobNm': '음식료', 'contL': None, 'itemNm': None, 'fseCdList': None, 'workIdList': None, 'today': None, 'stdate': None, 'eddate': None, 'isNew': 'N', 'brodId': None, 'fnGb': None, 'isScrap': 'N', 'prevSqno': 0, 'nextSqno': 0, 'prevTitl': None, 'nextTitl': None, 'prevMakeDt': None, 'nextMakeDt': None, 'no': 9, 'rSqno': 4147159, 'rMenuGb': 'CI', 'rMenuGbNm': '산업분석'}
+
             # print(list)
             # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
             LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}' 
@@ -1095,12 +1096,12 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_TITLE = list['titl']
 
             DOWNLOAD_URL = LIST_ARTICLE_URL
-
+            print(list)
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT":re.sub(r"[-./]", "", list['f0']),
+                "REG_DT":re.sub(r"[-./]", "", list['makeDt']),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
