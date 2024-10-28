@@ -1168,10 +1168,9 @@ def Hmsec_checkNewArticle():
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
-            REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+            REG_DT = jres['data_list'][0]['REG_DATE'].strip()
             # print(jres['data_list'])
             SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
-            # print('REG_DATE:',REG_DATE)
 
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1180,7 +1179,7 @@ def Hmsec_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # # "REG_DT":REG_DT,
+                "REG_DT":REG_DT,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
