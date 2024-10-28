@@ -50,7 +50,8 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
 
     # 파일명에서 사용할 수 없는 문자 제거
     ATTACH_FILE_NAME = re.sub(r"[\/:*?\"<>|]", '', FILE_NAME)  # 첫 번째 조건
-    ATTACH_FILE_NAME = re.sub(r"[^\w\s]", "", ATTACH_FILE_NAME)  # 두 번째 조건 추가
+    ATTACH_FILE_NAME = re.sub(r"[^\w\s.]", "", ATTACH_FILE_NAME)  # 두 번째 조건 수정: .을 제외한 특수 문자 제거
+
     print('convert URL:', URL)
     print('convert ATTACH_FILE_NAME:', ATTACH_FILE_NAME)
 
