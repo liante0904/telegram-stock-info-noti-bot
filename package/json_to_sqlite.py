@@ -208,13 +208,14 @@ def insert_json_data_list(json_data_list, table_name):
     for entry in json_data_list:
         cursor.execute(f'''
             INSERT OR IGNORE INTO {table_name} (
-                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
+                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT
+                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL,SAVE_TIME 
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             entry["SEC_FIRM_ORDER"],
             entry["ARTICLE_BOARD_ORDER"],
             entry["FIRM_NM"],
+            entry.get("REG_DT", ''),
             entry["ATTACH_URL"],
             entry["ARTICLE_TITLE"],
             entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
