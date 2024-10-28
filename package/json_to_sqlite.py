@@ -209,10 +209,11 @@ def insert_json_data_list(json_data_list, table_name):
         cursor.execute(f'''
             INSERT INTO {table_name} (
                 SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, SAVE_TIME 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(ATTACH_URL) DO UPDATE SET
-                REG_DT = excluded.REG_DT  -- ATTACH_URL 중복 시 REG_DT 업데이트
+                REG_DT = excluded.REG_DT,  -- ATTACH_URL 중복 시 REG_DT 업데이트
+                WRITER = excluded.WRITER  -- ATTACH_URL 중복 시 WRITER 업데이트
         ''', (
             entry["SEC_FIRM_ORDER"],
             entry["ARTICLE_BOARD_ORDER"],
@@ -223,6 +224,7 @@ def insert_json_data_list(json_data_list, table_name):
             entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
             entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
             entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+            entry.get("WRITER", ''),
             entry["SAVE_TIME"]
         ))
 
@@ -379,12 +381,17 @@ async def daily_select_data(date_str=None, type=None):
     query = f"""
     SELECT 
         id,
+        SEC_FIRM_ORDER, 
+        ARTICLE_BOARD_ORDER, 
         FIRM_NM, 
-        ARTICLE_TITLE, 
-        ARTICLE_URL,
+        REG_DT,
         ATTACH_URL, 
-        SAVE_TIME, 
-        SEND_USER,
+        ARTICLE_TITLE, 
+        ARTICLE_URL, 
+        MAIN_CH_SEND_YN, 
+        DOWNLOAD_URL, 
+        WRITER, 
+        SAVE_TIME,
         MAIN_CH_SEND_YN
     FROM 
         data_main_daily_send 
