@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
+from modules.imfnsec_18 import imfnsec_checkNewArticle
 from package.json_to_sqlite import insert_json_data_list
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
@@ -137,11 +138,8 @@ def LS_checkNewArticle():
     return nNewArticleCnt
 
 def LS_detail(TARGET_URL, str_date, firm_info):
-    
     TARGET_URL = TARGET_URL.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
-    
     item = {}  # 빈 딕셔너리로 초기화
-    
     time.sleep(0.1)
 
     scraper = WebScraper(TARGET_URL, firm_info)
@@ -152,7 +150,6 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     # 게시글 제목
     trs = soup.select('tr')
     item['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
-    
     
     # 첨부파일 이름
     item['LIST_ARTICLE_FILE_NAME'] = soup.select_one('.attach > a').get_text()
@@ -176,13 +173,11 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     # URL 인코딩 => 사파리 한글처리 
     item['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
     
-    
     # item['LIST_ARTICLE_URL'] = ATTACH_URL
     # item['LIST_ARTICLE_FILE_NAME'] = LIST_ARTICLE_FILE_NAME
     # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
     # print(item)
     # print('*********확인용**************')
-
     return item
     
 
@@ -231,7 +226,6 @@ def ShinHanInvest_checkNewArticle():
         TARGET_URL = (f"{base_url}?url=/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
             f"&param1={param1}&param2={param2}&param3={param3}&param4={param4}&param5={param5}"
             f"&param6={param6}&param7={param7}&type={type_param}")
-
 
         scraper = WebScraper(TARGET_URL, firm_info)
         
@@ -307,7 +301,7 @@ def NHQV_checkNewArticle():
         try:
             response = requests.post(TARGET_URL,
                                     headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
-                                                        'Accept':'application/json, text/javascript, */*; q=0.01'},
+                                             'Accept':'application/json, text/javascript, */*; q=0.01'},
                                     data=payload)
             # print(response.text)
             jres = json.loads(response.text)
@@ -365,7 +359,6 @@ def NHQV_checkNewArticle():
             "SAVE_TIME": datetime.now().isoformat()
         })
             
-
     # 메모리 정리
     del response
     gc.collect()
@@ -404,7 +397,6 @@ def HANA_checkNewArticle():
         # 글로벌 기업분석
         'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=3'
     ]
-
 
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
@@ -864,7 +856,6 @@ def Shinyoung_detail(SEQ, BBSNO):
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/devPass"
 
-
     # 추가할 request header
     headers = {
         "Accept": "text/plain, */*; q=0.01",
@@ -896,7 +887,6 @@ def Shinyoung_detail(SEQ, BBSNO):
     #### https://www.shinyoung.com/Common/checkAuth
 
     url = "https://www.shinyoung.com/Common/checkAuth"
-
 
     # 추가할 request header
     headers = {
@@ -1274,7 +1264,6 @@ def Koreainvestment_selenium_checkNewArticle():
             
             # https://file.truefriend.com/Storage/research/research05/20240726184612130_ko.pdf
 
-
         # # 링크와 제목 출력
         # for link_element in link_elements:
         #     title = link_element.text
@@ -1417,7 +1406,6 @@ def DAOL_checkNewArticle():
     TARGET_URL_10 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S04&web=0' 
     TARGET_URL_11 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S05&web=0' 
     TARGET_URL_12 = 'https://www.daolsecurities.com/research/article/common.jspx?rGubun=S01&sctrGubun=S06&web=0' 
-
 
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6
                         , TARGET_URL_7, TARGET_URL_8, TARGET_URL_9, TARGET_URL_10, TARGET_URL_11,TARGET_URL_12)
@@ -1584,7 +1572,6 @@ def TOSSinvest_checkNewArticle():
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
-
     # 메모리 정리
     del jres, soupList
     gc.collect()
@@ -1819,6 +1806,7 @@ def main():
     # 비동기 함수 리스트
     async_check_functions = [
         Daeshin_checkNewArticle,
+        imfnsec_checkNewArticle
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트
@@ -1837,37 +1825,37 @@ def main():
         time.sleep(1)
 
     # 비동기 함수 실행
-    for async_check_function in async_check_functions:
-        print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
-        json_data_list = asyncio.run(async_check_function())  # 비동기 함수 실행
-        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-            print('=' * 40)
-            print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-            total_data.extend(json_data_list)  # 전체 리스트에 추가
-            totalCnt += len(json_data_list)
+    # 새 이벤트 루프 생성 및 설정
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
-    # 비동기 함수 실행
-    for async_check_function in async_check_functions:
-        print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
-        json_data_list = asyncio.run(async_check_function())  # 비동기 함수 실행
-        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-            print('=' * 40)
-            print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-            total_data.extend(json_data_list)  # 전체 리스트에 추가
-            totalCnt += len(json_data_list)
+    try:
+        # 비동기 함수 리스트 실행
+        tasks = [func() for func in async_check_functions]  # 비동기 함수 호출을 태스크로 생성
+        results = loop.run_until_complete(asyncio.gather(*tasks))  # 태스크 병렬 실행 및 결과 수집
 
-    print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
-    
-    if total_data:
-        inserted_count = insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
-        print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
-        print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
-        if inserted_count:
-            asyncio.run(scrap_send_main.main())
-            asyncio.run(scrap_upload_pdf.main())
+        for idx, json_data_list in enumerate(results):
+            async_check_function = async_check_functions[idx]
+            print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
+            if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+                print('=' * 40)
+                print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+                total_data.extend(json_data_list)  # 전체 리스트에 추가
+                totalCnt += len(json_data_list)
 
-    else:
-        print("새로운 게시글이 스크랩 실패.")
+        print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
+        
+        if total_data:
+            inserted_count = insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+            print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
+            print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
+            if inserted_count:
+                loop.run_until_complete(scrap_send_main.main())
+                loop.run_until_complete(scrap_upload_pdf.main())
+        else:
+            print("새로운 게시글이 스크랩 실패.")
+    finally:
+        loop.close()  # 이벤트 루프 종료
         
 if __name__ == "__main__":
     main()
