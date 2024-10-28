@@ -63,7 +63,8 @@ class GoogleDrive:
             return None
 
         # 파일 업로드
-        metadata = {'name': file_name, 'parents': [self.folder_id], 'mimeType': None}
+        file_name_only = os.path.basename(file_name)
+        metadata = {'name': file_name_only, 'parents': [self.folder_id], 'mimeType': None}
         media = MediaFileUpload(file_name)
         res = self.drive_service.files().create(body=metadata, media_body=media).execute()
         
