@@ -573,14 +573,6 @@ def Samsung_checkNewArticle():
 
         soupList = soup.select('#content > section.bbsLstWrap > ul > li')
         # print(soupList)
-        try:
-            # ARTICLE_BOARD_NAME =  BOARD_NM 
-            a_href =soup.select('#content > section.bbsLstWrap > ul > li:nth-child(1)> a')[FIRST_ARTICLE_INDEX].attrs['href']
-            a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
-            a_href = a_href.split("'")
-            a_href = a_href[1]
-        except:
-            return 0
 
         # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
@@ -588,11 +580,17 @@ def Samsung_checkNewArticle():
         
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one('#content > section.bbsLstWrap > ul > li > a > dl > dt > strong').text
+            
             a_href = list.select_one('#content > section.bbsLstWrap > ul > li > a').attrs['href']
+            
+            # 기존 URL 형식 유지
             a_href = a_href.replace('javascript:downloadPdf(', '').replace(';', '')
-            a_href = a_href.split("'")
-            a_href = a_href[1]
-            LIST_ARTICLE_URL =  'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href+ '&contentType=application/pdf&inlineYn=Y'
+            a_href_parts = a_href.split("'")
+            a_href_path = a_href_parts[1]  # PDF 파일 경로
+            REG_DT = a_href_parts[3]       # REG_DT 값 추출
+
+            LIST_ARTICLE_URL = 'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName=' + a_href_path + '&contentType=application/pdf&inlineYn=Y'
+
             # fileNameArray = a_href.split("/")
             # LIST_ATTACT_FILE_NAME = fileNameArray[1].strip()
 
@@ -604,7 +602,7 @@ def Samsung_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
+                "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1102,7 +1100,7 @@ def Kiwoom_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", list['f0']),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1692,7 +1690,7 @@ async def Daeshin_checkNewArticle():
             
             for item in items:
                 title = item.find("strong", class_="title1").text.strip()
-                date = item.find("span", class_="date").text.strip()
+                reg_dt = item.find("span", class_="date").text.strip()
                 author = item.find("span", class_="time").text.strip()
                 
                 # 더 일반적인 'a' 태그 찾기
@@ -1712,7 +1710,7 @@ async def Daeshin_checkNewArticle():
                     "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
-                    # # "REG_DT":REG_DT,
+                    "REG_DT": re.sub(r"[-./]", "", reg_dt),
                     "ARTICLE_URL": article_url,
                     "ATTACH_URL": attach_url,
                     "DOWNLOAD_URL": attach_url,
