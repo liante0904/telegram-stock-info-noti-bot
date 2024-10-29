@@ -15,6 +15,7 @@ SECRET_KEY = SecretKey()
 # 로그 파일 경로는 환경 변수로부터 가져옵니다
 LOG_FILE = os.getenv('LOG_FILE', '~/log/logfile.log')
 LOG_FILE = os.path.expanduser(LOG_FILE)  # ~ 를 홈 디렉토리로 확장
+
 # 한글 인코딩 처리 및 wget으로 다운로드
 async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     """
@@ -33,20 +34,31 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     BOARD_NM = ''
     URL = report_info_row['ATTACH_URL'] if report_info_row['ATTACH_URL'] else report_info_row['ARTICLE_URL']
 
-    FILE_NAME = report_info_row['ARTICLE_TITLE']
-    FIRM_NAME = report_info_row['FIRM_NM']
+    if FILE_NAME is None:
+        # FILE_NAME이 None인 경우 기존 로직으로 파일 이름 생성
+        FILE_NAME = report_info_row['ARTICLE_TITLE']
+        FIRM_NAME = report_info_row['FIRM_NM']
+        
+        # report_info_row['REG_DT'] 값이 있으면 이를 사용하고 없으면 현재 날짜 사용
+        DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else GetCurrentDate('YYYYMMDD')[2:8]
 
-    # 파일명 지정
-    FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "")
-    FILE_NAME = FILE_NAME.replace(GetCurrentDate('YYYYMMDD')[2:8], "").replace(GetCurrentDate('YYYYMMDD'), "")
-    FILE_NAME = str(GetCurrentDate('YYYYMMDD')[2:8]) + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NAME
+        # 파일명 지정
+        FILE_NAME = FILE_NAME.replace(DATE_PART, "").replace(GetCurrentDate('YYYYMMDD'), "")
+        FILE_NAME = DATE_PART + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NAME
 
-    # 파일명 길이 제한 처리 및 확장자 추가
-    MAX_FILE_NAME_LENGTH = 240
-    if len(FILE_NAME) > MAX_FILE_NAME_LENGTH:
-        FILE_NAME = FILE_NAME[:MAX_FILE_NAME_LENGTH]
-    FILE_NAME += '.pdf'
+        # 파일명 길이 제한 처리
+        MAX_FILE_NAME_LENGTH = 240
+        if len(FILE_NAME) > MAX_FILE_NAME_LENGTH:
+            FILE_NAME = FILE_NAME[:MAX_FILE_NAME_LENGTH]
 
+        # 확장자 .pdf 추가
+        FILE_NAME += '.pdf'
+        
+    else:
+        # FILE_NAME이 주어진 경우 해당 값을 사용하며, 확장자가 없는 경우 .pdf 추가
+        FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "")
+        if not FILE_NAME.lower().endswith('.pdf'):
+            FILE_NAME += '.pdf'
 
     # 파일명에서 사용할 수 없는 문자 제거
     ATTACH_FILE_NAME = re.sub(r"[\/:*?\"<>|]", '', FILE_NAME)  # 첫 번째 조건
@@ -60,7 +72,6 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         log_message = f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다."
         print(log_message)
         if not os.path.exists(LOG_FILE):
-            print('??????????>>>',LOG_FILE)
             os.makedirs(LOG_FILE)
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(log_message + '\n')
@@ -72,11 +83,6 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         '--max-redirect=10', '--retry-connrefused', '--waitretry=5',
         '--read-timeout=20', '--timeout=15', '--tries=5', '--no-check-certificate'
     ]
-
-    # # 구글 드라이브에 업로드
-    # r = googledrive.upload(str(ATTACH_FILE_NAME))
-    # print(f'main URL {r}')
-    # return r
 
     try:
         # wget_command 리스트를 문자열로 변환
@@ -108,6 +114,8 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
             log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
         
         return False  # 다운로드 실패 시 False 반환
+
+    
 def main():
     URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf&sync=true&fileType=URL&filePath=https://www.hmsec.com/documents/research/20241007073137310_ko.pdf'
     ATTACH_FILE_NAME = '241007__자동차 산업 - 2024년 9월 현대차그룹 글로벌 도매 판매 _현대차증권.pdf'
