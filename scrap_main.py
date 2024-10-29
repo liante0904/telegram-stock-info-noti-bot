@@ -102,9 +102,9 @@ def LS_checkNewArticle():
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]") + 1:].strip()  # 불필요한 부분 제거
 
             # 추출된 정보 출력 (또는 필요한 방식으로 활용)
-            print("URL:", LIST_ARTICLE_URL)
-            print("Title:", LIST_ARTICLE_TITLE)
-            print("Date:", REG_DT)
+            # print("URL:", LIST_ARTICLE_URL)
+            # print("Title:", LIST_ARTICLE_TITLE)
+            # print("Date:", REG_DT)
             # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
@@ -429,7 +429,7 @@ def HANA_checkNewArticle():
         nNewArticleCnt = 0
         
         for list in soupList:
-            print('=============')
+            # print('=============')
             # print(list)
 
             # 제목과 URL 추출
@@ -442,11 +442,11 @@ def HANA_checkNewArticle():
             WRITER = list.select_one('li.mb7.m-info.info > span.none.m-name').text.strip()
             
             # 디버그 출력 (옵션)
-            print("Title:", LIST_ARTICLE_TITLE)
-            print("URL:", LIST_ARTICLE_URL)
-            print("Download URL:", DOWNLOAD_URL)
-            print("Date (REG_DT):", REG_DT)
-            print("Writer:", WRITER)
+            # print("Title:", LIST_ARTICLE_TITLE)
+            # print("URL:", LIST_ARTICLE_URL)
+            # print("Download URL:", DOWNLOAD_URL)
+            # print("Date (REG_DT):", REG_DT)
+            # print("Writer:", WRITER)
             
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
@@ -1048,10 +1048,10 @@ def Miraeasset_checkNewArticle():
                 "SAVE_TIME": datetime.now().isoformat()
             })
 
-            print("제목:", title)
-            print("첨부 파일:", attachment_link)
-            print("작성 일자:", REG_DT)
-            print()
+            # print("제목:", title)
+            # print("첨부 파일:", attachment_link)
+            # print("작성 일자:", REG_DT)
+            # print()
             
 
     # 메모리 정리
@@ -1121,7 +1121,7 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_TITLE = list['titl']
 
             DOWNLOAD_URL = LIST_ARTICLE_URL
-            print(list)
+            # print(list)
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
@@ -1534,9 +1534,10 @@ def DAOL_checkNewArticle():
             # print('NXT_KEY='+NXT_KEY)
             # ATTACH_URL = LIST_ARTICLE_URL
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-            print(LIST_ARTICLE_TITLE)
-            print(LIST_ARTICLE_URL)
-            print()
+            
+            # print(LIST_ARTICLE_TITLE)
+            # print(LIST_ARTICLE_URL)
+            # print()
             
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
@@ -1582,10 +1583,6 @@ def TOSSinvest_checkNewArticle():
         soupList = jres['result']['list']
         
         print('*' *40)
-        print(soupList)
-        print(len(soupList))
-        
-        print('*' *40)
         
         nNewArticleCnt = 0
         for list in soupList:
@@ -1597,8 +1594,8 @@ def TOSSinvest_checkNewArticle():
             REG_DT             = list['createdAt']
             DOWNLOAD_URL        = LIST_ARTICLE_URL
             
-            print(LIST_ARTICLE_TITLE)
-            print(LIST_ARTICLE_URL)
+            # print(LIST_ARTICLE_TITLE)
+            # print(LIST_ARTICLE_URL)
 
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
@@ -1656,9 +1653,9 @@ def Leading_checkNewArticle():
             reg_dt_element = list.select_one("td:nth-child(5)")
             REG_DT = reg_dt_element.get_text(strip=True)
             # 결과 출력
-            print("제목:", title)
-            print("첨부 파일:", attachment_link)
-            print()
+            # print("제목:", title)
+            # print("첨부 파일:", attachment_link)
+            # print()
             LIST_ARTICLE_TITLE = title
             LIST_ARTICLE_URL = attachment_link
             DOWNLOAD_URL     = attachment_link
