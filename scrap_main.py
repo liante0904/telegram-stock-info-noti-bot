@@ -430,7 +430,7 @@ def HANA_checkNewArticle():
         
         for list in soupList:
             print('=============')
-            print(list)
+            # print(list)
 
             # 제목과 URL 추출
             LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
@@ -506,7 +506,7 @@ def KB_checkNewArticle():
     
     nNewArticleCnt = 0
     
-    print(len(soupList))
+    # print(len(soupList))
     # JSON To List
     for list in soupList:
 
@@ -528,8 +528,6 @@ def KB_checkNewArticle():
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()
         })
-        print(json_data_list)
-            
     
     # 메모리 정리
     del soupList
