@@ -87,32 +87,43 @@ def LS_checkNewArticle():
 
         nNewArticleCnt = 0        
         for list in soupList:
-            str_date = list.select('td')[3].get_text()
-            list = list.select('a')
-            # print(list[0].text)
-            # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
-            LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
-            LIST_ARTICLE_TITLE = list[0].get_text()
-            LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-            POST_DATE = str_date.strip()
+            # print(list)
+            # 모든 td 태그 선택
+            td_elements = list.select('td')
+            # 작성자
+            WRITER = td_elements[2].get_text().strip()
+            # POST_DATE: 인덱스 3의 td 태그에서 날짜 추출
+            REG_DT = td_elements[3].get_text().strip()
+            # LIST_ARTICLE_TITLE 및 LIST_ARTICLE_URL: 인덱스 1의 td 태그에서 제목과 URL 추출
+            link_tag = td_elements[1].select_one('a')  # 첫 번째 a 태그 선택
+            if link_tag:
+                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + link_tag['href'].replace("amp;", "")
+                LIST_ARTICLE_TITLE = link_tag.get_text().strip()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]") + 1:].strip()  # 불필요한 부분 제거
+
+            # 추출된 정보 출력 (또는 필요한 방식으로 활용)
+            # print("URL:", LIST_ARTICLE_URL)
+            # print("Title:", LIST_ARTICLE_TITLE)
+            # print("Date:", REG_DT)
             # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
             try:
-                post_date_obj = datetime.strptime(POST_DATE, '%Y.%m.%d').date()
+                post_date_obj = datetime.strptime(REG_DT, '%Y.%m.%d').date()
             except ValueError as e:
-                print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
+                print(f"날짜 형식 오류: {REG_DT}, 오류: {e}")
                 continue
             
-            REG_DT = post_date_obj.strftime('%Y%m%d')
+            # REG_DT = post_date_obj.strftime('%Y%m%d')
             # print('post_date_obj',post_date_obj)
             # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
             if post_date_obj < seven_days_ago:
-                print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
+                print(f"게시물 날짜 {REG_DT}가 7일 이전이므로 중단합니다.")
                 break
-
-            item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
+            
+            
+            item = LS_detail(LIST_ARTICLE_URL, REG_DT, firm_info)
             # print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
@@ -123,7 +134,8 @@ def LS_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "WRITER": WRITER,
                 "ARTICLE_URL":DOWNLOAD_URL,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
@@ -234,17 +246,16 @@ def ShinHanInvest_checkNewArticle():
 
         soupList = jres['list']
 
-        nNewArticleCnt = 0
         # JSON To List
         for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print(list)
 
-            REG_DT = list['f1']
+            REG_DT = list['f0']
             REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
-
+            WRITER = list['f5']
             try:
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
@@ -258,6 +269,7 @@ def ShinHanInvest_checkNewArticle():
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
+                "WRITER":WRITER,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -268,7 +280,7 @@ def ShinHanInvest_checkNewArticle():
     del scraper
     gc.collect()
 
-    return nNewArticleCnt
+    return json_data_list
 
 def NHQV_checkNewArticle():
     SEC_FIRM_ORDER = 2
@@ -416,14 +428,31 @@ def HANA_checkNewArticle():
         nNewArticleCnt = 0
         
         for list in soupList:
-            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
-            LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-            DOWNLOAD_URL    = LIST_ARTICLE_URL
+            # print('=============')
+            # print(list)
+
+            # 제목과 URL 추출
+            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
+            LIST_ARTICLE_URL = 'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5) > div > a').get('href')
+            DOWNLOAD_URL = LIST_ARTICLE_URL
+
+            # 작성일자와 작성자 추출
+            REG_DT = list.select_one('li.mb7.m-info.info > span.txtbasic').text.strip()
+            WRITER = list.select_one('li.mb7.m-info.info > span.none.m-name').text.strip()
+            
+            # 디버그 출력 (옵션)
+            # print("Title:", LIST_ARTICLE_TITLE)
+            # print("URL:", LIST_ARTICLE_URL)
+            # print("Download URL:", DOWNLOAD_URL)
+            # print("Date (REG_DT):", REG_DT)
+            # print("Writer:", WRITER)
+            
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "WRITER":WRITER,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -457,8 +486,8 @@ def KB_checkNewArticle():
     # 요청 payload 데이터
     payload = {
         "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": GetCurrentDate("YYYYMMDD"),
+        "pageSize": 500,
+        "registdateFrom": datetime(datetime.now().year, 1, 1).strftime("%Y%m%d"),
         "registdateTo": GetCurrentDate("YYYYMMDD"),
         "templateid": "",
         "lowTempId": "",
@@ -476,9 +505,9 @@ def KB_checkNewArticle():
     
     nNewArticleCnt = 0
     
+    # print(len(soupList))
     # JSON To List
     for list in soupList:
-        # print(list)
 
         REG_DT              = re.sub(r"[-./]", "", list['publicDate'])
         WRITER              = list['analystNm']
@@ -498,7 +527,6 @@ def KB_checkNewArticle():
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()
         })
-            
     
     # 메모리 정리
     del soupList
@@ -990,50 +1018,46 @@ def Miraeasset_checkNewArticle():
         for index, post in enumerate(soupList):
             if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
                 continue
+
+            # 작성 일자 파싱
+            date_element = post.select_one("tr > td")
+            REG_DT = date_element.get_text(strip=True) if date_element else ""
+
+            # 제목 파싱
             title_element = post.select_one(".subject a")
             if not title_element:  # 제목 요소가 없는 경우
                 continue  # 건너뜁니다.
-            title = title_element.get_text()  # strip 제거
+            title = " : ".join(title_element.find_all(string=True))  # 제목 텍스트를 문자열로 합침
+
+            # 첨부 파일 파싱
             attachment_element = post.select_one(".bbsList_layer_icon a")
             attachment_link = "없음"
             if attachment_element:
                 attachment_link = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
-            print("제목:", title)
-            print("첨부 파일:", attachment_link)
-            print()
 
-        # soupList = posts
-
-        nNewArticleCnt = 0
-        
-        for list in soupList:
-            LIST_ARTICLE_TITLE = list.select_one(".subject a").text
-            LIST_ARTICLE_URL = "없음"
-            attachment_element = list.select_one(".bbsList_layer_icon a")
-            if attachment_element:
-                LIST_ARTICLE_URL = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
-                # ATTACH_URL = LIST_ARTICLE_URL
-                LIST_ARTICLE_TITLE = list.select_one(".subject a").find_all(string=True)
-                LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
-                DOWNLOAD_URL = LIST_ARTICLE_URL
-
+            # JSON 데이터 생성 및 리스트에 추가
             json_data_list.append({
-                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
-                "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
-                "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
-                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                "FIRM_NM": firm_info.get_firm_name(),
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "ATTACH_URL": attachment_link,
+                "DOWNLOAD_URL": attachment_link,
+                "ARTICLE_TITLE": title,
                 "SAVE_TIME": datetime.now().isoformat()
             })
+
+            # print("제목:", title)
+            # print("첨부 파일:", attachment_link)
+            # print("작성 일자:", REG_DT)
+            # print()
             
 
     # 메모리 정리
     del soup
     gc.collect()
 
-    return nNewArticleCnt
+    return json_data_list
 
 def Kiwoom_checkNewArticle():
     SEC_FIRM_ORDER = 10
@@ -1063,7 +1087,7 @@ def Kiwoom_checkNewArticle():
         payload = {
             "pageNo": 1,
             "pageSize": 10,
-            "stdate": '20231023',
+            "stdate": datetime(datetime.now().year, 1, 1).strftime("%Y%m%d"),
             "eddate": GetCurrentDate("yyyymmdd"),
             "f_keyField": '', 
             "f_key": '',
@@ -1087,7 +1111,7 @@ def Kiwoom_checkNewArticle():
         
         # JSON To List
         for list in soupList:
-            # {'pageNo': None, 'pageSize': 15, 'totalCount': None, 'startRow': None, 'endRow': None, 'f_key': None, 'f_keyField': None, 'rnum': 0, 'sqno': 5153, 'titl': '키움 음식료 Weekly (10/21)', 'expl': '위클리', 'workId': '박상준 외1명', 'workEmail': None, 'readCnt': 320, 'makeDt': '2024.10.21', 'attaFile': '1729407876549.pdf', 'attaFileName': 'Kiwoom FB Weekly_241021.pdf', 'ivstOpin': None, 'wingsSqno': None, 'relItemList': None, 'tpobNm': '음식료', 'contL': None, 'itemNm': None, 'fseCdList': None, 'workIdList': None, 'today': None, 'stdate': None, 'eddate': None, 'isNew': 'N', 'brodId': None, 'fnGb': None, 'isScrap': 'N', 'prevSqno': 0, 'nextSqno': 0, 'prevTitl': None, 'nextTitl': None, 'prevMakeDt': None, 'nextMakeDt': None, 'no': 9, 'rSqno': 4147159, 'rMenuGb': 'CI', 'rMenuGbNm': '산업분석'}
+            # {'pageNo': None, 'pageSize': 15, 'totalCount': None, 'startRow': None, 'endRow': None, 'f_key': None, 'f_keyField': None, 'rnum': 0, 'sqno': 3533, 'titl': 'Tesla 3Q24 실적 Review: 시장 기대치 상회하는 글로벌 인도량 가이던스 제시', 'expl': '이차전지 - Tesla 3Q24 실적 Review: 시장 기대치 상회하는 글로벌 인도량 가이던스 제시', 'workId': '권준수', 'workEmail': None, 'readCnt': 472, 'makeDt': '2024.10.25', 'attaFile': '1729807061019.pdf', 'attaFileName': 'Tesla 3Q24 실적_241025(final).pdf', 'ivstOpin': None, 'wingsSqno': None, 'relItemList': None, 'tpobNm': '이차전지', 'contL': None, 'itemNm': None, 'fseCdList': None, 'workIdList': None, 'today': None, 'stdate': None, 'eddate': None, 'isNew': 'N', 'brodId': None, 'fnGb': None, 'isScrap': 'N', 'prevSqno': 0, 'nextSqno': 0, 'prevTitl': None, 'nextTitl': None, 'prevMakeDt': None, 'nextMakeDt': None, 'no': 1, 'rSqno': 4147212, 'rMenuGb': 'SN', 'rMenuGbNm': '스팟노트'}
 
             # print(list)
             # 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb=CR&attaFile=1650493541463.pdf&makeDt=2022.04.21'
@@ -1096,7 +1120,7 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_TITLE = list['titl']
 
             DOWNLOAD_URL = LIST_ARTICLE_URL
-            print(list)
+            # print(list)
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
@@ -1147,7 +1171,7 @@ def Hmsec_checkNewArticle():
         jres = scraper.PostJson(params=payload)
         
         
-        REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
+        REG_DT = jres['data_list'][0]['REG_DATE'].strip()
         FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
         # print('REG_DATE:',REG_DATE)
         # print('FILE_NAME:',FILE_NAME)
@@ -1159,6 +1183,8 @@ def Hmsec_checkNewArticle():
         # JSON To List
         for list in soupList:
             # print(list)
+            # {'REG_TIME': '080734', 'TOTAL_VISITED': 8, 'SERIAL_NO': 33471, 'REG_DATE': '20241028', 'SUBJECT': '현대위아(011210) - 비용을 극복하는 수익 회복 지속능력 필요 ', 'UPLOAD_FILE1': '20241025211531427_ko.pdf', 'MENU_SUBJECT': 'Conmpany Report', 'NAME': '장문수', 'MENU_CODE': 201, 'CONTENTS': '<span style="font-size: 12px; font-family: 돋움; color: #4d4d4d; text-align: justify; line-height: 1'}
+            # {'REG_TIME': '080745', 'TOTAL_VISITED': 4, 'SERIAL_NO': 33480, 'REG_DATE': '20241029', 'SUBJECT': 'Global Daily 2024년 10월 29일', 'UPLOAD_FILE1': '20241029080509837_ko.pdf', 'MENU_SUBJECT': '글로벌 투자정보', 'MENU_CODE': 802, 'CONTENTS': '<span style="font-size: 12px; font-family: 돋움; color: #4d4d4d; text-align: justify; line-height: 1'}
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
             DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}' 
             DOWNLOAD_URL = DOWNLOAD_URL.format(list['UPLOAD_FILE1'])
@@ -1169,9 +1195,9 @@ def Hmsec_checkNewArticle():
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
-            REG_DT = jres['data_list'][0]['REG_DATE'].strip()
+            REG_DT = list['REG_DATE'].strip()
+            WRITER = list.get('name', '')
             # print(jres['data_list'])
-            SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1180,7 +1206,8 @@ def Hmsec_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "WRITER": WRITER,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
@@ -1231,7 +1258,9 @@ def Koreainvestment_selenium_checkNewArticle():
         title_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/div[2]/span[1]')
         # 링크 엘리먼트 찾기
         link_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[2]')
-
+        # Info 엘리먼트 찾기 
+        info_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/span')
+        
         # for title, link in zip(title_elements, link_elements):
         #     # 제목 출력
         #     print("제목:", title.text)
@@ -1242,10 +1271,11 @@ def Koreainvestment_selenium_checkNewArticle():
         
         
         # List
-        for title, link in zip(title_elements, link_elements):
+        for title, link, info in zip(title_elements, link_elements, info_elements):
             LIST_ARTICLE_TITLE = title.text
             LIST_ARTICLE_URL = link.get_attribute("onclick")
-
+            INFO_STR = info.text
+            print("INFO_STR =>", INFO_STR)
             LIST_ARTICLE_URL = Koreainvestment_GET_LIST_ARTICLE_URL(LIST_ARTICLE_URL)
             DOWNLOAD_URL = LIST_ARTICLE_URL
 
@@ -1456,7 +1486,7 @@ def DAOL_checkNewArticle():
             'hts':'',
             'filepath':'',
             'attaFileNm':'',
-            'startDate': '2024/01/01',
+            'startDate': datetime(datetime.now().year, 1, 1).strftime("%Y/%m/%d"),
             'endDate': GetCurrentDate("yyyy/mm/dd"),
             'searchSelect': '0',
             'searchNm1': '',
@@ -1468,21 +1498,24 @@ def DAOL_checkNewArticle():
         # HTML parse
         soup = BeautifulSoup(response.content, "html.parser")
         # print(soup)
-        soupList = soup.select('tr > td.al > a')
         
-        # print('*' *40)
-        # print(soupList[0])
-        # print('*' *40)
+        # soupList = soup.select('tr > td.al > a')
+        soupList = soup.select('tr')
 
         # 응답 처리
         if response.status_code != 200:
             print("요청이 실패했습니다.")
             print("상태 코드:", response.status_code)
-        
+            continue
+
         nNewArticleCnt = 0
-        
         for list in soupList:
-            # print(list)
+
+            strData = list.get_text()
+            if "게시물이 없습니다."  in strData:
+                break
+            REG_DT = list.select_one("td:nth-child(1)").get_text()
+            list = list.select_one('td.al > a')
             LIST_ARTICLE_TITLE = list['title']
             LIST_ARTICLE_URL   =  list['href']
     
@@ -1500,12 +1533,16 @@ def DAOL_checkNewArticle():
             # print('NXT_KEY='+NXT_KEY)
             # ATTACH_URL = LIST_ARTICLE_URL
             # sendMessageText += GetSendMessageText(ARTICLE_TITLE = LIST_ARTICLE_TITLE, ATTACH_URL = ATTACH_URL)
-
+            
+            # print(LIST_ARTICLE_TITLE)
+            # print(LIST_ARTICLE_URL)
+            # print()
+            
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # # "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1545,25 +1582,25 @@ def TOSSinvest_checkNewArticle():
         soupList = jres['result']['list']
         
         print('*' *40)
-        print(soupList)
-        print(len(soupList))
-        
-        print('*' *40)
         
         nNewArticleCnt = 0
         for list in soupList:
             # print(list)
+            # [{'id': 10306, 'type': 'INVESTMENT_INFO', 'category': {'id': 138, 'type': 'INVESTMENT_INFO', 'categoryName': '리서치 보고서', 'categoryDepth': 1, 'upperCategory': None, 'position': 0, 'displayYn': 'Y'}, 'title': '다녀왔습니다, 실리콘밸리', 'contents': '<p>작성자: 이영곤, 이지선 애널리스트</p><p>본 리포트를 시작으로, 토스증권 리서치센터는 &#39;실리콘밸리 특집&#39; 시리즈를 연이어 발행할 예정입니다. 실리콘밸리 현장에서 직접 발로 뛰며 얻은 생생한 이야기를 전해드리겠습니다.</p><p><br></p><p><strong>본 리포트에서 저희가 말씀드리고자 하는 건 크게 3가지입니다.</strong></p><p><br></p><p><strong>첫째, 실리콘밸리 혁신의 비결은 인재, 자본, 인프라입니다.</strong></p><p>실리콘밸리 주변에는 스탠포드, 버클리 등 세계 최고 수준의 대학들이 위치해 있습니다. 이곳의 학생들은 자연스럽게 주변 테크 기업에 취직하거나 창업을 선택하게 됩니다. 기업 문화가 경직되어 있지 않기 때문에 아시아 출신이나 여성 인재들도 실리콘밸리로 모여듭니다.</p><p>기업이 성장하는 데 있어 자본은 중요한 요소입니다. 실리콘밸리 지역의 벤처캐피탈은 창업한 지 얼마 안 된 기업에 적극적으로 투자하는 편이라, 성공 가능성 있는 기업이 창업 초기 현금 조달을 하지 못해 사라져 버리는 일을 막는 데 큰 역할을 하고 있습니다.</p><p>실리콘밸리는 기술, 인력, 자본이 시너지를 낼 수 있는 환경입니다. 네트워킹 문화를 바탕으로, 아이디어 공유를 비롯한 협력 관계가 갖춰져 있기 때문입니다. 뿐만 아니라 미국 정부의 정책적인 지원도 혁신 생태계 조성에 기여했습니다.</p><p><br></p><p><strong>둘째, 실리콘밸리 기업들은 AI 산업 성장을 선도하고 있습니다.</strong></p><p>최근 들어 실리콘밸리가 예전 같지 않다는 목소리도 나오는데요. 실제로 코로나19 직후 이 지역 실업률이 급증했고, 벤처 투자금도 한창때에 비해 줄어들었습니다. 현지 네트워킹 행사에서 만난 사람들도 하나같이 &ldquo;올해 특히 일자리 구하기가 힘들다&rdquo;고 하소연했습니다.</p><p>하지만 실리콘밸리는 여전히 혁신이라는 키워드를 놓지 않고 있습니다. 혁신의 중심에는 AI가 있습니다. 생성형 AI 산업의 성장은 대형 클라우드 서비스 제공자뿐 아니라 주변 생태계에도 영향을 미쳐, 시장 규모가 한 번 더 크게 성장할 거라는 전망이 나옵니다.</p><p>챗GPT팀 연구원의 한마디는 실리콘밸리 혁신의 속도가 어느 정도인지 단적으로 보여줍니다. &ldquo;실리콘밸리에서 AI 기술을 논할 때 몇 달 전의 기술을 언급하는 게 얼마나 뒤떨어진 말인지 알아야 한다.&rdquo;</p><p><br></p><p><strong>셋째, 실리콘밸리에서 다양한 투자 아이디어를 얻었습니다.</strong></p><p>&quot;혁신적 기술의 탄생에 관심을 갖되 투자는 기술을 실현시키는 기업에 하자.&quot; IBM은 1990년대 이미 스마트폰과 비슷한 제품을 개발했지만 시장에서는 성공하지 못했습니다.</p><p>&quot;새로운 비즈니스 모델이 열리는 시기엔, 그 시장을 선점하는 기업에 주목하라.&quot; 우버는 스마트폰을 이용한 차량 호출 서비스 시장을 선점해 택시 산업을 상당 부분 대체해 나가고 있습니다.</p><p>&quot;변화에 빠르고 유연하게 대응할 수 있는 기업에 투자하라.&quot; 바꿔야 할 것과 바꾸지 말아야 할 것을 잘 구분한 넷플릭스처럼요.</p><p>&quot;기술의 혁신성만 보지 말고 상용화 가능성을 체크하고, 나아가 기술 표준이 될 수 있는지에 주목하라.&quot; 한때 자율주행차의 핵심 부품으로 주목받았던 라이다는 아직 기술 표준으로 자리잡지 못했습니다.</p><p>&quot;애플처럼 높은 고객 충성도가 유지되는 기업에 투자하라.&quot; 높은 고객 충성도는 기업의 큰 자산입니다.</p><p>&quot;미래 핵심 기술을 보유하고, 지배력을 유지할 수 있는 기업에 집중하라.&quot; 엔비디아는 단순히 반도체 만드는 것을 넘어 인공지능 생태계를 주관하는 기업이 되길 꿈꾸고 있습니다.</p><p><br></p><p><br></p><p><strong>* 좀 더 자세한 내용은 첨부 파일을 참고해주시기 바랍니다.</strong></p>', 'position': 0, 'displayYn': 'Y', 'displayDt': '2024-10-29T00:00:00', 'displayEndDt': None, 'author': 'myungkyoon.ki', 'createdAt': '2024-10-29T10:59:01', 'updatedAt': '2024-10-29T10:59:02', 'pinned': False, 'subTitle': '', 'postImage': 'https://home-files.tossinvest.com/files/investment-info/cf72dfb2-4e46-433a-8242-42b33d1a941e.pdf', 'refLink': '', 'files': [{'postId': 10306, 'type': 'INVESTMENT_INFO', 'fileName': 'TossRC_Silicon_Valley_1st_20241029.pdf', 'filePath': 'https://home-files.tossinvest.com/files/investment-info/cf72dfb2-4e46-433a-8242-42b33d1a941e.pdf', 'createdAt': '2024-10-29T10:59:01'}]}, 
+            # {'id': 9678, 'type': 'INVESTMENT_INFO', 'category': {'id': 138, 'type': 'INVESTMENT_INFO', 'categoryName': '리서치 보고서', 'categoryDepth': 1, 'upperCategory': None, 'position': 0, 'displayYn': 'Y'}, 'title': '왜 미국 주식인가', 'contents': '<p style="text-align: left;">작성자: 이영곤, 이지선, 한상원 애널리스트</p><p><br></p><p>본 리포트는 &lsquo;개인투자자에게 미국 주식이 유리한 이유&rsquo;에 대해 3가지 관점에서 분석했습니다. 왜 미국주식일까요?</p><p><strong>첫째, 미국 주식은 &lsquo;좋은 시장&rsquo;에서 거래됩니다.</strong></p><p>미국 주식시장은 세계에서 가장 규모가 큰 시장으로, 좋은 투자처를 찾을 기회가 많습니다. 규모가 큰 만큼 유동성이 풍부해 하루 평균 거래액이 300조원을 넘습니다. 이는 한국의 30배 수준으로, 유동성이 풍부하면 주가가 왜곡될 위험이 낮습니다.</p><p>제도가 잘 갖춰져 있어 신뢰도도 높습니다. SEC(미국 증권거래위원회)의 관리 감독 하에 공정하고 투명하게 운영되기 때문에 타 주식시장에 비해 소액주주의 이익을 침해당할 위험도 낮습니다. 뿐만 아니라 배당, 자사주매입 등 기업의 이익을 주주에게 돌려주는 주주환원 움직임이 활발합니다.</p><p><strong>둘째, 미국에는 &lsquo;좋은 기업&rsquo;들이 많습니다.</strong></p><p>투자자에게 좋은 기업은 주가가 올라서 투자이익을 안겨주는 기업입니다. 주가가 오르려면 실적이 좋고 높은 멀티플을 부여받아야 합니다. 지난 30년간 미국은 높은 실적과 멀티플 덕분에 다른 나라 주식시장 대비 주가가 오른 기업들이 많았습니다. 특히 금융위기와 코로나 19 이후엔 미국 선호 현상이 더욱 심화되고 있습니다. 또한 미국에는 늘어난 이익을 배당의 형태로 주주들에게 돌려주는 기업들이 많습니다.</p><p>다수의 미국 기업들이 매출, 효율성 등 여러 가지 측면에서 전 세계 우수기업 리스트 상위권을 차지하고 있습니다. 이는 미국이 경제 규모, 천연자원, 국방력, 인적 자원 등 기업 성장의 원동력이 되는 요소들을 두루 갖추고 있기 때문입니다. 여기에 만족하지 않고 미국 기업들은 AI 등 미래 패러다임을 주도하고 있습니다.</p><p><strong>셋째, 미국 주식은 자산배분 효과가 있습니다.</strong></p><p>한국 투자자들의 자산은 원화에 쏠려 있습니다. 따라서 자산의 일정 비율을 달러로 바꿔두면 리스크를 줄일 수 있습니다. 기축통화인 달러는 한국의 투자자산과 반대로 움직이기 때문에 특히 자산배분 효과가 큽니다.</p><p>미국 주식을 사는 것 역시 그만큼의 달러를 보유한다는 의미와 같습니다. 실제로 과거 데이터를 살펴봤더니 코스피에만 투자하는 것보다 달러나 미국주식에 나눠 투자했을 때 리스크가 줄어드는 것으로 나타났습니다. 세계 경제에서 달러가 차지하는 비중을 고려했을 때 앞으로도 달러는 기축통화 자리를 지킬 확률이 높습니다. 따라서 미국 주식 투자의 자산배분 효과 역시 지속될 것으로 판단됩니다.</p><p><br></p><p><strong>* 좀 더 자세한 내용은 첨부 파일을 참고해주시기 바랍니다.</strong></p>', 'position': 0, 'displayYn': 'Y', 'displayDt': '2024-09-20T00:00:00', 'displayEndDt': None, 'author': 'bg.choi', 'createdAt': '2024-09-20T22:12:14', 'updatedAt': '2024-09-20T22:12:14', 'pinned': False, 'subTitle': '', 'postImage': 'https://home-files.tossinvest.com/files/investment-info/7ac1921e-c69d-4c18-a51b-776e27f9d731.pdf', 'refLink': '', 'files': [{'postId': 9678, 'type': 'INVESTMENT_INFO', 'fileName': 'TossRC_Why_US_Equities_20240923.pdf', 'filePath': 'https://home-files.tossinvest.com/files/investment-info/7ac1921e-c69d-4c18-a51b-776e27f9d731.pdf', 'createdAt': '2024-09-20T22:12:14'}]}]
             LIST_ARTICLE_TITLE = list['title']
             LIST_ARTICLE_URL   =  list['files'][0]['filePath']
-            DOWNLOAD_URL = LIST_ARTICLE_URL
-            print(LIST_ARTICLE_TITLE)
-            print(LIST_ARTICLE_URL)
+            REG_DT             = list['createdAt']
+            DOWNLOAD_URL        = LIST_ARTICLE_URL
+            
+            # print(LIST_ARTICLE_TITLE)
+            # print(LIST_ARTICLE_URL)
 
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # # "REG_DT":REG_DT,
+                "REG_DT":REG_DT.split('T')[0].replace('-', ''),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -1612,10 +1649,12 @@ def Leading_checkNewArticle():
             if attachment_element and 'href' in attachment_element.attrs:
                 attachment_link =  f"http://www.leading.co.kr{attachment_element['href']}"  # 상대 경로를 절대 경로로 변환
             
+            reg_dt_element = list.select_one("td:nth-child(5)")
+            REG_DT = reg_dt_element.get_text(strip=True)
             # 결과 출력
-            print("제목:", title)
-            print("첨부 파일:", attachment_link)
-            print()
+            # print("제목:", title)
+            # print("첨부 파일:", attachment_link)
+            # print()
             LIST_ARTICLE_TITLE = title
             LIST_ARTICLE_URL = attachment_link
             DOWNLOAD_URL     = attachment_link
@@ -1623,7 +1662,7 @@ def Leading_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # # "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
