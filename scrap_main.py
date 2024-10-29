@@ -87,32 +87,43 @@ def LS_checkNewArticle():
 
         nNewArticleCnt = 0        
         for list in soupList:
-            str_date = list.select('td')[3].get_text()
-            list = list.select('a')
-            # print(list[0].text)
-            # print('https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", ""))
-            LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
-            LIST_ARTICLE_TITLE = list[0].get_text()
-            LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
-            POST_DATE = str_date.strip()
+            # print(list)
+            # 모든 td 태그 선택
+            td_elements = list.select('td')
+            # 작성자
+            WRITER = td_elements[2].get_text().strip()
+            # POST_DATE: 인덱스 3의 td 태그에서 날짜 추출
+            REG_DT = td_elements[3].get_text().strip()
+            # LIST_ARTICLE_TITLE 및 LIST_ARTICLE_URL: 인덱스 1의 td 태그에서 제목과 URL 추출
+            link_tag = td_elements[1].select_one('a')  # 첫 번째 a 태그 선택
+            if link_tag:
+                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + link_tag['href'].replace("amp;", "")
+                LIST_ARTICLE_TITLE = link_tag.get_text().strip()
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]") + 1:].strip()  # 불필요한 부분 제거
+
+            # 추출된 정보 출력 (또는 필요한 방식으로 활용)
+            print("URL:", LIST_ARTICLE_URL)
+            print("Title:", LIST_ARTICLE_TITLE)
+            print("Date:", REG_DT)
             # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
             try:
-                post_date_obj = datetime.strptime(POST_DATE, '%Y.%m.%d').date()
+                post_date_obj = datetime.strptime(REG_DT, '%Y.%m.%d').date()
             except ValueError as e:
-                print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
+                print(f"날짜 형식 오류: {REG_DT}, 오류: {e}")
                 continue
             
-            REG_DT = post_date_obj.strftime('%Y%m%d')
+            # REG_DT = post_date_obj.strftime('%Y%m%d')
             # print('post_date_obj',post_date_obj)
             # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
             if post_date_obj < seven_days_ago:
-                print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
+                print(f"게시물 날짜 {REG_DT}가 7일 이전이므로 중단합니다.")
                 break
-
-            item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
+            
+            
+            item = LS_detail(LIST_ARTICLE_URL, REG_DT, firm_info)
             # print(item)
             if item:
                 LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
@@ -123,7 +134,8 @@ def LS_checkNewArticle():
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "WRITER": WRITER,
                 "ARTICLE_URL":DOWNLOAD_URL,
                 "ATTACH_URL":DOWNLOAD_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
@@ -244,7 +256,7 @@ def ShinHanInvest_checkNewArticle():
             REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
-
+            WRITER = list['f5']
             try:
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
@@ -258,6 +270,7 @@ def ShinHanInvest_checkNewArticle():
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
+                "WRITER":WRITER,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -416,14 +429,31 @@ def HANA_checkNewArticle():
         nNewArticleCnt = 0
         
         for list in soupList:
-            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
-            LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-            DOWNLOAD_URL    = LIST_ARTICLE_URL
+            print('=============')
+            print(list)
+
+            # 제목과 URL 추출
+            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text.strip()
+            LIST_ARTICLE_URL = 'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5) > div > a').get('href')
+            DOWNLOAD_URL = LIST_ARTICLE_URL
+
+            # 작성일자와 작성자 추출
+            REG_DT = list.select_one('li.mb7.m-info.info > span.txtbasic').text.strip()
+            WRITER = list.select_one('li.mb7.m-info.info > span.none.m-name').text.strip()
+            
+            # 디버그 출력 (옵션)
+            print("Title:", LIST_ARTICLE_TITLE)
+            print("URL:", LIST_ARTICLE_URL)
+            print("Download URL:", DOWNLOAD_URL)
+            print("Date (REG_DT):", REG_DT)
+            print("Writer:", WRITER)
+            
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
+                "REG_DT":re.sub(r"[-./]", "", REG_DT),
+                "WRITER":WRITER,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
@@ -457,8 +487,8 @@ def KB_checkNewArticle():
     # 요청 payload 데이터
     payload = {
         "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": GetCurrentDate("YYYYMMDD"),
+        "pageSize": 500,
+        "registdateFrom": datetime(datetime.now().year, 1, 1).strftime("%Y%m%d"),
         "registdateTo": GetCurrentDate("YYYYMMDD"),
         "templateid": "",
         "lowTempId": "",
@@ -476,9 +506,9 @@ def KB_checkNewArticle():
     
     nNewArticleCnt = 0
     
+    print(len(soupList))
     # JSON To List
     for list in soupList:
-        # print(list)
 
         REG_DT              = re.sub(r"[-./]", "", list['publicDate'])
         WRITER              = list['analystNm']
@@ -498,6 +528,7 @@ def KB_checkNewArticle():
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()
         })
+        print(json_data_list)
             
     
     # 메모리 정리
