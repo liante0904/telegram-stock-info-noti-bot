@@ -281,7 +281,6 @@ def ShinHanInvest_checkNewArticle():
     del scraper
     gc.collect()
 
-    print(json_data_list)
     return json_data_list
 
 def NHQV_checkNewArticle():
