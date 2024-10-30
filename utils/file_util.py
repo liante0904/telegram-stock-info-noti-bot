@@ -42,6 +42,10 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         # report_info_row['REG_DT'] 값이 있으면 이를 사용하고 없으면 현재 날짜 사용
         DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else GetCurrentDate('YYYYMMDD')[2:8]
 
+        # DATE_PART가 비어 있는 경우 현재 날짜를 기본값으로 설정
+        if not DATE_PART:
+            DATE_PART = GetCurrentDate('YYYYMMDD')[2:8]
+            
         # 파일명 지정
         FILE_NAME = FILE_NAME.replace(DATE_PART, "").replace(GetCurrentDate('YYYYMMDD'), "")
         FILE_NAME = DATE_PART + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NAME
