@@ -246,7 +246,6 @@ def ShinHanInvest_checkNewArticle():
 
         soupList = jres['list']
 
-        nNewArticleCnt = 0
         # JSON To List
         for list in soupList:
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
