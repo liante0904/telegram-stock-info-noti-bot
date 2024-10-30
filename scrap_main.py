@@ -1823,9 +1823,9 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        # LS_checkNewArticle,
+        LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
-        # NHQV_checkNewArticle,
+        NHQV_checkNewArticle,
         HANA_checkNewArticle,
         KB_checkNewArticle,
         Samsung_checkNewArticle,
