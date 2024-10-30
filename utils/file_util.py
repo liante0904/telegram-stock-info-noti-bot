@@ -43,7 +43,6 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else GetCurrentDate('YYYYMMDD')[2:8]
 
         # 파일명 지정
-        FILE_NAME = FILE_NAME.replace(".pdf", "").replace(".PDF", "")
         FILE_NAME = FILE_NAME.replace(DATE_PART, "").replace(GetCurrentDate('YYYYMMDD'), "")
         FILE_NAME = DATE_PART + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NAME
 

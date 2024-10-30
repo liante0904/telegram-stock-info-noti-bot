@@ -252,7 +252,7 @@ def ShinHanInvest_checkNewArticle():
             # {'f0': '등록일', 'f1': '제목', 'f2': '구분', 'f3': '파일명', 'f4': '본문', 'f5': '작성자', 'f6': '조회수'}
             # print(list)
 
-            REG_DT = list['f1']
+            REG_DT = list['f0']
             REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
@@ -281,7 +281,8 @@ def ShinHanInvest_checkNewArticle():
     del scraper
     gc.collect()
 
-    return nNewArticleCnt
+    print(json_data_list)
+    return json_data_list
 
 def NHQV_checkNewArticle():
     SEC_FIRM_ORDER = 2
@@ -1824,9 +1825,9 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        LS_checkNewArticle,
+        # LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
-        NHQV_checkNewArticle,
+        # NHQV_checkNewArticle,
         HANA_checkNewArticle,
         KB_checkNewArticle,
         Samsung_checkNewArticle,
