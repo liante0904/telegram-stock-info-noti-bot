@@ -78,7 +78,9 @@ async def convert_sql_to_telegram_messages(fetched_rows):
         sendMessageText += "*" + row['ARTICLE_TITLE'].replace("_", " ").replace("*", "") + "*" + "\n"
 
         # URL 우선순위 설정
-        if row.get('ATTACH_URL'):
+        if row.get('TELEGRAM_URL'):
+            link_url = row['TELEGRAM_URL']
+        elif row.get('ATTACH_URL'):
             link_url = row['ATTACH_URL']
         elif row.get('DOWNLOAD_URL'):
             link_url = row['DOWNLOAD_URL']
@@ -86,7 +88,7 @@ async def convert_sql_to_telegram_messages(fetched_rows):
             link_url = row['ARTICLE_URL']
         else:
             link_url = "링크없음"
-
+        
         # 원문 링크 추가
         if link_url == "링크없음":
             sendMessageText += "링크없음\n"
