@@ -209,11 +209,11 @@ def insert_json_data_list(json_data_list, table_name):
         cursor.execute(f'''
             INSERT INTO {table_name} (
                 SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, SAVE_TIME 
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(ATTACH_URL) DO UPDATE SET
-                REG_DT = excluded.REG_DT,  -- ATTACH_URL 중복 시 REG_DT 업데이트
-                WRITER = excluded.WRITER  -- ATTACH_URL 중복 시 WRITER 업데이트
+                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, KEY, SAVE_TIME 
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(KEY) DO UPDATE SET
+                REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
+                WRITER = excluded.WRITER  -- KEY 중복 시 WRITER 업데이트
         ''', (
             entry["SEC_FIRM_ORDER"],
             entry["ARTICLE_BOARD_ORDER"],
@@ -225,6 +225,7 @@ def insert_json_data_list(json_data_list, table_name):
             entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
             entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
             entry.get("WRITER", ''),
+            entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
             entry["SAVE_TIME"]
         ))
 
