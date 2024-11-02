@@ -211,9 +211,9 @@ def insert_json_data_list(json_data_list, table_name):
                 SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                 ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, KEY, SAVE_TIME 
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(ATTACH_URL) DO UPDATE SET
-                REG_DT = excluded.REG_DT,  -- ATTACH_URL 중복 시 REG_DT 업데이트
-                WRITER = excluded.WRITER  -- ATTACH_URL 중복 시 WRITER 업데이트
+            ON CONFLICT(KEY) DO UPDATE SET
+                REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
+                WRITER = excluded.WRITER  -- KEY 중복 시 WRITER 업데이트
         ''', (
             entry["SEC_FIRM_ORDER"],
             entry["ARTICLE_BOARD_ORDER"],
