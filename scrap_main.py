@@ -781,7 +781,7 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
         encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
         url += '?' + encoded_params
     
-    print(url)
+    # print(url)
     return url
 
 def Shinyoung_checkNewArticle():
@@ -1096,7 +1096,7 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_TITLE = list['titl']
 
             DOWNLOAD_URL = LIST_ARTICLE_URL
-            print(list)
+            # print(list)
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
@@ -1555,11 +1555,10 @@ def TOSSinvest_checkNewArticle():
         # HTML parse
         soupList = jres['result']['list']
         
-        print('*' *40)
-        print(soupList)
-        print(len(soupList))
+        # print('*' *40)
+        # print(soupList)
         
-        print('*' *40)
+        # print('*' *40)
         
         nNewArticleCnt = 0
         for list in soupList:
