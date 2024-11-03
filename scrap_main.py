@@ -30,6 +30,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+# import scrap_af_main
 import scrap_send_main
 import scrap_upload_pdf
 #################### global 변수 정리 ###################################
@@ -1856,6 +1857,7 @@ def main():
             print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
             print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
             if inserted_count:
+                # loop.run_until_complete(scrap_af_main.main())
                 loop.run_until_complete(scrap_send_main.main())
                 loop.run_until_complete(scrap_upload_pdf.main())
         else:
