@@ -136,7 +136,7 @@ async def imfnsec_checkNewArticle():
                     print(f"Failed to fetch page data for bid {bid}. Status code: {response.status}")
 
     # 최종 결과 출력 및 반환
-    print("Final fetched articles:", json_data_list)
+    # print("Final fetched articles:", json_data_list)
     return json_data_list
 
 async def main():
