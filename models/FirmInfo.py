@@ -20,7 +20,8 @@ firm_names = [
     "토스증권",        # 15
     "리딩투자증권",        # 16
     "대신증권",        # 17
-    "IM증권"        # 18
+    "IM증권",        # 18
+    "DB금융투자"      # 19
 ]
 
 # 게시판 이름을 담은 2차원 배열
@@ -123,7 +124,13 @@ board_names = [
      "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
      "투자전략",      # ARTICLE_BOARD_ORDER 3,
      "경제분석",       # ARTICLE_BOARD_ORDER 4,
-     "채권분석"]       # ARTICLE_BOARD_ORDER 5,
+     "채권분석"],       # ARTICLE_BOARD_ORDER 5,
+    
+    # SEC_FIRM_ORDER 19
+    ["기업/산업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "자산전략(채권)",         # ARTICLE_BOARD_ORDER 1,
+     "자산전략(주식)",       # ARTICLE_BOARD_ORDER 2,
+    ]       # ARTICLE_BOARD_ORDER 5,
     
 ]
 
@@ -232,8 +239,9 @@ label_names = [
      "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
      "투자전략",      # ARTICLE_BOARD_ORDER 3,
      "경제분석",       # ARTICLE_BOARD_ORDER 4,
-     "채권분석"]       # ARTICLE_BOARD_ORDER 5,
-
+     "채권분석"],       # ARTICLE_BOARD_ORDER 5,
+    # SEC_FIRM_ORDER 19
+    [""],              # ARTICLE_BOARD_ORDER 0,
 
 ]
 
