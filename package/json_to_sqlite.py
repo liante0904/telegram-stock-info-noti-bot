@@ -225,7 +225,7 @@ def insert_json_data_list(json_data_list, table_name):
             entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
             entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
             entry.get("WRITER", ''),
-            entry.get("KEY") or entry.get("ARTICLE_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
+            entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
             entry["SAVE_TIME"]
         ))
 
