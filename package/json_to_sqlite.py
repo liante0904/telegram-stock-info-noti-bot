@@ -8,6 +8,8 @@ import os
 from dotenv import load_dotenv
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
+
 load_dotenv()  # .env 파일의 환경 변수를 로드합니다
 env = os.getenv('ENV')
 print(env)
@@ -415,6 +417,76 @@ async def daily_select_data(date_str=None, type=None):
     
     return rows
 
+async def fetch_daily_articles_by_date(firm_info: FirmInfo, date_str: str = None):
+    """
+    지정된 날짜의 DB금융투자 기사를 조회하여 반환합니다.
+    
+    Args:
+        firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
+        date_str (str, optional): 조회할 날짜 (형식: 'YYYYMMDD'). 지정하지 않으면 오늘 날짜로 설정됩니다.
+        
+    Returns:
+        list[dict]: 조회된 기사 목록으로, 각 기사는 딕셔너리 형태로 구성됩니다.
+            - id: 기사 ID
+            - SEC_FIRM_ORDER: 증권사 식별 코드
+            - ARTICLE_BOARD_ORDER: 기사 게시판 순서
+            - FIRM_NM: 증권사 이름
+            - REG_DT: 기사 등록일
+            - ATTACH_URL: 첨부파일 URL
+            - ARTICLE_TITLE: 기사 제목
+            - ARTICLE_URL: 기사 URL
+            - MAIN_CH_SEND_YN: 메인 채널 전송 여부
+            - DOWNLOAD_URL: 다운로드 URL
+            - WRITER: 작성자
+            - SAVE_TIME: 저장 시간
+            - KEY: 키 값 (상세 기사 URL 조회 시 사용)
+    """
+    
+    # SQLite 데이터베이스 연결
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # date_str가 없으면 현재 날짜 사용
+    query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+    sec_firm_order = firm_info.sec_firm_order  # FirmInfo 인스턴스에서 SEC_FIRM_ORDER 가져오기
+    
+    # SQL 쿼리 정의
+    query = f"""
+    SELECT 
+        id,
+        SEC_FIRM_ORDER, 
+        ARTICLE_BOARD_ORDER, 
+        FIRM_NM, 
+        REG_DT,
+        ATTACH_URL, 
+        ARTICLE_TITLE, 
+        ARTICLE_URL, 
+        MAIN_CH_SEND_YN, 
+        DOWNLOAD_URL, 
+        WRITER, 
+        SAVE_TIME,
+        MAIN_CH_SEND_YN,
+        KEY
+    FROM 
+        data_main_daily_send 
+    WHERE 
+        REG_DT = '{query_date}'
+        AND SEC_FIRM_ORDER = '{sec_firm_order}'
+        AND KEY IS NOT NULL
+        AND TELEGRAM_URL IS NULL
+    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+    """
+    
+    # SQL 쿼리 실행
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    
+    # rows를 dict 형태로 변환
+    rows = [dict(row) for row in rows]
+
+    return rows
+
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
     데이터베이스의 데이터를 업데이트하는 함수입니다.
@@ -540,7 +612,8 @@ def main():
     if args.action == 'table' or args.action is None:
         print_tables()
     elif args.action == 'insert':
-        insert_data()
+        pass
+        # insert_data()
     elif args.action == 'select':
         select_data(args.name)
     elif args.action == 'fetch':
