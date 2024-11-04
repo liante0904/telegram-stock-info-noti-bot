@@ -71,6 +71,9 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     print('convert URL:', URL)
     print('convert ATTACH_FILE_NAME:', ATTACH_FILE_NAME)
 
+    if URL is None:
+        print('URL값이 유효하지 않아 종료')
+        return True
     # 파일이 이미 존재하는지 확인
     if os.path.exists(ATTACH_FILE_NAME):
         log_message = f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다."
