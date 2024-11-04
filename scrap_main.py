@@ -20,6 +20,7 @@ from bs4 import BeautifulSoup
 from models.FirmInfo import FirmInfo
 from models.WebScraper import WebScraper
 from modules.imfnsec_18 import imfnsec_checkNewArticle
+from modules.dbfi_19 import dbfi_checkNewArticle
 from package.json_to_sqlite import insert_json_data_list
 from utils.date_util import GetCurrentDate, GetCurrentDate_NH
 
@@ -43,7 +44,7 @@ FIRST_ARTICLE_INDEX = 0
 #################### global 변수 정리 끝###################################
 
 def LS_checkNewArticle():
-    SEC_FIRM_ORDER = 0
+    SEC_FIRM_ORDER      = 0
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -272,7 +273,7 @@ def ShinHanInvest_checkNewArticle():
     return nNewArticleCnt
 
 def NHQV_checkNewArticle():
-    SEC_FIRM_ORDER = 2
+    SEC_FIRM_ORDER      = 2
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -367,7 +368,7 @@ def NHQV_checkNewArticle():
     return nNewArticleCnt
 
 def HANA_checkNewArticle():
-    SEC_FIRM_ORDER = 3
+    SEC_FIRM_ORDER      = 3
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -545,7 +546,7 @@ def KB_decode_url(url):
     return decoded_url
 
 def Samsung_checkNewArticle():
-    SEC_FIRM_ORDER = 5
+    SEC_FIRM_ORDER      = 5
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -618,7 +619,7 @@ def Samsung_checkNewArticle():
     return nNewArticleCnt
 
 def Sangsanginib_checkNewArticle():
-    SEC_FIRM_ORDER = 6
+    SEC_FIRM_ORDER      = 6
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -786,7 +787,7 @@ def Sangsanginib_detail(NT_NO, CMS_CD):
     return url
 
 def Shinyoung_checkNewArticle():
-    SEC_FIRM_ORDER = 7
+    SEC_FIRM_ORDER      = 7
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -959,7 +960,7 @@ def Shinyoung_detail(SEQ, BBSNO):
     return url
 
 def Miraeasset_checkNewArticle():
-    SEC_FIRM_ORDER = 8
+    SEC_FIRM_ORDER      = 8
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -1037,7 +1038,7 @@ def Miraeasset_checkNewArticle():
     return nNewArticleCnt
 
 def Kiwoom_checkNewArticle():
-    SEC_FIRM_ORDER = 10
+    SEC_FIRM_ORDER      = 10
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -1117,7 +1118,7 @@ def Kiwoom_checkNewArticle():
     return nNewArticleCnt
 
 def Hmsec_checkNewArticle():
-    SEC_FIRM_ORDER = 9
+    SEC_FIRM_ORDER      = 9
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -1198,7 +1199,7 @@ def Hmsec_checkNewArticle():
     return nNewArticleCnt
 
 def Koreainvestment_selenium_checkNewArticle():
-    SEC_FIRM_ORDER = 13
+    SEC_FIRM_ORDER      = 13
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -1585,7 +1586,7 @@ def TOSSinvest_checkNewArticle():
     return nNewArticleCnt
 
 def Leading_checkNewArticle():
-    SEC_FIRM_ORDER = 16
+    SEC_FIRM_ORDER      = 16
     ARTICLE_BOARD_ORDER = 0
 
     requests.packages.urllib3.disable_warnings()
@@ -1646,7 +1647,7 @@ def Leading_checkNewArticle():
     return nNewArticleCnt
 
 async def Daeshin_checkNewArticle():
-    SEC_FIRM_ORDER = 17
+    SEC_FIRM_ORDER      = 17
     ARTICLE_BOARD_ORDER = 0
 
     firm_info = FirmInfo(
@@ -1813,7 +1814,8 @@ def main():
     # 비동기 함수 리스트
     async_check_functions = [
         Daeshin_checkNewArticle,
-        imfnsec_checkNewArticle
+        imfnsec_checkNewArticle,
+        dbfi_checkNewArticle,
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트
