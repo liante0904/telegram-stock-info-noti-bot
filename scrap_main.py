@@ -31,7 +31,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# import scrap_af_main
+import scrap_af_main
 import scrap_send_main
 import scrap_upload_pdf
 #################### global 변수 정리 ###################################
@@ -246,6 +246,7 @@ def ShinHanInvest_checkNewArticle():
             REG_DT = re.sub(r"[-./]", "", REG_DT)
             LIST_ARTICLE_TITLE = list['f1']
             LIST_ARTICLE_URL = list['f3']
+            WRITER = list['f5']
 
             try:
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
@@ -254,15 +255,17 @@ def ShinHanInvest_checkNewArticle():
                 print("에러 발생:", e)
                 LIST_ARTICLE_URL = list['f3']
             
-            DOWNLOAD_URL = LIST_ARTICLE_URL
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
+                "TELEGRAM_URL":LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "WRITER": WRITER,
+                "KEY:": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
@@ -420,15 +423,16 @@ def HANA_checkNewArticle():
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
             LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-            DOWNLOAD_URL    = LIST_ARTICLE_URL
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 # "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
+                "TELEGRAM_URL": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "KEY:": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
@@ -488,7 +492,6 @@ def KB_checkNewArticle():
         if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
         else: LIST_ARTICLE_TITLE = list['docTitleSub']
         LIST_ARTICLE_URL = f"http://rdata.kbsec.com/pdf_data/{list['documentid']}.pdf"
-        DOWNLOAD_URL     = LIST_ARTICLE_URL
         json_data_list.append({
             "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
             "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
@@ -496,8 +499,10 @@ def KB_checkNewArticle():
             "REG_DT":REG_DT,
             "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
-            "DOWNLOAD_URL": DOWNLOAD_URL,
+            "DOWNLOAD_URL": LIST_ARTICLE_URL,
+            "TELEGRAM_URL": LIST_ARTICLE_URL,
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+            "KEY:": LIST_ARTICLE_URL,
             "SAVE_TIME": datetime.now().isoformat()
         })
             
@@ -1000,11 +1005,10 @@ def Miraeasset_checkNewArticle():
             attachment_link = "없음"
             if attachment_element:
                 attachment_link = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
-            print("제목:", title)
-            print("첨부 파일:", attachment_link)
-            print()
+            # print("제목:", title)
+            # print("첨부 파일:", attachment_link)
+            # print()
 
-        # soupList = posts
 
         nNewArticleCnt = 0
         
@@ -1093,7 +1097,7 @@ def Hmsec_checkNewArticle():
 
             REG_DT = jres['data_list'][0]['REG_DATE'].strip()
             # print(jres['data_list'])
-            SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
+            # SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -1985,7 +1989,7 @@ def main():
     async_check_functions = [
         Daeshin_checkNewArticle,
         imfnsec_checkNewArticle,
-        # dbfi_checkNewArticle,
+        dbfi_checkNewArticle,
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트
@@ -2029,7 +2033,7 @@ def main():
             print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
             print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
             if inserted_count:
-                # loop.run_until_complete(scrap_af_main.main())
+                loop.run_until_complete(scrap_af_main.main())
                 loop.run_until_complete(scrap_send_main.main())
                 loop.run_until_complete(scrap_upload_pdf.main())
         else:

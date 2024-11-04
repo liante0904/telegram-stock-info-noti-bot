@@ -28,7 +28,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
 
     # 전체 회사들의 레코드가 JSON 리스트로 모임
     json_records = json.dumps(all_records, indent=2)
-    print(f"Combined JSON Records:\n{json_records}")
+    print(f"Combined JSON Records size:\n{len(json_records)}")
 
     # API를 통해 TELEGRAM_URL 획득 및 업데이트
     update_records = await fetch_detailed_url(all_records)
