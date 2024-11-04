@@ -1,11 +1,15 @@
+import aiosqlite
 import json
 import sqlite3
 import os
 import sys
 from dotenv import load_dotenv
-
+from datetime import datetime
+# 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
 # 환경 변수 로드
-load_dotenv() # .env 파일의 환경 변수를 로드합니다
+load_dotenv()
 env = os.getenv('ENV')
 
 if env == 'production':
@@ -21,79 +25,122 @@ else:
 db_path = os.path.expanduser('~/sqlite3/telegram.db')
 
 class SQLiteManager:
-    def __init__(self, db_path):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        self.db_path = db_path if db_path else globals()['db_path']
         self.connection = None
         self.cursor = None
 
     def open_connection(self):
-        """SQLite 데이터베이스에 연결합니다."""
+        """데이터베이스 연결 설정"""
         self.connection = sqlite3.connect(self.db_path)
+        self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
 
     def close_connection(self):
-        """데이터베이스 연결과 커서를 종료합니다."""
+        """데이터베이스 연결 종료"""
         if self.cursor:
             self.cursor.close()
         if self.connection:
             self.connection.close()
 
     def create_table(self, table_name, columns):
-        """테이블을 생성합니다."""
+        """테이블 생성"""
         columns_str = ", ".join(f"{col} {dtype}" for col, dtype in columns.items())
         query = f"CREATE TABLE IF NOT EXISTS {table_name} ({columns_str})"
         self.cursor.execute(query)
         self.connection.commit()
+        return {"status": "success", "query": query}
 
     def insert_data(self, table_name, data):
-        """데이터를 삽입합니다."""
+        """데이터 삽입"""
         placeholders = ', '.join('?' for _ in data)
         query = f"INSERT INTO {table_name} VALUES ({placeholders})"
         self.cursor.execute(query, data)
         self.connection.commit()
+        return {"status": "success", "query": query, "data": data}
 
     def fetch_all(self, table_name):
-        """테이블의 모든 데이터를 가져옵니다."""
+        """모든 데이터 조회"""
         query = f"SELECT * FROM {table_name}"
         self.cursor.execute(query)
-        return self.cursor.fetchall()
+        rows = self.cursor.fetchall()
+        return [dict(row) for row in rows]
 
-# 테스트 코드 및 메인 코드
+    async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
+        """
+        TELEGRAM_URL 갱신이 필요한 레코드를 조회합니다.
+        
+        Args:
+            firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
+            date_str (str, optional): 조회할 날짜 (형식: 'YYYYMMDD'). 지정하지 않으면 오늘 날짜로 설정됩니다.
+        
+        Returns:
+            list[dict]: 조회된 기사 목록
+        """
+        self.open_connection()
+        query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+        firmInfo = firm_info.get_state()
+        print(firmInfo["SEC_FIRM_ORDER"])
+        query = f"""
+        SELECT 
+            id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
+            DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
+        FROM 
+            data_main_daily_send 
+        WHERE 
+            REG_DT = '{query_date}'
+            AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
+            AND KEY IS NOT NULL
+            AND TELEGRAM_URL = ''
+            
+        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        """
+
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        self.close_connection()
+        
+        return [dict(row) for row in rows]
+
+    async def update_telegram_url(self, record_id, telegram_url):
+        """id를 기준으로 TELEGRAM_URL 컬럼을 비동기로 업데이트합니다."""
+        async with aiosqlite.connect(self.db_path) as db:
+            query = """
+            UPDATE data_main_daily_send
+            SET TELEGRAM_URL = ?
+            WHERE id = ?
+            """
+            await db.execute(query, (telegram_url, record_id))
+            await db.commit()
+        return {"status": "success", "query": query, "record_id": record_id, "telegram_url": telegram_url}
+
+# 메인 코드
 if __name__ == "__main__":
-    # SQLiteManager 인스턴스 생성
-    db_manager = SQLiteManager(db_path)
-
-    # 데이터베이스 연결
+    db_manager = SQLiteManager()
     db_manager.open_connection()
 
-    # JSON 파일 리스트와 대응되는 테이블 이름
     json_files = {
-        "data_main_daily_send.json": "data_main_daily_send",
         "hankyungconsen_research.json": "hankyungconsen_research",
         "naver_research.json": "naver_research"
     }
 
-    # 각 JSON 파일에 대해 테이블 생성 및 데이터 삽입
     for json_file, table_name in json_files.items():
-        # JSON 파일 경로 설정
         json_file_path = os.path.join(JSON_DIR, json_file)
 
-        # 테이블 생성 (예: id, name, created_at 컬럼)
-        db_manager.create_table(table_name, {
+        table_creation_result = db_manager.create_table(table_name, {
             'id': 'INTEGER PRIMARY KEY',
             'name': 'TEXT',
             'created_at': 'DATETIME DEFAULT CURRENT_TIMESTAMP'
         })
+        print(table_creation_result)
 
-        # JSON 파일에서 데이터 읽기
         try:
             with open(json_file_path, 'r') as f:
                 data = json.load(f)
-
-                # 데이터 삽입 (여기서는 data의 구조에 맞춰 조정해야 함)
                 for item in data:
-                    db_manager.insert_data(table_name, (item['id'], item['name']))
-
+                    insertion_result = db_manager.insert_data(table_name, (item['id'], item['name']))
+                    print(insertion_result)
         except FileNotFoundError:
             print(f"파일이 존재하지 않습니다: {json_file_path}")
         except json.JSONDecodeError:
@@ -101,12 +148,10 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"오류 발생: {str(e)}")
 
-    # 데이터 조회 예시
     for table_name in json_files.values():
         print(f"\nTable: {table_name}")
         records = db_manager.fetch_all(table_name)
         for record in records:
             print(record)
 
-    # 데이터베이스 연결 종료
     db_manager.close_connection()

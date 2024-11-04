@@ -221,7 +221,7 @@ def insert_json_data_list(json_data_list, table_name):
             entry["ARTICLE_BOARD_ORDER"],
             entry["FIRM_NM"],
             entry.get("REG_DT", ''),
-            entry["ATTACH_URL"],
+            entry.get("ATTACH_URL", ''),
             entry["ARTICLE_TITLE"],
             entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
             entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
@@ -377,6 +377,7 @@ async def daily_select_data(date_str=None, type=None):
     # 쿼리 타입에 따라 조건을 다르게 설정
     if type == 'send':
         query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
+        query_condition += "AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL <> ''))"
     elif type == 'download':
         query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
 
@@ -395,12 +396,14 @@ async def daily_select_data(date_str=None, type=None):
         DOWNLOAD_URL, 
         WRITER, 
         SAVE_TIME,
+        TELEGRAM_URL,
         MAIN_CH_SEND_YN
     FROM 
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
         AND {query_condition}
+        
     ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
     """
     
@@ -413,7 +416,7 @@ async def daily_select_data(date_str=None, type=None):
     # rows를 dict 형태로 변환
     rows = [dict(row) for row in rows]
 
-    print(rows)
+    # print(rows)
     
     return rows
 
