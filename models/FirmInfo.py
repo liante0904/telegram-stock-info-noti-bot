@@ -13,13 +13,15 @@ firm_names = [
     "미래에셋증권",  # 8
     "현대차증권",    # 9
     "키움증권",      # 10
-    "",              # 11
+    "DS투자증권",    # 11
     "",              # 12
     "한국투자증권",  # 13
     "다올투자증권",   # 14
     "토스증권",        # 15
     "리딩투자증권",        # 16
-    "대신증권"        # 17
+    "대신증권",        # 17
+    "IM증권",        # 18
+    "DB금융투자"      # 19
 ]
 
 # 게시판 이름을 담은 2차원 배열
@@ -85,7 +87,8 @@ board_names = [
      "미국/선진국"],  # ARTICLE_BOARD_ORDER 3
     
     # SEC_FIRM_ORDER 11
-    [""],             # ARTICLE_BOARD_ORDER 0
+    ["기엽분석",          # ARTICLE_BOARD_ORDER 0
+     "투자전략/경제분석"], # ARTICLE_BOARD_ORDER 1
     
     # SEC_FIRM_ORDER 12
     [""],             # ARTICLE_BOARD_ORDER 0
@@ -115,7 +118,20 @@ board_names = [
     # SEC_FIRM_ORDER 16
     ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
     # SEC_FIRM_ORDER 17
-    ["리서치리포트"] # ARTICLE_BOARD_ORDER 0
+    ["리서치리포트"], # ARTICLE_BOARD_ORDER 0
+    # SEC_FIRM_ORDER 18
+    ["기업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+     "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+     "투자전략",      # ARTICLE_BOARD_ORDER 3,
+     "경제분석",       # ARTICLE_BOARD_ORDER 4,
+     "채권분석"],       # ARTICLE_BOARD_ORDER 5,
+    
+    # SEC_FIRM_ORDER 19
+    ["기업/산업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "자산전략(채권)",         # ARTICLE_BOARD_ORDER 1,
+     "자산전략(주식)",       # ARTICLE_BOARD_ORDER 2,
+    ]       # ARTICLE_BOARD_ORDER 5,
     
 ]
 
@@ -217,7 +233,17 @@ label_names = [
     # SEC_FIRM_ORDER 16
     [""],              # ARTICLE_BOARD_ORDER 0,
     # SEC_FIRM_ORDER 17
-    [""]              # ARTICLE_BOARD_ORDER 0,
+    [""],              # ARTICLE_BOARD_ORDER 0,
+    # SEC_FIRM_ORDER 18
+    ["기업분석(국내)",    # ARTICLE_BOARD_ORDER 0,
+     "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+     "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+     "투자전략",      # ARTICLE_BOARD_ORDER 3,
+     "경제분석",       # ARTICLE_BOARD_ORDER 4,
+     "채권분석"],       # ARTICLE_BOARD_ORDER 5,
+    # SEC_FIRM_ORDER 19
+    [""],              # ARTICLE_BOARD_ORDER 0,
+
 ]
 
 class FirmInfo:
