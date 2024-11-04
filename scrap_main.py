@@ -612,6 +612,8 @@ def Samsung_checkNewArticle():
                 "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
+                "TELEGRAM_URL":LIST_ARTICLE_URL,
+                "KEY":LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
@@ -717,14 +719,14 @@ def Sangsanginib_checkNewArticle():
             REG_DT              = re.sub(r"[-./]", "", list['REGDT'])
             LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cmsCd[ARTICLE_BOARD_ORDER]}/{cmsCd[ARTICLE_BOARD_ORDER]}_{list['NT_NO']}_1.pdf"
             LIST_ARTICLE_TITLE = list['TITLE']
-            DOWNLOAD_URL = LIST_ARTICLE_URL
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
+                "KEY":LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
@@ -736,60 +738,6 @@ def Sangsanginib_checkNewArticle():
     gc.collect()
 
     return nNewArticleCnt
-
-def Sangsanginib_detail(NT_NO, CMS_CD):
-    ntNo = NT_NO
-    cmsCd = CMS_CD
-    # print('Sangsanginib_detail***********************')
-    url = "https://www.sangsanginib.com/notice/getNoticeDetail"
-    headers = {
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest",
-    }
-
-    data = {
-        "pageNum": "1",
-        "src": "all",
-        "cmsCd": cmsCd,
-        "rowNum": "10",
-        "startRow": "0",
-        "sdt": "",
-        "edt": "",
-        "ntNo": ntNo
-    }
-
-    response = requests.post(url, headers=headers, data=data)
-    if response.status_code != 200:
-        print("Failed to fetch data.")
-    
-    jres = json.loads(response.text)
-    jres = jres['file'][0] #PDF
-    
-    # https://www.sangsanginib.com/common/fileDownload?cmsCd=CM0078&ntNo=4315&fNo=1&fNm=%5BSangSangIn%5D2022038_428.pdf
-
-    # 기본 URL과 쿼리 매개변수 딕셔너리
-    base_url = 'https://www.sangsanginib.com/common/fileDownload'
-    params = {
-        'cmsCd': jres['CMS_CD'],
-        'ntNo': jres['NT_NO'],
-        'fNo': jres['FNO'], # PDF
-        'fNm': jres['FNM']
-    }
-    # print(params)
-    url = base_url
-    if params:
-        # print('urlparse(params)', urlparse.urlencode(params))
-        encoded_params = urlparse.urlencode(params)  # 쿼리 매개변수를 인코딩
-        url += '?' + encoded_params
-    
-    # print(url)
-    return url
 
 def Shinyoung_checkNewArticle():
     SEC_FIRM_ORDER      = 7
@@ -1108,10 +1056,11 @@ def Hmsec_checkNewArticle():
                 "FIRM_NM":firm_info.get_firm_name(),
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "REG_DT":REG_DT,
-                "ATTACH_URL":DOWNLOAD_URL,
+                "ATTACH_URL":LIST_ARTICLE_URL,
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
+                "KEY": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
@@ -1182,7 +1131,7 @@ def Kiwoom_checkNewArticle():
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list['rMenuGb'],  list['attaFile'], list['makeDt'])
             LIST_ARTICLE_TITLE = list['titl']
 
-            DOWNLOAD_URL = LIST_ARTICLE_URL
+            WRITER = list['workId']
             # print(list)
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
@@ -1190,8 +1139,10 @@ def Kiwoom_checkNewArticle():
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":re.sub(r"[-./]", "", list['makeDt']),
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "WRITER": WRITER,
+                "TELEGRAM_URL": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
@@ -1589,7 +1540,9 @@ def DAOL_checkNewArticle():
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
+                "TELEGRAM_URL": LIST_ARTICLE_URL,
+                "KEY": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "WRITER": WRITER,
                 "SAVE_TIME": datetime.now().isoformat()
@@ -1636,7 +1589,6 @@ def TOSSinvest_checkNewArticle():
         for list in soupList:
             LIST_ARTICLE_TITLE = list['title']
             LIST_ARTICLE_URL   =  list['files'][0]['filePath']
-            DOWNLOAD_URL = LIST_ARTICLE_URL
             REG_DT = list['createdAt'].split("T")[0]
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
@@ -1644,8 +1596,9 @@ def TOSSinvest_checkNewArticle():
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT": re.sub(r"[-./]", "", REG_DT),
                 "ATTACH_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "DOWNLOAD_URL": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "KEY":LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
