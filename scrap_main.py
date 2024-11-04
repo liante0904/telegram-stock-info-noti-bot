@@ -1882,7 +1882,7 @@ def main():
     async_check_functions = [
         Daeshin_checkNewArticle,
         imfnsec_checkNewArticle,
-        dbfi_checkNewArticle,
+        # dbfi_checkNewArticle,
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트
