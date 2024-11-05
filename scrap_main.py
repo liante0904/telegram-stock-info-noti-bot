@@ -113,14 +113,14 @@ def LS_checkNewArticle():
             # print('post_date_obj',post_date_obj)
             # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
-            if post_date_obj < seven_days_ago:
-                print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
-                break
+            # if post_date_obj < seven_days_ago:
+            #     print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
+            #     break
 
             item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
             # print(item)
             if item:
-                LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+                # LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
                 DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
                 LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
@@ -129,9 +129,11 @@ def LS_checkNewArticle():
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT":REG_DT,
-                "ARTICLE_URL":DOWNLOAD_URL,
-                "ATTACH_URL":DOWNLOAD_URL,
+                "ARTICLE_URL": '',
+                "ATTACH_URL": '',
                 "DOWNLOAD_URL": DOWNLOAD_URL,
+                "TELEGRAM_URL": DOWNLOAD_URL,
+                "KEY": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
@@ -1621,7 +1623,7 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        # LS_checkNewArticle,
+        LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
         HANA_checkNewArticle,
         Samsung_checkNewArticle,
