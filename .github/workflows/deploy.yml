@@ -90,6 +90,7 @@ jobs:
     - name: Sync changed files with test branch
       run: |
         # 원격에서 test 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
+        git remote update
         git fetch origin test:test
         git checkout test
         for file in $(echo "$CHANGED_FILES" | tr ',' '\n'); do
@@ -106,6 +107,7 @@ jobs:
     - name: Sync changed files with dev branch
       run: |
         # 원격에서 dev 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
+        git remote update
         git fetch origin dev:dev
         git checkout dev
         for file in $(echo "$CHANGED_FILES" | tr ',' '\n'); do
