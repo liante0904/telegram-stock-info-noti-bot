@@ -76,7 +76,7 @@ async def fetch_attach_url(session, bid, aid):
     return None
 
 # IM증권 기사 체크 함수
-async def imfnsec_checkNewArticle():
+async def iMfnsec_checkNewArticle():
     SEC_FIRM_ORDER = 18
     bids = ["R_E08", "R_E09", "R_E14", "R_E03", "R_E04", "R_E05"]
     json_data_list = []
@@ -140,7 +140,7 @@ async def imfnsec_checkNewArticle():
     return json_data_list
 
 async def main():
-    await imfnsec_checkNewArticle()
+    await iMfnsec_checkNewArticle()
 
 if __name__ == "__main__":
     asyncio.run(main())
