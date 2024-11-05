@@ -29,6 +29,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # business
+from modules.LS_1 import LS_detail
 from modules.NHQV_2 import NHQV_checkNewArticle
 from modules.KBsec_4 import KB_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
@@ -103,35 +104,37 @@ def LS_checkNewArticle():
             # print('POST_DATE',POST_DATE)
 
             # POST_DATE를 datetime 형식으로 변환 (형식: yyyy.mm.dd)
-            try:
-                post_date_obj = datetime.strptime(POST_DATE, '%Y.%m.%d').date()
-            except ValueError as e:
-                print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
-                continue
+            # try:
+            #     post_date_obj = datetime.strptime(POST_DATE, '%Y.%m.%d').date()
+            # except ValueError as e:
+            #     print(f"날짜 형식 오류: {POST_DATE}, 오류: {e}")
+            #     continue
             
-            REG_DT = post_date_obj.strftime('%Y%m%d')
+            # REG_DT = post_date_obj.strftime('%Y%m%d')
             # print('post_date_obj',post_date_obj)
             # print('REG_DT:', REG_DT)
             # 7일 이내의 게시물만 처리
-            if post_date_obj < seven_days_ago:
-                print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
-                break
+            # if post_date_obj < seven_days_ago:
+            #     print(f"게시물 날짜 {POST_DATE}가 7일 이전이므로 중단합니다.")
+            #     break
 
-            item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
+            # item = LS_detail(LIST_ARTICLE_URL, str_date, firm_info)
             # print(item)
-            if item:
-                LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
-                DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
-                LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
+            # if item:
+            #     # LIST_ARTICLE_URL = item['LIST_ARTICLE_URL']
+            #     DOWNLOAD_URL     = item['LIST_ARTICLE_URL']
+            #     LIST_ARTICLE_TITLE = item['LIST_ARTICLE_TITLE']
             
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT":REG_DT,
-                "ARTICLE_URL":DOWNLOAD_URL,
-                "ATTACH_URL":DOWNLOAD_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
+                "REG_DT": re.sub(r"[-./]", "", POST_DATE),
+                "ARTICLE_URL": '',
+                "ATTACH_URL": '',
+                "DOWNLOAD_URL": '',
+                "TELEGRAM_URL": '',
+                "KEY": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })

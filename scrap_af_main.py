@@ -26,25 +26,23 @@ async def update_firm_telegram_url_by_date(date_str=None):
             print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: {records}")
             all_records.extend(records)
 
+            # 조건에 따라 추가 작업 수행
+            if sec_firm_order == 19:
+                # sec_firm_order가 19인 경우 업데이트 수행
+                print("Updating TELEGRAM_URL for records with SEC_FIRM_ORDER 19")
+                update_records = await fetch_detailed_url(all_records)
+                for record in update_records:
+                    await db.update_telegram_url(record['id'], record['TELEGRAM_URL'])
+                    print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
+            
+            elif sec_firm_order == 0:
+                # sec_firm_order가 0인 경우 추가 작업 수행 (여기에 필요한 작업을 추가)
+                print("Additional processing for SEC_FIRM_ORDER 0")
+                # 추가적인 작업 코드를 여기에 삽입
+
     # 전체 회사들의 레코드가 JSON 리스트로 모임
     json_records = json.dumps(all_records, indent=2)
     print(f"Combined JSON Records size:\n{len(json_records)}")
-
-    # API를 통해 TELEGRAM_URL 획득 및 업데이트
-    update_records = await fetch_detailed_url(all_records)
-    for record in update_records:
-        # TELEGRAM_URL 업데이트 수행
-        await db.update_telegram_url(record['id'], record['TELEGRAM_URL'])
-        print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
-
-
-# API를 통해 TELEGRAM_URL을 획득하는 함수 (예시로 가정)
-async def fetch_telegram_url(key_url):
-    """API를 통해 TELEGRAM_URL을 가져오는 함수 (가정된 API)."""
-    # 실제 API 호출 코드 작성
-    # 예를 들어, aiohttp 또는 httpx를 이용해 비동기로 호출 가능
-    # 임의 URL 반환 예시
-    return f"https://example.com/telegram/{key_url.split('/')[-1]}"
 
 # 메인 함수
 async def main():
