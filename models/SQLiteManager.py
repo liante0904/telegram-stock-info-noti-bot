@@ -114,7 +114,28 @@ class SQLiteManager:
             await db.execute(query, (telegram_url, record_id))
             await db.commit()
         return {"status": "success", "query": query, "record_id": record_id, "telegram_url": telegram_url}
-
+    def execute_query(self, query, params=None):
+        """주어진 쿼리를 실행하고 결과를 반환합니다."""
+        self.open_connection()
+        try:
+            if params:
+                self.cursor.execute(query, params)
+            else:
+                self.cursor.execute(query)
+            
+            # SELECT 쿼리인 경우 fetch 결과 반환
+            if query.strip().lower().startswith("select"):
+                rows = self.cursor.fetchall()
+                result = [dict(row) for row in rows]
+            else:
+                # INSERT, UPDATE, DELETE 쿼리인 경우 commit 후 영향받은 행 반환
+                self.connection.commit()
+                result = {"status": "success", "affected_rows": self.cursor.rowcount}
+        except Exception as e:
+            result = {"status": "error", "error": str(e)}
+        finally:
+            self.close_connection()
+        return result
 # 메인 코드
 if __name__ == "__main__":
     db_manager = SQLiteManager()
