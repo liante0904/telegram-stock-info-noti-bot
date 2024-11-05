@@ -8,7 +8,6 @@ import json
 import re
 import urllib.parse as urlparse
 import urllib.request
-import base64
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta, date
@@ -18,11 +17,9 @@ from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
-from models.WebScraper import WebScraper
-from modules.imfnsec_18 import imfnsec_checkNewArticle
-from modules.dbfi_19 import dbfi_checkNewArticle
+from models.WebScraper import SyncWebScraper
 from package.json_to_sqlite import insert_json_data_list
-from utils.date_util import GetCurrentDate, GetCurrentDate_NH
+from utils.date_util import GetCurrentDate
 
 # selenium
 from selenium import webdriver
@@ -30,6 +27,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+# business
+from modules.NHQV_2 import NHQV_checkNewArticle
+from modules.KBsec_4 import KB_checkNewArticle
+from modules.iMfnsec_18 import iMfnsec_checkNewArticle
+from modules.DBfi_19 import DBfi_checkNewArticle
 
 import scrap_af_main
 import scrap_send_main
@@ -75,7 +78,7 @@ def LS_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         soup = scraper.Get()
@@ -144,7 +147,7 @@ def LS_detail(TARGET_URL, str_date, firm_info):
     item = {}  # 빈 딕셔너리로 초기화
     time.sleep(0.1)
 
-    scraper = WebScraper(TARGET_URL, firm_info)
+    scraper = SyncWebScraper(TARGET_URL, firm_info)
     
     # HTML parse
     soup = scraper.Get()
@@ -229,7 +232,7 @@ def ShinHanInvest_checkNewArticle():
             f"&param1={param1}&param2={param2}&param3={param3}&param4={param4}&param5={param5}"
             f"&param6={param6}&param7={param7}&type={type_param}")
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         jres = scraper.GetJson()
@@ -275,100 +278,6 @@ def ShinHanInvest_checkNewArticle():
 
     return nNewArticleCnt
 
-def NHQV_checkNewArticle():
-    SEC_FIRM_ORDER      = 2
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    # TARGET_URL =  'https://m.nhqv.com/research/newestBoardList'
-    # NH투자증권 오늘의 레포트
-    TARGET_URL =  'https://m.nhqv.com/research/commonTr.json'
-    
-    firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
-    )
-    
-    payload = {
-        "trName": "H3211",
-        "rshPprDruTmSt": "00000000",
-        "rshPprDruDtSt": GetCurrentDate_NH(),
-        "rshPprDruDtEd": GetCurrentDate_NH(),
-        "rshPprNo": ""
-    }
-    
-    r = ""
-    i = 1
-    listR = []
-    while True:
-        
-        try:
-            response = requests.post(TARGET_URL,
-                                    headers={'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
-                                             'Accept':'application/json, text/javascript, */*; q=0.01'},
-                                    data=payload)
-            # print(response.text)
-            jres = json.loads(response.text)
-            # print(jres)
-            
-        except:
-            return 0
-        
-        nNewArticleCnt = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-        if nNewArticleCnt == 0: return nNewArticleCnt
-        strList = jres['H3211']['H3211OutBlock2']
-        listR = listR + strList
-        
-        if nNewArticleCnt == 11: # 연속키 있음
-            payload['rshPprNo'] = jres['H3211']['H3211OutBlock2'][nNewArticleCnt-1]['rshPprNo']
-        
-        if nNewArticleCnt < 11: break
-        i = i +1
-    # 크롤링 종료
-
-    # 중복제거
-    r = []
-    for t in listR:
-        if t not in r:
-            r.append(t)
-    
-    soupList = r
-
-    BOARD_NM            = listR[0]['rshPprSerCdNm']
-   
-    # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-    # print('연속URL:', NXT_KEY) # 주소
-
-    nNewArticleCnt = 0
-    
-    for list in soupList:
-        # print(list)
-
-        REG_DT              = list['rshPprDruDtNm']
-        REG_DT              = re.sub(r"[-./]", "", REG_DT)
-        WRITER              = list['rshPprDruEmpFnm']
-        BOARD_NM            = list['rshPprSerCdNm']
-        LIST_ARTICLE_TITLE = list['rshPprTilCts']
-        LIST_ARTICLE_URL =  list['hpgeFleUrlCts']
-        DOWNLOAD_URL    = LIST_ARTICLE_URL
-        json_data_list.append({
-            "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
-            "FIRM_NM":firm_info.get_firm_name(),
-            "REG_DT":REG_DT,
-            "WRITER":WRITER,
-            "ATTACH_URL":LIST_ARTICLE_URL,
-            "DOWNLOAD_URL": DOWNLOAD_URL,
-            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-            "SAVE_TIME": datetime.now().isoformat()
-        })
-            
-    # 메모리 정리
-    del response
-    gc.collect()
-
-    return nNewArticleCnt
 
 def HANA_checkNewArticle():
     SEC_FIRM_ORDER      = 3
@@ -444,111 +353,6 @@ def HANA_checkNewArticle():
 
     return nNewArticleCnt
 
-# JSON API 타입
-def KB_checkNewArticle():
-    SEC_FIRM_ORDER      = 4
-    ARTICLE_BOARD_ORDER = 0
-
-    requests.packages.urllib3.disable_warnings()
-
-    
-    # KB증권 오늘의 레포트
-    TARGET_URL   = 'https://rc.kbsec.com/ajax/categoryReportList.json'
-    
-    firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
-    )
-
-    # 요청 payload 데이터
-    payload = {
-        "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": GetCurrentDate("YYYYMMDD"),
-        "registdateTo": GetCurrentDate("YYYYMMDD"),
-        "templateid": "",
-        "lowTempId": "",
-        "folderid": "", #"37,38,186",
-        "callGbn": "RCLIST"
-    }
-
-    scraper = WebScraper(TARGET_URL, firm_info)
-    
-    # HTML parse
-    jres = scraper.PostJson(json=payload)
-
-    soupList = jres['response']['reportList']
-    # print(soupList)
-    
-    nNewArticleCnt = 0
-    
-    # JSON To List
-    for list in soupList:
-        # print(list)
-
-        REG_DT              = re.sub(r"[-./]", "", list['publicDate'])
-        WRITER              = list['analystNm']
-        LIST_ARTICLE_TITLE = list['docTitleSub']
-        if list['docTitle'] not in list['docTitleSub'] : LIST_ARTICLE_TITLE = list['docTitle'] + " : " + list['docTitleSub']
-        else: LIST_ARTICLE_TITLE = list['docTitleSub']
-        LIST_ARTICLE_URL = f"http://rdata.kbsec.com/pdf_data/{list['documentid']}.pdf"
-        json_data_list.append({
-            "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
-            "FIRM_NM":firm_info.get_firm_name(),
-            "REG_DT":REG_DT,
-            "WRITER":WRITER,
-            "ATTACH_URL":LIST_ARTICLE_URL,
-            "DOWNLOAD_URL": LIST_ARTICLE_URL,
-            "TELEGRAM_URL": LIST_ARTICLE_URL,
-            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-            "KEY:": LIST_ARTICLE_URL,
-            "SAVE_TIME": datetime.now().isoformat()
-        })
-            
-    
-    # 메모리 정리
-    del soupList
-    gc.collect()
-
-    return nNewArticleCnt
-
-# KB증권 암호화 해제
-def KB_decode_url(url):
-    """
-    주어진 URL에서 id와 Base64로 인코딩된 url 값을 추출하고, 인코딩된 url 값을 디코딩하여 반환하는 함수
-
-    Parameters:
-    url (str): URL 문자열
-
-    Returns:
-    str: 추출된 id 값과 디코딩된 url 값을 포함한 문자열
-    """
-    url = url.replace('&amp;', '&')
-    # URL 파싱
-    parsed_url = urlparse.urlparse(url)
-    
-    # 쿼리 문자열 파싱
-    query_params = urlparse.parse_qs(parsed_url.query)
-    
-    # id와 url 추출
-    id_value = query_params.get('id', [None])[0]
-    encoded_url = query_params.get('url', [None])[0]
-    
-    if id_value is None or encoded_url is None:
-        print('Invalid URL: id or url is missing')
-        return "Invalid URL: id or url is missing"
-    
-    # Base64 디코딩
-    try:
-        # '&amp;'를 '&'로 변환
-        encoded_url = encoded_url.replace('&amp;', '&')
-        decoded_url = base64.b64decode(encoded_url).decode('utf-8')
-    except Exception as e:
-        return f"Error decoding url: {e}"
-    
-    print(f"Extracted id: {id_value}, Decoded URL: {decoded_url}")
-    return decoded_url
 
 def Samsung_checkNewArticle():
     SEC_FIRM_ORDER      = 5
@@ -573,7 +377,7 @@ def Samsung_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         soup = scraper.Get()
@@ -763,7 +567,7 @@ def Shinyoung_checkNewArticle():
         "page": "1"
     }
 
-    scraper = WebScraper(TARGET_URL, firm_info)
+    scraper = SyncWebScraper(TARGET_URL, firm_info)
     
     # HTML parse
     jres = scraper.PostJson(params=payload)
@@ -931,7 +735,7 @@ def Miraeasset_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
         
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         soup = scraper.Get()
@@ -1015,7 +819,7 @@ def Hmsec_checkNewArticle():
         )
         payload = {"curPage":1}
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         jres = scraper.PostJson(params=payload)
@@ -1107,7 +911,7 @@ def Kiwoom_checkNewArticle():
             "dummyVal": 0
         }
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         jres = scraper.PostJson(params=payload)
@@ -1572,7 +1376,7 @@ def TOSSinvest_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
         # HTML parse
         jres = scraper.GetJson()
@@ -1626,7 +1430,7 @@ def Leading_checkNewArticle():
             article_board_order=ARTICLE_BOARD_ORDER
         )
         
-        scraper = WebScraper(TARGET_URL, firm_info)
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         soup = scraper.Get()
         soupList = soup.select('#sub-container > div.table-wrap > table > tbody > tr')
         print('='*50)
@@ -1922,9 +1726,7 @@ def main():
     sync_check_functions = [
         LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
-        NHQV_checkNewArticle,
         HANA_checkNewArticle,
-        KB_checkNewArticle,
         Samsung_checkNewArticle,
         Sangsanginib_checkNewArticle,
         Shinyoung_checkNewArticle,
@@ -1940,9 +1742,11 @@ def main():
 
     # 비동기 함수 리스트
     async_check_functions = [
+        NHQV_checkNewArticle,
+        KB_checkNewArticle,
         Daeshin_checkNewArticle,
-        imfnsec_checkNewArticle,
-        dbfi_checkNewArticle,
+        iMfnsec_checkNewArticle,
+        DBfi_checkNewArticle,
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트

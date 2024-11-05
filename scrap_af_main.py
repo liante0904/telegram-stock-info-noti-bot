@@ -5,7 +5,7 @@ import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.SQLiteManager import SQLiteManager
 from models.FirmInfo import FirmInfo
-from modules.dbfi_19 import fetch_detailed_url
+from modules.DBfi_19 import fetch_detailed_url
 
 
 # TELEGRAM_URL을 얻고 업데이트하는 함수
