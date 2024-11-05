@@ -15,7 +15,7 @@ HEADERS_TEMPLATE = {
 }
 
 # DB금융투자 기사 체크 함수
-async def dbfi_checkNewArticle():
+async def DBfi_checkNewArticle():
     SEC_FIRM_ORDER = 19
     urls = [
         "/appData/rsh_entr_lst.json",
@@ -91,7 +91,7 @@ async def fetch_detailed_url(articles):
     return articles
 
 async def main():
-    articles = await dbfi_checkNewArticle()
+    articles = await DBfi_checkNewArticle()
     # detailed_articles = await fetch_detailed_url(articles)
     # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
 

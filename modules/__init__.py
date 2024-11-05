@@ -1,2 +1,2 @@
-from modules.imfnsec_18 import imfnsec_checkNewArticle
+from modules.iMfnsec_18 import iMfnsec_checkNewArticle
 # from models.order import Order
