@@ -263,7 +263,7 @@ class FirmInfo:
             self.ARTICLE_BOARD_ORDER = article_board_order
             
         # telegram_url 업데이트가 필요한 회사인지 여부
-        self.telegram_update_required = self.SEC_FIRM_ORDER in {19}
+        self.telegram_update_required = self.SEC_FIRM_ORDER in {0, 19}
         
     def get_firm_name(self):
         if 0 <= self.SEC_FIRM_ORDER < len(self.firm_names):

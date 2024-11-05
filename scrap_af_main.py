@@ -5,6 +5,7 @@ import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.SQLiteManager import SQLiteManager
 from models.FirmInfo import FirmInfo
+from modules.LS_1 import LS_detail
 from modules.DBfi_19 import fetch_detailed_url
 
 
@@ -38,7 +39,10 @@ async def update_firm_telegram_url_by_date(date_str=None):
             elif sec_firm_order == 0:
                 # sec_firm_order가 0인 경우 추가 작업 수행 (여기에 필요한 작업을 추가)
                 print("Additional processing for SEC_FIRM_ORDER 0")
-                # 추가적인 작업 코드를 여기에 삽입
+                update_records = LS_detail(articles=all_records, firm_info=firm_info)
+                for record in update_records:
+                    await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                    print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
 
     # 전체 회사들의 레코드가 JSON 리스트로 모임
     json_records = json.dumps(all_records, indent=2)
