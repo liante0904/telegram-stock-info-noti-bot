@@ -96,7 +96,7 @@ class SQLiteManager:
             
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
-        
+
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
         self.close_connection()
@@ -122,8 +122,6 @@ class SQLiteManager:
                 """
                 params = [telegram_url, article_title, record_id]
 
-            # print(query)
-            print(params)
             # 쿼리 실행 및 커밋
             await db.execute(query, params)
             await db.commit()
