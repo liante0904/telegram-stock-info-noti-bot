@@ -42,11 +42,10 @@ def LS_detail(articles, firm_info):
         ATTACH_URL = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
         
         # URL 인코딩 => 사파리 한글처리 
-        article['TELEGRAM_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
-        article['DOWNLOAD_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+        article['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+        
         # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
         # print(item)
         # print('*********확인용**************')
-    # print(articles)
     return articles
         
