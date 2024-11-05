@@ -73,25 +73,30 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # 전체 히스토리를 가져와서 파일 변경 내역을 정확하게 확인합니다.
 
     - name: Set up Git user
       run: |
-        git config user.name "seunghoon shin"
+        git config user.name "Seunghoon Shin"
         git config user.email "liante0904@gmail.com"
 
     - name: Get list of changed files
       id: changed-files
       run: |
-        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD)
+        # 변경된 파일 목록을 쉼표(,)로 구분하여 CHANGED_FILES 환경 변수에 저장합니다.
+        CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\n' ',')
         echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
 
     - name: Sync changed files with test branch
       run: |
-        git checkout test --
-        for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
+        # 원격에서 test 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
+        git remote update
+        git fetch origin test:test
+        git checkout test
+        for file in $(echo "$CHANGED_FILES" | tr ',' '\n'); do
           git checkout master -- "$file"
         done
+        # 변경 사항이 있으면 커밋 후 test 브랜치에 푸시합니다.
         if ! git diff-index --quiet HEAD; then
           git commit -m "Sync changed files from master to test"
           git push origin test
@@ -101,10 +106,14 @@ jobs:
 
     - name: Sync changed files with dev branch
       run: |
-        git checkout dev --
-        for file in $(echo "$CHANGED_FILES" | tr '\n' ' '); do
+        # 원격에서 dev 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
+        git remote update
+        git fetch origin dev:dev
+        git checkout dev
+        for file in $(echo "$CHANGED_FILES" | tr ',' '\n'); do
           git checkout master -- "$file"
         done
+        # 변경 사항이 있으면 커밋 후 dev 브랜치에 푸시합니다.
         if ! git diff-index --quiet HEAD; then
           git commit -m "Sync changed files from master to dev"
           git push origin dev

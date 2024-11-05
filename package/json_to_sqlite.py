@@ -167,36 +167,6 @@ def print_tables():
     else:
         print("No tables found in the database.")
 
-def insert_data():
-    """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
-    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
-
-    for json_file, table_name in json_files.items():
-        json_file_path = os.path.join(JSON_DIR, json_file)
-        print(json_file_path)
-        with open(json_file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            for entry in data:
-                cursor.execute(f'''
-                    INSERT OR IGNORE INTO {table_name} (
-                        SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    entry["SEC_FIRM_ORDER"],
-                    entry["ARTICLE_BOARD_ORDER"],
-                    entry["FIRM_NM"],
-                    entry["ATTACH_URL"],
-                    entry["ARTICLE_TITLE"],
-                    entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-                    ' ', # MAIN_CH_SEND_YN
-                    entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
-                    entry["SAVE_TIME"]
-                ))
-
-    conn.commit()
-    print("Data inserted successfully.")
-    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
 
 def insert_json_data_list(json_data_list, table_name):
     """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
@@ -420,75 +390,6 @@ async def daily_select_data(date_str=None, type=None):
     
     return rows
 
-async def fetch_daily_articles_by_date(firm_info: FirmInfo, date_str: str = None):
-    """
-    지정된 날짜의 DB금융투자 기사를 조회하여 반환합니다.
-    
-    Args:
-        firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
-        date_str (str, optional): 조회할 날짜 (형식: 'YYYYMMDD'). 지정하지 않으면 오늘 날짜로 설정됩니다.
-        
-    Returns:
-        list[dict]: 조회된 기사 목록으로, 각 기사는 딕셔너리 형태로 구성됩니다.
-            - id: 기사 ID
-            - SEC_FIRM_ORDER: 증권사 식별 코드
-            - ARTICLE_BOARD_ORDER: 기사 게시판 순서
-            - FIRM_NM: 증권사 이름
-            - REG_DT: 기사 등록일
-            - ATTACH_URL: 첨부파일 URL
-            - ARTICLE_TITLE: 기사 제목
-            - ARTICLE_URL: 기사 URL
-            - MAIN_CH_SEND_YN: 메인 채널 전송 여부
-            - DOWNLOAD_URL: 다운로드 URL
-            - WRITER: 작성자
-            - SAVE_TIME: 저장 시간
-            - KEY: 키 값 (상세 기사 URL 조회 시 사용)
-    """
-    
-    # SQLite 데이터베이스 연결
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    # date_str가 없으면 현재 날짜 사용
-    query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
-    sec_firm_order = firm_info.sec_firm_order  # FirmInfo 인스턴스에서 SEC_FIRM_ORDER 가져오기
-    
-    # SQL 쿼리 정의
-    query = f"""
-    SELECT 
-        id,
-        SEC_FIRM_ORDER, 
-        ARTICLE_BOARD_ORDER, 
-        FIRM_NM, 
-        REG_DT,
-        ATTACH_URL, 
-        ARTICLE_TITLE, 
-        ARTICLE_URL, 
-        MAIN_CH_SEND_YN, 
-        DOWNLOAD_URL, 
-        WRITER, 
-        SAVE_TIME,
-        MAIN_CH_SEND_YN,
-        KEY
-    FROM 
-        data_main_daily_send 
-    WHERE 
-        REG_DT = '{query_date}'
-        AND SEC_FIRM_ORDER = '{sec_firm_order}'
-        AND KEY IS NOT NULL
-        AND TELEGRAM_URL IS NULL
-    ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
-    """
-    
-    # SQL 쿼리 실행
-    cursor.execute(query)
-    rows = cursor.fetchall()
-    
-    # rows를 dict 형태로 변환
-    rows = [dict(row) for row in rows]
-
-    return rows
 
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
