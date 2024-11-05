@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
-EXCLUDED_FORWARD_REPORT_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권", "미래에셋증권", "iM증권", "대신증권", "상상인증권", "LS증권"}
+EXCLUDED_FORWARD_REPORT_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권", "미래에셋증권", "iM증권", "대신증권", "상상인증권", "LS증권","키움증권"}
 
 def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, download_url=None, send_users=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)

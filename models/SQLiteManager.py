@@ -103,17 +103,37 @@ class SQLiteManager:
         
         return [dict(row) for row in rows]
 
-    async def update_telegram_url(self, record_id, telegram_url):
-        """id를 기준으로 TELEGRAM_URL 컬럼을 비동기로 업데이트합니다."""
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
+        """id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
         async with aiosqlite.connect(self.db_path) as db:
+            # 기본 쿼리 구성
             query = """
             UPDATE data_main_daily_send
             SET TELEGRAM_URL = ?
             WHERE id = ?
             """
-            await db.execute(query, (telegram_url, record_id))
+            params = [telegram_url, record_id]  # 기본 매개변수
+
+            # article_title이 주어진 경우 쿼리에 추가
+            if article_title is not None:
+                query = """
+                UPDATE data_main_daily_send
+                SET TELEGRAM_URL = ?, ARTICLE_TITLE = ?
+                WHERE id = ?
+                """
+                params = [telegram_url, article_title, record_id]
+
+            # 쿼리 실행 및 커밋
+            await db.execute(query, params)
             await db.commit()
-        return {"status": "success", "query": query, "record_id": record_id, "telegram_url": telegram_url}
+
+        return {
+            "status": "success",
+            "query": query,
+            "record_id": record_id,
+            "telegram_url": telegram_url,
+            "article_title": article_title
+        }
     def execute_query(self, query, params=None):
         """주어진 쿼리를 실행하고 결과를 반환합니다."""
         self.open_connection()
