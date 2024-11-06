@@ -28,8 +28,6 @@ def LS_detail(articles, firm_info):
         base_value = alt_value.split(".")[0]  # 확장자를 제외한 부분 추출
         parts = base_value.split("_")  # 언더스코어를 기준으로 분할
 
-        # parts[2] (날짜) + parts[0] + parts[1] 순으로 배치하여 URL 생성
-        url = f"https://msg.ls-sec.co.kr/eum/K_{parts[2]}_{parts[0]}_{parts[1]}.pdf"
 
         # 게시글 제목
         trs = soup.select('tr')
@@ -40,9 +38,12 @@ def LS_detail(articles, firm_info):
         # => https://www.ls-sec.co.kr/upload/EtwBoardData/B202410/20241002_한국 9월 소비자물가.pdf
         
         # # B포스팅 월
-        # URL_PARAM = article["REG_DT"]  # 예: "20231105" 형식
-        # URL_PARAM_0 = 'B' + URL_PARAM[:6]  # 'BYYYYMM' 형식으로 변환
+        URL_PARAM = article["REG_DT"]  # 예: "20231105" 형식
+        URL_PARAM_0 = 'B' + URL_PARAM[:6]  # 'BYYYYMM' 형식으로 변환
 
+
+        # parts[2] (날짜) + parts[0] + parts[1] 순으로 배치하여 URL 생성
+        url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
         # # 첨부 파일 이름과 URL 인코딩 처리
         # ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
         # ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
@@ -69,7 +70,7 @@ def LS_detail(articles, firm_info):
 
 
 if __name__ == "__main__":
-    test = [{"KEY": "https://www.ls-sec.co.kr/EtwFrontBoard/View.jsp?skey=&sval=&board_no=36&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1&board_seq=7679855",
+    test = [{"KEY": "https://www.ls-sec.co.kr/EtwFrontBoard/View.jsp?skey=&sval=&board_no=37&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1&board_seq=7679815",
              "REG_DT": "20241106"
              }]
     
