@@ -22,7 +22,7 @@ def LS_detail(articles, firm_info):
 
         # 게시글 제목
         trs = soup.select('tr')
-        article['LIST_ARTICLE_TITLE'] = trs[0].select_one('td').text
+        article['ARTICLE_TITLE'] = trs[0].select_one('td').text
         
         
         # 첨부파일 URL 조립 예시  
@@ -43,6 +43,7 @@ def LS_detail(articles, firm_info):
         
         # URL 인코딩 => 사파리 한글처리 
         article['LIST_ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+        article['TELEGRAM_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
         
         # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
         # print(item)
