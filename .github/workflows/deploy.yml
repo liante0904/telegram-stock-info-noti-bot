@@ -77,7 +77,7 @@ jobs:
 
     - name: Set up Git user
       run: |
-        git config user.name "seunghoon shin"
+        git config user.name "Seunghoon Shin"
         git config user.email "liante0904@gmail.com"
 
     - name: Get list of changed files
