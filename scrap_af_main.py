@@ -44,7 +44,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     for record in update_records:
                         await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
                         print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
-                    all_records.extend(record)
+                all_records.extend(record)
 
     # 전체 회사들의 레코드가 JSON 리스트로 모임
     json_records = json.dumps(all_records, indent=2)
