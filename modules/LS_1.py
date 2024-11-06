@@ -7,6 +7,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
+from models.FirmInfo import FirmInfo
 
 
 def LS_detail(articles, firm_info):
@@ -46,7 +47,17 @@ def LS_detail(articles, firm_info):
         article['TELEGRAM_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
         
         # item['LIST_ARTICLE_TITLE'] = LIST_ARTICLE_TITLE
-        # print(item)
+        # print(article)
         # print('*********확인용**************')
+    print(articles)
     return articles
         
+
+
+if __name__ == "__main__":
+    test = [{"KEY": "https://www.ls-sec.co.kr/EtwFrontBoard/View.jsp?skey=&sval=&board_no=36&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1&board_seq=7679835",
+             "REG_DT": "20241106"
+             }]
+    
+    firm_info = FirmInfo(sec_firm_order=0)
+    LS_detail(test, firm_info)
