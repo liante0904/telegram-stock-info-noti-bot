@@ -24,24 +24,25 @@ async def update_firm_telegram_url_by_date(date_str=None):
         # 회사 이름이 공백이 아니고, telegram_update_required가 True인 경우만 처리
         if firm_info.get_firm_name() and firm_info.telegram_update_required:
             records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
-            print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: {records}")
-            all_records.extend(records)
 
-            # 조건에 따라 추가 작업 수행
-            if sec_firm_order == 19:
-                # sec_firm_order가 19인 경우 업데이트 수행
-                if all_records:  # all_records가 비어 있지 않은 경우에만 실행
+            # records가 빈 리스트가 아닌 경우에만 처리 진행
+            if records:
+                print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: {records}")
+                all_records.extend(records)
+
+                # 조건에 따라 추가 작업 수행
+                if sec_firm_order == 19:
+                    # sec_firm_order가 19인 경우 업데이트 수행
                     print("Updating TELEGRAM_URL for records with SEC_FIRM_ORDER 19")
-                    update_records = await fetch_detailed_url(all_records)
+                    update_records = await fetch_detailed_url(records)  # all_records 대신 records 사용
                     for record in update_records:
                         await db.update_telegram_url(record['id'], record['TELEGRAM_URL'])
                         print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
-            
-            elif sec_firm_order == 0:
-                # sec_firm_order가 0인 경우 추가 작업 수행 (여기에 필요한 작업을 추가)
-                if all_records:  # all_records가 비어 있지 않은 경우에만 실행
+                
+                elif sec_firm_order == 0:
+                    # sec_firm_order가 0인 경우 추가 작업 수행
                     print("Additional processing for SEC_FIRM_ORDER 0")
-                    update_records = LS_detail(articles=all_records, firm_info=firm_info)
+                    update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용
                     
                     for record in update_records:
                         await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
