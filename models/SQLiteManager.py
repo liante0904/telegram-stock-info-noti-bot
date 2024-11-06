@@ -110,6 +110,7 @@ class SQLiteManager:
             query = """
             UPDATE data_main_daily_send
             SET TELEGRAM_URL = ?
+            WHERE id = ?
             """
             params = [telegram_url, record_id]  # 기본 매개변수
 
