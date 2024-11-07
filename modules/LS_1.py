@@ -21,11 +21,11 @@ def LS_detail(articles, firm_info):
         # HTML parse
         soup = scraper.Get()
         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-        
+        print(img)
         src_value  = img.attrs.get("src")
         filename = src_value.split('/')[-1]  # "31780_96_20241105.PNG"
         base_value = filename.rsplit('.', 1)[0]  # "31780_96_20241105"
-        print(src_value)
+        # print(src_value)
 
         # alt 값에서 필요한 정보만 추출하고 순서 재배치
         # src_value에서 파일명을 추출하고 확장자 제거
