@@ -32,6 +32,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from modules.LS_1 import LS_detail
 from modules.NHQV_2 import NHQV_checkNewArticle
 from modules.KBsec_4 import KB_checkNewArticle
+from modules.eugenefn_12 import eugene_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
 from modules.DBfi_19 import DBfi_checkNewArticle
 
@@ -1747,6 +1748,7 @@ def main():
     async_check_functions = [
         NHQV_checkNewArticle,
         KB_checkNewArticle,
+        eugene_checkNewArticle,
         Daeshin_checkNewArticle,
         iMfnsec_checkNewArticle,
         DBfi_checkNewArticle,
