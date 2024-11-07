@@ -22,7 +22,8 @@ def LS_detail(articles, firm_info):
         soup = scraper.Get()
         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
         
-        alt_value = img.get("alt")
+        alt_value = img.attrs.get("alt")
+        
 
         # alt 값에서 필요한 정보만 추출하고 순서 재배치
         base_value = alt_value.split(".")[0]  # 확장자를 제외한 부분 추출
