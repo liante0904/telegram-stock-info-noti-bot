@@ -18,8 +18,6 @@ from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from models.SQLiteManager import SQLiteManager
-from package.json_to_sqlite import insert_json_data_list
 from utils.date_util import GetCurrentDate
 
 def LS_checkNewArticle():

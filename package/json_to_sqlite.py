@@ -8,6 +8,8 @@ import os
 from dotenv import load_dotenv
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
+
 load_dotenv()  # .env 파일의 환경 변수를 로드합니다
 env = os.getenv('ENV')
 print(env)
@@ -154,112 +156,6 @@ def update_data(date=None, keyword=None, user_ids=None):
 
     conn.commit()
 
-def print_tables():
-    """데이터베이스에 존재하는 테이블 목록을 출력합니다."""
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = cursor.fetchall()
-    if tables:
-        print("Tables in the database:")
-        for table in tables:
-            print(table[0])
-    else:
-        print("No tables found in the database.")
-
-def insert_data():
-    """JSON 파일의 데이터를 데이터베이스 테이블에 삽입합니다."""
-    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
-
-    for json_file, table_name in json_files.items():
-        json_file_path = os.path.join(JSON_DIR, json_file)
-        print(json_file_path)
-        with open(json_file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            for entry in data:
-                cursor.execute(f'''
-                    INSERT OR IGNORE INTO {table_name} (
-                        SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, 
-                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, SAVE_TIME 
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    entry["SEC_FIRM_ORDER"],
-                    entry["ARTICLE_BOARD_ORDER"],
-                    entry["FIRM_NM"],
-                    entry["ATTACH_URL"],
-                    entry["ARTICLE_TITLE"],
-                    entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-                    ' ', # MAIN_CH_SEND_YN
-                    entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
-                    entry["SAVE_TIME"]
-                ))
-
-    conn.commit()
-    print("Data inserted successfully.")
-    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
-
-def insert_json_data_list(json_data_list, table_name):
-    """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
-    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
-
-    # 삽입 및 업데이트 건수 초기화
-    inserted_count = 0
-    updated_count = 0
-
-    # 데이터 삽입 및 업데이트 시도
-    for entry in json_data_list:
-        cursor.execute(f'''
-            INSERT INTO {table_name} (
-                SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, KEY, SAVE_TIME 
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(KEY) DO UPDATE SET
-                REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
-                WRITER = excluded.WRITER  -- KEY 중복 시 WRITER 업데이트
-        ''', (
-            entry["SEC_FIRM_ORDER"],
-            entry["ARTICLE_BOARD_ORDER"],
-            entry["FIRM_NM"],
-            entry.get("REG_DT", ''),
-            entry["ATTACH_URL"],
-            entry["ARTICLE_TITLE"],
-            entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-            entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
-            entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
-            entry.get("WRITER", ''),
-            entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
-            entry["SAVE_TIME"]
-        ))
-
-        # 삽입 또는 업데이트 확인
-        if cursor.rowcount == 1:
-            inserted_count += 1  # 새로 삽입된 경우
-        else:
-            updated_count += 1  # 업데이트된 경우
-
-    # 커밋하고 결과 출력
-    conn.commit()
-    print(f"Data inserted successfully: {inserted_count} rows.")
-    print(f"Data updated successfully: {updated_count} rows.")
-    
-    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
-    return inserted_count, updated_count
-
-
-
-def select_data(table=None):
-    """특정 테이블 또는 모든 테이블의 데이터를 조회합니다."""
-    if table:
-        tables = [table]
-    else:
-        tables = json_files.values()
-    
-    for table_name in tables:
-        print(f'\nContents of table {table_name}:')
-        cursor.execute(f'SELECT * FROM {table_name}')
-        rows = cursor.fetchall()
-        for row in rows:
-            print(row)
-            
-    
 def format_message(data_list):
     """데이터를 포맷팅하여 문자열로 반환합니다."""
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
@@ -309,50 +205,6 @@ def format_message(data_list):
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
 
-def keyword_select(keyword):
-    """특정 키워드가 포함된 기사 제목을 가진 데이터를 조회하고, 특정 조건에 따라 필터링합니다."""
-    today = datetime.now().strftime('%Y-%m-%d')  # 오늘 날짜를 'YYYY-MM-DD' 형식으로 저장
-
-    # 기준 테이블에서 키워드 포함 데이터 추출
-    cursor.execute(f"""
-        SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, SAVE_TIME
-        FROM data_main_daily_send
-        WHERE ARTICLE_TITLE LIKE ? AND DATE(SAVE_TIME) = ?
-    """, (f'%{keyword}%', today))
-    main_results = cursor.fetchall()
-    main_firms = {row[0] for row in main_results}  # 기준 테이블의 증권사 목록
-
-    print(f"\nResults containing '{keyword}' on {today}:")
-    for result in main_results:
-        print(result)
-
-    # 다른 테이블에서 키워드 포함 데이터를 추출하며, 기준 테이블에 없는 증권사만 추출
-    query_parts = [
-        f"""
-        SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, SAVE_TIME
-        FROM {table}
-        WHERE ARTICLE_TITLE LIKE ? AND DATE(SAVE_TIME) = ? AND FIRM_NM NOT IN ({','.join('?'*len(main_firms))})
-        """
-        for table in json_files.values()
-        if table != 'data_main_daily_send'
-    ]
-
-    # 전체 쿼리 조합
-    union_query = " UNION ".join(query_parts)
-    params = [f'%{keyword}%', today] * (len(json_files) - 1) + list(main_firms) * (len(json_files) - 1)
-
-    # `ORDER BY` 추가: SAVE_TIME과 FIRM_NM으로 정렬
-    final_query = f"""
-    {union_query}
-    ORDER BY SAVE_TIME ASC, FIRM_NM ASC
-    """
-    cursor.execute(final_query, params)
-
-    other_results = cursor.fetchall()
-    formatted_message = format_message(main_results + other_results)
-    print(formatted_message)
-    return formatted_message
-
 async def daily_select_data(date_str=None, type=None):
     # SQLite 데이터베이스 연결
     conn = sqlite3.connect(db_path)
@@ -375,6 +227,7 @@ async def daily_select_data(date_str=None, type=None):
     # 쿼리 타입에 따라 조건을 다르게 설정
     if type == 'send':
         query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
+        query_condition += "AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL <> ''))"
     elif type == 'download':
         query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
 
@@ -393,12 +246,14 @@ async def daily_select_data(date_str=None, type=None):
         DOWNLOAD_URL, 
         WRITER, 
         SAVE_TIME,
+        TELEGRAM_URL,
         MAIN_CH_SEND_YN
     FROM 
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
         AND {query_condition}
+        
     ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
     """
     
@@ -411,9 +266,10 @@ async def daily_select_data(date_str=None, type=None):
     # rows를 dict 형태로 변환
     rows = [dict(row) for row in rows]
 
-    print(rows)
+    # print(rows)
     
     return rows
+
 
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
@@ -499,37 +355,6 @@ def close_db_connection(conn, cursor):
     cursor.close()
     conn.close()
 
-
-def save_data_to_json():
-    """data_main_daily_send 테이블의 전체 데이터를 JSON 파일에 저장합니다."""
-    # JSON 파일 저장 경로 설정
-    directory = './json'
-    if not os.path.exists(directory):
-        os.makedirs(directory)  # 경로가 없다면 생성
-    filename = os.path.join(directory, 'data_main_daily_send_all.json')
-    conn, cursor = open_db_connection()  # 데이터베이스 연결 열기
-
-    # 전체 데이터 조회
-    cursor.execute("SELECT * FROM data_main_daily_send")
-    rows = cursor.fetchall()
-
-    # 컬럼 이름 가져오기
-    columns = [column[0] for column in cursor.description]
-
-    # JSON 데이터로 변환
-    json_data = []
-    for row in rows:
-        entry = {columns[i]: row[i] for i in range(len(columns))}
-        json_data.append(entry)
-
-    # JSON 파일에 저장
-    with open(filename, 'w', encoding='utf-8') as json_file:
-        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
-
-    print(f"Data saved to {filename} successfully.")
-    close_db_connection(conn, cursor)  # 데이터베이스 연결 닫기
-
-
 def main():
 
     # 명령행 인자 파서 설정
@@ -537,26 +362,13 @@ def main():
     parser.add_argument('action', nargs='?', choices=['table', 'insert', 'select', 'fetch', 'keyword_select', 'daily', 'save'], help="Action to perform")
     parser.add_argument('name', nargs='?', help="Table name for the action")
     args = parser.parse_args()
-    if args.action == 'table' or args.action is None:
-        print_tables()
-    elif args.action == 'insert':
-        insert_data()
-    elif args.action == 'select':
-        select_data(args.name)
-    elif args.action == 'fetch':
+
+    if args.action == 'fetch':
         print(args.name)
         fetch_data(date='2024-08-21', keyword=args.name)
-    elif args.action == 'keyword_select':
-        if args.name:
-            keyword_select(args.name)
-        else:
-            print("Error: 'keyword_select' action requires a keyword argument.")
-
     elif args.action == 'daily':
         daily_select_data(args.name)
-    elif args.action == 'save':
-        # 함수 호출하여 데이터 저장
-        save_data_to_json()
+
 
 cursor.close()
 conn.close()
