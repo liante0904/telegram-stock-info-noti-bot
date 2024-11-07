@@ -17,7 +17,7 @@ class FirmInfo:
         "현대차증권",    # 9
         "키움증권",      # 10
         "DS투자증권",    # 11
-        "",              # 12
+        "유진투자증권",  # 12
         "한국투자증권",  # 13
         "다올투자증권",   # 14
         "토스증권",        # 15
@@ -94,8 +94,10 @@ class FirmInfo:
         "투자전략/경제분석"], # ARTICLE_BOARD_ORDER 1
         
         # SEC_FIRM_ORDER 12
-        [""],             # ARTICLE_BOARD_ORDER 0
-        
+        ["글로벌전략",      # ARTICLE_BOARD_ORDER 0
+        "국내기업분석",      # ARTICLE_BOARD_ORDER 1
+        "국내산업분석",      # ARTICLE_BOARD_ORDER 2
+        "해외기업분석"],  # ARTICLE_BOARD_ORDER 3        
         # SEC_FIRM_ORDER 13
         ["오늘의레포트"], # ARTICLE_BOARD_ORDER 0
         
