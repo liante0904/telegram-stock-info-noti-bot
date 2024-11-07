@@ -20,10 +20,11 @@ def LS_detail(articles, firm_info):
        
         # HTML parse
         soup = scraper.Get()
-        img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-        print(TARGET_URL)
-        print(soup) 
-        print(img)
+        # img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+        img = soup.select_one('img[align="bottom"]')
+        # print(TARGET_URL)
+        # print(soup) 
+        # print(img)
         src_value  = img.attrs.get("src")
         filename = src_value.split('/')[-1]  # "31780_96_20241105.PNG"
         base_value = filename.rsplit('.', 1)[0]  # "31780_96_20241105"
