@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from package.json_to_sqlite import insert_json_data_list
+from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
 
 # selenium
@@ -1732,20 +1732,20 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        LS_checkNewArticle,
-        ShinHanInvest_checkNewArticle,
-        HANA_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle,
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
-        Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
-        # DS_checkNewArticle,
-        Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle,
-        TOSSinvest_checkNewArticle,
-        Leading_checkNewArticle,
+        # LS_checkNewArticle,
+        # ShinHanInvest_checkNewArticle,
+        # HANA_checkNewArticle,
+        # Samsung_checkNewArticle,
+        # Sangsanginib_checkNewArticle,
+        # Shinyoung_checkNewArticle,
+        # Miraeasset_checkNewArticle,
+        # Hmsec_checkNewArticle,
+        # Kiwoom_checkNewArticle,
+        # # DS_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle,
+        # DAOL_checkNewArticle,
+        # TOSSinvest_checkNewArticle,
+        # Leading_checkNewArticle,
     ]
 
     # 비동기 함수 리스트
@@ -1795,7 +1795,8 @@ def main():
         print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
         
         if total_data:
-            inserted_count = insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+            db = SQLiteManager()
+            inserted_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
             print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
             print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
             if inserted_count:
