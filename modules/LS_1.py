@@ -17,7 +17,7 @@ def LS_detail(articles, firm_info):
         time.sleep(0.1)
 
         scraper = SyncWebScraper(TARGET_URL, firm_info)
-        
+        print(TARGET_URL)
         # HTML parse
         soup = scraper.Get()
         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
