@@ -52,6 +52,7 @@ def LS_detail(articles, firm_info):
             # URL 인코딩 => 사파리 한글처리 
             article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
             article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
 
         except Exception as e:
             print(f"Error processing article: {e}")
