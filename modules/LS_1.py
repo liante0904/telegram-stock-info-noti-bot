@@ -22,13 +22,18 @@ def LS_detail(articles, firm_info):
         soup = scraper.Get()
         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
         
-        alt_value = img.attrs.get("alt")
-        
+        src_value  = img.attrs.get("src")
+        filename = src_value.split('/')[-1]  # "31780_96_20241105.PNG"
+        base_value = filename.rsplit('.', 1)[0]  # "31780_96_20241105"
+        print(src_value)
 
         # alt 값에서 필요한 정보만 추출하고 순서 재배치
-        base_value = alt_value.split(".")[0]  # 확장자를 제외한 부분 추출
-        parts = base_value.split("_")  # 언더스코어를 기준으로 분할
+        # src_value에서 파일명을 추출하고 확장자 제거
+        filename = src_value.split('/')[-1]  # "31780_96_20241105.PNG"
+        base_value = filename.rsplit('.', 1)[0]  # "31780_96_20241105"
 
+        # 날짜 부분을 분리하고 필요한 값 추출
+        parts = base_value.split('_')  # ["31780", "96", "20241105"]
 
         # 게시글 제목
         trs = soup.select('tr')
@@ -40,7 +45,7 @@ def LS_detail(articles, firm_info):
         
         # # B포스팅 월
         URL_PARAM = article["REG_DT"]  # 예: "20231105" 형식
-        URL_PARAM_0 = 'B' + URL_PARAM[:6]  # 'BYYYYMM' 형식으로 변환
+        # URL_PARAM_0 = 'B' + URL_PARAM[:6]  # 'BYYYYMM' 형식으로 변환
 
 
         # parts[2] (날짜) + parts[0] + parts[1] 순으로 배치하여 URL 생성
