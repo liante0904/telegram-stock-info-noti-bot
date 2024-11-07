@@ -66,6 +66,53 @@ class SQLiteManager:
         rows = self.cursor.fetchall()
         return [dict(row) for row in rows]
 
+    def insert_json_data_list(self, json_data_list, table_name):
+        """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
+        self.open_connection()  # 데이터베이스 연결 열기
+
+        # 삽입 및 업데이트 건수 초기화
+        inserted_count = 0
+        updated_count = 0
+
+        # 데이터 삽입 및 업데이트 시도
+        for entry in json_data_list:
+            self.cursor.execute(f'''
+                INSERT INTO {table_name} (
+                    SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                    ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, KEY, SAVE_TIME 
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(KEY) DO UPDATE SET
+                    REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
+                    WRITER = excluded.WRITER  -- KEY 중복 시 WRITER 업데이트
+            ''', (
+                entry["SEC_FIRM_ORDER"],
+                entry["ARTICLE_BOARD_ORDER"],
+                entry["FIRM_NM"],
+                entry.get("REG_DT", ''),
+                entry.get("ATTACH_URL", ''),
+                entry["ARTICLE_TITLE"],
+                entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
+                entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
+                entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+                entry.get("WRITER", ''),
+                entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
+                entry["SAVE_TIME"]
+            ))
+
+            # 삽입 또는 업데이트 확인
+            if self.cursor.rowcount == 1:
+                inserted_count += 1  # 새로 삽입된 경우
+            else:
+                updated_count += 1  # 업데이트된 경우
+
+        # 커밋하고 결과 출력
+        self.connection.commit()
+        print(f"Data inserted successfully: {inserted_count} rows.")
+        print(f"Data updated successfully: {updated_count} rows.")
+        
+        self.close_connection()  # 데이터베이스 연결 닫기
+        return inserted_count, updated_count
+
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """
         TELEGRAM_URL 갱신이 필요한 레코드를 조회합니다.
@@ -134,6 +181,7 @@ class SQLiteManager:
             "telegram_url": telegram_url,
             "article_title": article_title
         }
+    
     def execute_query(self, query, params=None):
         """주어진 쿼리를 실행하고 결과를 반환합니다."""
         self.open_connection()
