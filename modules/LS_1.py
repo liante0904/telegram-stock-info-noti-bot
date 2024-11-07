@@ -17,10 +17,12 @@ def LS_detail(articles, firm_info):
         time.sleep(0.1)
 
         scraper = SyncWebScraper(TARGET_URL, firm_info)
-        print(TARGET_URL)
+       
         # HTML parse
         soup = scraper.Get()
         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+        print(TARGET_URL)
+        print(soup) 
         print(img)
         src_value  = img.attrs.get("src")
         filename = src_value.split('/')[-1]  # "31780_96_20241105.PNG"
