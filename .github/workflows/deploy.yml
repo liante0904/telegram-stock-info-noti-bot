@@ -47,6 +47,8 @@ jobs:
         ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << 'EOF'
           cd $PROJECT_DIR  # 실제 배포할 프로젝트 경로
           echo "Current directory: $(pwd)"
+          cd ${{ secrets.PROJECT_DIR }}
+          echo "Current directory: $(pwd)"
           git fetch --all && git reset --hard origin/master
           git pull origin master
 
@@ -86,7 +88,6 @@ jobs:
         # 변경된 파일 목록을 쉼표(,)로 구분하여 CHANGED_FILES 환경 변수에 저장합니다.
         CHANGED_FILES=$(git diff-tree --no-commit-id --name-only -r HEAD | tr '\n' ',')
         echo "CHANGED_FILES=$CHANGED_FILES" >> $GITHUB_ENV
-
     - name: Sync changed files with test branch
       run: |
         # 원격에서 test 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
@@ -103,7 +104,6 @@ jobs:
         else
           echo "No changes to commit"
         fi
-
     - name: Sync changed files with dev branch
       run: |
         # 원격에서 dev 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
