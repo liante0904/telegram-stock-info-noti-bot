@@ -1530,6 +1530,10 @@ async def Daeshin_checkNewArticle():
             
             for item in items:
                 title = item.find("strong", class_="title1").text.strip()
+                # Check if the input string starts with '[대신증권'
+                if title.startswith("[대신증권 "):
+                    # Using replace method to modify the string
+                    title = title.replace("[대신증권 ", "[")
                 reg_dt = item.find("span", class_="date").text.strip()
                 author = item.find("span", class_="time").text.strip()
                 
