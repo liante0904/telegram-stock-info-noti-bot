@@ -32,7 +32,13 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     print("download_file_wget()")
 
     BOARD_NM = ''
-    URL = report_info_row['ATTACH_URL'] if report_info_row['ATTACH_URL'] else report_info_row['ARTICLE_URL']
+    URL = (
+    report_info_row['DOWNLOAD_URL'] if report_info_row['DOWNLOAD_URL']
+    else report_info_row['ATTACH_URL'] if report_info_row['ATTACH_URL']
+    else report_info_row['ARTICLE_URL'] if report_info_row['ARTICLE_URL']
+    else report_info_row['TELEGRAM_URL']
+    )
+
 
     if FILE_NAME is None:
         # FILE_NAME이 None인 경우 기존 로직으로 파일 이름 생성
