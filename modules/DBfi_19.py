@@ -7,6 +7,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.SQLiteManager import SQLiteManager
 
 BASE_URL = "https://m.db-fi.com"
 HEADERS_TEMPLATE = {
@@ -72,7 +73,7 @@ async def fetch_detailed_url(articles):
     async with aiohttp.ClientSession() as session:
         for article in articles:
             key_url = article["KEY"]
-            print(f"Fetching detailed data from {key_url}")
+            # print(f"Fetching detailed data from {key_url}")
 
             async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
                 if response.status == 200:
@@ -82,7 +83,6 @@ async def fetch_detailed_url(articles):
                         encoded_url = detail_data['data'].get("url", "")
                         telegram_url = f"https://m.db-fi.com/mod/streamDocs.do?docId={encoded_url}"
                         article["TELEGRAM_URL"] = telegram_url
-                        article["DETAILS"] = detail_data.get("bdy", "No details available")  # 상세 내용 추가
                     except json.JSONDecodeError:
                         print(f"Failed to parse JSON for {key_url}")
                 else:
@@ -92,7 +92,10 @@ async def fetch_detailed_url(articles):
 
 async def main():
     articles = await DBfi_checkNewArticle()
-    # detailed_articles = await fetch_detailed_url(articles)
+    detailed_articles = await fetch_detailed_url(articles)
+    db = SQLiteManager()
+    inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    print(inserted_count)
     # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
