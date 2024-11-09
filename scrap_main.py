@@ -1732,28 +1732,28 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        LS_checkNewArticle,
-        ShinHanInvest_checkNewArticle,
-        HANA_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle,
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
-        Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
-        # DS_checkNewArticle,
-        Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle,
-        TOSSinvest_checkNewArticle,
-        Leading_checkNewArticle,
+        # LS_checkNewArticle,
+        # ShinHanInvest_checkNewArticle,
+        # HANA_checkNewArticle,
+        # Samsung_checkNewArticle,
+        # Sangsanginib_checkNewArticle,
+        # Shinyoung_checkNewArticle,
+        # Miraeasset_checkNewArticle,
+        # Hmsec_checkNewArticle,
+        # Kiwoom_checkNewArticle,
+        # # DS_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle,
+        # DAOL_checkNewArticle,
+        # TOSSinvest_checkNewArticle,
+        # Leading_checkNewArticle,
     ]
 
     # 비동기 함수 리스트
     async_check_functions = [
-        NHQV_checkNewArticle,
-        KB_checkNewArticle,
-        eugene_checkNewArticle,
-        Daeshin_checkNewArticle,
+        # NHQV_checkNewArticle,
+        # KB_checkNewArticle,
+        # eugene_checkNewArticle,
+        # Daeshin_checkNewArticle,
         iMfnsec_checkNewArticle,
         DBfi_checkNewArticle,
     ]
