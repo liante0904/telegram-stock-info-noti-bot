@@ -12,6 +12,7 @@ import hashlib
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.SQLiteManager import SQLiteManager
 
 # 기본 URL과 공통 헤더 설정
 BASE_URL = "https://m.imfnsec.com:442"
@@ -69,14 +70,15 @@ async def fetch_attach_url(session, bid, aid):
                 jres = json.loads(await response.text())[0][0]
                 url = f"https://www.imfnsec.com/upload/{jres['file_dir']}/{jres['file_name']}"
                 return url
-            except json.JSONDecodeError:
-                print("Response is not JSON format.")
+            except (json.JSONDecodeError, IndexError):
+                print("Error decoding JSON or accessing response data.")
+                return None
         else:
             print(f"Failed to retrieve attach URL. Status Code: {response.status}")
     return None
 
 # IM증권 기사 체크 함수
-async def iMfnsec_checkNewArticle():
+async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
     SEC_FIRM_ORDER = 18
     bids = ["R_E08", "R_E09", "R_E14", "R_E03", "R_E04", "R_E05"]
     json_data_list = []
@@ -100,47 +102,67 @@ async def iMfnsec_checkNewArticle():
                 "X-Requested-With": "XMLHttpRequest"
             }
 
-            data = {
-                "tr_cd": "db/board/TWBBACL/board_list",
-                "bid": bid,
-                "cur_page": "1",
-                "num_page": "60",
-                "secureKey": secure_key
-            }
+            page = int(cur_page)
+            while True:
+                data = {
+                    "tr_cd": "db/board/TWBBACL/board_list",
+                    "bid": bid,
+                    "cur_page": str(page),
+                    "num_page": "100",
+                    "secureKey": secure_key
+                }
 
-            print(f"Fetching articles for bid: {bid} with ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}")
-            async with session.post(f"{BASE_URL}/_json/source.jsp", headers=headers, data=data) as response:
-                # 상태 코드 출력 추가
-                print(f"Response status for bid {bid}: {response.status}")
-                if response.status == 200:
-                    try:
-                        jres = json.loads(await response.text())[0]
-                    except (json.JSONDecodeError, IndexError):
-                        print(f"No items found on the page for bid {bid}.")
-                        continue
+                print(f"Fetching articles for bid: {bid} with ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}, page: {page}")
+                async with session.post(f"{BASE_URL}/_json/source.jsp", headers=headers, data=data) as response:
+                    print(f"Response status for bid {bid}, page {page}: {response.status}")
+                    if response.status == 200:
+                        try:
+                            jres = json.loads(await response.text(encoding='utf-8', errors='ignore'))[0]
+                            # print(jres)
+                            if not jres:
+                                break
+                        except (json.JSONDecodeError, IndexError):
+                            print(f"No items found or error parsing response for bid {bid}, page {page}.")
+                            break
 
-                    for item in jres:
-                        attach_url = await fetch_attach_url(session, item['bid'], item['aid'])
-                        json_data_list.append({
-                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                            "FIRM_NM": firm_info.get_firm_name(),
-                            "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
-                            "ARTICLE_URL": BASE_URL,
-                            "ATTACH_URL": attach_url,
-                            "DOWNLOAD_URL": attach_url,
-                            "ARTICLE_TITLE": item['title'],
-                            "SAVE_TIME": datetime.now().isoformat()
-                        })
-                else:
-                    print(f"Failed to fetch page data for bid {bid}. Status code: {response.status}")
+                        for item in jres:
+                            try:
+                                attach_url = await fetch_attach_url(session, item['bid'], item['aid'])
+                                json_data_list.append({
+                                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                                    "FIRM_NM": firm_info.get_firm_name(),
+                                    "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
+                                    "ARTICLE_URL": BASE_URL,
+                                    "ATTACH_URL": attach_url,
+                                    "DOWNLOAD_URL": attach_url,
+                                    "ARTICLE_TITLE": item['title'],
+                                    "WRITER": item['username'],
+                                    "SAVE_TIME": datetime.now().isoformat()
+                                })
+                            except KeyError as e:
+                                print(f"KeyError encountered: {e} for item in bid {bid}, page {page}.")
 
-    # 최종 결과 출력 및 반환
-    # print("Final fetched articles:", json_data_list)
+                        # 다음 페이지로 이동
+                        if single_page_only:
+                            break
+                        page += 1
+                    else:
+                        print(f"Failed to fetch page data for bid {bid}. Status code: {response.status}")
+                        break
+
     return json_data_list
 
+# main 함수: 파라미터 페이지가 호출되지 않을 때까지 작동
 async def main():
-    await iMfnsec_checkNewArticle()
+    cur_page = "1"
+    results = await iMfnsec_checkNewArticle(cur_page, single_page_only=False)
+    if not results:
+        print("No articles found.")
+    else:
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(results, 'data_main_daily_send')
+        print(inserted_count)
 
 if __name__ == "__main__":
     asyncio.run(main())
