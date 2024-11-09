@@ -1,5 +1,4 @@
 import asyncio
-import aiohttp
 import json
 from datetime import datetime
 import re  # 정규식 사용을 위한 import
