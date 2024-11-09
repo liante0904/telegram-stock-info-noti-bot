@@ -1,30 +1,11 @@
 # -*- coding:utf-8 -*- 
 import os
-import gc
 import logging
-import requests
 import time
-import re
-import urllib.parse as urlparse
-import urllib.request
 import asyncio
-import aiohttp
-from datetime import datetime, timedelta, date
 
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
-from bs4 import BeautifulSoup
-
-from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
-
-# selenium
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 # business
 from modules.LS_0 import LS_checkNewArticle
@@ -38,7 +19,6 @@ from modules.Shinyoung_7 import Shinyoung_checkNewArticle
 from modules.Miraeasset_8 import Miraeasset_checkNewArticle
 from modules.Hmsec_9 import Hmsec_checkNewArticle
 from modules.Kiwoom_10 import Kiwoom_checkNewArticle
-from modules.DS_11 import DS_checkNewArticle
 from modules.eugenefn_12 import eugene_checkNewArticle
 from modules.Koreainvestment_13 import Koreainvestment_selenium_checkNewArticle
 from modules.DAOL_14 import DAOL_checkNewArticle
