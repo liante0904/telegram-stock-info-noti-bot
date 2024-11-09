@@ -99,8 +99,8 @@ def KB_decode_url(url):
 
 # Main function to run the code
 async def main():
-    nNewArticleCnt, json_data_list = await KB_checkNewArticle()
-    print(f"New Article Count: {nNewArticleCnt}")
+    json_data_list = await KB_checkNewArticle()
+    print(f"New Article Count: {len(json_data_list)}")
     print("JSON Data List:")
     for item in json_data_list:
         print(item)

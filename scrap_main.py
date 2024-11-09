@@ -1,38 +1,30 @@
 # -*- coding:utf-8 -*- 
 import os
-import gc
 import logging
-import requests
 import time
-import json
-import re
-import urllib.parse as urlparse
-import urllib.request
 import asyncio
-import aiohttp
-from datetime import datetime, timedelta, date
 
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
-from bs4 import BeautifulSoup
-
-from models.FirmInfo import FirmInfo
-from models.WebScraper import SyncWebScraper
 from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
 
-# selenium
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
 # business
-from modules.LS_1 import LS_detail
+from modules.LS_0 import LS_checkNewArticle
+from modules.ShinHanInvest_1 import ShinHanInvest_checkNewArticle
 from modules.NHQV_2 import NHQV_checkNewArticle
+from modules.HANA_3 import HANA_checkNewArticle
 from modules.KBsec_4 import KB_checkNewArticle
+from modules.Samsung_5 import Samsung_checkNewArticle
+from modules.Sangsanginib_6 import Sangsanginib_checkNewArticle
+from modules.Shinyoung_7 import Shinyoung_checkNewArticle
+from modules.Miraeasset_8 import Miraeasset_checkNewArticle
+from modules.Hmsec_9 import Hmsec_checkNewArticle
+from modules.Kiwoom_10 import Kiwoom_checkNewArticle
 from modules.eugenefn_12 import eugene_checkNewArticle
+from modules.Koreainvestment_13 import Koreainvestment_selenium_checkNewArticle
+from modules.DAOL_14 import DAOL_checkNewArticle
+from modules.TOSSinvest_15 import TOSSinvest_checkNewArticle
+from modules.Leading_16 import Leading_checkNewArticle
+from modules.Daeshin_17 import Daeshin_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
 from modules.DBfi_19 import DBfi_checkNewArticle
 
@@ -1732,28 +1724,28 @@ def main():
 
     # 동기 함수 리스트
     sync_check_functions = [
-        # LS_checkNewArticle,
-        # ShinHanInvest_checkNewArticle,
-        # HANA_checkNewArticle,
-        # Samsung_checkNewArticle,
-        # Sangsanginib_checkNewArticle,
-        # Shinyoung_checkNewArticle,
-        # Miraeasset_checkNewArticle,
-        # Hmsec_checkNewArticle,
-        # Kiwoom_checkNewArticle,
-        # # DS_checkNewArticle,
-        # Koreainvestment_selenium_checkNewArticle,
-        # DAOL_checkNewArticle,
-        # TOSSinvest_checkNewArticle,
-        # Leading_checkNewArticle,
+        LS_checkNewArticle,
+        ShinHanInvest_checkNewArticle,
+        HANA_checkNewArticle,
+        Samsung_checkNewArticle,
+        Sangsanginib_checkNewArticle,
+        Shinyoung_checkNewArticle,
+        Miraeasset_checkNewArticle,
+        Hmsec_checkNewArticle,
+        Kiwoom_checkNewArticle,
+        # DS_checkNewArticle,
+        Koreainvestment_selenium_checkNewArticle,
+        DAOL_checkNewArticle,
+        TOSSinvest_checkNewArticle,
+        Leading_checkNewArticle,
     ]
 
     # 비동기 함수 리스트
     async_check_functions = [
-        # NHQV_checkNewArticle,
-        # KB_checkNewArticle,
-        # eugene_checkNewArticle,
-        # Daeshin_checkNewArticle,
+        NHQV_checkNewArticle,
+        KB_checkNewArticle,
+        eugene_checkNewArticle,
+        Daeshin_checkNewArticle,
         iMfnsec_checkNewArticle,
         DBfi_checkNewArticle,
     ]
