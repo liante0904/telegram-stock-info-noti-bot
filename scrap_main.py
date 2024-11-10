@@ -1744,6 +1744,7 @@ def main():
     async_check_functions = [
         NHQV_checkNewArticle,
         KB_checkNewArticle,
+        Kiwoom_checkNewArticle,
         eugene_checkNewArticle,
         Daeshin_checkNewArticle,
         iMfnsec_checkNewArticle,
