@@ -12,6 +12,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper  # Assuming there is an async version of the scraper
+from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
 
 def get_start_of_year():
@@ -96,11 +97,19 @@ async def Kiwoom_checkNewArticle(stdate, eddate, page_size=100):
 
 if __name__ == "__main__":
     # Main function to set parameters
-    stdate = get_start_of_year()
+    stdate = "20000101"
     eddate = GetCurrentDate("yyyymmdd")
-    page_size = 100  # Default value
+    page_size = 100000  # Default value
 
     # Run the async function with specified parameters
     asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
     result = asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
     print(result)
+    
+    if not result:
+        print("No articles found.")
+    else:
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
+        print(f"Inserted {inserted_count} articles.")
+
