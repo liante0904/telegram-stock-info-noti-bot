@@ -13,31 +13,24 @@ from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
-def LS_checkNewArticle(page=1):
+def LS_checkNewArticle(page=1, is_imported=False):
     SEC_FIRM_ORDER = 0
     ARTICLE_BOARD_ORDER = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
 
-    # 이슈브리프
-    TARGET_URL_0 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=146&currPage={page}'
-    # 기업분석 게시판
-    TARGET_URL_1 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=36&currPage={page}'
-    # 산업분석
-    TARGET_URL_2 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=37&currPage={page}'
-    # 투자전략
-    TARGET_URL_3 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=38&currPage={page}'
-    # Quant
-    TARGET_URL_4 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=147&currPage={page}'
-    # Macro
-    TARGET_URL_5 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=39&currPage={page}'
-    # FI/ Credit
-    TARGET_URL_6 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=183&currPage={page}'
-    # Commodity
-    TARGET_URL_7 = f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=145&currPage={page}'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3, TARGET_URL_4, TARGET_URL_5, TARGET_URL_6, TARGET_URL_7)
+    # URL list
+    TARGET_URL_TUPLE = (
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=146&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=36&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=37&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=38&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=147&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=39&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=183&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=145&currPage={page}'
+    )
 
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
@@ -52,13 +45,15 @@ def LS_checkNewArticle(page=1):
         soup = scraper.Get()
 
         soupList = soup.select('#contents > table > tbody > tr')
-        
+
         # 현재 날짜
         today = date.today()
         # 7일 전 날짜 계산
         seven_days_ago = today - timedelta(days=7)
 
-        nNewArticleCnt = 0        
+        if not soupList and not is_imported:
+            continue  # Skip if no data found when called in main
+
         for list in soupList:
             try:
                 str_date = list.select('td')[3].get_text()
@@ -84,7 +79,7 @@ def LS_checkNewArticle(page=1):
             except IndexError:
                 print("IndexError: list index out of range - Skipping this entry and continuing.")
                 continue
-            
+
     # 메모리 정리
     del soup
     gc.collect()
@@ -130,25 +125,23 @@ def LS_detail(articles, firm_info):
         except Exception as e:
             print(f"Error processing article: {e}")
 
-    print(articles)
     return articles
 
 
 if __name__ == "__main__":
     page = 1
+    all_articles = []
     while True:
-        print(f"Page:{page}.. Process..")
-        articles = LS_checkNewArticle(page)
-        if not articles:
-            break
-        for article in articles:
-            print(article)
+        print(f"Page:{page}.. Process..");
+        articles = LS_checkNewArticle(page, is_imported=False)
+        if not any(articles):
+            break  # Exit loop if all 7 URLs return no data
+        all_articles.extend(articles)
         page += 1
     
-    if not articles:
+    if not all_articles:
         print("No articles found.")
     else:
         db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(articles, 'data_main_daily_send')
-        print(inserted_count)
-
+        inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
+        print(f"Inserted {inserted_count} articles.")
