@@ -18,7 +18,12 @@ from utils.date_util import GetCurrentDate
 def get_start_of_year():
     return datetime(datetime.now().year, 1, 1).strftime("%Y%m%d")
 
-async def Kiwoom_checkNewArticle(stdate, eddate, page_size=100):
+async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
+    if stdate is None:
+        stdate = get_start_of_year()
+    if eddate is None:
+        eddate = GetCurrentDate("yyyymmdd")
+
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
     json_data_list = []
@@ -97,12 +102,11 @@ async def Kiwoom_checkNewArticle(stdate, eddate, page_size=100):
 
 if __name__ == "__main__":
     # Main function to set parameters
-    stdate = "20000101"
-    eddate = GetCurrentDate("yyyymmdd")
+    stdate = None  # Default to system year start if None
+    eddate = None  # Default to system date if None
     page_size = 100000  # Default value
 
     # Run the async function with specified parameters
-    asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
     result = asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
     print(result)
     
@@ -112,4 +116,3 @@ if __name__ == "__main__":
         db = SQLiteManager()
         inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
         print(f"Inserted {inserted_count} articles.")
-

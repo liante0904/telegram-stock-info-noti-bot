@@ -14,6 +14,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
     """
     firm_names 배열의 모든 인덱스를 순회하며, telegram_update_required가 True인 경우 TELEGRAM_URL 컬럼을 업데이트합니다.
     """
+    print('update_firm_telegram_url_by_date')
     db = SQLiteManager()
     all_records = []  # 모든 회사의 레코드를 저장할 리스트
 
@@ -24,7 +25,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
         # 회사 이름이 공백이 아니고, telegram_update_required가 True인 경우만 처리
         if firm_info.get_firm_name() and firm_info.telegram_update_required:
             records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
-
+            print(records)
             # records가 빈 리스트가 아닌 경우에만 처리 진행
             if records:
                 print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: {records}")
@@ -55,11 +56,12 @@ async def update_firm_telegram_url_by_date(date_str=None):
 
 # 메인 함수
 async def main():
-    firm_info = FirmInfo(
-        sec_firm_order=19,
-        article_board_order=0
-    )
+    # firm_info = FirmInfo(
+    #     sec_firm_order=19,
+    #     article_board_order=0
+    # )
     # TELEGRAM_URL 업데이트 함수 호출
+    print('?????????????')
     await update_firm_telegram_url_by_date()
 
 if __name__ == "__main__":
