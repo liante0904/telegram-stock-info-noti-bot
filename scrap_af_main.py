@@ -5,7 +5,7 @@ import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.SQLiteManager import SQLiteManager
 from models.FirmInfo import FirmInfo
-from modules.LS_1 import LS_detail
+from modules.LS_0 import LS_detail
 from modules.DBfi_19 import fetch_detailed_url
 
 
@@ -55,10 +55,10 @@ async def update_firm_telegram_url_by_date(date_str=None):
 
 # 메인 함수
 async def main():
-    firm_info = FirmInfo(
-        sec_firm_order=19,
-        article_board_order=0
-    )
+    # firm_info = FirmInfo(
+    #     sec_firm_order=19,
+    #     article_board_order=0
+    # )
     # TELEGRAM_URL 업데이트 함수 호출
     await update_firm_telegram_url_by_date()
 
