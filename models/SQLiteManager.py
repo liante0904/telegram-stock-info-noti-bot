@@ -39,9 +39,16 @@ class SQLiteManager:
     def close_connection(self):
         """데이터베이스 연결 종료"""
         if self.cursor:
-            self.cursor.close()
+            try:
+                self.cursor.close()
+            except sqlite3.ProgrammingError:
+                print("Cursor is already closed.")
         if self.connection:
-            self.connection.close()
+            try:
+                self.connection.close()
+            except sqlite3.ProgrammingError:
+                print("Connection is already closed.")
+
 
     def create_table(self, table_name, columns):
         """테이블 생성"""
