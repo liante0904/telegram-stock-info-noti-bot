@@ -1732,7 +1732,6 @@ def main():
         Shinyoung_checkNewArticle,
         Miraeasset_checkNewArticle,
         Hmsec_checkNewArticle,
-        Kiwoom_checkNewArticle,
         # DS_checkNewArticle,
         Koreainvestment_selenium_checkNewArticle,
         DAOL_checkNewArticle,
