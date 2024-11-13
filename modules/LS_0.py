@@ -111,7 +111,7 @@ async def LS_detail(articles, firm_info):
             TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
             
             # AsyncWebScraper 인스턴스 생성
-            scraper = AsyncWebScraper(TARGET_URL, headers=firm_info.headers)
+            scraper = AsyncWebScraper(TARGET_URL)
             
             # 각 요청을 비동기로 추가
             tasks.append(scraper.Get(session))
