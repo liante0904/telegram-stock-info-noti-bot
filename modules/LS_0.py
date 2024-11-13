@@ -109,6 +109,13 @@ def LS_detail(articles, firm_info):
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
     }
 
+    # articles가 리스트가 아닐 경우 리스트로 변환하여 단일 항목도 처리 가능하게 함
+    if isinstance(articles, dict):
+        articles = [articles]  # 단일 딕셔너리를 리스트로 변환
+    elif isinstance(articles, str):
+        print("Error: Invalid article format. Expected a dictionary or a list of dictionaries.")
+        return []  # 문자열이 주어진 경우 빈 리스트 반환
+    
     for article in articles:
         TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
         time.sleep(0.1)
