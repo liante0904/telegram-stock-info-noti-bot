@@ -43,7 +43,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
                 elif sec_firm_order == 0:
                     # sec_firm_order가 0인 경우 추가 작업 수행
                     print("Additional processing for SEC_FIRM_ORDER 0")
-                    update_records = await LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용
+                    update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용
                     
                     for record in update_records:
                         await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
