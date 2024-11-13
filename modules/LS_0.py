@@ -43,7 +43,6 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        # 재시도 로직
         retries = 3
         while retries > 0:
             try:
@@ -56,7 +55,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             except (AttributeError, ValueError) as e:
                 print(f"Error fetching data: {e}. Retrying... ({3 - retries} retries left)")
                 retries -= 1
-                time.sleep(1)  # 잠시 대기 후 재시도
+                time.sleep(1)
                 if retries == 0:
                     skip_boards.add(ARTICLE_BOARD_ORDER)
                     print(f"Skipping board {ARTICLE_BOARD_ORDER} from page {page} onward.")
@@ -68,7 +67,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
         seven_days_ago = today - timedelta(days=7)
 
         if not soupList and not is_imported:
-            continue  # Skip if no data found and not imported
+            continue
 
         for list in soupList:
             try:
@@ -93,13 +92,13 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     "SAVE_TIME": datetime.now().isoformat()
                 })
             except IndexError:
-                print("IndexError: list index out of range - Skipping this entry and continuing.")
-                continue
+                print("IndexError: list index out of range - Skipping this board.")
+                skip_boards.add(ARTICLE_BOARD_ORDER)  # Add to skip_boards on IndexError
+                break  # Skip the rest of this board’s articles
 
     del soup
     gc.collect()
     return json_data_list, skip_boards
-
 
 def LS_detail(articles, firm_info):
     for article in articles:
@@ -146,13 +145,13 @@ def LS_detail(articles, firm_info):
 if __name__ == "__main__":
     page = 1
     all_articles = []
-    skip_boards = set()  # 게시판 건너뛰기용 세트
+    skip_boards = set()
 
     while True:
-        print(f"Page:{page}.. Process..");
+        print(f"Page:{page}.. Process..")
         articles, skip_boards = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
         if not any(articles):
-            break  # 모든 게시판이 데이터가 없을 경우 종료
+            break  # Exit loop if no articles found
         all_articles.extend(articles)
         page += 1
 
@@ -162,4 +161,3 @@ if __name__ == "__main__":
         db = SQLiteManager()
         inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
         print(f"Inserted {inserted_count} articles.")
-
