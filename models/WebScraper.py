@@ -1,7 +1,8 @@
+import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
-class WebScraper:
+class SyncWebScraper:
     def __init__(self, target_url, firm_info):
         """
         WebScraper 클래스의 초기화 메서드
@@ -172,17 +173,13 @@ class WebScraper:
 
         print('='*40)
         print('==================WebScraper Get==================' )
-        # print(soup)
-        # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        # css_selector = self._get_css_selector()
-        # soup_list = soup.select(css_selector)
 
-        # # SEC_FIRM_ORDER에 따른 파싱 로직 적용
-        # result = self._parse_list_item(soup_list)
         return soup
 
     def GetJson(self, params=None):
         response = requests.get(self.target_url, headers=self.headers, params=params)
+        print('='*40)
+        print('==================WebScraper GetJson==================' )
         print('='*40)
         print('==================WebScraper GetJson==================' )
         return response.json()
@@ -206,11 +203,9 @@ class WebScraper:
         print('='*40)
         print('==================WebScraper Post==================' )
 
-        # SEC_FIRM_ORDER에 따른 CSS 선택자 적용
-        # css_selector = self._get_css_selector()
-        # soup_list = soup.select(css_selector)
+        print('='*40)
+        print('==================WebScraper Post==================' )
 
-        # return soup_list
         return soup
 
     def PostJson(self, params=None, json=None):
@@ -218,12 +213,66 @@ class WebScraper:
         print('='*40)
         print('==================WebScraper PostJson==================' )
         return response.json()
-    
-    def parse_table(self, soup_list):
+
+
+class AsyncWebScraper:
+    def __init__(self, target_url, headers=None):
         """
-        파싱된 테이블 리스트를 처리하는 메서드
-        :param soup_list: BeautifulSoup으로 파싱된 테이블 리스트
-        :return: 테이블 행 데이터 출력 (예시)
+        AsyncWebScraper 클래스의 초기화 메서드
+        :param target_url: 요청할 URL
+        :param headers: 요청에 사용할 헤더 (기본값은 None)
         """
-        for row in soup_list:
-            print(f"테이블 행 데이터: {row.text}")
+        self.target_url = target_url
+        self.headers = headers or {"User-Agent": "Mozilla/5.0"}
+
+    async def Get(self, session=None, params=None):
+        """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
+        # 세션이 없으면 새 세션을 생성하여 사용
+        close_session = False
+        if session is None:
+            session = aiohttp.ClientSession()
+            close_session = True
+
+        try:
+            response = await session.get(self.target_url, headers=self.headers, params=params)
+            response.raise_for_status()
+            html = await response.text()
+            return BeautifulSoup(html, "html.parser")
+        finally:
+            if close_session:
+                await session.close()  # 세션을 닫아 메모리 누수 방지
+                
+    async def Post(self, session=None, data=None):
+        """비동기 POST 요청을 통해 데이터를 가져오는 메서드"""
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).post(self.target_url, headers=self.headers, data=data)
+            response.raise_for_status()
+            html = await response.text()
+            return BeautifulSoup(html, "html.parser")
+
+    async def GetJson(self, session=None, params=None):
+        """비동기 GET 요청을 통해 JSON 데이터를 가져오는 메서드"""
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).get(self.target_url, headers=self.headers, params=params)
+            response.raise_for_status()
+            print('=' * 40)
+            print('==================AsyncWebScraper GetJson==================')
+            return await response.json()
+
+    async def PostJson(self, session=None, params=None, json_data=None):
+        """
+        비동기 POST 요청을 통해 JSON 데이터를 가져오는 메서드.
+        :param session: aiohttp ClientSession 인스턴스 (선택적)
+        :param params: 요청 시 보낼 URL 인코딩 데이터 (기본값 None)
+        :param json_data: JSON 데이터 (기본값 None)
+        """
+        async with session or aiohttp.ClientSession() as new_session:
+            response = await (session or new_session).post(self.target_url, headers=self.headers, data=params, json=json_data)
+            response.raise_for_status()
+            print('=' * 40)
+            print('==================AsyncWebScraper PostJson==================')
+            return await response.json()
+
+
+
+        
