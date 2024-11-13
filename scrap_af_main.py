@@ -25,7 +25,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
         # 회사 이름이 공백이 아니고, telegram_update_required가 True인 경우만 처리
         if firm_info.get_firm_name() and firm_info.telegram_update_required:
             records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
-            print(records)
+            print(f"Total records count{len(records)}")
             # records가 빈 리스트가 아닌 경우에만 처리 진행
             if records:
                 print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: records count{len(records)}")
