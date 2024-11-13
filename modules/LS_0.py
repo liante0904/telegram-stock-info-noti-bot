@@ -112,6 +112,13 @@ async def LS_detail(articles, firm_info):
             TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
             
             print(TARGET_URL)
+            # '.pdf' 문자열이 TARGET_URL에 포함된 경우 URL을 저장하고 다음 레코드로 진행
+            if '.pdf' in TARGET_URL:
+                article['ARTICLE_URL'] = TARGET_URL
+                article['TELEGRAM_URL'] = TARGET_URL
+                article['DOWNLOAD_URL'] = TARGET_URL
+                continue  # 다음 레코드로 진행
+            
             # AsyncWebScraper 인스턴스 생성
             scraper = AsyncWebScraper(TARGET_URL)
             
