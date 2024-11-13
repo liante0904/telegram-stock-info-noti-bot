@@ -37,7 +37,9 @@ class FirmInfo:
         "Quant",         # ARTICLE_BOARD_ORDER 4
         "Macro",         # ARTICLE_BOARD_ORDER 5
         "FI/ Credit",    # ARTICLE_BOARD_ORDER 6
-        "Commodity"],    # ARTICLE_BOARD_ORDER 7
+        "Commodity",     # ARTICLE_BOARD_ORDER 7
+        "정기자료",
+        "해외리서치"],    
         
         # SEC_FIRM_ORDER 1
         ["산업분석",      # ARTICLE_BOARD_ORDER 0
