@@ -228,12 +228,21 @@ class AsyncWebScraper:
 
     async def Get(self, session=None, params=None):
         """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
-        async with session or aiohttp.ClientSession() as new_session:
-            response = await (session or new_session).get(self.target_url, headers=self.headers, params=params)
+        # 세션이 없으면 새 세션을 생성하여 사용
+        close_session = False
+        if session is None:
+            session = aiohttp.ClientSession()
+            close_session = True
+
+        try:
+            response = await session.get(self.target_url, headers=self.headers, params=params)
             response.raise_for_status()
             html = await response.text()
             return BeautifulSoup(html, "html.parser")
-
+        finally:
+            if close_session:
+                await session.close()  # 세션을 닫아 메모리 누수 방지
+                
     async def Post(self, session=None, data=None):
         """비동기 POST 요청을 통해 데이터를 가져오는 메서드"""
         async with session or aiohttp.ClientSession() as new_session:

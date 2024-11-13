@@ -6,6 +6,10 @@ import time
 import re
 import urllib.request
 import sys
+import requests
+from bs4 import BeautifulSoup
+import time
+
 from datetime import datetime, timedelta, date
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -98,17 +102,44 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     del soup
     gc.collect()
-    return json_data_list, skip_boards
+    return json_data_list#, skip_boards
 
 def LS_detail(articles, firm_info):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    }
+
+    # articles가 리스트가 아닐 경우 리스트로 변환하여 단일 항목도 처리 가능하게 함
+    if isinstance(articles, dict):
+        articles = [articles]  # 단일 딕셔너리를 리스트로 변환
+    elif isinstance(articles, str):
+        print("Error: Invalid article format. Expected a dictionary or a list of dictionaries.")
+        return []  # 문자열이 주어진 경우 빈 리스트 반환
+    
     for article in articles:
         TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
         time.sleep(0.1)
 
-        scraper = SyncWebScraper(TARGET_URL, firm_info)
+        # '.pdf'가 URL에 포함된 경우 해당 URL을 그대로 사용하고 다음 레코드로 진행
+        if '.pdf' in TARGET_URL:
+            article['ARTICLE_URL'] = TARGET_URL
+            article['TELEGRAM_URL'] = TARGET_URL
+            article['DOWNLOAD_URL'] = TARGET_URL
+            continue
 
-        # HTML parse
-        soup = scraper.Get()
+        # 요청 보내기
+        try:
+            response = requests.get(TARGET_URL, headers=headers, verify=False)
+            # 상태 코드가 200이 아닌 경우 로그 출력 후 다음 레코드로 이동
+            if response.status_code != 200:
+                print(f"Skipping URL due to status code {response.status_code}: {TARGET_URL}")
+                continue  # 다음 레코드로 넘어감
+        except requests.RequestException as e:
+            print(f"Error requesting URL {TARGET_URL}: {e}")
+            continue  # 요청 실패 시 다음 레코드로 이동
+
+        # HTML 파싱
+        soup = BeautifulSoup(response.content, "html.parser")
 
         trs = soup.select('tr')
         article['ARTICLE_TITLE'] = trs[0].select_one('td').get_text().strip()
