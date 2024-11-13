@@ -6,6 +6,10 @@ import time
 import re
 import urllib.request
 import sys
+import requests
+from bs4 import BeautifulSoup
+import time
+
 from datetime import datetime, timedelta, date
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -98,11 +102,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     del soup
     gc.collect()
-    return json_data_list, skip_boards
-
-import requests
-from bs4 import BeautifulSoup
-import time
+    return json_data_list#, skip_boards
 
 def LS_detail(articles, firm_info):
     headers = {
