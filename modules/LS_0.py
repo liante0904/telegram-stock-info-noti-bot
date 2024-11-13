@@ -105,11 +105,13 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     return json_data_list, skip_boards
 
 async def LS_detail(articles, firm_info):
+    print('======LS_detail=====')
     async with aiohttp.ClientSession() as session:
         tasks = []
         for article in articles:
             TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
             
+            print(TARGET_URL)
             # AsyncWebScraper 인스턴스 생성
             scraper = AsyncWebScraper(TARGET_URL)
             
@@ -151,6 +153,7 @@ async def LS_detail(articles, firm_info):
             except Exception as e:
                 print(f"Error processing article: {e}")
 
+    print(articles)
     return articles
 
 # 예제 호출 방법
@@ -164,6 +167,13 @@ if __name__ == "__main__":
     all_articles = []
     skip_boards = set()
 
+    firm_info = FirmInfo(
+        sec_firm_order=0,
+        article_board_order=0
+    )
+    articles = [{"KEY": "https://www.ls-sec.co.kr/EtwFrontBoard/View.jsp?skey=&sval=&board_no=253&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=37&board_seq=2211194", "REG_DT": "20220920"}]
+    asyncio.run(LS_detail(articles, firm_info))
+    
     while True:
         print(f"Page:{page}.. Process..")
         articles, skip_boards = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
