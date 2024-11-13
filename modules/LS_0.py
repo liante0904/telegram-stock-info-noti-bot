@@ -30,8 +30,8 @@ def LS_checkNewArticle(page=1, is_imported=False):
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=39&currPage={page}',
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=183&currPage={page}',
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=145&currPage={page}',
-        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=33&currPage={page}', # 정기자료
-        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=211&currPage={page}'
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=33&currPage={page}',
+        f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=253&currPage={page}'
     )
 
     # URL GET
@@ -40,13 +40,14 @@ def LS_checkNewArticle(page=1, is_imported=False):
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-
-        scraper = SyncWebScraper(TARGET_URL, firm_info)
         
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
         # HTML parse
         soup = scraper.Get()
 
         soupList = soup.select('#contents > table > tbody > tr')
+        
+        print(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판...")
 
         # 현재 날짜
         today = date.today()
