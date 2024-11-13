@@ -13,14 +13,11 @@ from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
-def LS_checkNewArticle(page=1, is_imported=False):
+def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     SEC_FIRM_ORDER = 0
-    ARTICLE_BOARD_ORDER = 0
     json_data_list = []
-
     requests.packages.urllib3.disable_warnings()
 
-    # URL list
     TARGET_URL_TUPLE = (
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=146&currPage={page}',
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=36&currPage={page}',
@@ -34,28 +31,44 @@ def LS_checkNewArticle(page=1, is_imported=False):
         f'https://www.ls-sec.co.kr/EtwFrontBoard/List.jsp?board_no=253&currPage={page}'
     )
 
-    # URL GET
+    if skip_boards is None:
+        skip_boards = set()
+
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        if ARTICLE_BOARD_ORDER in skip_boards:
+            continue  # Skip this board if no more articles are available
+
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
-        
-        scraper = SyncWebScraper(TARGET_URL, firm_info)
-        # HTML parse
-        soup = scraper.Get()
 
-        soupList = soup.select('#contents > table > tbody > tr')
-        
+        # 재시도 로직
+        retries = 3
+        while retries > 0:
+            try:
+                scraper = SyncWebScraper(TARGET_URL, firm_info)
+                soup = scraper.Get()
+                if soup is None:
+                    raise ValueError("Empty response from server.")
+                soupList = soup.select('#contents > table > tbody > tr')
+                break  # 성공하면 while loop 탈출
+            except (AttributeError, ValueError) as e:
+                print(f"Error fetching data: {e}. Retrying... ({3 - retries} retries left)")
+                retries -= 1
+                time.sleep(1)  # 잠시 대기 후 재시도
+                if retries == 0:
+                    skip_boards.add(ARTICLE_BOARD_ORDER)
+                    print(f"Skipping board {ARTICLE_BOARD_ORDER} from page {page} onward.")
+                    continue
+
         print(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판...")
 
-        # 현재 날짜
         today = date.today()
-        # 7일 전 날짜 계산
         seven_days_ago = today - timedelta(days=7)
 
         if not soupList and not is_imported:
-            continue  # Skip if no data found when called in main
+            continue  # Skip if no data found and not imported
 
         for list in soupList:
             try:
@@ -83,10 +96,9 @@ def LS_checkNewArticle(page=1, is_imported=False):
                 print("IndexError: list index out of range - Skipping this entry and continuing.")
                 continue
 
-    # 메모리 정리
     del soup
     gc.collect()
-    return json_data_list
+    return json_data_list, skip_boards
 
 
 def LS_detail(articles, firm_info):
@@ -134,17 +146,20 @@ def LS_detail(articles, firm_info):
 if __name__ == "__main__":
     page = 1
     all_articles = []
+    skip_boards = set()  # 게시판 건너뛰기용 세트
+
     while True:
         print(f"Page:{page}.. Process..");
-        articles = LS_checkNewArticle(page, is_imported=False)
+        articles, skip_boards = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
         if not any(articles):
-            break  # Exit loop if all 7 URLs return no data
+            break  # 모든 게시판이 데이터가 없을 경우 종료
         all_articles.extend(articles)
         page += 1
-    
+
     if not all_articles:
         print("No articles found.")
     else:
         db = SQLiteManager()
         inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
         print(f"Inserted {inserted_count} articles.")
+
