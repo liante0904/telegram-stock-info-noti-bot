@@ -28,7 +28,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
             print(records)
             # records가 빈 리스트가 아닌 경우에만 처리 진행
             if records:
-                print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: {records}")
+                print(f"Fetched records for SEC_FIRM_ORDER {sec_firm_order}: records count{len(records)}")
                 all_records.extend(records)
 
                 # 조건에 따라 추가 작업 수행
@@ -46,7 +46,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print(f"records{len(records)}")
                     for record in records:
                         LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
-                        await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        r = await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        print(r)
 
                     # update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용
                     
