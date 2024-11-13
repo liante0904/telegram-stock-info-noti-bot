@@ -6,10 +6,14 @@ import time
 import re
 import urllib.request
 import sys
+import aiohttp
+from bs4 import BeautifulSoup
+import asyncio
+import urllib.parse
 from datetime import datetime, timedelta, date
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from models.WebScraper import SyncWebScraper
+from models.WebScraper import SyncWebScraper, AsyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
@@ -100,46 +104,59 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     gc.collect()
     return json_data_list, skip_boards
 
-def LS_detail(articles, firm_info):
-    for article in articles:
-        TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
-        time.sleep(0.1)
+async def LS_detail(articles, firm_info):
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for article in articles:
+            TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
+            
+            # AsyncWebScraper 인스턴스 생성
+            scraper = AsyncWebScraper(TARGET_URL, headers=firm_info.headers)
+            
+            # 각 요청을 비동기로 추가
+            tasks.append(scraper.Get(session))
 
-        scraper = SyncWebScraper(TARGET_URL, firm_info)
+        # 모든 페이지를 비동기적으로 가져옵니다.
+        html_pages = await asyncio.gather(*tasks)
+        
+        # 각 페이지의 HTML을 파싱합니다.
+        for article, soup in zip(articles, html_pages):
+            try:
+                # 기본 데이터 파싱
+                trs = soup.select('tr')
+                article['ARTICLE_TITLE'] = trs[0].select_one('td').get_text().strip() if trs else "No Title"
 
-        # HTML parse
-        soup = scraper.Get()
+                # URL 처리 로직
+                img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+                alt_value = img.get("alt") if img else None
+                if alt_value:
+                    base_value = alt_value.split(".")[0]
+                    parts = base_value.split("_")
+                    URL_PARAM = article["REG_DT"]
+                    url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
+                else:
+                    URL_PARAM = article["REG_DT"]
+                    URL_PARAM_0 = 'B' + URL_PARAM[:6]
+                    ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
+                    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
+                    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+                    ATTACH_URL = f'https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}'
+                    url = ATTACH_URL
 
-        trs = soup.select('tr')
-        article['ARTICLE_TITLE'] = trs[0].select_one('td').get_text().strip()
-        try:
-            img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-            alt_value = img.get("alt") if img else None
-            if alt_value:
-                base_value = alt_value.split(".")[0]
-                parts = base_value.split("_")
+                # URL을 인코딩하여 저장
+                article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
+                article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
 
-                URL_PARAM = article["REG_DT"]
-                url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
-            else:
-                URL_PARAM = article["REG_DT"]
-                URL_PARAM_0 = 'B' + URL_PARAM[:6]
-
-                ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
-                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-
-                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
-
-            article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
-            article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
-            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
-
-        except Exception as e:
-            print(f"Error processing article: {e}")
+            except Exception as e:
+                print(f"Error processing article: {e}")
 
     return articles
+
+# 예제 호출 방법
+# articles = [{"KEY": "<article_url>", "REG_DT": "20220101"}, ...]
+# asyncio.run(LS_detail(articles, firm_info))
+
 
 
 if __name__ == "__main__":
