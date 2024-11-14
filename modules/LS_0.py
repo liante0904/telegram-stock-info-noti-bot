@@ -77,6 +77,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             try:
                 str_date = list.select('td')[3].get_text()
                 list = list.select('a')
+                print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
                 LIST_ARTICLE_TITLE = list[0].get_text()
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
@@ -117,7 +118,7 @@ def LS_detail(articles, firm_info):
         return []  # 문자열이 주어진 경우 빈 리스트 반환
     
     for article in articles:
-        TARGET_URL = article["KEY"].replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
+        TARGET_URL = article["KEY"]#.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
         time.sleep(0.1)
 
         # '.pdf'가 URL에 포함된 경우 해당 URL을 그대로 사용하고 다음 레코드로 진행
