@@ -60,28 +60,29 @@ def Miraeasset_checkNewArticle():
 
 
         nNewArticleCnt = 0
-        
         for list in soupList:
             LIST_ARTICLE_TITLE = list.select_one(".subject a").text
             LIST_ARTICLE_URL = "없음"
+            DOWNLOAD_URL = "없음"  # 기본값 설정
             attachment_element = list.select_one(".bbsList_layer_icon a")
             if attachment_element:
                 LIST_ARTICLE_URL = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
                 # ATTACH_URL = LIST_ARTICLE_URL
                 LIST_ARTICLE_TITLE = list.select_one(".subject a").find_all(string=True)
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
-                DOWNLOAD_URL = LIST_ARTICLE_URL
+                DOWNLOAD_URL = LIST_ARTICLE_URL  # attachment_element가 있을 때만 갱신
 
             json_data_list.append({
-                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
-                "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
-                "ATTACH_URL":LIST_ARTICLE_URL,
+                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                "FIRM_NM": firm_info.get_firm_name(),
+                # "REG_DT": REG_DT,
+                "ATTACH_URL": LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
-                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
+
             
 
     # 메모리 정리
