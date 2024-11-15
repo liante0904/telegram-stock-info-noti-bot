@@ -113,7 +113,7 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     # HTML parse
     soup = BeautifulSoup(response, "html.parser")
     # print(soup)
-    soupList = soup.select_one('#content > div.fs3 > div > div.ArticleDetailHeaderTools_article__jSo5t.ArticleDetailHeaderTools_article_original__A_8Dq > a')
+    soupList = soup.select_one('#content > div.fs3 > div > div.ArticleDetailHeaderTools_article__jSo5t.ArticleDetailHeaderTools_article_original___wGZh > a')
     strUrl = soupList.attrs['href']
 
     return strUrl
