@@ -62,7 +62,7 @@ async def DBfi_checkNewArticle():
                             "KEY": detail_url,
                             "SAVE_TIME": datetime.now().isoformat()
                         })
-                        # print(json_data_list)
+                        print(json_data_list)
                 else:
                     print(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
 
@@ -88,6 +88,7 @@ async def fetch_detailed_url(articles):
                 else:
                     print(f"Failed to fetch details from {key_url}. Status code: {response.status}")
 
+    print(articles)
     return articles
 
 async def main():
