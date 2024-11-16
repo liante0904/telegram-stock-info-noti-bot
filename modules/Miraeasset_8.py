@@ -44,6 +44,9 @@ def Miraeasset_checkNewArticle():
 
         # 게시물 정보 파싱
         for index, post in enumerate(soupList):
+            #contents > table > tbody > tr:nth-child(2) > 
+            
+
             if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
                 continue
             title_element = post.select_one(".subject a")
@@ -59,8 +62,10 @@ def Miraeasset_checkNewArticle():
             # print()
 
 
+
         nNewArticleCnt = 0
         for list in soupList:
+
             LIST_ARTICLE_TITLE = list.select_one(".subject a").text
             LIST_ARTICLE_URL = "없음"
             DOWNLOAD_URL = "없음"  # 기본값 설정
@@ -72,11 +77,13 @@ def Miraeasset_checkNewArticle():
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
                 DOWNLOAD_URL = LIST_ARTICLE_URL  # attachment_element가 있을 때만 갱신
 
+            REG_DT = list.select_one("td:nth-child(1)").get_text()
+            REG_DT = re.sub(r"[-./]", "", REG_DT)
             json_data_list.append({
                 "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                 "FIRM_NM": firm_info.get_firm_name(),
-                # "REG_DT": REG_DT,
+                "REG_DT": REG_DT,
                 "ATTACH_URL": LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -90,3 +97,4 @@ def Miraeasset_checkNewArticle():
     gc.collect()
 
     return json_data_list
+Miraeasset_checkNewArticle()
