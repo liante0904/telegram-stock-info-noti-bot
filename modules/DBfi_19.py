@@ -88,6 +88,7 @@ async def fetch_detailed_url(articles):
                 else:
                     print(f"Failed to fetch details from {key_url}. Status code: {response.status}")
 
+    print(articles)
     return articles
 
 async def main():
