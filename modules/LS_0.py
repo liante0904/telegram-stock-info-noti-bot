@@ -77,7 +77,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             try:
                 str_date = list.select('td')[3].get_text()
                 list = list.select('a')
-                print(list[0]['href'])
+                # print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
                 LIST_ARTICLE_TITLE = list[0].get_text()
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
