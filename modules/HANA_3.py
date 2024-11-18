@@ -9,7 +9,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-
+from models.SQLiteManager import SQLiteManager
 
 async def fetch(session, url):
     """비동기로 HTTP 요청을 보내는 함수"""
@@ -155,6 +155,9 @@ async def main():
     result = await HANA_checkNewArticle()
     print(f"Fetched {len(result)} articles.")
     print(result)
+    db = SQLiteManager()
+    inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    print(inserted_count)
 
 
 if __name__ == "__main__":
