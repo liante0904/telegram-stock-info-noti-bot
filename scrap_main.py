@@ -84,7 +84,6 @@ def main():
     sync_check_functions = [
         LS_checkNewArticle,
         ShinHanInvest_checkNewArticle,
-        HANA_checkNewArticle,
         Samsung_checkNewArticle,
         Sangsanginib_checkNewArticle,
         Shinyoung_checkNewArticle,
@@ -100,6 +99,7 @@ def main():
     # 비동기 함수 리스트
     async_check_functions = [
         NHQV_checkNewArticle,
+        HANA_checkNewArticle,
         KB_checkNewArticle,
         Kiwoom_checkNewArticle,
         eugene_checkNewArticle,
