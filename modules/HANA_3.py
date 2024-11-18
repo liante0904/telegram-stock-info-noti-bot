@@ -3,6 +3,7 @@ import os
 import gc
 import requests
 import time
+import re
 from datetime import datetime
 
 from bs4 import BeautifulSoup
@@ -61,20 +62,23 @@ def HANA_checkNewArticle():
         soup = BeautifulSoup(response.content, "html.parser")
         soupList = soup.select('#container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li')
 
-        nNewArticleCnt = 0
-        
+        #container > div.rc_area_con > div.daily_bbs.m-mb20 > ul > li > div.con > ul > li.mb7.m-info.info > span:nth-child(3)
         for list in soupList:
-            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').text
+            LIST_ARTICLE_TITLE = list.select_one('div.con > ul > li.mb4 > h3 > a').get_text()
             LIST_ARTICLE_URL =  'https://www.hanaw.com' + list.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
+            REG_DT = list.select_one('div.con > ul > li.mb7.m-info.info > span:nth-child(3)').get_text()
+            REG_DT = re.sub(r"[-./]", "", REG_DT)
+            WRITER = list.select_one('div.con > ul > li.mb7.m-info.info > span.none.m-name').get_text()
             json_data_list.append({
                 "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                 "FIRM_NM":firm_info.get_firm_name(),
-                # "REG_DT":REG_DT,
+                "REG_DT":REG_DT,
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": LIST_ARTICLE_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
+                "WRITER":WRITER,
                 "KEY:": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
@@ -84,5 +88,4 @@ def HANA_checkNewArticle():
     del soup
     del response
     gc.collect()
-
     return json_data_list
