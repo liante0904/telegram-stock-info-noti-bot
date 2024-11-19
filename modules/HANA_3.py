@@ -16,13 +16,55 @@ async def fetch(session, url):
     async with session.get(url) as response:
         return await response.text()
 
+def adjust_date(REG_DT, time_str):
+    reg_date = datetime.strptime(REG_DT, "%Y%m%d")
+    time_str = time_str.strip()
 
-async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order):
+    # "오전/오후" 형식 또는 24시간제 형식 모두 지원
+    match = re.match(r"(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", time_str)
+    if not match:
+        raise ValueError(f"Invalid time format: {time_str}")
+
+    period, hour, minute, second = match.groups()
+    hour = int(hour)
+    minute = int(minute)
+    second = int(second) if second else 0
+
+    # "오전/오후"가 없는 경우: 24시간제로 처리
+    if period:
+        if period == "오후" and hour != 12:
+            hour += 12
+        elif period == "오전" and hour == 12:  # 오전 12시는 자정
+            hour = 0
+    elif 0 <= hour <= 23:
+        # 24시간제이므로 추가 처리 필요 없음
+        pass
+    else:
+        raise ValueError(f"Invalid hour format: {hour}")
+
+    # 시간 계산
+    current_time = reg_date + timedelta(hours=hour, minutes=minute, seconds=second)
+
+    # 오전 10시 이후는 다음날로 처리
+    if current_time.hour >= 10:
+        reg_date += timedelta(days=1)
+
+    # 주말 처리 (토요일: 5, 일요일: 6)
+    while reg_date.weekday() >= 5:  # 주말이면
+        reg_date += timedelta(days=1)
+
+    return reg_date.strftime("%Y%m%d")
+
+
+async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order, max_pages=None):
     """모든 페이지 데이터를 순회하며 가져오는 함수"""
     json_data_list = []
     page = 1
 
     while True:
+        if max_pages and page > max_pages:  # 최대 페이지를 초과하면 종료
+            break
+
         target_url = f"{base_url}&curPage={page}"
         print(f"Fetching: {target_url}")
 
@@ -70,7 +112,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
     return json_data_list
 
 
-async def HANA_checkNewArticle():
+async def HANA_checkNewArticle(full_fetch=False):
     """하나금융 데이터 수집"""
     SEC_FIRM_ORDER = 3
 
@@ -101,10 +143,13 @@ async def HANA_checkNewArticle():
         'https://www.hanaw.com/main/research/research/list.cmd?pid=8&cid=3'
     ]
 
+    # full_fetch가 False이면 최대 3페이지까지만 조회
+    max_pages = None if full_fetch else 3
+
     all_results = []
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):
-            results = await fetch_all_pages(session, base_url, SEC_FIRM_ORDER, article_board_order)
+            results = await fetch_all_pages(session, base_url, SEC_FIRM_ORDER, article_board_order, max_pages)
             all_results.extend(results)
 
     # 메모리 정리
@@ -112,47 +157,8 @@ async def HANA_checkNewArticle():
     return all_results
 
 
-def adjust_date(REG_DT, time_str):
-    reg_date = datetime.strptime(REG_DT, "%Y%m%d")
-    time_str = time_str.strip()
-
-    # "오전/오후" 형식 또는 24시간제 형식 모두 지원
-    match = re.match(r"(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", time_str)
-    if not match:
-        raise ValueError(f"Invalid time format: {time_str}")
-
-    period, hour, minute, second = match.groups()
-    hour = int(hour)
-    minute = int(minute)
-    second = int(second) if second else 0
-
-    # "오전/오후"가 없는 경우: 24시간제로 처리
-    if period:
-        if period == "오후" and hour != 12:
-            hour += 12
-        elif period == "오전" and hour == 12:  # 오전 12시는 자정
-            hour = 0
-    elif 0 <= hour <= 23:
-        # 24시간제이므로 추가 처리 필요 없음
-        pass
-    else:
-        raise ValueError(f"Invalid hour format: {hour}")
-
-    # 시간 계산
-    current_time = reg_date + timedelta(hours=hour, minutes=minute, seconds=second)
-
-    # 오전 10시 이후는 다음날로 처리
-    if current_time.hour >= 10:
-        reg_date += timedelta(days=1)
-
-    # 주말 처리 (토요일: 5, 일요일: 6)
-    while reg_date.weekday() >= 5:  # 주말이면
-        reg_date += timedelta(days=1)
-
-    return reg_date.strftime("%Y%m%d")
-
 async def main():
-    result = await HANA_checkNewArticle()
+    result = await HANA_checkNewArticle(full_fetch=True)  # main에서는 모든 페이지 조회
     print(f"Fetched {len(result)} articles.")
     print(result)
     db = SQLiteManager()
