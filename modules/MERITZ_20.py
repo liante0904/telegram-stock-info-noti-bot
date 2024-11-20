@@ -146,7 +146,7 @@ async def MERITZ_checkNewArticle(full_fetch=False):
     ]
 
     # full_fetch가 False이면 최대 3페이지까지만 조회
-    max_pages = None if full_fetch else 1
+    max_pages = None if full_fetch else 3
 
     all_results = []
     async with aiohttp.ClientSession() as session:
