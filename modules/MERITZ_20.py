@@ -44,46 +44,65 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
 
         for list_item in soupList:
             try:
-                # 제목 및 URL
-                link_tag = list_item.select_one('td:nth-child(2) a')
+                # 게시판에 따라 선택자를 유연하게 변경
+                if article_board_order == 1:
+                    # 게시판 1의 경우 다른 구조를 사용
+                    link_tag = list_item.select_one('td:nth-child(2) div > a')
+                elif article_board_order == 2:
+                    # 게시판 2의 경우 다른 구조를 사용
+                    link_tag = list_item.select_one('td > div > a')
+                else:
+                    # 기본 구조
+                    link_tag = list_item.select_one('td:nth-child(2) a')
+
+                if not link_tag:  # 링크 태그가 없을 경우 처리
+                    print(f"Warning: Missing link tag in list item: {list_item}")
+                    continue
+
                 LIST_ARTICLE_TITLE = link_tag.get_text().strip()
                 LIST_ARTICLE_URL = "https://home.imeritz.com" + link_tag['href']
 
                 # 등록일
-                REG_DT = list_item.select_one('td:nth-child(5)').get_text().strip()
+                reg_dt_tag = list_item.select_one('td:nth-child(5)')
+                if not reg_dt_tag:
+                    print(f"Warning: Missing REG_DT tag in list item: {list_item}")
+                    continue
+                REG_DT = reg_dt_tag.get_text().strip()
                 REG_DT = re.sub(r"[-./]", "", REG_DT)
 
                 # 작성자
-                WRITER = list_item.select_one('td:nth-child(6)').get_text().strip()
+                writer_tag = list_item.select_one('td:nth-child(6)')
+                if not writer_tag:
+                    print(f"Warning: Missing WRITER tag in list item: {list_item}")
+                    continue
+                WRITER = writer_tag.get_text().strip()
 
                 # 카테고리 (선택적으로 사용 가능)
-                CATEGORY = list_item.select_one('td:nth-child(4)').get_text().strip()
-
-                # print(f"Parsing article: {LIST_ARTICLE_TITLE} | URL: {LIST_ARTICLE_URL}")
+                category_tag = list_item.select_one('td:nth-child(4)')
+                CATEGORY = category_tag.get_text().strip() if category_tag else ""
 
                 # LIST_ARTICLE_URL로 접속하여 DOWNLOAD_URL, TELEGRAM_URL 생성
                 try:
                     article_html = await fetch(session, LIST_ARTICLE_URL)
                     article_soup = BeautifulSoup(article_html, "html.parser")
 
-                    # 주요 지표 및 뉴스 전용 로직
-                    download_tag = article_soup.select_one('body > table > tbody > tr:nth-child(3) > td:nth-child(2) > a')
-                    if not download_tag:  # 기본 첨부 태그
-                        download_tag = article_soup.select_one('body > table > tbody > tr:nth-child(5) > td > a')
+                    # 첨부 파일 태그 찾기: title 속성만 사용
+                    download_tag = article_soup.select_one('a[title]')  # title 속성을 가진 <a> 태그 찾기
 
                     if download_tag and 'title' in download_tag.attrs:
+                        # title 속성에서 파일 이름 추출
                         file_name = download_tag['title']
-                        file_name = file_name.replace(" 파일 다운로드", "")
+                        file_name = file_name.replace(" 파일 다운로드", "").strip()  # 필요 없는 텍스트 제거
                         DOWNLOAD_URL = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
                         TELEGRAM_URL = DOWNLOAD_URL
+                        print(f"Constructed DOWNLOAD_URL: {DOWNLOAD_URL}")
                     else:
-                        DOWNLOAD_URL = LIST_ARTICLE_URL  # 기본적으로 LIST_ARTICLE_URL로 설정
-                        TELEGRAM_URL = LIST_ARTICLE_URL
+                        print("No 'title' attribute found in download tag.")
+                        DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL  # 기본 URL로 설정
 
                 except Exception as e:
                     print(f"Error fetching DOWNLOAD_URL from {LIST_ARTICLE_URL}: {e}")
-                    DOWNLOAD_URL = LIST_ARTICLE_URL
-                    TELEGRAM_URL = LIST_ARTICLE_URL
+                    DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL
 
                 # JSON 데이터 생성
                 article_data = {
@@ -100,7 +119,6 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     "KEY:": LIST_ARTICLE_URL,
                     "SAVE_TIME": datetime.now().isoformat()
                 }
-
                 json_data_list.append(article_data)
                 print(f"Appended article data: {article_data}")  # 데이터 추가 후 출력
             except Exception as e:
@@ -110,6 +128,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
         page += 1  # 다음 페이지로 이동
 
     return json_data_list
+
 
 async def MERITZ_checkNewArticle(full_fetch=False):
     """메리츠증권 데이터 수집"""
