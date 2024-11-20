@@ -59,7 +59,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                 # 카테고리 (선택적으로 사용 가능)
                 CATEGORY = list_item.select_one('td:nth-child(4)').get_text().strip()
 
-                print(f"Parsing article: {LIST_ARTICLE_TITLE} | URL: {LIST_ARTICLE_URL}")
+                # print(f"Parsing article: {LIST_ARTICLE_TITLE} | URL: {LIST_ARTICLE_URL}")
 
                 # LIST_ARTICLE_URL로 접속하여 DOWNLOAD_URL, TELEGRAM_URL 생성
                 try:
@@ -69,7 +69,6 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     if download_tag and 'title' in download_tag.attrs:
                         file_name = download_tag['title']
                         file_name = file_name.replace(" 파일 다운로드", "")
-                        print(f"file_name===========>{file_name}")
                         DOWNLOAD_URL = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
                         TELEGRAM_URL = DOWNLOAD_URL
                 except Exception as e:
@@ -94,7 +93,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                 }
 
                 json_data_list.append(article_data)
-                print(f"Appended article data: {article_data}")  # 데이터 추가 후 출력
+                # print(f"Appended article data: {article_data}")  # 데이터 추가 후 출력
             except Exception as e:
                 print(f"Error parsing article: {e}")
                 continue
