@@ -2,7 +2,7 @@ import json
 import sqlite3
 import os
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 import os
 from dotenv import load_dotenv
@@ -220,9 +220,11 @@ async def daily_select_data(date_str=None, type=None):
     if date_str is None:
         # date_str가 없으면 현재 날짜 사용
         query_date = datetime.now().strftime('%Y-%m-%d')
+        query_reg_dt = datetime.now().strftime('%Y%m%d')
     else:
         # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
         query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+        query_reg_dt = date_str
 
     # 쿼리 타입에 따라 조건을 다르게 설정
     if type == 'send':
@@ -230,6 +232,9 @@ async def daily_select_data(date_str=None, type=None):
         query_condition += "AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL <> ''))"
     elif type == 'download':
         query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+
+    # 3일 이내 조건 추가
+    three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
 
     # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
     query = f"""
@@ -252,8 +257,9 @@ async def daily_select_data(date_str=None, type=None):
         data_main_daily_send 
     WHERE 
         DATE(SAVE_TIME) = '{query_date}'
+        AND REG_DT >= '{three_days_ago}'
+        AND REG_DT <= '{query_reg_dt}'
         AND {query_condition}
-        
     ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
     """
     
@@ -266,10 +272,7 @@ async def daily_select_data(date_str=None, type=None):
     # rows를 dict 형태로 변환
     rows = [dict(row) for row in rows]
 
-    # print(rows)
-    
     return rows
-
 
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
