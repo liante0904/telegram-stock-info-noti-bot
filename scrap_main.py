@@ -27,6 +27,7 @@ from modules.Leading_16 import Leading_checkNewArticle
 from modules.Daeshin_17 import Daeshin_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
 from modules.DBfi_19 import DBfi_checkNewArticle
+from modules.MERITZ_20 import MERITZ_checkNewArticle
 
 import scrap_af_main
 import scrap_send_main
@@ -1748,6 +1749,7 @@ def main():
         Daeshin_checkNewArticle,
         iMfnsec_checkNewArticle,
         DBfi_checkNewArticle,
+        MERITZ_checkNewArticle
     ]
 
     total_data = []  # 전체 데이터를 저장할 리스트
