@@ -68,7 +68,7 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
 
             # JSON To List
             for list in soupList:
-                REG_DT = list['f1']
+                REG_DT = list['f0']
                 REG_DT = re.sub(r"[-./]", "", REG_DT)
                 LIST_ARTICLE_TITLE = list['f1']
                 LIST_ARTICLE_URL = list['f3']
