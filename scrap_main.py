@@ -1713,15 +1713,42 @@ def setup_debug_directory():
     print("LOG_FULLFILENAME",LOG_FULLFILENAME)
     logging.debug('이것은 디버그 메시지입니다.')
     
-    
-def main():
+def sync_check_main(sync_check_functions, total_data):
+    totalCnt = 0
+    # 동기 함수 실행
+    for check_function in sync_check_functions:
+        print(f"{check_function.__name__} => 새 게시글 정보 확인")
+        json_data_list = check_function()  # 각 함수가 반환한 json_data_list
+        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+            print('=' * 40)
+            print(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+            total_data.extend(json_data_list)  # 전체 리스트에 추가
+            totalCnt += len(json_data_list)
+        time.sleep(1)  # 과도한 요청 방지를 위한 딜레이
+    return totalCnt
+
+async def async_check_main(async_check_functions, total_data):
+    totalCnt = 0
+    # 비동기 함수 리스트 실행
+    tasks = [func() for func in async_check_functions]  # 비동기 함수 호출을 태스크로 생성
+    results = await asyncio.gather(*tasks)  # 태스크 병렬 실행 및 결과 수집
+
+    for idx, json_data_list in enumerate(results):
+        async_check_function = async_check_functions[idx]
+        print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
+        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+            print('=' * 40)
+            print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+            total_data.extend(json_data_list)  # 전체 리스트에 추가
+            totalCnt += len(json_data_list)
+
+    return totalCnt
+
+async def main():
     print('===================scrap_send===============')
     
     # 로그 디렉토리 설정
     setup_log_directory()
-
-    # Set Debug
-    # setup_debug_directory()
 
     # 동기 함수 리스트
     sync_check_functions = [
@@ -1754,53 +1781,26 @@ def main():
 
     total_data = []  # 전체 데이터를 저장할 리스트
     totalCnt = 0
-
     # 동기 함수 실행
-    for check_function in sync_check_functions:
-        print(f"{check_function.__name__} => 새 게시글 정보 확인")
-        json_data_list = check_function()  # 각 함수가 반환한 json_data_list
-        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-            print('=' * 40)
-            print(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-            total_data.extend(json_data_list)  # 전체 리스트에 추가
-            totalCnt += len(json_data_list)
-        
-        time.sleep(1)
+    totalCnt = sync_check_main(sync_check_functions, total_data)
 
     # 비동기 함수 실행
-    # 새 이벤트 루프 생성 및 설정
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    totalCnt += await async_check_main(async_check_functions, total_data)
 
-    try:
-        # 비동기 함수 리스트 실행
-        tasks = [func() for func in async_check_functions]  # 비동기 함수 호출을 태스크로 생성
-        results = loop.run_until_complete(asyncio.gather(*tasks))  # 태스크 병렬 실행 및 결과 수집
+    print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
-        for idx, json_data_list in enumerate(results):
-            async_check_function = async_check_functions[idx]
-            print(f"{async_check_function.__name__} => 새 게시글 정보 확인")
-            if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-                print('=' * 40)
-                print(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-                total_data.extend(json_data_list)  # 전체 리스트에 추가
-                totalCnt += len(json_data_list)
+    if total_data:
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+        print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
+        print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
+        if inserted_count:
+            # 추가 비동기 작업 실행
+            await scrap_af_main.main()
+            await scrap_send_main.main()
+            await scrap_upload_pdf.main()
+    else:
+        print("새로운 게시글 스크랩 실패.")
 
-        print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
-        
-        if total_data:
-            db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
-            print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
-            print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
-            if inserted_count:
-                loop.run_until_complete(scrap_af_main.main())
-                loop.run_until_complete(scrap_send_main.main())
-                loop.run_until_complete(scrap_upload_pdf.main())
-        else:
-            print("새로운 게시글이 스크랩 실패.")
-    finally:
-        loop.close()  # 이벤트 루프 종료
-        
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
