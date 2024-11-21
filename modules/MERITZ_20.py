@@ -120,7 +120,6 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     "SAVE_TIME": datetime.now().isoformat()
                 }
                 json_data_list.append(article_data)
-                print(f"Appended article data: {article_data}")  # 데이터 추가 후 출력
             except Exception as e:
                 print(f"Error parsing article: {e}")
                 continue
