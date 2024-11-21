@@ -90,7 +90,10 @@ class SQLiteManager:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(KEY) DO UPDATE SET
                     REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
-                    WRITER = excluded.WRITER  -- KEY 중복 시 WRITER 업데이트
+                    WRITER = excluded.WRITER,  -- KEY 중복 시 WRITER 업데이트
+                    DOWNLOAD_URL = excluded.DOWNLOAD_URL,  -- KEY 중복 시 DOWNLOAD_URL 업데이트
+                    TELEGRAM_URL = excluded.TELEGRAM_URL  -- KEY 중복 시 TELEGRAM_URL 업데이트
+                    
             ''', (
                 entry["SEC_FIRM_ORDER"],
                 entry["ARTICLE_BOARD_ORDER"],
@@ -101,6 +104,7 @@ class SQLiteManager:
                 entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
                 entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
                 entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+                entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
                 entry.get("WRITER", ''),
                 entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ARTICLE_URL을 사용
                 entry["SAVE_TIME"]
@@ -143,8 +147,7 @@ class SQLiteManager:
         FROM 
             data_main_daily_send 
         WHERE 
-            --REG_DT = '{query_date}'
-            1=1
+            REG_DT = '{query_date}'
             AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
             AND TELEGRAM_URL = ''
