@@ -87,7 +87,7 @@ class SQLiteManager:
                 INSERT INTO {table_name} (
                     SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, WRITER, KEY, SAVE_TIME 
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(KEY) DO UPDATE SET
                     REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
                     WRITER = excluded.WRITER,  -- KEY 중복 시 WRITER 업데이트
