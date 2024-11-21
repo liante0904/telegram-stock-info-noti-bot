@@ -220,11 +220,11 @@ async def daily_select_data(date_str=None, type=None):
     if date_str is None:
         # date_str가 없으면 현재 날짜 사용
         query_date = datetime.now().strftime('%Y-%m-%d')
-        query_reg_dt = datetime.now().strftime('%Y%m%d')
+        query_reg_dt = (datetime.now() + timedelta(days=2)).strftime('%Y%m%d')  # 2일 추가
     else:
         # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
         query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-        query_reg_dt = date_str
+        query_reg_dt = (datetime.strptime(date_str, '%Y%m%d') + timedelta(days=2)).strftime('%Y%m%d')  # 2일 추가
 
     # 쿼리 타입에 따라 조건을 다르게 설정
     if type == 'send':
@@ -273,6 +273,7 @@ async def daily_select_data(date_str=None, type=None):
     rows = [dict(row) for row in rows]
 
     return rows
+
 
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
