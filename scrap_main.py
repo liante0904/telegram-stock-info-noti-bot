@@ -3,6 +3,7 @@ import os
 import logging
 import time
 import asyncio
+from send_error import send_message_to_shell
 
 from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
@@ -1744,63 +1745,72 @@ async def async_check_main(async_check_functions, total_data):
 
     return totalCnt
 
+
+
 async def main():
-    print('===================scrap_send===============')
-    
-    # 로그 디렉토리 설정
-    setup_log_directory()
+    try:
+        print('===================scrap_send===============')
+        
+        # 로그 디렉토리 설정
+        setup_log_directory()
 
-    # 동기 함수 리스트
-    sync_check_functions = [
-        LS_checkNewArticle,
-        ShinHanInvest_checkNewArticle,
-        Samsung_checkNewArticle,
-        Sangsanginib_checkNewArticle,
-        Shinyoung_checkNewArticle,
-        Miraeasset_checkNewArticle,
-        Hmsec_checkNewArticle,
-        # DS_checkNewArticle,
-        Koreainvestment_selenium_checkNewArticle,
-        DAOL_checkNewArticle,
-        TOSSinvest_checkNewArticle,
-        Leading_checkNewArticle,
-    ]
+        # 동기 함수 리스트
+        sync_check_functions = [
+            LS_checkNewArticle,
+            ShinHanInvest_checkNewArticle,
+            Samsung_checkNewArticle,
+            Sangsanginib_checkNewArticle,
+            Shinyoung_checkNewArticle,
+            Miraeasset_checkNewArticle,
+            Hmsec_checkNewArticle,
+            # DS_checkNewArticle,
+            Koreainvestment_selenium_checkNewArticle,
+            DAOL_checkNewArticle,
+            TOSSinvest_checkNewArticle,
+            Leading_checkNewArticle,
+        ]
 
-    # 비동기 함수 리스트
-    async_check_functions = [
-        NHQV_checkNewArticle,
-        HANA_checkNewArticle,
-        KB_checkNewArticle,
-        Kiwoom_checkNewArticle,
-        eugene_checkNewArticle,
-        Daeshin_checkNewArticle,
-        iMfnsec_checkNewArticle,
-        DBfi_checkNewArticle,
-        MERITZ_checkNewArticle
-    ]
+        # 비동기 함수 리스트
+        async_check_functions = [
+            NHQV_checkNewArticle,
+            HANA_checkNewArticle,
+            KB_checkNewArticle,
+            Kiwoom_checkNewArticle,
+            eugene_checkNewArticle,
+            Daeshin_checkNewArticle,
+            iMfnsec_checkNewArticle,
+            DBfi_checkNewArticle,
+            MERITZ_checkNewArticle
+        ]
 
-    total_data = []  # 전체 데이터를 저장할 리스트
-    totalCnt = 0
-    # 동기 함수 실행
-    totalCnt = sync_check_main(sync_check_functions, total_data)
+        total_data = []  # 전체 데이터를 저장할 리스트
+        totalCnt = 0
+        
+        # 동기 함수 실행
+        totalCnt = sync_check_main(sync_check_functions, total_data)
 
-    # 비동기 함수 실행
-    totalCnt += await async_check_main(async_check_functions, total_data)
+        # 비동기 함수 실행
+        totalCnt += await async_check_main(async_check_functions, total_data)
 
-    print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
+        print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
-    if total_data:
-        db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
-        print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
-        print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했습니다.")
-        if inserted_count:
-            # 추가 비동기 작업 실행
-            await scrap_af_main.main()
-            await scrap_send_main.main()
-            await scrap_upload_pdf.main()
-    else:
-        print("새로운 게시글 스크랩 실패.")
+        if total_data:
+            db = SQLiteManager()
+            inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+            print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
+            print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
+            
+            if inserted_count or updated_count:
+                # 추가 비동기 작업 실행
+                await scrap_af_main.main()
+                await scrap_send_main.main()
+                await scrap_upload_pdf.main()
+        else:
+            print("새로운 게시글 스크랩 실패.")
+    except Exception as e:
+        # 에러 메시지 로깅 및 send_message_to_shell 호출
+        logging.error("An error occurred in the main process", exc_info=True)
+        send_message_to_shell(f"Error in main: {str(e)}")
 
 if __name__ == "__main__":
     asyncio.run(main())
