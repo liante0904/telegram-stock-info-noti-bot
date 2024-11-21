@@ -90,10 +90,18 @@ class SQLiteManager:
                     DOWNLOAD_URL, TELEGRAM_URL, WRITER, KEY, SAVE_TIME 
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(KEY) DO UPDATE SET
-                    REG_DT = excluded.REG_DT,  -- KEY 중복 시 REG_DT 업데이트
-                    WRITER = excluded.WRITER,  -- KEY 중복 시 WRITER 업데이트
-                    DOWNLOAD_URL = excluded.DOWNLOAD_URL,  -- KEY 중복 시 DOWNLOAD_URL 업데이트
-                    TELEGRAM_URL = excluded.TELEGRAM_URL  -- KEY 중복 시 TELEGRAM_URL 업데이트
+                    REG_DT = excluded.REG_DT,  -- 항상 갱신
+                    WRITER = excluded.WRITER,  -- 항상 갱신
+                    DOWNLOAD_URL = CASE 
+                        WHEN excluded.DOWNLOAD_URL IS NOT NULL AND excluded.DOWNLOAD_URL != '' 
+                        THEN excluded.DOWNLOAD_URL 
+                        ELSE DOWNLOAD_URL -- 기존 값을 유지
+                    END,
+                    TELEGRAM_URL = CASE 
+                        WHEN excluded.TELEGRAM_URL IS NOT NULL AND excluded.TELEGRAM_URL != '' 
+                        THEN excluded.TELEGRAM_URL 
+                        ELSE TELEGRAM_URL -- 기존 값을 유지
+                    END
             ''', (
                 entry["SEC_FIRM_ORDER"],
                 entry["ARTICLE_BOARD_ORDER"],
@@ -123,6 +131,7 @@ class SQLiteManager:
         
         self.close_connection()  # 데이터베이스 연결 닫기
         return inserted_count, updated_count
+
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """
