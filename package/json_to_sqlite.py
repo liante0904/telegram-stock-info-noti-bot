@@ -78,7 +78,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     for table in tables:
         query_parts.append(f"""
-            SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, DOWNLOAD_URL SAVE_TIME, SEND_USER
+            SELECT FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, DOWNLOAD_URL SAVE_TIME, SEND_USER
             FROM {table}
             WHERE ARTICLE_TITLE LIKE '%{keyword}%' 
               AND DATE(SAVE_TIME) = '{date}'
