@@ -120,7 +120,7 @@ def format_message_sql(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER, TELEGRAM_URL = data
+        FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME, SEND_USER = data
 
         sendMessageText = ""
         
