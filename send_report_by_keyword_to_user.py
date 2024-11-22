@@ -83,7 +83,7 @@ async def main():
             message = ''
             # # 전송할 메시지 생성 및 발송
             if r:
-                message = f"=====알림 키워드 : {entry['keyword']}=====\n"
+                message = f"=====알림 키워드 : {entry['keyword']}====="
                 message += format_message_sql(r)
                 print('여기==>', message)  # 메시지 발송 전에 출력 (디버깅 용도)
 
