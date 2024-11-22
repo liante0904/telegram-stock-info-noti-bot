@@ -72,18 +72,37 @@ def fetch_data(date=None, keyword=None, user_id=None):
     if keyword is None:
         raise ValueError("keyword 파라미터는 필수입니다.")
     
-    # 조회할 테이블 목록
-    tables = ['data_main_daily_send', 'hankyungconsen_research', 'naver_research']
+    # 조회할 테이블 목록과 TELEGRAM_URL 존재 여부
+    tables = [
+        {'name': 'data_main_daily_send', 'use_telegram_url': True},
+        {'name': 'hankyungconsen_research', 'use_telegram_url': False},
+        {'name': 'naver_research', 'use_telegram_url': False}
+    ]
     query_parts = []
 
     for table in tables:
-        query_parts.append(f"""
-            SELECT FIRM_NM, ARTICLE_TITLE, ATTACH_URL AS ARTICLE_URL, DOWNLOAD_URL SAVE_TIME, SEND_USER
-            FROM {table}
-            WHERE ARTICLE_TITLE LIKE '%{keyword}%' 
-              AND DATE(SAVE_TIME) = '{date}'
-              AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
-        """)
+        if table['use_telegram_url']:
+            # TELEGRAM_URL이 있는 테이블
+            query_parts.append(f"""
+                SELECT FIRM_NM, ARTICLE_TITLE, 
+                    COALESCE(TELEGRAM_URL, DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
+                    SAVE_TIME, SEND_USER
+                FROM {table['name']}
+                WHERE ARTICLE_TITLE LIKE '%{keyword}%'
+                AND DATE(SAVE_TIME) = '{date}'
+                AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
+            """)
+        else:
+            # TELEGRAM_URL이 없는 테이블
+            query_parts.append(f"""
+                SELECT FIRM_NM, ARTICLE_TITLE, 
+                    COALESCE(DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
+                    SAVE_TIME, SEND_USER
+                FROM {table['name']}
+                WHERE ARTICLE_TITLE LIKE '%{keyword}%'
+                AND DATE(SAVE_TIME) = '{date}'
+                AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
+            """)
 
     # 전체 쿼리 조합
     final_query = " UNION ".join(query_parts) + " ORDER BY SAVE_TIME ASC, FIRM_NM ASC"
@@ -92,6 +111,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
     print("Generated SQL Query:")
     print(final_query)
 
+    # 쿼리 실행
     cursor.execute(final_query)
     results = cursor.fetchall()
 
@@ -102,6 +122,8 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     conn.close()
     return results
+
+
 
 def update_data(date=None, keyword=None, user_ids=None):
     """특정 키워드와 날짜를 기준으로 여러 테이블의 데이터를 업데이트하며, 파라미터가 포함된 실제 쿼리를 출력합니다.
