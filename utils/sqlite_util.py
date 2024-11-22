@@ -120,7 +120,7 @@ def format_message_sql(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER = data
+        FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER, TELEGRAM_URL = data
 
         sendMessageText = ""
         
@@ -134,7 +134,7 @@ def format_message_sql(data_list):
         # 게시글 제목(굵게)
         sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
         # 원문 링크
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + TELEGRAM_URL + ")" + "\n"
 
         # SEND_USER 값을 표시하고 싶다면 여기에 추가
         # sendMessageText += "발송 사용자: " + SEND_USER + "\n"
