@@ -82,23 +82,22 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     for table in tables:
         if table['use_telegram_url']:
+            # TELEGRAM_URL이 있는 테이블
             query_parts.append(f"""
                 SELECT FIRM_NM, ARTICLE_TITLE, 
-                    CASE 
-                        WHEN TELEGRAM_URL IS NOT NULL THEN TELEGRAM_URL 
-                        ELSE ARTICLE_URL 
-                    END AS ARTICLE_URL, 
-                    DOWNLOAD_URL, SAVE_TIME, SEND_USER
+                    COALESCE(TELEGRAM_URL, DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
+                    SAVE_TIME, SEND_USER
                 FROM {table['name']}
                 WHERE ARTICLE_TITLE LIKE '%{keyword}%'
                 AND DATE(SAVE_TIME) = '{date}'
                 AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
             """)
         else:
+            # TELEGRAM_URL이 없는 테이블
             query_parts.append(f"""
                 SELECT FIRM_NM, ARTICLE_TITLE, 
-                    ARTICLE_URL AS ARTICLE_URL, 
-                    DOWNLOAD_URL, SAVE_TIME, SEND_USER
+                    COALESCE(DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
+                    SAVE_TIME, SEND_USER
                 FROM {table['name']}
                 WHERE ARTICLE_TITLE LIKE '%{keyword}%'
                 AND DATE(SAVE_TIME) = '{date}'
@@ -112,6 +111,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
     print("Generated SQL Query:")
     print(final_query)
 
+    # 쿼리 실행
     cursor.execute(final_query)
     results = cursor.fetchall()
 
@@ -122,6 +122,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
 
     conn.close()
     return results
+
 
 
 def update_data(date=None, keyword=None, user_ids=None):
