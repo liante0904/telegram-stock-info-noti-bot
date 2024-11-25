@@ -20,6 +20,7 @@ from modules.Shinyoung_7 import Shinyoung_checkNewArticle
 from modules.Miraeasset_8 import Miraeasset_checkNewArticle
 from modules.Hmsec_9 import Hmsec_checkNewArticle
 from modules.Kiwoom_10 import Kiwoom_checkNewArticle
+from modules.DS_11 import DS_checkNewArticle
 from modules.eugenefn_12 import eugene_checkNewArticle
 from modules.Koreainvestment_13 import Koreainvestment_selenium_checkNewArticle
 from modules.DAOL_14 import DAOL_checkNewArticle
@@ -104,8 +105,6 @@ async def async_check_main(async_check_functions, total_data):
 
     return totalCnt
 
-
-
 async def main():
     try:
         print('===================scrap_send===============')
@@ -120,9 +119,9 @@ async def main():
             Samsung_checkNewArticle,
             Sangsanginib_checkNewArticle,
             Shinyoung_checkNewArticle,
+            #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
             Hmsec_checkNewArticle,
-            # DS_checkNewArticle,
             Koreainvestment_selenium_checkNewArticle,
             DAOL_checkNewArticle,
             TOSSinvest_checkNewArticle,
@@ -144,21 +143,44 @@ async def main():
 
         total_data = []  # 전체 데이터를 저장할 리스트
         totalCnt = 0
-        
+
         # 동기 함수 실행
-        totalCnt = sync_check_main(sync_check_functions, total_data)
+        print("Running synchronous functions...")
+        for func in sync_check_functions:
+            try:
+                print(f"Running {func.__name__}")
+                data = func()  # 동기 함수 호출
+                if data:
+                    total_data.extend(data)  # 데이터 병합
+                    totalCnt += len(data)  # 카운트 증가
+            except Exception as e:
+                # 함수별 에러 처리
+                logging.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
+                send_message_to_shell(f"Error in sync function {func.__name__}: {str(e)}")
 
         # 비동기 함수 실행
-        totalCnt += await async_check_main(async_check_functions, total_data)
+        print("Running asynchronous functions...")
+        for func in async_check_functions:
+            try:
+                print(f"Running {func.__name__}")
+                data = await func()  # 비동기 함수 호출
+                if data:
+                    total_data.extend(data)  # 데이터 병합
+                    totalCnt += len(data)  # 카운트 증가
+            except Exception as e:
+                # 함수별 에러 처리
+                logging.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
+                send_message_to_shell(f"Error in async function {func.__name__}: {str(e)}")
 
         print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
         if total_data:
             db = SQLiteManager()
-            inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+            # 모든 데이터를 한 번에 DB에 삽입
+            inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
             print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
             print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
-            
+
             if inserted_count or updated_count:
                 # 추가 비동기 작업 실행
                 await scrap_af_main.main()
@@ -167,7 +189,7 @@ async def main():
         else:
             print("새로운 게시글 스크랩 실패.")
     except Exception as e:
-        # 에러 메시지 로깅 및 send_message_to_shell 호출
+        # 전체 프로세스 에러 처리
         logging.error("An error occurred in the main process", exc_info=True)
         send_message_to_shell(f"Error in main: {str(e)}")
 
