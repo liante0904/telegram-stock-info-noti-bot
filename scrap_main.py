@@ -42,6 +42,7 @@ json_data_list = []
 FIRST_ARTICLE_INDEX = 0
 #################### global 변수 정리 끝###################################
 
+   
 # 로그 디렉토리 설정 함수
 def setup_log_directory():
     HOME_PATH = os.path.expanduser("~")
