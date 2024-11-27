@@ -103,7 +103,7 @@ async def main(date_str=None):
     print('===================scrap_send_main===============')
     # 발송될 내역
     await daily_report(report_type='send', date_str=date_str)
-    await daily_report(report_type='download', date_str=date_str)
+    # await daily_report(report_type='download', date_str=date_str)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily report script.')
