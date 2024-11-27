@@ -94,7 +94,8 @@ async def daily_report(report_type, date_str=None):
                     # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
                     r = await daily_update_data(date_str=date_str, fetched_rows=row, type='download')
                 else:
-                    print(f"파일 다운로드 실패: {row['file_name']}")  # 실패한 파일 로그 출력
+                    print(f"파일 다운로드 실패: {row.get('file_name', '')}")  # 실패한 파일 로그 출력
+                    continue
 
 
 async def main(date_str=None):
@@ -102,7 +103,7 @@ async def main(date_str=None):
     print('===================scrap_send_main===============')
     # 발송될 내역
     await daily_report(report_type='send', date_str=date_str)
-    await daily_report(report_type='download', date_str=date_str)
+    # await daily_report(report_type='download', date_str=date_str)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily report script.')
