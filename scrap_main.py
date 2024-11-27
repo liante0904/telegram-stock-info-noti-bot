@@ -214,7 +214,7 @@ async def main():
                 # 추가 비동기 작업 실행
                 await scrap_af_main.main()
                 await scrap_send_main.main()
-                await scrap_upload_pdf.main()
+                # await scrap_upload_pdf.main()
         else:
             print("새로운 게시글 스크랩 실패.")
     except Exception as e:
