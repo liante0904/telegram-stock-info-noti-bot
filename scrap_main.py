@@ -105,6 +105,24 @@ async def async_check_main(async_check_functions, total_data):
 
     return totalCnt
 
+async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
+    """메모리에서 데이터를 보관한 채로 일정 시간 뒤 DB 삽입 재시도"""
+    for attempt in range(retries):
+        try:
+            inserted_count, updated_count = db.insert_json_data_list(data, table_name)
+            print(f"DB 재삽입 성공: {inserted_count}개의 새로운 게시글, {updated_count}개의 게시글 업데이트.")
+            return True  # 성공 시 함수 종료
+        except Exception as e:
+            print(f"DB 삽입 실패 (시도 {attempt + 1}/{retries}): {str(e)}")
+            logging.error(f"DB Insert retry failed (attempt {attempt + 1}/{retries}): {str(e)}", exc_info=True)
+            if attempt < retries - 1:
+                print(f"{delay}초 후 다시 시도합니다...")
+                await asyncio.sleep(delay)  # 재시도 전 대기
+
+    # 모든 시도 실패 시
+    print("모든 DB 삽입 시도가 실패했습니다.")
+    return False
+
 async def main():
     try:
         print('===================scrap_send===============')
@@ -154,7 +172,6 @@ async def main():
                     total_data.extend(data)  # 데이터 병합
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
-                # 함수별 에러 처리
                 logging.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
                 send_message_to_shell(f"Error in sync function {func.__name__}: {str(e)}")
 
@@ -168,7 +185,6 @@ async def main():
                     total_data.extend(data)  # 데이터 병합
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
-                # 함수별 에러 처리
                 logging.error(f"Error in {func.__name__}: {str(e)}", exc_info=True)
                 send_message_to_shell(f"Error in async function {func.__name__}: {str(e)}")
 
@@ -176,10 +192,23 @@ async def main():
 
         if total_data:
             db = SQLiteManager()
-            # 모든 데이터를 한 번에 DB에 삽입
-            inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
-            print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
-            print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
+
+            # 데이터 삽입 시도
+            try:
+                inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
+                print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
+                print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
+            except Exception as e:
+                print(f"DB 삽입 중 오류 발생: {str(e)}")
+                logging.error(f"DB Insert Error: {str(e)}", exc_info=True)
+
+                # 메모리에서 데이터를 보관하며 재시도
+                print("DB 삽입 실패, 일정 시간 후 재시도합니다...")
+                success = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
+                if success:
+                    print("DB 재삽입 성공.")
+                else:
+                    print("DB 재삽입 실패. 데이터를 확인하세요.")
 
             if inserted_count or updated_count:
                 # 추가 비동기 작업 실행
