@@ -142,34 +142,54 @@ def LS_detail(articles, firm_info):
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
+
+        # 각 tr에서 데이터 추출
         trs = soup.select('tr')
-        article['ARTICLE_TITLE'] = trs[0].select_one('td').get_text().strip()
-        try:
-            img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-            alt_value = img.get("alt") if img else None
-            if alt_value:
-                base_value = alt_value.split(".")[0]
-                parts = base_value.split("_")
+        for tr in trs:
+            th = tr.select_one('th')
+            td = tr.select_one('td')
 
-                URL_PARAM = article["REG_DT"]
-                url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
-            else:
-                URL_PARAM = article["REG_DT"]
-                URL_PARAM_0 = 'B' + URL_PARAM[:6]
+            if th and td:
+                th_text = th.get_text(strip=True)
+                td_text = td.get_text(strip=True)
 
-                ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
-                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+                if th_text == '제목':
+                    article['ARTICLE_TITLE'] = td_text
+                elif th_text == '작성일':
+                    pass # 이미 메인 fetch에서 가져옴
+                    # article['REG_DT'] = td_text
+                elif th_text == '첨부파일':
+                    attach_a = tr.select_one('td.attach a')
+                    if attach_a:
+                        article['ATTACH_FILE_NAME'] = attach_a.get_text(strip=True)
+                        
+                    try:
+                        img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+                        alt_value = img.get("alt") if img else None
+                        if alt_value:
+                            print(alt_value)
+                            base_value = alt_value.split(".")[0]
+                            parts = base_value.split("_")
 
-                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+                            URL_PARAM = article["REG_DT"]
+                            url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
+                        else:
+                            URL_PARAM = article["REG_DT"]
+                            URL_PARAM_0 = 'B' + URL_PARAM[:6]
 
-            article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
-            article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
-            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+                            ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
+                            ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+                            URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
 
-        except Exception as e:
-            print(f"Error processing article: {e}")
+                            ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                            url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+
+                        article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
+                        article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                        article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+
+                    except Exception as e:
+                        print(f"Error processing article: {e}")
 
     return articles
 
