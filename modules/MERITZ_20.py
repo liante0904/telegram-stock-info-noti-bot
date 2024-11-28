@@ -61,11 +61,14 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                 LIST_ARTICLE_URL = "https://home.imeritz.com" + link_tag['href']
                 
                 # 작성일시
-                REG_DT = list_item.select_one(f'td:nth-child({header_map["작성일시"] + 1})').get_text().strip()
-                REG_DT = re.sub(r"[-./]", "", REG_DT)
+                # '작성일' 또는 '작성일시'를 처리
+                date_column = "작성일" if "작성일" in header_map else "작성일시"
+                REG_DT = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
+                REG_DT = re.sub(r"[-./]", "", REG_DT)  # 날짜 포맷 정리
                 
                 # 작성자
-                WRITER = list_item.select_one(f'td:nth-child({header_map["작성자명"] + 1})').get_text().strip()
+                date_column = "작성자" if "작성자" in header_map else "작성자명"
+                WRITER = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
                 
                 # 카테고리 (선택적으로 사용 가능)
                 CATEGORY = list_item.select_one(f'td:nth-child({header_map["분류"] + 1})').get_text().strip() if "분류" in header_map else ""
