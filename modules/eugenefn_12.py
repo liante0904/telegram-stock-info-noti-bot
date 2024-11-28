@@ -72,12 +72,12 @@ async def eugene_checkNewArticle():
         referer_url = base_url.replace('Add.do', '.do')
         scraper = AsyncWebScraper(target_url=base_url, headers={**HEADERS_TEMPLATE, "Referer": referer_url})
         for ARTICLE_BOARD_ORDER, page_no in enumerate(range(1, 6)):
-            print(f"Fetching from URI: {base_url} (Page {page_no})")
+            # print(f"Fetching from URI: {base_url} (Page {page_no})")
             payload = f"pageNo={page_no}&add=Y"
             response_soup = await scraper.Post(data=payload)
             
             if response_soup:
-                print(f"Status: Success for {base_url} (Page {page_no})")
+                # print(f"Status: Success for {base_url} (Page {page_no})")
                 html_text = str(response_soup)
                 articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
                 all_articles.extend(articles)
