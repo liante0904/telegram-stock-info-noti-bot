@@ -36,50 +36,39 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
 
         # HTML parse
         soup = BeautifulSoup(html_content, "html.parser")
+        soupListHead = soup.select('table > thead > tr > th')  # 메리츠증권 리스트 헤더
         soupList = soup.select('table > tbody > tr')  # 메리츠증권 리스트 아이템 선택자
         print(f"Page {page}: Found {len(soupList)} articles")  # Progress 출력
 
         if not soupList:  # 더 이상 데이터가 없으면 종료
             break
 
+        for list_head in soupListHead:
+            print(list_head.get_text())
+            
+
+        # 헤더 매핑 생성: 헤더 이름 -> 열 번호
+        header_map = {th.get_text().strip(): idx for idx, th in enumerate(soupListHead)}
+        print(f"Header Map: {header_map}")
+        
         for list_item in soupList:
             try:
-                # 게시판에 따라 선택자를 유연하게 변경
-                if article_board_order == 1:
-                    # 게시판 1의 경우 다른 구조를 사용
-                    link_tag = list_item.select_one('td:nth-child(2) div > a')
-                elif article_board_order == 2:
-                    # 게시판 2의 경우 다른 구조를 사용
-                    link_tag = list_item.select_one('td > div > a')
-                else:
-                    # 기본 구조
-                    link_tag = list_item.select_one('td:nth-child(2) a')
 
-                if not link_tag:  # 링크 태그가 없을 경우 처리
-                    print(f"Warning: Missing link tag in list item: {list_item}")
-                    continue
+                link_tag = list_item.select_one(f'td:nth-child({header_map["제목"] + 1}) a')
 
-                LIST_ARTICLE_TITLE = link_tag.get_text().strip()
+
+                LIST_ARTICLE_TITLE = link_tag.get_text().strip() if link_tag else "N/A"
                 LIST_ARTICLE_URL = "https://home.imeritz.com" + link_tag['href']
-
-                # 등록일
-                reg_dt_tag = list_item.select_one('td:nth-child(5)')
-                if not reg_dt_tag:
-                    print(f"Warning: Missing REG_DT tag in list item: {list_item}")
-                    continue
-                REG_DT = reg_dt_tag.get_text().strip()
+                
+                # 작성일시
+                REG_DT = list_item.select_one(f'td:nth-child({header_map["작성일시"] + 1})').get_text().strip()
                 REG_DT = re.sub(r"[-./]", "", REG_DT)
-
+                
                 # 작성자
-                writer_tag = list_item.select_one('td:nth-child(6)')
-                if not writer_tag:
-                    print(f"Warning: Missing WRITER tag in list item: {list_item}")
-                    continue
-                WRITER = writer_tag.get_text().strip()
-
+                WRITER = list_item.select_one(f'td:nth-child({header_map["작성자명"] + 1})').get_text().strip()
+                
                 # 카테고리 (선택적으로 사용 가능)
-                category_tag = list_item.select_one('td:nth-child(4)')
-                CATEGORY = category_tag.get_text().strip() if category_tag else ""
+                CATEGORY = list_item.select_one(f'td:nth-child({header_map["분류"] + 1})').get_text().strip() if "분류" in header_map else ""
 
                 # LIST_ARTICLE_URL로 접속하여 DOWNLOAD_URL, TELEGRAM_URL 생성
                 try:
