@@ -106,6 +106,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     return json_data_list#, skip_boards
 
 def LS_detail(articles, firm_info):
+    requests.packages.urllib3.disable_warnings()
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
     }
@@ -167,7 +168,6 @@ def LS_detail(articles, firm_info):
                         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
                         alt_value = img.get("alt") if img else None
                         if alt_value:
-                            print(alt_value)
                             base_value = alt_value.split(".")[0]
                             parts = base_value.split("_")
 
