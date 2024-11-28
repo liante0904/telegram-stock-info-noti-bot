@@ -166,7 +166,11 @@ def LS_detail(articles, firm_info):
                         
                     try:
                         img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+                        print('******본문 이미지 추출******')
+                        print(img) # 본문 이미지 추출 
+                        print('******본문 이미지 파일명******')
                         alt_value = img.get("alt") if img else None
+                        print(alt_value) # 본문 이미지 파일명
                         if alt_value:
                             base_value = alt_value.split(".")[0]
                             parts = base_value.split("_")
