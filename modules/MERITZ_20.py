@@ -42,14 +42,9 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
 
         if not soupList:  # 더 이상 데이터가 없으면 종료
             break
-
-        for list_head in soupListHead:
-            print(list_head.get_text())
             
-
         # 헤더 매핑 생성: 헤더 이름 -> 열 번호
         header_map = {th.get_text().strip(): idx for idx, th in enumerate(soupListHead)}
-        print(f"Header Map: {header_map}")
         
         for list_item in soupList:
             try:
@@ -87,7 +82,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                         file_name = file_name.replace(" 파일 다운로드", "").strip()  # 필요 없는 텍스트 제거
                         DOWNLOAD_URL = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
                         TELEGRAM_URL = DOWNLOAD_URL
-                        print(f"Constructed DOWNLOAD_URL: {DOWNLOAD_URL}")
+                        # print(f"Constructed DOWNLOAD_URL: {DOWNLOAD_URL}")
                     else:
                         print("No 'title' attribute found in download tag.")
                         DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL  # 기본 URL로 설정

@@ -66,7 +66,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
             break
 
         target_url = f"{base_url}&curPage={page}"
-        print(f"Fetching: {target_url}")
+        # print(f"Fetching: {target_url}")
 
         try:
             html_content = await fetch(session, target_url)
