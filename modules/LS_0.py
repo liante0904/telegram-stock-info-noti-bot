@@ -169,14 +169,35 @@ def LS_detail(articles, firm_info):
                         print('******본문 이미지 추출******')
                         print(img) # 본문 이미지 추출 
                         print('******본문 이미지 파일명******')
-                        alt_value = img.get("alt") if img else None
-                        print(alt_value) # 본문 이미지 파일명
-                        if alt_value:
-                            base_value = alt_value.split(".")[0]
-                            parts = base_value.split("_")
+                        img_filename = img.get("alt") if img else None
+                        print(img_filename) # 본문 이미지 파일명
+                        if img_filename:
+                            name, extension  = os.path.splitext(img_filename)
 
-                            URL_PARAM = article["REG_DT"]
-                            url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
+                            # 정규표현식으로 '_8자리 숫자' 찾기
+                            match = re.search(r'_(\d{8})$', name)
+
+                            if match:
+                                # 날짜 추출
+                                date_part = match.group(1)
+                                # 날짜를 제외한 나머지 이름 추출
+                                new_name = re.sub(r'_(\d{8})$', '', name)
+                                # 새로운 파일명 생성
+                                new_filename = f"{date_part}_{new_name}.pdf"
+                                url = f"https://msg.ls-sec.co.kr/eum/K_{new_filename}"
+                                print(url)  # 출력: https://msg.ls-sec.co.kr/eum/K_20210618_jh.shin_410.pdf
+                            else:
+                                URL_PARAM = article["REG_DT"]
+                                URL_PARAM_0 = 'B' + URL_PARAM[:6]
+
+                                ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
+                                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+                                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+                                print("파일명에서 _8자리 숫자를 찾을 수 없습니다.")
+                                
                         else:
                             URL_PARAM = article["REG_DT"]
                             URL_PARAM_0 = 'B' + URL_PARAM[:6]
