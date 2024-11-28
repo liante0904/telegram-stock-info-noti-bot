@@ -106,6 +106,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     return json_data_list#, skip_boards
 
 def LS_detail(articles, firm_info):
+    requests.packages.urllib3.disable_warnings()
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
     }
@@ -142,34 +143,78 @@ def LS_detail(articles, firm_info):
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
+
+        # 각 tr에서 데이터 추출
         trs = soup.select('tr')
-        article['ARTICLE_TITLE'] = trs[0].select_one('td').get_text().strip()
-        try:
-            img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-            alt_value = img.get("alt") if img else None
-            if alt_value:
-                base_value = alt_value.split(".")[0]
-                parts = base_value.split("_")
+        for tr in trs:
+            th = tr.select_one('th')
+            td = tr.select_one('td')
 
-                URL_PARAM = article["REG_DT"]
-                url = f"https://msg.ls-sec.co.kr/eum/K_{URL_PARAM}_{parts[0]}_{parts[1]}.pdf"
-            else:
-                URL_PARAM = article["REG_DT"]
-                URL_PARAM_0 = 'B' + URL_PARAM[:6]
+            if th and td:
+                th_text = th.get_text(strip=True)
+                td_text = td.get_text(strip=True)
 
-                ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
-                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+                if th_text == '제목':
+                    article['ARTICLE_TITLE'] = td_text
+                elif th_text == '작성일':
+                    pass # 이미 메인 fetch에서 가져옴
+                    # article['REG_DT'] = td_text
+                elif th_text == '첨부파일':
+                    attach_a = tr.select_one('td.attach a')
+                    if attach_a:
+                        article['ATTACH_FILE_NAME'] = attach_a.get_text(strip=True)
+                        
+                    try:
+                        img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
+                        print('******본문 이미지 추출******')
+                        print(img) # 본문 이미지 추출 
+                        print('******본문 이미지 파일명******')
+                        img_filename = img.get("alt") if img else None
+                        print(img_filename) # 본문 이미지 파일명
+                        if img_filename:
+                            name, extension  = os.path.splitext(img_filename)
 
-                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+                            # 정규표현식으로 '_8자리 숫자' 찾기
+                            match = re.search(r'_(\d{8})$', name)
 
-            article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
-            article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
-            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+                            if match:
+                                # 날짜 추출
+                                date_part = match.group(1)
+                                # 날짜를 제외한 나머지 이름 추출
+                                new_name = re.sub(r'_(\d{8})$', '', name)
+                                # 새로운 파일명 생성
+                                new_filename = f"{date_part}_{new_name}.pdf"
+                                url = f"https://msg.ls-sec.co.kr/eum/K_{new_filename}"
+                                print(url)  # 출력: https://msg.ls-sec.co.kr/eum/K_20210618_jh.shin_410.pdf
+                            else:
+                                URL_PARAM = article["REG_DT"]
+                                URL_PARAM_0 = 'B' + URL_PARAM[:6]
 
-        except Exception as e:
-            print(f"Error processing article: {e}")
+                                ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
+                                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+                                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+                                print("파일명에서 _8자리 숫자를 찾을 수 없습니다.")
+                                
+                        else:
+                            URL_PARAM = article["REG_DT"]
+                            URL_PARAM_0 = 'B' + URL_PARAM[:6]
+
+                            ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
+                            ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
+                            URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                            ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                            url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+
+                        article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
+                        article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                        article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+
+                    except Exception as e:
+                        print(f"Error processing article: {e}")
 
     return articles
 
