@@ -77,7 +77,7 @@ def Miraeasset_checkNewArticle():
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
                 DOWNLOAD_URL = LIST_ARTICLE_URL  # attachment_element가 있을 때만 갱신
 
-            REG_DT = list.select_one("td:nth-child(1)").get_text()
+            REG_DT = list.select_one("td:nth-child(1)").get_text(strip=True)
             REG_DT = re.sub(r"[-./]", "", REG_DT)
             json_data_list.append({
                 "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
