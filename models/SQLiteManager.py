@@ -160,7 +160,7 @@ class SQLiteManager:
             1=1
             AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
-            AND TELEGRAM_URL = ''
+            AND TELEGRAM_URL is null
             
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
