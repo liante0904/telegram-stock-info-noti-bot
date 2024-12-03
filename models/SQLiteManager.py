@@ -156,7 +156,8 @@ class SQLiteManager:
         FROM 
             data_main_daily_send 
         WHERE 
-            REG_DT = '{query_date}'
+            --REG_DT = '{query_date}'
+            1=1
             AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
             AND TELEGRAM_URL = ''
