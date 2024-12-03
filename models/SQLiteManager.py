@@ -156,14 +156,14 @@ class SQLiteManager:
         FROM 
             data_main_daily_send 
         WHERE 
-            --REG_DT = '{query_date}'
-            1=1
+            REG_DT BETWEEN DATE_FORMAT(DATE_ADD(STR_TO_DATE('{query_date}', '%Y%m%d'), INTERVAL -3 DAY), '%Y%m%d')
+                    AND DATE_FORMAT(DATE_ADD(STR_TO_DATE('{query_date}', '%Y%m%d'), INTERVAL 2 DAY), '%Y%m%d')
             AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
-            AND TELEGRAM_URL is null
-            
+            AND TELEGRAM_URL IS NULL
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
+
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
