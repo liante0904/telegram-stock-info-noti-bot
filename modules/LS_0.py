@@ -117,107 +117,135 @@ def LS_detail(articles, firm_info):
     elif isinstance(articles, str):
         print("Error: Invalid article format. Expected a dictionary or a list of dictionaries.")
         return []  # 문자열이 주어진 경우 빈 리스트 반환
-    
+
     for article in articles:
-        TARGET_URL = article["KEY"]#.replace('&category_no=&left_menu_no=&front_menu_no=&sub_menu_no=&parent_menu_no=&currPage=1', '')
+        TARGET_URL = article["KEY"]
         time.sleep(0.1)
 
         # '.pdf'가 URL에 포함된 경우 해당 URL을 그대로 사용하고 다음 레코드로 진행
-        if '.pdf' in TARGET_URL:
-            article['ARTICLE_URL'] = TARGET_URL
-            article['TELEGRAM_URL'] = TARGET_URL
-            article['DOWNLOAD_URL'] = TARGET_URL
+        if ".pdf" in TARGET_URL:
+            article["ARTICLE_URL"] = TARGET_URL
+            article["TELEGRAM_URL"] = TARGET_URL
+            article["DOWNLOAD_URL"] = TARGET_URL
             continue
 
         # 요청 보내기
         try:
             response = requests.get(TARGET_URL, headers=headers, verify=False)
-            # 상태 코드가 200이 아닌 경우 로그 출력 후 다음 레코드로 이동
             if response.status_code != 200:
                 print(f"Skipping URL due to status code {response.status_code}: {TARGET_URL}")
-                continue  # 다음 레코드로 넘어감
+                continue
         except requests.RequestException as e:
             print(f"Error requesting URL {TARGET_URL}: {e}")
-            continue  # 요청 실패 시 다음 레코드로 이동
+            continue
 
         # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
-
         # 각 tr에서 데이터 추출
-        trs = soup.select('tr')
+        trs = soup.select("tr")
         for tr in trs:
-            th = tr.select_one('th')
-            td = tr.select_one('td')
+            th = tr.select_one("th")
+            td = tr.select_one("td")
 
             if th and td:
                 th_text = th.get_text(strip=True)
                 td_text = td.get_text(strip=True)
 
-                if th_text == '제목':
-                    article['ARTICLE_TITLE'] = td_text
-                elif th_text == '작성일':
-                    pass # 이미 메인 fetch에서 가져옴
-                    # article['REG_DT'] = td_text
-                elif th_text == '첨부파일':
-                    attach_a = tr.select_one('td.attach a')
+                if th_text == "제목":
+                    article["ARTICLE_TITLE"] = td_text
+                elif th_text == "첨부파일":
+                    attach_a = tr.select_one("td.attach a")
                     if attach_a:
-                        article['ATTACH_FILE_NAME'] = attach_a.get_text(strip=True)
-                        
+                        article["ATTACH_FILE_NAME"] = attach_a.get_text(strip=True)
+
                     try:
-                        img = soup.select_one('#contents > div.tbViewCon > div > html > body > p > img')
-                        print('******본문 이미지 추출******')
-                        print(img) # 본문 이미지 추출 
-                        print('******본문 이미지 파일명******')
+                        img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img")
+                        print("******본문 이미지 추출******")
+                        print(img)  # 본문 이미지 추출
+                        print("******본문 이미지 파일명******")
                         img_filename = img.get("alt") if img else None
-                        print(img_filename) # 본문 이미지 파일명
+                        print(img_filename)  # 본문 이미지 파일명
+
                         if img_filename:
-                            name, extension  = os.path.splitext(img_filename)
+                            name, extension = os.path.splitext(img_filename)
 
                             # 정규표현식으로 '_8자리 숫자' 찾기
-                            match = re.search(r'_(\d{8})$', name)
+                            match = re.search(r"_(\d{8})$", name)
 
                             if match:
                                 # 날짜 추출
                                 date_part = match.group(1)
                                 # 날짜를 제외한 나머지 이름 추출
-                                new_name = re.sub(r'_(\d{8})$', '', name)
+                                new_name = re.sub(r"_(\d{8})$", "", name)
                                 # 새로운 파일명 생성
                                 new_filename = f"{date_part}_{new_name}.pdf"
-                                url = f"https://msg.ls-sec.co.kr/eum/K_{new_filename}"
-                                print(url)  # 출력: https://msg.ls-sec.co.kr/eum/K_20210618_jh.shin_410.pdf
+
+                                # URL 생성 및 상태코드 확인
+                                url = get_valid_url(new_filename, date_part, article, headers)
+                                print(url)  # 최종 URL 출력
+
+                                # URL 저장
+                                article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                             else:
-                                URL_PARAM = article["REG_DT"]
-                                URL_PARAM_0 = 'B' + URL_PARAM[:6]
-
-                                ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
-                                ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
-                                URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-
-                                ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                                url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
-                                print("파일명에서 _8자리 숫자를 찾을 수 없습니다.")
-                                
-                        else:
-                            URL_PARAM = article["REG_DT"]
-                            URL_PARAM_0 = 'B' + URL_PARAM[:6]
-
-                            ATTACH_FILE_NAME = article['ATTACH_FILE_NAME']
-                            ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%') 
-                            URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-
-                            ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                            url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
-
-                        article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
-                        article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
-                        article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+                                # 정규표현식 매칭 실패 시 else 로직 실행
+                                url = create_fallback_url(article)
+                                article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
 
                     except Exception as e:
                         print(f"Error processing article: {e}")
 
     return articles
 
+
+def get_valid_url(new_filename, date_part, article, headers):
+    """
+    새로운 URL을 시도하며 상태코드 200인 URL을 찾습니다.
+    """
+    base_url = "https://msg.ls-sec.co.kr/eum/K_{filename}"
+    try:
+        date_obj = datetime.strptime(date_part, "%Y%m%d")
+    except ValueError:
+        print("Invalid date format in date_part:", date_part)
+        return create_fallback_url(article)
+
+    # 날짜 기반으로 앞뒤 2일 추가 탐색
+    date_range = [date_obj + timedelta(days=i) for i in range(-2, 3)]
+    for test_date in date_range:
+        test_date_str = test_date.strftime("%Y%m%d")
+        test_filename = new_filename.replace(date_part, test_date_str)
+        test_url = base_url.format(filename=test_filename)
+
+        try:
+            response = requests.get(test_url, headers=headers, verify=False)
+            if response.status_code == 200:
+                print(f"Valid URL found: {test_url}")
+                return test_url
+            else:
+                print(f"URL {test_url} returned status code {response.status_code}")
+        except requests.RequestException as e:
+            print(f"Error accessing {test_url}: {e}")
+
+    # 5일 동안 유효한 URL을 찾지 못한 경우
+    return create_fallback_url(article)
+
+
+def create_fallback_url(article):
+    """
+    5일 동안 유효한 URL을 찾지 못한 경우, fallback 로직으로 URL 생성.
+    """
+    URL_PARAM = article["REG_DT"]
+    URL_PARAM_0 = "B" + URL_PARAM[:6]
+    ATTACH_FILE_NAME = article["ATTACH_FILE_NAME"]
+    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(" ", "%20").replace("[", "%5B").replace("]", "%5D").replace("%25", "%")
+    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+    ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}"
+    print("Fallback URL created:", ATTACH_URL)
+    return ATTACH_URL
 
 if __name__ == "__main__":
     page = 1
