@@ -56,6 +56,7 @@ async def DBfi_checkNewArticle():
                             "FIRM_NM": firm_info.get_firm_name(),
                             "REG_DT": item['rdt'][:8],
                             "ARTICLE_URL": "",
+                            "TELEGRAM_URL": "",
                             "ARTICLE_TITLE": item['tit'],
                             "WRITER": item['wnm'],
                             "CATEGORY": item['div'],
