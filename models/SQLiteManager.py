@@ -154,15 +154,17 @@ class SQLiteManager:
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
         FROM 
-            data_main_daily_send 
+            data_main_daily_send
         WHERE 
-            REG_DT = '{query_date}'
+            REG_DT BETWEEN strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '-3 days'))
+                    AND strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '+2 days'))
             AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
-            AND TELEGRAM_URL = ''
-            
+            AND TELEGRAM_URL  = ''
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
+
+
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
