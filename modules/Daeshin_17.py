@@ -93,6 +93,7 @@ async def Daeshin_checkNewArticle():
                     "ARTICLE_URL": article_url,
                     "ATTACH_URL": attach_url,
                     "DOWNLOAD_URL": attach_url,
+                    "TELEGRAM_URL": attach_url,
                     "ARTICLE_TITLE": title,
                     "WRITER": author,
                     "SAVE_TIME": datetime.now().isoformat()
@@ -120,4 +121,18 @@ async def Daeshin_checkNewArticle():
         
         # 모든 태스크 완료 대기
         await asyncio.gather(*tasks)
+        print(json_data_list)
         return json_data_list
+
+
+async def main():
+    articles = await Daeshin_checkNewArticle()
+    # detailed_articles = await fetch_detailed_url(articles)
+    # db = SQLiteManager()
+    # inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    # print(inserted_count)
+    # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
+    print(articles)
+
+if __name__ == "__main__":
+    asyncio.run(main())
