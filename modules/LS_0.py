@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import time
 
 from datetime import datetime, timedelta, date
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
@@ -79,6 +80,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 list = list.select('a')
                 # print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
+                LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL)
                 LIST_ARTICLE_TITLE = list[0].get_text()
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
                 POST_DATE = str_date.strip()
@@ -104,6 +106,33 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     del soup
     gc.collect()
     return json_data_list#, skip_boards
+
+def clean_url(url):
+    # URL 파싱
+    parsed_url = urlparse(url)
+    
+    # 필요한 쿼리 파라미터 추출
+    query_params = parse_qs(parsed_url.query)
+    required_params = {
+        'board_no': query_params.get('board_no', [''])[0],
+        'board_seq': query_params.get('board_seq', [''])[0],
+    }
+    
+    # 새로운 쿼리 문자열 생성
+    new_query = urlencode(required_params)
+    
+    # 새 URL 구성
+    cleaned_url = urlunparse((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        parsed_url.path,
+        '',  # params
+        new_query,  # 새로운 쿼리
+        ''  # fragment
+    ))
+    
+    return cleaned_url
+
 
 def LS_detail(articles, firm_info):
     requests.packages.urllib3.disable_warnings()
