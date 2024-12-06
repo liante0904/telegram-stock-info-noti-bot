@@ -97,13 +97,14 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     "ARTICLE_BOARD_ORDER": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": REG_DT,
+                    "ARTICLE_URL": LIST_ARTICLE_URL,
                     "ATTACH_URL": LIST_ARTICLE_URL,
                     "DOWNLOAD_URL": DOWNLOAD_URL,
                     "TELEGRAM_URL": TELEGRAM_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "WRITER": WRITER,
                     "CATEGORY": CATEGORY,
-                    "KEY:": LIST_ARTICLE_URL,
+                    "KEY:": TELEGRAM_URL,
                     "SAVE_TIME": datetime.now().isoformat()
                 }
                 json_data_list.append(article_data)
