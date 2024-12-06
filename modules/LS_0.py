@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import time
 
 from datetime import datetime, timedelta, date
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
@@ -79,6 +80,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 list = list.select('a')
                 # print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
+                LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL)
                 LIST_ARTICLE_TITLE = list[0].get_text()
                 LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find("]")+1:len(LIST_ARTICLE_TITLE)]
                 POST_DATE = str_date.strip()
@@ -105,31 +107,57 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     gc.collect()
     return json_data_list#, skip_boards
 
+def clean_url(url):
+    # URL 파싱
+    parsed_url = urlparse(url)
+    
+    # 필요한 쿼리 파라미터 추출
+    query_params = parse_qs(parsed_url.query)
+    required_params = {
+        'board_no': query_params.get('board_no', [''])[0],
+        'board_seq': query_params.get('board_seq', [''])[0],
+    }
+    
+    # 새로운 쿼리 문자열 생성
+    new_query = urlencode(required_params)
+    
+    # 새 URL 구성
+    cleaned_url = urlunparse((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        parsed_url.path,
+        '',  # params
+        new_query,  # 새로운 쿼리
+        ''  # fragment
+    ))
+    
+    return cleaned_url
+
+
 def LS_detail(articles, firm_info):
     requests.packages.urllib3.disable_warnings()
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
     }
 
-    # articles가 리스트가 아닐 경우 리스트로 변환하여 단일 항목도 처리 가능하게 함
+    # articles가 리스트가 아닐 경우 리스트로 변환
     if isinstance(articles, dict):
-        articles = [articles]  # 단일 딕셔너리를 리스트로 변환
+        articles = [articles]
     elif isinstance(articles, str):
         print("Error: Invalid article format. Expected a dictionary or a list of dictionaries.")
-        return []  # 문자열이 주어진 경우 빈 리스트 반환
+        return []
 
     for article in articles:
         TARGET_URL = article["KEY"]
         time.sleep(0.1)
 
-        # '.pdf'가 URL에 포함된 경우 해당 URL을 그대로 사용하고 다음 레코드로 진행
+        # '.pdf' 처리
         if ".pdf" in TARGET_URL:
             article["ARTICLE_URL"] = TARGET_URL
             article["TELEGRAM_URL"] = TARGET_URL
             article["DOWNLOAD_URL"] = TARGET_URL
             continue
 
-        # 요청 보내기
         try:
             response = requests.get(TARGET_URL, headers=headers, verify=False)
             if response.status_code != 200:
@@ -139,10 +167,9 @@ def LS_detail(articles, firm_info):
             print(f"Error requesting URL {TARGET_URL}: {e}")
             continue
 
-        # HTML 파싱
         soup = BeautifulSoup(response.content, "html.parser")
 
-        # 각 tr에서 데이터 추출
+        # 'tr' 데이터 추출
         trs = soup.select("tr")
         for tr in trs:
             th = tr.select_one("th")
@@ -160,41 +187,45 @@ def LS_detail(articles, firm_info):
                         article["ATTACH_FILE_NAME"] = attach_a.get_text(strip=True)
 
                     try:
-                        img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img")
-                        print("******본문 이미지 추출******")
-                        print(img)  # 본문 이미지 추출
-                        print("******본문 이미지 파일명******")
-                        img_filename = img.get("alt") if img else None
-                        print(img_filename)  # 본문 이미지 파일명
+                        # img 추출
+                        img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
+                              soup.select_one("#contents > div.tbViewCon > div > p > img")
 
-                        if img_filename:
-                            name, extension = os.path.splitext(img_filename)
+                        if img:
+                            img_filename = img.get("alt")
+                            if img_filename:
+                                name, extension = os.path.splitext(img_filename)
+                                match = re.search(r"_(\d{8})$", name)
 
-                            # 정규표현식으로 '_8자리 숫자' 찾기
-                            match = re.search(r"_(\d{8})$", name)
+                                if match:
+                                    date_part = match.group(1)
+                                    new_name = re.sub(r"_(\d{8})$", "", name)
+                                    new_filename = f"{date_part}_{new_name}.pdf"
 
-                            if match:
-                                # 날짜 추출
-                                date_part = match.group(1)
-                                # 날짜를 제외한 나머지 이름 추출
-                                new_name = re.sub(r"_(\d{8})$", "", name)
-                                # 새로운 파일명 생성
-                                new_filename = f"{date_part}_{new_name}.pdf"
+                                    url = get_valid_url(new_filename, date_part, article, headers)
+                                    article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                                    article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                                    article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                                else:
+                                    url = create_fallback_url(article)
+                                    article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                                    article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                                    article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                        else:
+                            # img가 None인 경우 대체 로직 실행
+                            URL_PARAM = article["REG_DT"]
+                            URL_PARAM_0 = 'B' + URL_PARAM[:6]
 
-                                # URL 생성 및 상태코드 확인
-                                url = get_valid_url(new_filename, date_part, article, headers)
-                                print(url)  # 최종 URL 출력
+                            ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
+                            ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
+                            URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
 
-                                # URL 저장
-                                article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                                article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                                article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
-                            else:
-                                # 정규표현식 매칭 실패 시 else 로직 실행
-                                url = create_fallback_url(article)
-                                article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                                article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                                article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                            ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                            url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+
+                            article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
+                            article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
 
                     except Exception as e:
                         print(f"Error processing article: {e}")
