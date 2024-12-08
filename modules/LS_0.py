@@ -155,6 +155,7 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
         return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):
+    print("process_article")
     TARGET_URL = article["KEY"]
 
     # '.pdf' 처리
@@ -200,17 +201,27 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                             new_name = re.sub(r"_(\d{8})$", "", name)
                             new_filename = f"{date_part}_{new_name}.pdf"
 
-                            url = get_valid_url(new_filename, date_part, article, headers)
+                            url = await get_valid_url(new_filename, date_part, article, headers)
                             article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                             article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
                             article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                         else:
-                            url = create_fallback_url(article)
+                            url = await create_fallback_url(article)
                             article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                             article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
                             article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                     else:
-                        url = create_fallback_url(article)
+                        # url = create_fallback_url(article)
+                        # img가 None인 경우 대체 로직 실행
+                        URL_PARAM = article["REG_DT"]
+                        URL_PARAM_0 = 'B' + URL_PARAM[:6]
+
+                        ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
+                        ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
+                        URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                        ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                        url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
                         article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                         article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
                         article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
@@ -248,7 +259,7 @@ async def LS_detail(articles, firm_info=None):
     print(articles)
     return articles
 
-def get_valid_url(new_filename, date_part, article, headers):
+async def get_valid_url(new_filename, date_part, article, headers):
     """
     새로운 URL을 시도하며 상태코드 200인 URL을 찾습니다.
     """
@@ -280,7 +291,7 @@ def get_valid_url(new_filename, date_part, article, headers):
     return create_fallback_url(article)
 
 
-def create_fallback_url(article):
+async def create_fallback_url(article):
     """
     5일 동안 유효한 URL을 찾지 못한 경우, fallback 로직으로 URL 생성.
     """
@@ -291,6 +302,7 @@ def create_fallback_url(article):
     URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
     ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}"
     print("Fallback URL created:", ATTACH_URL)
+    
     return ATTACH_URL
 
 if __name__ == "__main__":
