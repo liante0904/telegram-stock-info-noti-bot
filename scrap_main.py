@@ -161,6 +161,8 @@ async def main():
 
         total_data = []  # 전체 데이터를 저장할 리스트
         totalCnt = 0
+        inserted_count = 0
+        updated_count = 0
 
         # 동기 함수 실행
         print("Running synchronous functions...")
