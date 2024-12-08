@@ -135,13 +135,11 @@ async def main():
             LS_checkNewArticle,
             ShinHanInvest_checkNewArticle,
             Samsung_checkNewArticle,
-            Sangsanginib_checkNewArticle,
             Shinyoung_checkNewArticle,
             #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
             Hmsec_checkNewArticle,
             Koreainvestment_selenium_checkNewArticle,
-            DAOL_checkNewArticle,
             TOSSinvest_checkNewArticle,
             Leading_checkNewArticle,
         ]
@@ -151,8 +149,10 @@ async def main():
             NHQV_checkNewArticle,
             HANA_checkNewArticle,
             KB_checkNewArticle,
+            Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
             eugene_checkNewArticle,
+            DAOL_checkNewArticle,
             Daeshin_checkNewArticle,
             iMfnsec_checkNewArticle,
             DBfi_checkNewArticle,
@@ -161,6 +161,8 @@ async def main():
 
         total_data = []  # 전체 데이터를 저장할 리스트
         totalCnt = 0
+        inserted_count = 0
+        updated_count = 0
 
         # 동기 함수 실행
         print("Running synchronous functions...")

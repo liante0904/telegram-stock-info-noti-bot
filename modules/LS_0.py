@@ -9,6 +9,13 @@ import sys
 import requests
 from bs4 import BeautifulSoup
 import time
+import asyncio
+import aiohttp
+from aiohttp import ClientSession
+from bs4 import BeautifulSoup
+import re
+import os
+import urllib.parse
 
 from datetime import datetime, timedelta, date
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
@@ -17,6 +24,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
+
+# 전역 변수 선언
+skip_boards = set()
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     SEC_FIRM_ORDER = 0
@@ -78,7 +88,6 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             try:
                 str_date = list.select('td')[3].get_text()
                 list = list.select('a')
-                # print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
                 LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL)
                 LIST_ARTICLE_TITLE = list[0].get_text()
@@ -105,7 +114,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     del soup
     gc.collect()
-    return json_data_list#, skip_boards
+    return json_data_list
 
 def clean_url(url):
     # URL 파싱
@@ -134,106 +143,123 @@ def clean_url(url):
     return cleaned_url
 
 
-def LS_detail(articles, firm_info):
-    requests.packages.urllib3.disable_warnings()
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
-    }
+async def fetch(session: ClientSession, url: str, headers: dict) -> str:
+    try:
+        async with session.get(url, headers=headers, ssl=False) as response:
+            if response.status != 200:
+                print(f"Skipping URL due to status code {response.status}: {url}")
+                return None
+            return await response.text()
+    except Exception as e:
+        print(f"Error requesting URL {url}: {e}")
+        return None
 
-    # articles가 리스트가 아닐 경우 리스트로 변환
+async def process_article(session: ClientSession, article: dict, headers: dict):
+    print("process_article")
+    TARGET_URL = article["KEY"]
+
+    # '.pdf' 처리
+    if ".pdf" in TARGET_URL:
+        article["ARTICLE_URL"] = TARGET_URL
+        article["TELEGRAM_URL"] = TARGET_URL
+        article["DOWNLOAD_URL"] = TARGET_URL
+        return
+
+    html_content = await fetch(session, TARGET_URL, headers)
+    if not html_content:
+        return
+
+    soup = BeautifulSoup(html_content, "html.parser")
+    trs = soup.select("tr")
+
+    for tr in trs:
+        th = tr.select_one("th")
+        td = tr.select_one("td")
+
+        if th and td:
+            th_text = th.get_text(strip=True)
+            td_text = td.get_text(strip=True)
+
+            if th_text == "제목":
+                article["ARTICLE_TITLE"] = td_text
+            elif th_text == "첨부파일":
+                attach_a = tr.select_one("td.attach a")
+                if attach_a:
+                    article["ATTACH_FILE_NAME"] = attach_a.get_text(strip=True)
+
+                img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
+                      soup.select_one("#contents > div.tbViewCon > div > p > img")
+
+                if img:
+                    img_filename = img.get("alt") or img.get("src")
+                    if img_filename:
+                        name, extension = os.path.splitext(img_filename)
+                        match = re.search(r"_(\d{8})$", name)
+
+                        if match:
+                            date_part = match.group(1)
+                            new_name = re.sub(r"_(\d{8})$", "", name)
+                            new_filename = f"{date_part}_{new_name}.pdf"
+
+                            url = await get_valid_url(new_filename, date_part, article, headers)
+                            article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                        else:
+                            url = await create_fallback_url(article)
+                            article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                    else:
+                        # url = create_fallback_url(article)
+                        # img가 None인 경우 대체 로직 실행
+                        URL_PARAM = article["REG_DT"]
+                        URL_PARAM_0 = 'B' + URL_PARAM[:6]
+
+                        ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
+                        ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
+                        URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                        ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                        url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+                        article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                        article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                        article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                else:
+                    # img가 None인 경우 대체 로직 실행
+                    URL_PARAM = article["REG_DT"]
+                    URL_PARAM_0 = 'B' + URL_PARAM[:6]
+
+                    ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
+                    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
+                    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
+
+                    ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
+                    url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
+
+                    article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
+                    article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                    article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
+
+async def LS_detail(articles, firm_info=None):
     if isinstance(articles, dict):
         articles = [articles]
     elif isinstance(articles, str):
         print("Error: Invalid article format. Expected a dictionary or a list of dictionaries.")
         return []
 
-    for article in articles:
-        TARGET_URL = article["KEY"]
-        time.sleep(0.1)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+    }
 
-        # '.pdf' 처리
-        if ".pdf" in TARGET_URL:
-            article["ARTICLE_URL"] = TARGET_URL
-            article["TELEGRAM_URL"] = TARGET_URL
-            article["DOWNLOAD_URL"] = TARGET_URL
-            continue
+    async with aiohttp.ClientSession() as session:
+        tasks = [process_article(session, article, headers) for article in articles]
+        await asyncio.gather(*tasks)
 
-        try:
-            response = requests.get(TARGET_URL, headers=headers, verify=False)
-            if response.status_code != 200:
-                print(f"Skipping URL due to status code {response.status_code}: {TARGET_URL}")
-                continue
-        except requests.RequestException as e:
-            print(f"Error requesting URL {TARGET_URL}: {e}")
-            continue
-
-        soup = BeautifulSoup(response.content, "html.parser")
-
-        # 'tr' 데이터 추출
-        trs = soup.select("tr")
-        for tr in trs:
-            th = tr.select_one("th")
-            td = tr.select_one("td")
-
-            if th and td:
-                th_text = th.get_text(strip=True)
-                td_text = td.get_text(strip=True)
-
-                if th_text == "제목":
-                    article["ARTICLE_TITLE"] = td_text
-                elif th_text == "첨부파일":
-                    attach_a = tr.select_one("td.attach a")
-                    if attach_a:
-                        article["ATTACH_FILE_NAME"] = attach_a.get_text(strip=True)
-
-                    try:
-                        # img 추출
-                        img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
-                              soup.select_one("#contents > div.tbViewCon > div > p > img")
-
-                        if img:
-                            img_filename = img.get("alt")
-                            if img_filename:
-                                name, extension = os.path.splitext(img_filename)
-                                match = re.search(r"_(\d{8})$", name)
-
-                                if match:
-                                    date_part = match.group(1)
-                                    new_name = re.sub(r"_(\d{8})$", "", name)
-                                    new_filename = f"{date_part}_{new_name}.pdf"
-
-                                    url = get_valid_url(new_filename, date_part, article, headers)
-                                    article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                                    article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                                    article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
-                                else:
-                                    url = create_fallback_url(article)
-                                    article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                                    article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                                    article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
-                        else:
-                            # img가 None인 경우 대체 로직 실행
-                            URL_PARAM = article["REG_DT"]
-                            URL_PARAM_0 = 'B' + URL_PARAM[:6]
-
-                            ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                            ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
-                            URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-
-                            ATTACH_URL = 'https://www.ls-sec.co.kr/upload/EtwBoardData/{0}/{1}'
-                            url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
-
-                            article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
-                            article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
-                            article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
-
-                    except Exception as e:
-                        print(f"Error processing article: {e}")
-
+    print(articles)
     return articles
 
-
-def get_valid_url(new_filename, date_part, article, headers):
+async def get_valid_url(new_filename, date_part, article, headers):
     """
     새로운 URL을 시도하며 상태코드 200인 URL을 찾습니다.
     """
@@ -242,7 +268,7 @@ def get_valid_url(new_filename, date_part, article, headers):
         date_obj = datetime.strptime(date_part, "%Y%m%d")
     except ValueError:
         print("Invalid date format in date_part:", date_part)
-        return create_fallback_url(article)
+        return await create_fallback_url(article)
 
     # 날짜 기반으로 앞뒤 2일 추가 탐색
     date_range = [date_obj + timedelta(days=i) for i in range(-2, 3)]
@@ -262,10 +288,10 @@ def get_valid_url(new_filename, date_part, article, headers):
             print(f"Error accessing {test_url}: {e}")
 
     # 5일 동안 유효한 URL을 찾지 못한 경우
-    return create_fallback_url(article)
+    return await create_fallback_url(article)
 
 
-def create_fallback_url(article):
+async def create_fallback_url(article):
     """
     5일 동안 유효한 URL을 찾지 못한 경우, fallback 로직으로 URL 생성.
     """
@@ -276,16 +302,16 @@ def create_fallback_url(article):
     URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
     ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}"
     print("Fallback URL created:", ATTACH_URL)
+    
     return ATTACH_URL
 
 if __name__ == "__main__":
     page = 1
     all_articles = []
-    skip_boards = set()
 
     while True:
         print(f"Page:{page}.. Process..")
-        articles, skip_boards = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
+        articles = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
         if not any(articles):
             break  # Exit loop if no articles found
         all_articles.extend(articles)
