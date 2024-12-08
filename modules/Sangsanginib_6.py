@@ -22,16 +22,51 @@ async def fetch_data(session: ClientSession, url: str, headers: dict, data: dict
         return {}
 
 
+async def process_board_order(session: ClientSession, sec_firm_order: int, article_board_order: int, target_url: str, cms_cd: str, headers: dict, cookies: dict):
+    firm_info = FirmInfo(
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
+    )
+    data = {
+        "pageNum": "1",
+        "src": "all",
+        "cmsCd": cms_cd,
+        "rowNum": "10",
+        "startRow": "0",
+        "sdt": "",
+        "edt": ""
+    }
+
+    response = await fetch_data(session, target_url, headers, data, cookies)
+    if not response:
+        return []
+
+    soup_list = response[0].get('getNoticeList', [])
+    json_data_list = []
+
+    for list_item in soup_list:
+        REG_DT = re.sub(r"[-./]", "", list_item['REGDT'])
+        LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cms_cd}/{cms_cd}_{list_item['NT_NO']}_1.pdf"
+        LIST_ARTICLE_TITLE = list_item['TITLE']
+        json_data_list.append({
+            "SEC_FIRM_ORDER": sec_firm_order,
+            "ARTICLE_BOARD_ORDER": article_board_order,
+            "FIRM_NM": firm_info.get_firm_name(),
+            "REG_DT": REG_DT,
+            "ATTACH_URL": LIST_ARTICLE_URL,
+            "DOWNLOAD_URL": LIST_ARTICLE_URL,
+            "KEY": LIST_ARTICLE_URL,
+            "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+            "SAVE_TIME": datetime.now().isoformat()
+        })
+
+    return json_data_list
+
+
 async def Sangsanginib_checkNewArticle():
     SEC_FIRM_ORDER = 6
-    ARTICLE_BOARD_ORDER = 0
-    json_data_list = []
-    
-    TARGET_URL_0 = "https://www.sangsanginib.com/notice/getNoticeList"
-    TARGET_URL_1 = TARGET_URL_0
-    TARGET_URL_2 = TARGET_URL_0
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+    TARGET_URL = "https://www.sangsanginib.com/notice/getNoticeList"
+    cmsCd_list = ["CM0078", "CM0338", "CM0079"]
 
     headers = {
         "Accept": "*/*",
@@ -43,7 +78,6 @@ async def Sangsanginib_checkNewArticle():
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
     }
 
-    cmsCd = ["CM0078", "CM0338", "CM0079"]
     cookies = {
         "SSISTOCK_JSESSIONID": "F63EB7BB0166E9ECA5988FF541287E07",
         "_ga": "GA1.1.467249692.1728208332",
@@ -51,49 +85,14 @@ async def Sangsanginib_checkNewArticle():
     }
 
     async with aiohttp.ClientSession() as session:
-        tasks = []
-        for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-            firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
-            )
+        tasks = [
+            process_board_order(session, SEC_FIRM_ORDER, idx, TARGET_URL, cms_cd, headers, cookies)
+            for idx, cms_cd in enumerate(cmsCd_list)
+        ]
 
-            data = {
-                "pageNum": "1",
-                "src": "all",
-                "cmsCd": cmsCd[ARTICLE_BOARD_ORDER],
-                "rowNum": "10",
-                "startRow": "0",
-                "sdt": "",
-                "edt": ""
-            }
-
-            # 비동기적으로 데이터를 가져오기 위한 작업 추가
-            tasks.append(fetch_data(session, TARGET_URL, headers, data, cookies))
-
-        # 비동기적으로 모든 요청을 완료
-        responses = await asyncio.gather(*tasks)
-
-        for response in responses:
-            if response:
-                soupList = response[0].get('getNoticeList', [])
-                
-                for list_item in soupList:
-                    REG_DT = re.sub(r"[-./]", "", list_item['REGDT'])
-                    LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cmsCd[ARTICLE_BOARD_ORDER]}/{cmsCd[ARTICLE_BOARD_ORDER]}_{list_item['NT_NO']}_1.pdf"
-                    LIST_ARTICLE_TITLE = list_item['TITLE']
-                    
-                    json_data_list.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "REG_DT": REG_DT,
-                        "ATTACH_URL": LIST_ARTICLE_URL,
-                        "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                        "KEY": LIST_ARTICLE_URL,
-                        "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                        "SAVE_TIME": datetime.now().isoformat()
-                    })
+        results = await asyncio.gather(*tasks)
+        # Flatten the results
+        json_data_list = [item for sublist in results for item in sublist]
 
         # 메모리 정리
         gc.collect()
