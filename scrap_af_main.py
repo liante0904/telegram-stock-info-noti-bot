@@ -45,7 +45,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print("Additional processing for SEC_FIRM_ORDER 0")
                     print(f"records{len(records)}")
                     for record in records:
-                        LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
+                        await LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
                         r = await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
                         print(r)
 
