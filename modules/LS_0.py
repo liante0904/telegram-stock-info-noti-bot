@@ -18,6 +18,9 @@ from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
+# 전역 변수 선언
+skip_boards = set()
+
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     SEC_FIRM_ORDER = 0
     json_data_list = []
@@ -78,7 +81,6 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             try:
                 str_date = list.select('td')[3].get_text()
                 list = list.select('a')
-                # print(list[0]['href'])
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
                 LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL)
                 LIST_ARTICLE_TITLE = list[0].get_text()
@@ -105,7 +107,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     del soup
     gc.collect()
-    return json_data_list#, skip_boards
+    return json_data_list
 
 def clean_url(url):
     # URL 파싱
@@ -281,11 +283,10 @@ def create_fallback_url(article):
 if __name__ == "__main__":
     page = 1
     all_articles = []
-    skip_boards = set()
 
     while True:
         print(f"Page:{page}.. Process..")
-        articles, skip_boards = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
+        articles = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
         if not any(articles):
             break  # Exit loop if no articles found
         all_articles.extend(articles)
