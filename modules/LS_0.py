@@ -192,9 +192,9 @@ def LS_detail(articles, firm_info=None):
                         # img 추출
                         img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
                               soup.select_one("#contents > div.tbViewCon > div > p > img")
-
                         if img:
-                            img_filename = img.get("alt")
+                            img_filename = img.get("alt") or \
+                                           img.get("src")
                             if img_filename:
                                 name, extension = os.path.splitext(img_filename)
                                 match = re.search(r"_(\d{8})$", name)
@@ -213,6 +213,11 @@ def LS_detail(articles, firm_info=None):
                                     article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                                     article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
                                     article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                            else:
+                                url = create_fallback_url(article)
+                                article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                                article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                         else:
                             # img가 None인 경우 대체 로직 실행
                             URL_PARAM = article["REG_DT"]
