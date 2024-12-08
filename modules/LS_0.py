@@ -268,7 +268,7 @@ async def get_valid_url(new_filename, date_part, article, headers):
         date_obj = datetime.strptime(date_part, "%Y%m%d")
     except ValueError:
         print("Invalid date format in date_part:", date_part)
-        return create_fallback_url(article)
+        return await create_fallback_url(article)
 
     # 날짜 기반으로 앞뒤 2일 추가 탐색
     date_range = [date_obj + timedelta(days=i) for i in range(-2, 3)]
@@ -288,7 +288,7 @@ async def get_valid_url(new_filename, date_part, article, headers):
             print(f"Error accessing {test_url}: {e}")
 
     # 5일 동안 유효한 URL을 찾지 못한 경우
-    return create_fallback_url(article)
+    return await create_fallback_url(article)
 
 
 async def create_fallback_url(article):
