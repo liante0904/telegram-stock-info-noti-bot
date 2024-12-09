@@ -2,7 +2,6 @@
 import requests
 import asyncio
 from bs4 import BeautifulSoup
-
 from models.SecretKey import SecretKey
 from utils.date_util import GetCurrentDate, GetCurrentDay
 from utils.telegram_util import sendMarkDownText
@@ -10,78 +9,67 @@ from utils.telegram_util import sendMarkDownText
 SECRET_KEY = SecretKey()
 token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
 
-def extract_data(element):
-    if element:
-        index_name = element.select_one('.index_name').get_text(strip=True)
-        index_value_tag = element.select_one('.index_value')
-        index_value = ""
-        if index_value_tag:
-            index_value_str = index_value_tag.get_text(strip=True).replace(",", "")
-            index_value = float(index_value_str)
+def parse_decimal(element):
+    """숫자와 소수를 결합하여 하나의 float 값으로 반환"""
+    if not element:
+        return 0.0
+    # 정수 부분 추출
+    integer_element = element.select_one("strong")
+    integer_part = integer_element.get_text(strip=True).replace(",", "") if integer_element else "0"
 
-        index_range_tag = element.select_one('.index_range > span')
-        index_range = ""
-        if index_range_tag:
-            class_name = index_range_tag.get('class', [None])[0]
-            index_range_value_str = index_range_tag.get_text(strip=True).replace(",", "")
-            index_range_value = float(index_range_value_str)
+    # 소수 부분 추출
+    decimal_element = element.select_one(".decimal")
+    decimal_part = decimal_element.get_text(strip=True) if decimal_element else ""
 
-            previous_close = 0.0
-            rate_of_change = 0.0
+    # 정수와 소수를 결합하여 변환
+    return float(f"{integer_part}{decimal_part}")
 
-            # 등락폭에 따라 전일 종가 계산 및 등락률 계산
-            if class_name == 'stock-down':
-                previous_close = index_value + index_range_value
-                rate_of_change = (index_range_value / previous_close) * 100
-                index_range = f"📉 || -{index_range_value:.2f} (-{rate_of_change:.2f}%)"
-            elif class_name == 'stock-up':
-                previous_close = index_value - index_range_value
-                rate_of_change = (index_range_value / previous_close) * 100
-                index_range = f"📈 || +{index_range_value:.2f} (+{rate_of_change:.2f}%)"
+def extract_market_data(item):
+    """마켓 데이터를 추출하여 포맷팅"""
+    name = item.select_one(".name").get_text(strip=True)
+    value = parse_decimal(item.select_one(".index-vlaue"))
+    change_value = parse_decimal(item.select_one(".index-range .stock-up, .index-range .stock-down"))
+    change_rate = parse_decimal(item.select_one(".index-rate .stock-up, .index-rate .stock-down"))
 
-        return f"======={index_name}=======\n {index_value:.2f}{index_range}"
-    else:
-        return "Element not found"
+    change_type = "📈" if "stock-up" in item.select_one(".index-range span").get("class", []) else "📉"
+    change_str = f"{change_type} {change_value:.2f} ({change_rate:.2f}%)"
+
+    # PER, PBR, ROE 정보는 코스피 및 코스닥만 출력
+    per_info = ""
+    if name in ["코스피", "코스닥"]:
+        per = parse_decimal(item.select_one(".per .market-value"))
+        pbr = parse_decimal(item.select_one(".pbr .market-value"))
+        roe = item.select_one(".roe .market-value strong")
+        roe = roe.get_text(strip=True) if roe else "N/A"
+        per_info = f"\nPER: {per:.2f} | PBR: {pbr:.2f} | ROE: {roe}"
+
+    return f"======={name}=======\n지수: {value:.2f} {change_str}{per_info}"
 
 
 async def main():
     print(GetCurrentDate('YYYYMMDD'), GetCurrentDay())
     sendMessageText = ''
     url = 'https://itooza.com/'
-    
+
     response = requests.get(url)
     response.raise_for_status()
-
     soup = BeautifulSoup(response.text, "html.parser")
 
-    indices_data = []
-    indices_items = soup.select("div.data.indices div.items div.inner div.item")
-    for item in indices_items:
-        indices_data.append(extract_data(item))
+    # 마켓 데이터 추출
+    market_items = soup.select(".section-market .data-group .data-item")
+    market_data = [extract_market_data(item) for item in market_items]
 
-    valuation_data = []
-    valuation_items = soup.select("div.data.valuation div.items div.inner div.item")
-    for item in valuation_items:
-        market_name = item.select_one("div.index_name").get_text(strip=True)
-        per_value = item.select_one("div.index_cate.per span.index_value").get_text(strip=True)
-        pbr_value = item.select_one("div.index_cate.pbr span.index_value").get_text(strip=True)
-        roe_value = item.select_one("div.index_cate.roe span.index_value").get_text(strip=True)
-        msg = f"======={market_name}=======\nPER: {per_value} || PBR: {pbr_value} || ROE: {roe_value}"
-        valuation_data.append(msg)
-
-    # 마켓 밸류에이션 날짜 정보 추출
-    rDate_element = soup.select_one('div.data.valuation div.header > p')
-    rDate = rDate_element.get_text() if rDate_element else "날짜 정보 없음"
+    # 날짜 정보 추출
+    date_elements = soup.select(".date-reference .date-item")
+    date_info = "\n".join([f"{item.select_one('.title').get_text(strip=True)}: {item.select_one('.date').get_text(strip=True)}" for item in date_elements])
 
     # 메시지 구성
-    sendMessageText += "\n\n" + "* ●" + '마켓밸류에이션*  '
-    sendMessageText += "\n\n" + "* ●" + rDate + '일자 기준*' + "\n \n"
-    sendMessageText += "*오늘의 주요 지수*\n\n"
-    for data in indices_data:
-        sendMessageText += data + "\n\n"
-
-    sendMessageText += "\n\n*마켓 밸류에이션*\n\n"
-    for data in valuation_data:
+    sendMessageText += f"*오늘의 마켓 데이터*\n\n"
+    sendMessageText += f"*=======산출 기준 일자=======*\n\n"
+    
+    sendMessageText += f"{date_info}\n\n"
+    
+    for data in market_data:
         sendMessageText += data + "\n\n"
 
     print(sendMessageText)
