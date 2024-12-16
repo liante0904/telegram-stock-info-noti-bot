@@ -98,7 +98,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": REG_DT,
                     "ARTICLE_URL": LIST_ARTICLE_URL,
-                    "ATTACH_URL": LIST_ARTICLE_URL,
+                    "ATTACH_URL": TELEGRAM_URL,
                     "DOWNLOAD_URL": DOWNLOAD_URL,
                     "TELEGRAM_URL": TELEGRAM_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
