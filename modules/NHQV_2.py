@@ -81,11 +81,11 @@ async def NHQV_checkNewArticle(target_date=None):
                     "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": article['rshPprDruDtNm'].replace("-", ""),
+                    "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
                     "WRITER": article['rshPprDruEmpFnm'],
-                    "ATTACH_URL": article['hpgeFleUrlCts'],
-                    "DOWNLOAD_URL": article['hpgeFleUrlCts'],
+                    "TELEGRAM_URL": article['hpgeFleUrlCts'],
                     "ARTICLE_TITLE": article['rshPprTilCts'],
+                    "KEY":article['hpgeFleUrlCts'],
                     "SAVE_TIME": datetime.now().isoformat()
                 })
 
