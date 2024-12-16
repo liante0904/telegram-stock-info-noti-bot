@@ -123,8 +123,6 @@ def fetch_data(date=None, keyword=None, user_id=None):
     conn.close()
     return results
 
-
-
 def update_data(date=None, keyword=None, user_ids=None):
     """특정 키워드와 날짜를 기준으로 여러 테이블의 데이터를 업데이트하며, 파라미터가 포함된 실제 쿼리를 출력합니다.
     
@@ -177,55 +175,6 @@ def update_data(date=None, keyword=None, user_ids=None):
         print(f"{cursor.rowcount} rows updated in {table}.")
 
     conn.commit()
-
-def format_message(data_list):
-    """데이터를 포맷팅하여 문자열로 반환합니다."""
-    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-    formatted_messages = []
-
-    # 특정 FIRM_NM을 제외할 리스트
-    EXCLUDED_FIRMS = {"네이버", "조선비즈"}
-
-    # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
-    if isinstance(data_list, tuple):
-        data_list = [data_list]
-
-    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
-
-    for data in data_list:
-        # 데이터 항목을 사전으로 변환
-        data_dict = {
-            'FIRM_NM': data[0],
-            'ARTICLE_TITLE': data[1],
-            'ATTACH_URL': data[2],
-            'SAVE_TIME': data[3]
-        }
-        
-        ARTICLE_TITLE = data_dict['ARTICLE_TITLE']
-        ARTICLE_URL = data_dict['ATTACH_URL']
-        
-        sendMessageText = ""
-        
-        # 'FIRM_NM'이 존재하는 경우에만 포함
-        if 'FIRM_NM' in data_dict:
-            FIRM_NM = data_dict['FIRM_NM']
-            # data_list가 단건인 경우, 회사명 출력을 생략
-            if len(data_list) > 1:
-                # 제외할 FIRM_NM이 아닌 경우에만 처리
-                if '네이버' not in FIRM_NM and '조선비즈' not in FIRM_NM:
-                    # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
-                    if FIRM_NM != last_firm_nm:
-                        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                        last_firm_nm = FIRM_NM
-        
-        # 게시글 제목(굵게)
-        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-        # 원문 링크
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-        formatted_messages.append(sendMessageText)
-    
-    # 모든 메시지를 하나의 문자열로 결합합니다.
-    return "\n".join(formatted_messages)
 
 async def daily_select_data(date_str=None, type=None):
     # SQLite 데이터베이스 연결
@@ -295,7 +244,6 @@ async def daily_select_data(date_str=None, type=None):
     rows = [dict(row) for row in rows]
 
     return rows
-
 
 async def daily_update_data(date_str=None, fetched_rows=None, type=None):
     """
@@ -369,17 +317,6 @@ async def daily_update_data(date_str=None, fetched_rows=None, type=None):
 
     # 변경 사항 저장 및 커넥션 닫기
     conn.commit()
-
-def open_db_connection():
-    """SQLite 데이터베이스에 연결하고 커서를 반환합니다."""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    return conn, cursor
-
-def close_db_connection(conn, cursor):
-    """데이터베이스 연결과 커서를 종료합니다."""
-    cursor.close()
-    conn.close()
 
 def main():
 
