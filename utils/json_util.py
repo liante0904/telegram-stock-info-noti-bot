@@ -73,55 +73,6 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
-async def save_multiple_data_to_local_json(filename, news_data_list):
-    directory = os.path.dirname(filename)
-
-    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
-
-    # 기존 데이터를 읽어옵니다.
-    if os.path.exists(filename) and os.path.getsize(filename) > 0:
-        with open(filename, 'r', encoding='utf-8') as json_file:
-            existing_data = json.load(json_file)
-    else:
-        existing_data = []
-
-    # 중복 체크 및 데이터 추가
-    for new_data in news_data_list:
-        # 기존 데이터에서 중복 여부를 확인
-        is_duplicate = any(
-            existing_item.get("FIRM_NM") == new_data.get("firm_nm") and
-            existing_item.get("ARTICLE_TITLE") == new_data.get("article_title")
-            for existing_item in existing_data
-        )
-
-        if not is_duplicate:
-            existing_data.append({
-                "SEC_FIRM_ORDER": new_data.get("sec_firm_order"),
-                "ARTICLE_BOARD_ORDER": new_data.get("article_board_order"),
-                "FIRM_NM": new_data.get("firm_nm"),
-                "ATTACH_URL": new_data.get("attach_url"),
-                "ARTICLE_TITLE": new_data.get("article_title"),
-                "SEND_USER": [],
-                "MAIN_CH_SEND_YN": "N",
-                "DOWNLOAD_URL": new_data.get("attach_url"),
-                "SAVE_TIME": datetime.now().isoformat()
-            })
-
-    # 업데이트된 데이터를 JSON 파일로 저장합니다.
-    with open(filename, 'w', encoding='utf-8') as json_file:
-        json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
-
-    print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
-    
-    # existing_data가 비어 있지 않은 경우에만 마지막 데이터의 메시지를 생성합니다.
-    if existing_data:
-        return format_message(existing_data[-1]) + '\n'
-    else:
-        return ''
-
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
     formatted_messages = []
@@ -166,36 +117,6 @@ def format_message(data_list):
     formatted_messages.append(sendMessageText)
     # 모든 메시지를 하나의 문자열로 결합합니다.
     return "\n".join(formatted_messages)
-
-def update_json_with_main_ch_send_yn(file_path):
-    directory = os.path.dirname(file_path)
-
-    # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
-    
-    if not os.path.exists(file_path):
-        print(f"\n파일 경로 '{file_path}'가 존재하지 않습니다.")
-        return
-
-    with open(file_path, 'r', encoding='utf-8') as json_file:
-        data = json.load(json_file)
-
-    # 각 항목에 MAIN_CH_SEND_YN 키를 추가합니다.
-    for item in data:
-        item["MAIN_CH_SEND_YN"] = "N"
-        
-        # SAVE_TIME을 마지막에 유지하기 위해 삭제 후 다시 추가
-        save_time = item.pop("SAVE_TIME", None)
-        if save_time:
-            item["SAVE_TIME"] = save_time
-
-    # 업데이트된 데이터를 다시 JSON 파일로 저장합니다.
-    with open(file_path, 'w', encoding='utf-8') as json_file:
-        json.dump(data, json_file, ensure_ascii=False, indent=4)
-    
-    print(f"\n{file_path} 파일에 MAIN_CH_SEND_YN 키가 업데이트되었습니다.")
 
 def get_unsent_main_ch_data_to_local_json(filename):
     directory = os.path.dirname(filename)
@@ -329,29 +250,6 @@ def filter_news_by_save_time(filename):
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
 
-
-def filter_data_by_save_time(filename):
-    # 파일에서 JSON 데이터 읽기
-    with open(filename, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    # 오늘 날짜
-    today = datetime.now()
-
-    # 1달 이내 날짜 계산
-    one_week_ago = today - timedelta(days=30)
-
-    # 뉴스 리스트 필터링
-    filtered_news_list = [
-        news for news in data
-        if datetime.fromisoformat(news['SAVE_TIME']) >= one_week_ago
-    ]
-
-    # 필터링된 데이터를 다시 JSON 파일로 저장
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(filtered_news_list, f, ensure_ascii=False, indent=4)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
     parser.add_argument('action', choices=['update', 'send'], help='Action to perform: update or send')
@@ -359,9 +257,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.action == 'update':
-        update_json_with_main_ch_send_yn(args.file_path)
-    elif args.action == 'send':
+    if args.action == 'send':
         results = get_unsent_main_ch_data_to_local_json(args.file_path)
         for result in results:
             print(result)
