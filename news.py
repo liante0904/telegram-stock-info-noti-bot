@@ -8,7 +8,7 @@ import logging
 
 from datetime import datetime, timedelta
 from utils.json_util import save_data_to_local_json, filter_news_by_save_time
-from utils.date_util import GetCurrentDate, GetCurrentDay
+from utils.date_util import GetCurrentDate
 from utils.telegram_util import sendMarkDownText
 from models.SecretKey import SecretKey
 
@@ -393,8 +393,6 @@ async def main():
     # logging.info('정보 메시지 출력 예시')
     # logging.warning('경고 메시지 출력 예시')
      
-    print(GetCurrentDay())
-    
     print("ChosunBizBot_checkNewArticle()=> 새 게시글 정보 확인 # 995");  
     await ChosunBizBot_checkNewArticle(); 
     print("NAVERNews_checkNewArticle_0()=> 새 게시글 정보 확인 # 998"); 
