@@ -104,19 +104,3 @@ jobs:
         else
           echo "No changes to commit"
         fi
-    - name: Sync changed files with dev branch
-      run: |
-        # 원격에서 dev 브랜치를 가져오고 로컬에 없으면 생성 후 체크아웃합니다.
-        git remote update
-        git fetch origin dev:dev
-        git checkout dev
-        for file in $(echo "$CHANGED_FILES" | tr ',' '\n'); do
-          git checkout master -- "$file"
-        done
-        # 변경 사항이 있으면 커밋 후 dev 브랜치에 푸시합니다.
-        if ! git diff-index --quiet HEAD; then
-          git commit -m "Sync changed files from master to dev"
-          git push origin dev
-        else
-          echo "No changes to commit"
-        fi
