@@ -1,12 +1,16 @@
 # -*- coding:utf-8 -*-
 import os
-import gc
+import urllib.parse
 import aiohttp
 import asyncio
 import re
 from datetime import datetime
 from xml.etree import ElementTree as ET
+import os
+import sys
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
 
@@ -18,9 +22,18 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         stdate = get_start_of_year()
     if eddate is None:
         eddate = GetCurrentDate("yyyymmdd")
+    if page_size is None:
+        page_size = 1000
+        
+        
 
-    SEC_FIRM_ORDER = 20  # 한화투자증권 고유 ID
+    print(stdate, eddate, page_size)
+    SEC_FIRM_ORDER = 21  # 한화투자증권 고유 ID
     ARTICLE_BOARD_ORDER = 0
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER
+    )
     json_data_list = []
 
     BASE_URL = "https://www.hanwhawm.com/service/mobileapp/researchListNew.cmd"
@@ -42,7 +55,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                 xml_text = await response.text()
                 return parse_xml(xml_text)
 
-    def parse_xml(xml_text):
+    def parse_xml(xml_text, firm_info=firm_info):
         try:
             root = ET.fromstring(xml_text)
             articles = []
@@ -53,16 +66,17 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                     title = block.find("vc_title").text
                     writer = block.find("vc_penname").text
                     file_name = block.find("fname").text
+                    store_name = block.find("sname").text
                     dir_path = block.find("dir").text
                     attach_url = f"https://www.hanwhawm.com/{dir_path}/{file_name}"
-                    
+                    download_url = f"https://www.hanwhawm.com/main/common/common_file/fileView.cmd?category=1&getFD=2&file={urllib.parse.quote(file_name)}&store={store_name}&dir={dir_path}"
                     articles.append({
                         "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                         "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                        "FIRM_NM": "한화투자증권",
+                        "FIRM_NM": firm_info.get_firm_name(),
                         "REG_DT": reg_date,
-                        "ATTACH_URL": attach_url,
-                        "DOWNLOAD_URL": attach_url,
+                        "ATTACH_URL": download_url,
+                        "DOWNLOAD_URL": download_url,
                         "ARTICLE_TITLE": title,
                         "WRITER": writer,
                         "TELEGRAM_URL": attach_url,

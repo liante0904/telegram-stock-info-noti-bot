@@ -25,7 +25,8 @@ class FirmInfo:
         "대신증권",        # 17
         "IM증권",        # 18
         "DB금융투자",      # 19
-        "메리츠증권"      # 20
+        "메리츠증권",      # 20
+        "한화투자증권",      # 21
     ]
 
     # 게시판 이름을 담은 2차원 배열
@@ -146,6 +147,9 @@ class FirmInfo:
         "산업분석",         # ARTICLE_BOARD_ORDER 1,
         "기업분석",       # ARTICLE_BOARD_ORDER 2,
         "주요 지표 및 뉴스"       # ARTICLE_BOARD_ORDER 3,
+        ],
+        # SEC_FIRM_ORDER 21
+        ["",    # ARTICLE_BOARD_ORDER 0,
         ],
     ]
 
