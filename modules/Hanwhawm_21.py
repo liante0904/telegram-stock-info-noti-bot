@@ -72,14 +72,21 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
 
             for block in root.findall(".//block1"):
                 try:
-                    reg_date = re.sub(r"[-./]", "", block.find("dt_regdate").text)
-                    title = block.find("vc_title").text
-                    writer = block.find("vc_penname").text
-                    file_name = block.find("fname").text
-                    store_name = block.find("sname").text
-                    dir_path = block.find("dir").text
-                    attach_url = f"https://www.hanwhawm.com/{dir_path}/{file_name}"
-                    download_url = f"https://www.hanwhawm.com/main/common/common_file/fileView.cmd?category=1&getFD=2&file={urllib.parse.quote(file_name)}&store={store_name}&dir={dir_path}"
+                    reg_date = re.sub(r"[-./]", "", block.find("dt_regdate").text or "")
+                    title = block.find("vc_title").text or "No Title"
+                    writer = block.find("vc_penname").text or "Unknown"
+                    file_name = block.find("fname").text or ""
+                    store_name = block.find("sname").text or ""
+                    dir_path = block.find("dir").text or ""
+
+                    # URL 필드 검증 및 인코딩
+                    attach_url = f"https://www.hanwhawm.com/{dir_path}/{file_name}" if file_name and dir_path else ""
+                    download_url = (
+                        f"https://www.hanwhawm.com/main/common/common_file/fileView.cmd?category=1&getFD=2"
+                        f"&file={urllib.parse.quote(file_name)}&store={urllib.parse.quote(store_name)}&dir={urllib.parse.quote(dir_path)}"
+                        if file_name and store_name and dir_path else ""
+                    )
+
                     articles.append({
                         "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                         "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
@@ -89,7 +96,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                         "DOWNLOAD_URL": download_url,
                         "ARTICLE_TITLE": title,
                         "WRITER": writer,
-                        "TELEGRAM_URL": attach_url,
+                        "TELEGRAM_URL": download_url,
                         "SAVE_TIME": datetime.now().isoformat()
                     })
                 except Exception as e:
@@ -100,6 +107,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         except ET.ParseError as e:
             print(f"XML parsing error: {e}")
             return []
+
 
     # Pagination 처리
     tasks = [fetch_data(page_val) for page_val in range(1, 6)]  # 예시: 1~5페이지 크롤링
