@@ -40,6 +40,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
     headers = {"User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"}
 
     async def fetch_data(page_val):
+        # Query string 생성
         params = {
             "pageSize": page_size,
             "depth2_id": "1002",  # Research depth ID
@@ -48,9 +49,9 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
             "pageVal": page_val
         }
 
-        # Query string 생성
+        # URL에 직접 쿼리 추가
         query_string = urllib.parse.urlencode(params)
-        full_url = f"{BASE_URL}?{query_string}"  # URL에 직접 쿼리 추가
+        full_url = f"{BASE_URL}?{query_string}"
 
         async with aiohttp.ClientSession() as session:
             try:
