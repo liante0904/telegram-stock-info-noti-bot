@@ -47,13 +47,23 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
             "ch_gbn": "iOS",
             "pageVal": page_val
         }
+
+        # Query string 생성
+        query_string = urllib.parse.urlencode(params)
+        full_url = f"{BASE_URL}?{query_string}"  # URL에 직접 쿼리 추가
+
         async with aiohttp.ClientSession() as session:
-            async with session.get(BASE_URL, params=params, headers=headers) as response:
-                if response.status != 200:
-                    print(f"Failed to fetch data: HTTP {response.status}")
-                    return []
-                xml_text = await response.text()
-                return parse_xml(xml_text)
+            try:
+                async with session.get(full_url, headers=headers) as response:
+                    if response.status != 200:
+                        print(f"Failed to fetch data: HTTP {response.status}")
+                        return []
+                    xml_text = await response.text()
+                    return parse_xml(xml_text)
+            except aiohttp.ClientError as e:
+                print(f"HTTP request failed: {e}")
+                return []
+
 
     def parse_xml(xml_text, firm_info=firm_info):
         try:
