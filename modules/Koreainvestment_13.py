@@ -15,10 +15,6 @@ from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
-from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
-from utils.date_util import GetCurrentDate
-
 # selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -26,6 +22,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo
+from models.SQLiteManager import SQLiteManager
+from utils.date_util import GetCurrentDate
 
 
 def Koreainvestment_selenium_checkNewArticle():
@@ -212,3 +214,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 
     # print(url)
     return url
+
+if __name__ == "__main__":
+    asyncio.run(Koreainvestment_selenium_checkNewArticle())
+
