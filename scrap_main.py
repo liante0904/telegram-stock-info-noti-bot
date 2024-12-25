@@ -32,7 +32,7 @@ from modules.DBfi_19 import DBfi_checkNewArticle
 from modules.MERITZ_20 import MERITZ_checkNewArticle
 from modules.Hanwhawm_21 import Hanwha_checkNewArticle
 from modules.Hygood_22 import Hanyang_checkNewArticle
-
+from modules.BNKfn_23 import BNK_checkNewArticle
 
 import scrap_af_main
 import scrap_send_main
@@ -161,7 +161,8 @@ async def main():
             DBfi_checkNewArticle,
             MERITZ_checkNewArticle,
             Hanwha_checkNewArticle,
-            Hanyang_checkNewArticle
+            Hanyang_checkNewArticle,
+            BNK_checkNewArticle
         ]
 
         total_data = []  # 전체 데이터를 저장할 리스트

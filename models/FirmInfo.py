@@ -28,6 +28,7 @@ class FirmInfo:
         "메리츠증권",      # 20
         "한화투자증권",      # 21
         "한양증권",      # 22
+        "BNK투자증권",      # 23
     ]
 
     # 게시판 이름을 담은 2차원 배열
@@ -156,6 +157,12 @@ class FirmInfo:
         ["기업분석",    # ARTICLE_BOARD_ORDER 0,
         "산업 및 이슈 분석",    # ARTICLE_BOARD_ORDER 1,
         "채권/크레딧 분석",    # ARTICLE_BOARD_ORDER 2,
+        ],
+        # SEC_FIRM_ORDER 23
+        ["기업분석",    # ARTICLE_BOARD_ORDER 0,
+        "산업분석",    # ARTICLE_BOARD_ORDER 1,
+        "금융시장",    # ARTICLE_BOARD_ORDER 2,
+        "Quant분석",    # ARTICLE_BOARD_ORDER 3,
         ],
     ]
 
