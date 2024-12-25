@@ -95,7 +95,18 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
                 # 구분
                 ANALYSIS_TYPE = row.select_one('td:nth-child(4)').get_text(strip=True)
-
+                if ANALYSIS_TYPE == "기업분석":
+                    article_board_order = 0
+                    LIST_ARTICLE_TITLE = f"{CATEGORY} : {LIST_ARTICLE_TITLE}"
+                elif ANALYSIS_TYPE == "산업분석":
+                    article_board_order = 1
+                    LIST_ARTICLE_TITLE = f"{CATEGORY} : {LIST_ARTICLE_TITLE}"
+                elif ANALYSIS_TYPE == "투자전략":
+                    article_board_order = 2
+                elif ANALYSIS_TYPE == "채권전략":
+                    article_board_order = 3
+                else:
+                    article_board_order = 4
                 # 작성자
                 WRITER = row.select_one('td:nth-child(5) a').get_text(strip=True)
 
@@ -103,7 +114,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 attachment_tag = row.select_one('td:nth-child(7) a')
                 ATTACH_URL = None
                 if attachment_tag:
-                    ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "")
+                    ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
 
                 # 시간은 기본값으로 10:00 설정
                 time_str = "10:00"
@@ -116,10 +127,9 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "REG_DT": adjust_date(REG_DT, time_str),
                     "ATTACH_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
+                    "TELEGRAM_URL": ATTACH_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "CATEGORY": CATEGORY,
-                    "ANALYSIS_TYPE": ANALYSIS_TYPE,
                     "WRITER": WRITER,
                     "KEY": LIST_ARTICLE_URL,
                     "SAVE_TIME": datetime.now().isoformat()
@@ -134,9 +144,9 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
 
 
-async def KYOBObank_checkNewArticle(full_fetch=False):
+async def Kyobo_checkNewArticle(full_fetch=False):
     """교보증권 데이터 수집"""
-    SEC_FIRM_ORDER = 4
+    SEC_FIRM_ORDER = 24
 
     TARGET_URL_TUPLE = [
         # 교보증권 리서치 데이터 URL
@@ -170,7 +180,7 @@ async def KYOBObank_checkNewArticle(full_fetch=False):
 
 
 async def main():
-    result = await KYOBObank_checkNewArticle(full_fetch=False)  # main에서는 모든 페이지 조회
+    result = await Kyobo_checkNewArticle(full_fetch=True)  # main에서는 모든 페이지 조회
     print(f"Fetched {len(result)} articles.")
     print(result)
     db = SQLiteManager()
