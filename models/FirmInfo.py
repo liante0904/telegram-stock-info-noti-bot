@@ -29,6 +29,7 @@ class FirmInfo:
         "한화투자증권",      # 21
         "한양증권",      # 22
         "BNK투자증권",      # 23
+        "교보증권",      # 24
     ]
 
     # 게시판 이름을 담은 2차원 배열
@@ -164,6 +165,13 @@ class FirmInfo:
         "금융시장",    # ARTICLE_BOARD_ORDER 2,
         "Quant분석",    # ARTICLE_BOARD_ORDER 3,
         ],
+        # SEC_FIRM_ORDER 24
+        ["기업분석",    # ARTICLE_BOARD_ORDER 0,
+        "산업분석",    # ARTICLE_BOARD_ORDER 1,
+        "투자전략",    # ARTICLE_BOARD_ORDER 2,
+        "채권전략",    # ARTICLE_BOARD_ORDER 3,
+        "기타분석",    # ARTICLE_BOARD_ORDER 4,
+        ]
     ]
 
     # 라벨 이름을 담은 2차원 배열
