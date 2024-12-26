@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*- 
 import os
-import gc
 import logging
 import requests
 import time
@@ -13,7 +12,6 @@ from datetime import datetime, timedelta, date
 
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
-from bs4 import BeautifulSoup
 
 # selenium
 from selenium import webdriver
@@ -30,7 +28,7 @@ from models.SQLiteManager import SQLiteManager
 from utils.date_util import GetCurrentDate
 
 
-def Koreainvestment_selenium_checkNewArticle():
+async def Koreainvestment_selenium_checkNewArticle():
     SEC_FIRM_ORDER      = 13
     ARTICLE_BOARD_ORDER = 0
     json_data_list = []
@@ -104,8 +102,7 @@ def Koreainvestment_selenium_checkNewArticle():
         # 브라우저 닫기
         driver.quit()
         
-    # 메모리 정리
-    gc.collect()
+    print(json_data_list)
 
     return json_data_list
 
