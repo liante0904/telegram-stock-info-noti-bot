@@ -10,7 +10,6 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from utils.date_util import GetCurrentDate
 
 async def fetch_article(session, TARGET_URL, form_data, headers):
     async with session.post(TARGET_URL, data=form_data, headers=headers) as response:
@@ -69,6 +68,12 @@ async def DAOL_checkNewArticle():
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
                 'X-Requested-With': 'XMLHttpRequest'
             }
+            
+            # 현재 날짜
+            now = datetime.now()
+
+            # 연초 값 설정
+            start_of_year = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
             # form data 설정
             form_data = {
@@ -80,8 +85,8 @@ async def DAOL_checkNewArticle():
                 'hts': '',
                 'filepath': '',
                 'attaFileNm': '',
-                'startDate': '2024/01/01',
-                'endDate': GetCurrentDate("yyyy/mm/dd"),
+                'startDate': start_of_year.strftime("%Y/%m/%d"),
+                'endDate': datetime.now().strftime("%Y%m%d"),
                 'searchSelect': '0',
                 'searchNm1': '',
                 'searchNm2': query_params.get('rGubun')

@@ -143,7 +143,6 @@ async def main():
             #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
             Hmsec_checkNewArticle,
-            Koreainvestment_selenium_checkNewArticle,
             TOSSinvest_checkNewArticle,
             Leading_checkNewArticle,
         ]
@@ -155,6 +154,7 @@ async def main():
             KB_checkNewArticle,
             Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
+            Koreainvestment_selenium_checkNewArticle,
             eugene_checkNewArticle,
             DAOL_checkNewArticle,
             Daeshin_checkNewArticle,

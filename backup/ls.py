@@ -1,24 +1,13 @@
 # -*- coding:utf-8 -*-
-import os
 import gc
-import logging
 import requests
-import json
-import re
-import urllib.parse as urlparse
 import urllib.request
-import asyncio
-import aiohttp
 from datetime import datetime, timedelta, date
 import time
 
-from urllib3.util.retry import Retry
-from requests.adapters import HTTPAdapter
-from bs4 import BeautifulSoup
 
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from utils.date_util import GetCurrentDate
 
 def LS_checkNewArticle():
     json_data_list = []

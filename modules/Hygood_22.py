@@ -2,7 +2,6 @@ import os
 import gc
 import aiohttp
 import asyncio
-import urllib.parse as urlparse
 import re
 from datetime import datetime
 
@@ -11,7 +10,6 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from utils.date_util import GetCurrentDate
 
 async def fetch_article(session, url, headers):
     async with session.get(url, headers=headers) as response:
