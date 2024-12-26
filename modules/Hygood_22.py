@@ -97,8 +97,9 @@ async def Hanyang_checkNewArticle():
                     "ARTICLE_TITLE": ARTICLE_TITLE,
                     "ARTICLE_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
-                    "FIRM_NM" : firm_info.get_firm_name(),
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "TELEGRAM_URL": ATTACH_URL,
+                    "SAVE_TIME": datetime.now().isoformat(),
+                    "KEY":ATTACH_URL
                 })
 
         # 메모리 정리
