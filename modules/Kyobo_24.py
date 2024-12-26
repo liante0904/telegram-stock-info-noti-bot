@@ -75,10 +75,14 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
         # HTML parse
         soup = BeautifulSoup(html_content, "html.parser")
-        soupList = soup.select('table.pb_Gtable tbody tr')
 
-        if not soupList:  # 더 이상 데이터가 없으면 종료
+        # 더 이상 글이 없는 페이지 판별
+        no_data_message = soup.select_one('table.pb_Gtable tbody tr td[colspan="8"]')
+        if no_data_message and "등록된 글이 없습니다." in no_data_message.get_text(strip=True):
+            print("No data available on this page.")
             break
+
+        soupList = soup.select('table.pb_Gtable tbody tr')
 
         for row in soupList:
             try:
@@ -88,6 +92,9 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 # 제목 및 상세 URL
                 title_cell = row.select_one('td.tLeft a')
                 LIST_ARTICLE_TITLE = title_cell.get_text(strip=True)
+                if not LIST_ARTICLE_TITLE:
+                    print("No more data available.")
+                    break
                 LIST_ARTICLE_URL = "https://www.iprovest.com" + title_cell['href']
 
                 # 종목/업종
@@ -131,7 +138,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "CATEGORY": CATEGORY,
                     "WRITER": WRITER,
-                    "KEY": LIST_ARTICLE_URL,
+                    "KEY": ATTACH_URL,
                     "SAVE_TIME": datetime.now().isoformat()
                 })
             except Exception as e:
@@ -178,15 +185,13 @@ async def Kyobo_checkNewArticle(full_fetch=False):
     gc.collect()
     return all_results
 
-
-async def main():
-    result = await Kyobo_checkNewArticle(full_fetch=True)  # main에서는 모든 페이지 조회
-    print(f"Fetched {len(result)} articles.")
-    print(result)
-    db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
-    print(inserted_count)
-
-
 if __name__ == "__main__":
+    async def main():
+        result = await Kyobo_checkNewArticle(full_fetch=True)  # main에서는 모든 페이지 조회
+        print(f"Fetched {len(result)} articles.")
+        print(result)
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+        print(inserted_count)
+
     asyncio.run(main())
