@@ -85,7 +85,8 @@ async def BNK_checkNewArticle():
                     "ARTICLE_TITLE": ARTICLE_TITLE,
                     "ARTICLE_URL": ARTICLE_URL,
                     "DOWNLOAD_URL": ARTICLE_URL,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "SAVE_TIME": datetime.now().isoformat(),
+                    "KEY": ARTICLE_URL
                 })
 
         # 메모리 정리
