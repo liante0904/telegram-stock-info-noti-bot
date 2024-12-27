@@ -83,6 +83,7 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                 "WRITER": WRITER,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
+                "KEY": LIST_ARTICLE_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
 
