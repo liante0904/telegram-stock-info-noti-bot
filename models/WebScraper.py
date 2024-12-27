@@ -223,7 +223,7 @@ class AsyncWebScraper:
         :param headers: 요청에 사용할 헤더 (기본값은 None)
         """
         self.target_url = target_url
-        self.headers = headers or {"User-Agent": "Mozilla/5.0"}
+        self.headers = headers or {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"}
 
     async def Get(self, session=None, params=None):
         """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
@@ -266,7 +266,15 @@ class AsyncWebScraper:
         :param params: 요청 시 보낼 URL 인코딩 데이터 (기본값 None)
         :param json_data: JSON 데이터 (기본값 None)
         """
-        async with session or aiohttp.ClientSession() as new_session:
+        conn = aiohttp.TCPConnector(ssl=False, force_close=True)  # SSL 인증 비활성화
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Content-Type": "application/json;charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+            "Referrer": self.target_url  # Referrer 헤더 추가
+        }
+        async with session or aiohttp.ClientSession(connector=conn) as new_session:
             response = await (session or new_session).post(self.target_url, headers=self.headers, data=params, json=json_data)
             response.raise_for_status()
             print('=' * 40)
