@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*- 
-import os
 import gc
 import requests
 import json

@@ -1,8 +1,5 @@
 # -*- coding:utf-8 -*- 
 import os
-import gc
-import requests
-import re
 import sys
 import asyncio
 import aiohttp
