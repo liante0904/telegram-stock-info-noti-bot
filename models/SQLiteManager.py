@@ -134,7 +134,6 @@ class SQLiteManager:
         self.close_connection()  # 데이터베이스 연결 닫기
         return inserted_count, updated_count
 
-
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """
         TELEGRAM_URL 갱신이 필요한 레코드를 조회합니다.
@@ -205,6 +204,7 @@ class SQLiteManager:
             "telegram_url": telegram_url,
             "article_title": article_title
         }
+    
     async def execute_query(self, query, params=None, close=False):
         """주어진 쿼리를 실행하고 결과를 반환합니다. 필요 시 커넥션을 종료합니다."""
         async with aiosqlite.connect(self.db_path) as conn:
@@ -296,6 +296,74 @@ class SQLiteManager:
 
         return rows
 
+    async def daily_update_data(self, date_str=None, fetched_rows=None, type=None):
+        """
+        데이터베이스의 데이터를 업데이트하는 함수입니다.
+        
+        Args:
+            fetched_rows (list[dict] or dict): 'send' 타입일 경우에는 업데이트할 여러 행의 리스트를 전달하고, 
+                                            'download' 타입일 경우에는 단일 행의 딕셔너리를 전달합니다.
+            type (str): 업데이트 유형을 지정합니다. 'send' 또는 'download' 중 하나를 선택해야 합니다.
+                        'send'는 여러 행을 업데이트하고, 'download'는 단일 행을 업데이트합니다.
+        
+        Raises:
+            ValueError: 'type'이 'send' 또는 'download'가 아닌 경우 예외를 발생시킵니다.
+        
+        """
+        
+        """데이터를 업데이트합니다. type에 따라 업데이트 쿼리가 달라집니다."""
+        
+        if date_str is None:
+            # date_str가 없으면 현재 날짜 사용
+            query_date = datetime.now().strftime('%Y-%m-%d')
+        else:
+            # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
+            query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+
+        # 'type' 파라미터가 필수임을 확인
+        if type not in ['send', 'download']:
+            raise ValueError("Invalid type. Must be 'send' or 'download'.")
+
+        # 'send' 타입에 대한 업데이트 처리
+        if type == 'send':
+            update_query = """
+                UPDATE data_main_daily_send
+                SET 
+                    MAIN_CH_SEND_YN = 'Y'
+                WHERE 
+                    id = ?  -- id를 기준으로 업데이트
+            """
+            # 여러 건의 데이터를 업데이트
+            for row in fetched_rows:
+                print(f"Row data: {row}")
+                
+                # 쿼리와 파라미터를 출력
+                print(f"Executing query: {update_query}")
+                print(f"With parameters: {(row['id'],)}")
+                
+                # 업데이트 쿼리 실행
+                rows = await self.execute_query(update_query, (row['id'],))
+
+        # 'download' 타입에 대한 업데이트 처리
+        elif type == 'download':
+            update_query = """
+                UPDATE data_main_daily_send
+                SET 
+                    DOWNLOAD_STATUS_YN = 'Y'
+                WHERE 
+                    id = ?  -- id를 기준으로 업데이트
+            """
+            # 단일 행 데이터 업데이트
+            print(f"Single row for download: {fetched_rows}")
+            
+            # 쿼리와 파라미터를 출력합니다.
+            print(f"Executing query: {update_query}")
+            print(f"With parameters: {(fetched_rows['id'],)}")
+            
+            # 업데이트 쿼리 실행
+            rows = await self.execute_query(update_query, (fetched_rows['id'],))
+        return rows
+
 async def main():
     db_manager = SQLiteManager()
     rows = await db_manager.daily_select_data(date_str='20241230', type='send')
@@ -306,9 +374,12 @@ async def main():
 # 예시 사용법
 if __name__ == "__main__":
     async def main():
-        manager = SQLiteManager()
-        data = await manager.daily_select_data(type='send')
-        print(data)
-        manager.close_connection()
+        db = SQLiteManager()
+        rows = await db.daily_select_data(type='send')
+        print(rows)
+        if rows:
+            r = await db.daily_update_data(fetched_rows=rows, type='send')
+            print(r)
+        db.close_connection()
 
     asyncio.run(main())
