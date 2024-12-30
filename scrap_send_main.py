@@ -1,13 +1,17 @@
-import argparse
+import os
 import asyncio
-from package.json_to_sqlite import daily_select_data, daily_update_data
+import argparse
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
-from models.SecretKey import SecretKey
+from models.SQLiteManager import SQLiteManager
+from dotenv import load_dotenv
 
-SECRET_KEY = SecretKey()
-token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+load_dotenv()
+
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+chat_id = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
+
 
 def format_date(date_str):
     """
@@ -53,8 +57,9 @@ async def daily_report(report_type, date_str=None):
     date_str : str, optional
         처리할 날짜 (형식: YYYY-MM-DD). 기본값은 None입니다.
     """
+    db = SQLiteManager()
     if report_type == 'send':
-        rows = await daily_select_data(date_str=date_str, type=report_type)
+        rows = await db.daily_select_data(date_str=date_str, type=report_type)
         if rows:
             formatted_messages = await convert_sql_to_telegram_messages(rows)
             print('=' * 30)
@@ -65,7 +70,7 @@ async def daily_report(report_type, date_str=None):
                 try:
                     print(f"메시지 발송 중: {sendMessageText}")
                     await sendMarkDownText(token=token,
-                                           chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+                                           chat_id=chat_id,
                                            sendMessageText=sendMessageText)
                 except Exception as e:
                     print(f"메시지 발송 실패: {sendMessageText}, 오류: {e}")
@@ -73,14 +78,14 @@ async def daily_report(report_type, date_str=None):
 
             # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
             if send_success:
-                r = await daily_update_data(date_str=date_str, fetched_rows=rows, type=report_type)
+                r = await db.daily_update_data(date_str=date_str, fetched_rows=rows, type=report_type)
                 if r:
                     print('DB 업데이트 성공')
             else:
                 print('일부 메시지 발송 실패, DB 업데이트 생략')
 
     elif report_type == 'download':
-        rows = await daily_select_data(date_str=date_str, type='download')
+        rows = await db.daily_select_data(date_str=date_str, type='download')
         # print(rows)
 
         # 파일 다운로드 처리
@@ -92,7 +97,7 @@ async def daily_report(report_type, date_str=None):
                 
                 if download_success:
                     # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
-                    r = await daily_update_data(date_str=date_str, fetched_rows=row, type='download')
+                    r = await db.daily_update_data(date_str=date_str, fetched_rows=row, type='download')
                 else:
                     print(f"파일 다운로드 실패: {row.get('file_name', '')}")  # 실패한 파일 로그 출력
                     continue
