@@ -259,7 +259,7 @@ class AsyncWebScraper:
             print('==================AsyncWebScraper GetJson==================')
             return await response.json()
 
-    async def PostJson(self, session=None, params=None, json_data=None):
+    async def PostJson(self, headers=None, session=None, params=None, json_data=None):
         """
         비동기 POST 요청을 통해 JSON 데이터를 가져오는 메서드.
         :param session: aiohttp ClientSession 인스턴스 (선택적)
@@ -267,13 +267,12 @@ class AsyncWebScraper:
         :param json_data: JSON 데이터 (기본값 None)
         """
         conn = aiohttp.TCPConnector(ssl=False, force_close=True)  # SSL 인증 비활성화
-        self.headers = {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",
-            "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Content-Type": "application/json;charset=UTF-8",
-            "X-Requested-With": "XMLHttpRequest",
-            "Referrer": self.target_url  # Referrer 헤더 추가
-        }
+        self.headers = headers
+        if headers is None:
+            self.headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                "Referrer": self.target_url  # Referrer 헤더 추가
+            }
         async with session or aiohttp.ClientSession(connector=conn) as new_session:
             response = await (session or new_session).post(self.target_url, headers=self.headers, data=params, json=json_data)
             response.raise_for_status()
