@@ -9,6 +9,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.SQLiteManager import SQLiteManager
 
 def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
     SEC_FIRM_ORDER = 1
@@ -17,6 +18,8 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
 
     requests.packages.urllib3.disable_warnings()
 
+    if cur_page is None:
+        cur_page = 1
     # 신한증권 국내산업분석
     TARGET_URL_0 = 'giindustry'
     
@@ -108,5 +111,12 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
     return json_data_list
 
 if __name__ == "__main__":
-    r = ShinHanInvest_checkNewArticle(cur_page=100, single_page_only=False)
-    print(r)
+    results = ShinHanInvest_checkNewArticle(cur_page=100, single_page_only=False)
+    print(f"Fetched {len(results)} articles from Meritz.")
+    print(results)
+
+    db = SQLiteManager()
+    inserted_count_results = db.insert_json_data_list(results, 'data_main_daily_send')
+
+    print(f"Articles Inserted: {inserted_count_results}")
+
