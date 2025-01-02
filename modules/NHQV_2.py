@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*- 
+# -*- coding:utf-8 -*-
 import os
 import sys
 import asyncio
@@ -7,16 +7,12 @@ from datetime import datetime, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.WebScraper import AsyncWebScraper
 from utils.date_util import GetCurrentDate_NH
-from models.FirmInfo import FirmInfo
-from models.WebScraper import AsyncWebScraper
 from models.SQLiteManager import SQLiteManager
 
 # 주말이 아닌 평일을 확인하는 함수
 def is_weekday(date: datetime):
     return date.weekday() < 5  # 월=0, 금=4, 토=5, 일=6
-
 
 # 시작일부터 종료일까지 평일 리스트 생성
 def generate_workdays(start_date: datetime, end_date: datetime):
@@ -28,7 +24,6 @@ def generate_workdays(start_date: datetime, end_date: datetime):
         current_date += timedelta(days=1)
     return weekdays
 
-
 async def NHQV_checkNewArticle(target_date=None):
     json_data_list = []
     SEC_FIRM_ORDER = 2
@@ -39,16 +34,16 @@ async def NHQV_checkNewArticle(target_date=None):
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Accept': 'application/json, text/javascript, */*; q=0.01'
     }
-    
+
     # 기본적으로 target_date가 없으면 현재 날짜로 설정
     if target_date is None:
         target_date = GetCurrentDate_NH()
-    
+
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
-    
+
     payload = {
         "trName": "H3211",
         "rshPprDruTmSt": "00000000",
@@ -56,12 +51,13 @@ async def NHQV_checkNewArticle(target_date=None):
         "rshPprDruDtEd": target_date,
         "rshPprNo": ""
     }
-    
+
     async with aiohttp.ClientSession() as session:
-        scraper = AsyncWebScraper(target_url=TARGET_URL, headers=headers)
         while True:
             try:
-                jres = await scraper.PostJson(session, params=payload, json_data=None)
+                async with session.post(TARGET_URL, headers=headers, data=payload) as response:
+                    response.raise_for_status()
+                    jres = await response.json()
             except Exception as e:
                 print(f"Error fetching articles for {target_date}: {e}")
                 return []
@@ -82,7 +78,7 @@ async def NHQV_checkNewArticle(target_date=None):
                     "WRITER": article['rshPprDruEmpFnm'],
                     "TELEGRAM_URL": article['hpgeFleUrlCts'],
                     "ARTICLE_TITLE": article['rshPprTilCts'],
-                    "KEY":article['hpgeFleUrlCts'],
+                    "KEY": article['hpgeFleUrlCts'],
                     "SAVE_TIME": datetime.now().isoformat()
                 })
 
@@ -91,9 +87,9 @@ async def NHQV_checkNewArticle(target_date=None):
                 payload['rshPprNo'] = articles[-1]['rshPprNo']
             else:
                 break
+
     print(json_data_list)
     return json_data_list
-
 
 async def main():
     start_date = datetime(2021, 1, 1)  # 2021년 초
@@ -112,7 +108,6 @@ async def main():
     print(inserted_count)
     # 여기서 원하는 방식으로 데이터를 저장하거나 처리
     return all_results
-
 
 if __name__ == "__main__":
     asyncio.run(main())
