@@ -44,8 +44,8 @@ def adjust_date(REG_DT, time_str):
 
     reg_date = reg_date + timedelta(hours=hour, minutes=minute, seconds=second)
 
-    # 오전 10시 이후는 다음날로 처리
-    if reg_date.hour >= 10:
+    # 오후 4시 이후는 다음날로 처리
+    if reg_date.hour >= 16:
         reg_date += timedelta(days=1)
 
     # 주말 처리 (토요일: 5, 일요일: 6)
@@ -53,7 +53,6 @@ def adjust_date(REG_DT, time_str):
         reg_date += timedelta(days=1)
 
     return reg_date.strftime("%Y%m%d")
-
 
 async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order, headers, max_pages=None):
     """모든 페이지 데이터를 순회하며 가져오는 함수"""
@@ -87,8 +86,8 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
         for row in soupList:
             try:
                 # 일자
-                REG_DT = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "-")
-
+                REG_DT = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "")
+                print(REG_DT)
                 # 제목 및 상세 URL
                 title_cell = row.select_one('td.tLeft a')
                 LIST_ARTICLE_TITLE = title_cell.get_text(strip=True)
@@ -122,16 +121,12 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 ATTACH_URL = None
                 if attachment_tag:
                     ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
-
-                # 시간은 기본값으로 10:00 설정
-                time_str = "10:00"
-
                 # JSON 데이터 생성
                 json_data_list.append({
                     "SEC_FIRM_ORDER": sec_firm_order,
                     "ARTICLE_BOARD_ORDER": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
-                    "REG_DT": adjust_date(REG_DT, time_str),
+                    "REG_DT": REG_DT,
                     "ATTACH_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
                     "TELEGRAM_URL": ATTACH_URL,
@@ -148,8 +143,6 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
         page += 1  # 다음 페이지로 이동
 
     return json_data_list
-
-
 
 async def Kyobo_checkNewArticle(full_fetch=False):
     """교보증권 데이터 수집"""

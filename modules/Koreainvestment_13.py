@@ -74,6 +74,7 @@ async def Koreainvestment_selenium_checkNewArticle():
                 "REG_DT":re.sub(r"[-./]", "", article_info_str[1]),
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
+                "TELEGRAM_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "WRITER": article_info_str[0],
                 "SAVE_TIME": datetime.now().isoformat()

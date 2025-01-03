@@ -136,6 +136,7 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                                     "ARTICLE_URL": BASE_URL,
                                     "ATTACH_URL": attach_url,
                                     "DOWNLOAD_URL": attach_url,
+                                    "TELEGRAM_URL": attach_url,
                                     "ARTICLE_TITLE": item['title'],
                                     "WRITER": item['username'],
                                     "SAVE_TIME": datetime.now().isoformat()

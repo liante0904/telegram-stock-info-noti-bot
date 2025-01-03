@@ -67,7 +67,7 @@ def Hmsec_checkNewArticle():
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
-            REG_DT = jres['data_list'][0]['REG_DATE'].strip()
+            REG_DT = list['REG_DATE'].strip()
             # print(jres['data_list'])
             # SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
@@ -94,3 +94,17 @@ def Hmsec_checkNewArticle():
     gc.collect()
 
     return json_data_list
+
+
+# # 비동기 함수 실행
+# async def main():
+#     result = await Sangsanginib_checkNewArticle()
+#     print(result)
+
+def main():
+    result = Hmsec_checkNewArticle()
+    print(result)
+    
+if __name__ == '__main__':
+    main()
+    # asyncio.run(main())
