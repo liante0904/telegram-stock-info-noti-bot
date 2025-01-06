@@ -58,31 +58,43 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
                 f"&param1={param1}&param2={param2}&param3={param3}&param4=/mobile/json.list.do?boardName={board_name}&curPage={cur_page}"
                 f"&param5={param5}&param6={param6}&param7={param7}&type={type_param}")
 
-
             scraper = SyncWebScraper(TARGET_URL, firm_info)
             
             # HTML parse
             jres = scraper.GetJson()
+            # print(jres)
             print(f"Calling URL: {TARGET_URL}")
             
+            # title_map에서 동적으로 키 매핑
+            title_map = {v: k for k, v in jres['title'].items()}  # 키-값을 역으로 매핑
+            print(title_map)
+            reg_dt_key = title_map.get('등록일', '')  # 등록일 키
+            title_key = title_map.get('제목', '')  # 제목 키
+            url_key = title_map.get('파일명', '')  # 파일명 키
+            
+
+            # 작성자 또는 애널리스트 키 매핑
+            writer_key = title_map.get('작성자', '') or title_map.get('애널리스트', '')  # 작성자 또는 애널리스트 키
+
             soupList = jres['list']
             if not soupList:
                 break
 
             # JSON To List
-            for list in soupList:
-                REG_DT = list['f0']
-                REG_DT = re.sub(r"[-./]", "", REG_DT)
-                LIST_ARTICLE_TITLE = list['f1']
-                LIST_ARTICLE_URL = list['f3']
-                WRITER = list['f5']
+            for item in soupList:
+                REG_DT = item.get(reg_dt_key, '')  # 등록일
+                if REG_DT:
+                    REG_DT = re.sub(r"[-./]", "", REG_DT)
+                LIST_ARTICLE_TITLE = item.get(title_key, '')  # 제목
+                LIST_ARTICLE_URL = item.get(url_key, '')  # 파일명
+                WRITER = item.get(writer_key, '')  # 작성자
 
                 try:
                     LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
                     LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
                 except Exception as e:
                     print("에러 발생:", e)
-                    LIST_ARTICLE_URL = list['f3']
+                    LIST_ARTICLE_URL = item.get(url_key, '')
                 
                 json_data_list.append({
                     "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
@@ -97,7 +109,6 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
                     "KEY:": LIST_ARTICLE_URL,
                     "SAVE_TIME": datetime.now().isoformat()
                 })
-                # print(json_data_list)
 
             # 다음 페이지로 이동
             if single_page_only:
@@ -111,9 +122,9 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
     return json_data_list
 
 if __name__ == "__main__":
-    results = ShinHanInvest_checkNewArticle(cur_page=100, single_page_only=False)
+    results = ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True)
     print(f"Fetched {len(results)} articles from Meritz.")
-    print(results)
+    # print(results)
 
     db = SQLiteManager()
     inserted_count_results = db.insert_json_data_list(results, 'data_main_daily_send')
