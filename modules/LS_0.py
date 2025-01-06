@@ -81,6 +81,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
         for list in soupList:
             try:
+                WRITER = list.select('td')[2].get_text()
                 str_date = list.select('td')[3].get_text()
                 list = list.select('a')
                 LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + list[0]['href'].replace("amp;", "")
@@ -98,6 +99,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     "ATTACH_URL": '',
                     "DOWNLOAD_URL": '',
                     "TELEGRAM_URL": '',
+                    "WRITER": WRITER,
                     "KEY": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "SAVE_TIME": datetime.now().isoformat()
