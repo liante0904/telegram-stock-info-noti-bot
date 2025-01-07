@@ -61,6 +61,7 @@ async def BNK_checkNewArticle():
 
                 # ARTICLE_TITLE 및 ARTICLE_URL 추출
                 article_link = cells[1].find("a")
+                WRITER = cells[2].get_text(strip=True)
                 if not article_link:
                     continue
 
@@ -75,6 +76,8 @@ async def BNK_checkNewArticle():
                     file_name = match.group(2)
                     ARTICLE_URL = f"https://www.bnkfn.co.kr{base_path}/{file_name}"
 
+                
+                
                 REG_DT = cells[4].get_text(strip=True)
 
                 json_data_list.append({
@@ -86,6 +89,7 @@ async def BNK_checkNewArticle():
                     "ARTICLE_URL": ARTICLE_URL,
                     "DOWNLOAD_URL": ARTICLE_URL,
                     "TELEGRAM_URL": ARTICLE_URL,
+                    "WRITER": WRITER,
                     "SAVE_TIME": datetime.now().isoformat(),
                     "KEY": ARTICLE_URL
                 })
