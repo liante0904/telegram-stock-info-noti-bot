@@ -11,6 +11,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.SQLiteManager import SQLiteManager
 
 def Miraeasset_checkNewArticle():
     SEC_FIRM_ORDER      = 8
@@ -73,9 +74,10 @@ def Miraeasset_checkNewArticle():
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                "SAVE_TIME": datetime.now().isoformat()
+                "SAVE_TIME": datetime.now().isoformat(),
+                "KEY": DOWNLOAD_URL
             })
-            # print(json_data_list)
+            print(json_data_list)
 
             
 
@@ -84,4 +86,16 @@ def Miraeasset_checkNewArticle():
     gc.collect()
 
     return json_data_list
-Miraeasset_checkNewArticle()
+
+
+
+
+if __name__ == "__main__":
+    result = Miraeasset_checkNewArticle()
+    print(result)
+    if not result:
+        print("No articles found.")
+    else:
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
+        print(f"Inserted {inserted_count} articles.")
