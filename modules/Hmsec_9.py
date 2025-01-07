@@ -50,9 +50,8 @@ def Hmsec_checkNewArticle():
         # print('REG_DATE:',REG_DATE)
         # print('FILE_NAME:',FILE_NAME)
 
+        # print(jres)
         soupList = jres['data_list']
-        
-        nNewArticleCnt = 0
         
         # JSON To List
         for list in soupList:
@@ -68,6 +67,8 @@ def Hmsec_checkNewArticle():
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
             REG_DT = list['REG_DATE'].strip()
+            list['NAME'] = (list.get('NAME') or '').strip()
+            WRITER = list['NAME'].strip()
             # print(jres['data_list'])
             # SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
@@ -85,6 +86,7 @@ def Hmsec_checkNewArticle():
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
                 "KEY": LIST_ARTICLE_URL,
+                "WRITER": WRITER,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
@@ -92,7 +94,7 @@ def Hmsec_checkNewArticle():
     # 메모리 정리
     del soupList
     gc.collect()
-
+    # print(json_data_list)
     return json_data_list
 
 
