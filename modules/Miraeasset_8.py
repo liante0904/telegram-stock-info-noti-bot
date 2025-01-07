@@ -40,33 +40,19 @@ def Miraeasset_checkNewArticle():
         # 첫 번째 레코드의 제목을 바로 담습니다.
         soupList = soup.select("tbody tr")[2:]  # 타이틀 제거
 
-        # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
-
-        # 게시물 정보 파싱
-        for index, post in enumerate(soupList):
-            #contents > table > tbody > tr:nth-child(2) > 
-            
-
-            if index == 0:  # 첫 번째 레코드는 이미 처리했으므로 건너뜁니다.
-                continue
-            title_element = post.select_one(".subject a")
-            if not title_element:  # 제목 요소가 없는 경우
-                continue  # 건너뜁니다.
-            title = title_element.get_text()  # strip 제거
-            attachment_element = post.select_one(".bbsList_layer_icon a")
-            attachment_link = "없음"
-            if attachment_element:
-                attachment_link = re.search(r"javascript:downConfirm\('(.*?)'", attachment_element["href"]).group(1)
-            # print("제목:", title)
-            # print("첨부 파일:", attachment_link)
-            # print()
-
-
-
-        nNewArticleCnt = 0
         for list in soupList:
-
-            LIST_ARTICLE_TITLE = list.select_one(".subject a").text
+            # print(list)
+            # print(list.select_one("td:nth-child(1)").get_text(strip=True))
+            # print(list.select_one("td:nth-child(2)").get_text(strip=True))
+            # print(list.select_one("td:nth-child(3)").get_text(strip=True))
+            # print(list.select_one("td:nth-child(4)").get_text(strip=True))
+            
+            REG_DT = list.select_one("td:nth-child(1)").get_text(strip=True) # 날짜
+            REG_DT = re.sub(r"[-./]", "", REG_DT) # 날짜 포맷 정리
+            
+            LIST_ARTICLE_TITLE = list.select_one("td:nth-child(2)").get_text(strip=True) # 제목
+            WRITER = list.select_one("td:nth-child(4)").get_text(strip=True) # 작성자
+            
             LIST_ARTICLE_URL = "없음"
             DOWNLOAD_URL = "없음"  # 기본값 설정
             attachment_element = list.select_one(".bbsList_layer_icon a")
@@ -77,19 +63,19 @@ def Miraeasset_checkNewArticle():
                 LIST_ARTICLE_TITLE = " : ".join(LIST_ARTICLE_TITLE)
                 DOWNLOAD_URL = LIST_ARTICLE_URL  # attachment_element가 있을 때만 갱신
 
-            REG_DT = list.select_one("td:nth-child(1)").get_text(strip=True)
-            REG_DT = re.sub(r"[-./]", "", REG_DT)
+
             json_data_list.append({
                 "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                 "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                 "FIRM_NM": firm_info.get_firm_name(),
                 "REG_DT": REG_DT,
-                "ATTACH_URL": LIST_ARTICLE_URL,
+                "WRITER": WRITER,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat()
             })
+            # print(json_data_list)
 
             
 
