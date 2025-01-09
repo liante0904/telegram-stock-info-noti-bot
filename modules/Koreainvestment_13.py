@@ -77,6 +77,7 @@ async def Koreainvestment_selenium_checkNewArticle():
                 "TELEGRAM_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "WRITER": article_info_str[0],
+                "KEY": DOWNLOAD_URL,
                 "SAVE_TIME": datetime.now().isoformat()
             })
             
