@@ -97,6 +97,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                         "DOWNLOAD_URL": download_url,
                         "ARTICLE_TITLE": title,
                         "WRITER": writer,
+                        "KEY": download_url,
                         "TELEGRAM_URL": download_url,
                         "SAVE_TIME": datetime.now().isoformat()
                     })
