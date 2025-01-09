@@ -139,6 +139,7 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                                     "TELEGRAM_URL": attach_url,
                                     "ARTICLE_TITLE": item['title'],
                                     "WRITER": item['username'],
+                                    "KEY": attach_url,
                                     "SAVE_TIME": datetime.now().isoformat()
                                 })
                             except KeyError as e:
