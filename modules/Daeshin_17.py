@@ -94,6 +94,7 @@ async def Daeshin_checkNewArticle():
                     "ATTACH_URL": attach_url,
                     "DOWNLOAD_URL": attach_url,
                     "TELEGRAM_URL": attach_url,
+                    "KEY": attach_url,
                     "ARTICLE_TITLE": title,
                     "WRITER": author,
                     "SAVE_TIME": datetime.now().isoformat()
