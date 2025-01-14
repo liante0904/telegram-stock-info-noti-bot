@@ -87,7 +87,6 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
             try:
                 # 일자
                 REG_DT = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "")
-                print(REG_DT)
                 # 제목 및 상세 URL
                 title_cell = row.select_one('td.tLeft a')
                 LIST_ARTICLE_TITLE = title_cell.get_text(strip=True)
@@ -121,6 +120,8 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 ATTACH_URL = None
                 if attachment_tag:
                     ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
+                
+                print(json_data_list)
                 # JSON 데이터 생성
                 json_data_list.append({
                     "SEC_FIRM_ORDER": sec_firm_order,
