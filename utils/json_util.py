@@ -6,6 +6,52 @@ import argparse
 # 전역 변수로 필터링할 증권사 목록 정의
 EXCLUDED_FORWARD_REPORT_FIRMS = {"하나증권", "신한투자증권", "이베스트증권","이베스트투자증권", "미래에셋증권", "iM증권", "대신증권", "상상인증권", "LS증권","키움증권", "유진투자증권", "메리츠증권", "한화투자증권"}
 
+def format_message(data_list):
+    EMOJI_PICK = u'\U0001F449'  # 이모지 설정
+    formatted_messages = []
+
+    # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
+    if isinstance(data_list, dict):
+        data_list = [data_list]
+
+    last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
+
+    for data in data_list:
+        ARTICLE_TITLE = data.get('ARTICLE_TITLE','')
+        ARTICLE_URL = data.get('ATTACH_URL','')
+        
+        sendMessageText = ""
+        
+        # 'FIRM_NM'이 존재하는 경우에만 포함
+        if 'FIRM_NM' in data:
+            FIRM_NM = data['FIRM_NM']
+            # data_list가 단건인 경우, 회사명 출력을 생략
+            if len(data_list) > 1:
+                # 제외할 FIRM_NM이 아닌 경우에만 처리
+                if '네이버' not in FIRM_NM or '조선비즈' not in FIRM_NM:
+                    # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
+                    if FIRM_NM != last_firm_nm:
+                        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
+                        last_firm_nm = FIRM_NM
+        
+
+    # 게시글 제목이 유효한 값인지 확인
+    if ARTICLE_TITLE:
+        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+    else:
+        sendMessageText += ""  # 제목이 없을 경우의 처리
+
+    # 원문 링크가 유효한 값인지 확인
+    if ARTICLE_URL:
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+    else:
+        sendMessageText += ""  # 링크가 없을 경우의 처리
+
+    formatted_messages.append(sendMessageText)
+    # 모든 메시지를 하나의 문자열로 결합합니다.
+    return "\n".join(formatted_messages)
+
+
 def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, download_url=None, send_users=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
 
@@ -74,50 +120,6 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         return ''
 
 def get_unsent_main_ch_data_to_local_json(filename):
-    def format_message(data_list):
-        EMOJI_PICK = u'\U0001F449'  # 이모지 설정
-        formatted_messages = []
-
-        # data_list가 단일 데이터 항목일 경우, 리스트로 감싸줍니다.
-        if isinstance(data_list, dict):
-            data_list = [data_list]
-
-        last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
-
-        for data in data_list:
-            ARTICLE_TITLE = data.get('ARTICLE_TITLE','')
-            ARTICLE_URL = data.get('ATTACH_URL','')
-            
-            sendMessageText = ""
-            
-            # 'FIRM_NM'이 존재하는 경우에만 포함
-            if 'FIRM_NM' in data:
-                FIRM_NM = data['FIRM_NM']
-                # data_list가 단건인 경우, 회사명 출력을 생략
-                if len(data_list) > 1:
-                    # 제외할 FIRM_NM이 아닌 경우에만 처리
-                    if '네이버' not in FIRM_NM or '조선비즈' not in FIRM_NM:
-                        # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
-                        if FIRM_NM != last_firm_nm:
-                            sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                            last_firm_nm = FIRM_NM
-            
-
-        # 게시글 제목이 유효한 값인지 확인
-        if ARTICLE_TITLE:
-            sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
-        else:
-            sendMessageText += ""  # 제목이 없을 경우의 처리
-
-        # 원문 링크가 유효한 값인지 확인
-        if ARTICLE_URL:
-            sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
-        else:
-            sendMessageText += ""  # 링크가 없을 경우의 처리
-
-        formatted_messages.append(sendMessageText)
-        # 모든 메시지를 하나의 문자열로 결합합니다.
-        return "\n".join(formatted_messages)
 
     directory = os.path.dirname(filename)
     
