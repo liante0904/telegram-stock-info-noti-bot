@@ -121,7 +121,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 if attachment_tag:
                     ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
                 
-                print(json_data_list)
+                # print(json_data_list)
                 # JSON 데이터 생성
                 json_data_list.append({
                     "SEC_FIRM_ORDER": sec_firm_order,
