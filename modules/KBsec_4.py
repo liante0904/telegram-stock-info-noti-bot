@@ -29,8 +29,8 @@ async def KB_checkNewArticle():
     # 요청 payload 데이터
     payload = {
         "pageNo": 1,
-        "pageSize": 60,
-        "registdateFrom": datetime.now().strftime("%Y%m%d"),
+        "pageSize": 500,
+        "registdateFrom": datetime(datetime.now().year, 1, 1).strftime("%Y%m%d"),
         "registdateTo": datetime.now().strftime("%Y%m%d"),
         "templateid": "",
         "lowTempId": "",
@@ -48,6 +48,11 @@ async def KB_checkNewArticle():
 
     # JSON To List 변환
     for item in soupList:
+        print(item['pCategoryid'], item['docTitle'], item['docTitleSub'], item['publicDate'], item['documentid'])
+        
+        MKT_TP = "KR"
+        if item['pCategoryid'] == 26:
+            MKT_TP = "GLOBAL"
         REG_DT = re.sub(r"[-./]", "", item['publicDate'])
         WRITER = item['analystNm']
         LIST_ARTICLE_TITLE = item['docTitleSub']
@@ -64,6 +69,7 @@ async def KB_checkNewArticle():
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
             "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+            "MKT_TP": MKT_TP,
             "KEY:": LIST_ARTICLE_URL,
             "SAVE_TIME": datetime.now().isoformat()
         })
@@ -102,8 +108,8 @@ async def main():
     json_data_list = await KB_checkNewArticle()
     print(f"New Article Count: {len(json_data_list)}")
     print("JSON Data List:")
-    for item in json_data_list:
-        print(item)
+    # for item in json_data_list:
+    #     print(item)
 
 # 비동기 함수 실행
 if __name__ == "__main__":

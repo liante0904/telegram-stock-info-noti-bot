@@ -122,7 +122,7 @@ async def Daeshin_checkNewArticle():
         
         # 모든 태스크 완료 대기
         await asyncio.gather(*tasks)
-        print(json_data_list)
+        # print(json_data_list)
         return json_data_list
 
 

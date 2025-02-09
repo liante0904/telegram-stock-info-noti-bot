@@ -27,7 +27,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         
         
 
-    print(stdate, eddate, page_size)
+    # print(stdate, eddate, page_size)
     SEC_FIRM_ORDER = 21  # 한화투자증권 고유 ID
     ARTICLE_BOARD_ORDER = 0
     firm_info = FirmInfo(

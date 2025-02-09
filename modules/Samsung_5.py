@@ -55,8 +55,8 @@ def Samsung_checkNewArticle():
                     continue
 
                 LIST_ARTICLE_TITLE = title_element.text.strip()
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
-                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")") + 1:].strip()
+                # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
+                # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")") + 1:].strip()
                 
                 # PDF 링크 데이터 파싱
                 a_href = item.a.get("href", "").replace("javascript:downloadPdf(", "").replace(")", "").replace("'", "")
@@ -75,8 +75,8 @@ def Samsung_checkNewArticle():
                 pub_date = dd_elements[0].text.strip() if len(dd_elements) > 0 else "N/A"
                 category = dd_elements[1].text.strip() if len(dd_elements) > 1 else "N/A"
                 author = dd_elements[2].text.strip() if len(dd_elements) > 2 else "N/A"
-
-
+                
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace(f"({author})", "")
                 
                 # 결과 저장
                 json_data_list.append({
