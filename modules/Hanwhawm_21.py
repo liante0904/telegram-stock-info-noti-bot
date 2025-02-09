@@ -43,7 +43,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         # Query string 생성
         params = {
             "pageSize": page_size,
-            "depth2_id": "1002",  # Research depth ID
+            # "depth2_id": "1002",  # Research depth ID
             "mode": "depth2",
             "ch_gbn": "iOS",
             "pageVal": page_val
@@ -67,6 +67,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
 
 
     def parse_xml(xml_text, firm_info=firm_info):
+        # print(xml_text)
         try:
             root = ET.fromstring(xml_text)
             articles = []
@@ -74,12 +75,18 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
             for block in root.findall(".//block1"):
                 try:
                     reg_date = re.sub(r"[-./]", "", block.find("dt_regdate").text or "")
+                    
+                    depth3_id = block.find("depth3_id").text or ""
                     title = block.find("vc_title").text or "No Title"
                     writer = block.find("vc_penname").text or "Unknown"
                     file_name = block.find("fname").text or ""
                     store_name = block.find("sname").text or ""
                     dir_path = block.find("dir").text or ""
-
+                    if depth3_id == "anls19":
+                        mkt_tp = "GLOBAL"
+                    else:
+                        mkt_tp = "KR"
+                        
                     # URL 필드 검증 및 인코딩
                     attach_url = f"https://www.hanwhawm.com/{dir_path}/{file_name}" if file_name and dir_path else ""
                     download_url = (
@@ -97,6 +104,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                         "DOWNLOAD_URL": download_url,
                         "ARTICLE_TITLE": title,
                         "WRITER": writer,
+                        "MKT_TP": mkt_tp,
                         "KEY": download_url,
                         "TELEGRAM_URL": download_url,
                         "SAVE_TIME": datetime.now().isoformat()
@@ -128,7 +136,7 @@ if __name__ == "__main__":
 
     # Run the async function with specified parameters
     result = asyncio.run(Hanwha_checkNewArticle(stdate, eddate, page_size))
-    print(result)
+    # print(result)
     
     if not result:
         print("No articles found.")
