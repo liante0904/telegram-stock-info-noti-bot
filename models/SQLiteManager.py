@@ -87,8 +87,8 @@ class SQLiteManager:
                 INSERT INTO {table_name} (
                     SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-                    DOWNLOAD_URL, TELEGRAM_URL, WRITER, KEY, SAVE_TIME 
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME 
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(KEY) DO UPDATE SET
                     REG_DT = excluded.REG_DT,  -- 항상 갱신
                     WRITER = excluded.WRITER,  -- 항상 갱신
@@ -114,6 +114,7 @@ class SQLiteManager:
                 entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
                 entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
                 entry.get("WRITER", ''),
+                entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
                 entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
                 entry["SAVE_TIME"]
             ))
