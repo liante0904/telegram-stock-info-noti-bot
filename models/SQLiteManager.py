@@ -92,6 +92,7 @@ class SQLiteManager:
                 ON CONFLICT(KEY) DO UPDATE SET
                     REG_DT = excluded.REG_DT,  -- 항상 갱신
                     WRITER = excluded.WRITER,  -- 항상 갱신
+                    MKT_TP = excluded.MKT_TP,  -- 항상 갱신
                     DOWNLOAD_URL = CASE 
                         WHEN excluded.DOWNLOAD_URL IS NOT NULL AND excluded.DOWNLOAD_URL != '' 
                         THEN excluded.DOWNLOAD_URL 
