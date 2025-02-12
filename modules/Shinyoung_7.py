@@ -46,30 +46,29 @@ def Shinyoung_checkNewArticle():
     # print(jres['rows'])
     soupList = jres['rows']
     
-    nNewArticleCnt = 0
-    
     # JSON To List
     for list in soupList:
         # print('list***************** \n',list)
-        
+        MKT_TP              = "KR"    
         REG_DT              = re.sub(r"[-./]", "", list['APPDATE'])
         WRITER              = list['EMPNM']
         # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
+        if "해외주식" in LIST_ARTICLE_TITLE :
+            MKT_TP = "GLOBAL"
         DOWNLOAD_URL = LIST_ARTICLE_URL
         json_data_list.append({
             "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
             "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
             "FIRM_NM":firm_info.get_firm_name(),
+            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "REG_DT":REG_DT,
             "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
-            "DOWNLOAD_URL": DOWNLOAD_URL,
             "TELEGRAM_URL": DOWNLOAD_URL,
+            "MKT_TP": MKT_TP,
             "KEY":LIST_ARTICLE_URL,
-            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-            
             "SAVE_TIME": datetime.now().isoformat()
         })
             
@@ -77,7 +76,6 @@ def Shinyoung_checkNewArticle():
     # 메모리 정리
     del soupList
     gc.collect()
-
     return json_data_list
 
 def Shinyoung_detail(SEQ, BBSNO):
@@ -189,3 +187,6 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     # print('*******************완성된 URL',url)
     return url
+
+if __name__ == "__main__":
+    Shinyoung_checkNewArticle()
