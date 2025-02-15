@@ -115,7 +115,7 @@ def Samsung_checkNewArticle():
     # 3. 정렬된 결과 출력
     # print("Sorted JSON Data:")
     # print(json.dumps(sorted_data, indent=4, ensure_ascii=False))
-    print(json_data_list)
+    # print(json_data_list)
     return json_data_list
 
 def extract_and_deduplicate(json_list):
