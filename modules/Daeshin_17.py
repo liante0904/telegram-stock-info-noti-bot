@@ -91,7 +91,6 @@ async def Daeshin_checkNewArticle():
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", reg_dt),
                     "ARTICLE_URL": article_url,
-                    "ATTACH_URL": attach_url,
                     "DOWNLOAD_URL": attach_url,
                     "TELEGRAM_URL": attach_url,
                     "KEY": attach_url,
