@@ -106,15 +106,35 @@ async def NAVER_Report_checkNewArticle():
 
 def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     strUrl = ''
-    request = urllib.request.Request(LIST_ARTICLE_URL, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'})
-    #검색 요청 및 처리
-    response = urllib.request.urlopen(request).read() 
+    request = urllib.request.Request(
+        LIST_ARTICLE_URL,
+        headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'}
+    )
+    
+    # 검색 요청 및 응답 처리
+    response = urllib.request.urlopen(request)
+    html = response.read()
 
-    # HTML parse
-    soup = BeautifulSoup(response, "html.parser")
-    # print(soup)
-    soupList = soup.select_one('#content > div.fs3 > div > div.ArticleDetailHeaderTools_article__JHT6y.ArticleDetailHeaderTools_article_original___wGZh > a')
-    strUrl = soupList.attrs['href']
+    try:
+        # UTF-8 디코딩
+        html_decoded = html.decode("utf-8")
+    except UnicodeDecodeError:
+        html_decoded = html.decode("utf-8", errors="replace")
+
+    print("페이지 URL:", LIST_ARTICLE_URL)
+    
+    # HTML 파싱
+    soup = BeautifulSoup(html_decoded, "html.parser")
+
+    # "원문 보기" 버튼이 포함된 <a> 태그 찾기
+    a_tag = soup.find("a", class_="ResearchHeaderTools_button_text__5E_Qj")
+
+    # href 값 가져오기
+    if a_tag and "href" in a_tag.attrs:
+        strUrl = a_tag["href"]
+        print("찾은 링크:", strUrl)
+    else:
+        print("해당 태그를 찾을 수 없습니다.")
 
     return strUrl
 
