@@ -1,6 +1,8 @@
 import asyncio
 import aiohttp
 import json
+import ssl
+import certifi
 from datetime import datetime
 import os
 import sys
@@ -15,6 +17,13 @@ HEADERS_TEMPLATE = {
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
 }
 
+# SSL 검증 완전히 비활성화
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+ssl_context.set_ciphers("DEFAULT")
+
+
 # DB금융투자 기사 체크 함수
 async def DBfi_checkNewArticle():
     SEC_FIRM_ORDER = 19
@@ -25,7 +34,7 @@ async def DBfi_checkNewArticle():
     ]
     json_data_list = []
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
         for ARTICLE_BOARD_ORDER, url_path in enumerate(urls):
             firm_info = FirmInfo(
                 sec_firm_order=SEC_FIRM_ORDER,
@@ -63,18 +72,17 @@ async def DBfi_checkNewArticle():
                             "KEY": detail_url,
                             "SAVE_TIME": datetime.now().isoformat()
                         })
-                        # print(json_data_list)
                 else:
                     print(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
 
     return json_data_list
 
+
 # 상세 URL로 후처리 데이터 획득 함수
 async def fetch_detailed_url(articles):
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
         for article in articles:
             key_url = article["KEY"]
-            # print(f"Fetching detailed data from {key_url}")
 
             async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
                 if response.status == 200:
@@ -92,13 +100,14 @@ async def fetch_detailed_url(articles):
     print(articles)
     return articles
 
+
 async def main():
     articles = await DBfi_checkNewArticle()
     detailed_articles = await fetch_detailed_url(articles)
     db = SQLiteManager()
     inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
     print(inserted_count)
-    # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     asyncio.run(main())
