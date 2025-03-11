@@ -37,6 +37,10 @@ class SQLiteManager:
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
 
+        # PRAGMA journal_mode=WAL 설정 적용
+        self.cursor.execute("PRAGMA journal_mode=WAL;")
+        self.connection.commit()  # 변경사항 반영
+        
     def close_connection(self):
         """데이터베이스 연결 종료"""
         if self.cursor:
