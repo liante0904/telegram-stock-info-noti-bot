@@ -84,7 +84,7 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
             for item in soupList:
                 REG_DT = item.get(reg_dt_key, '')  # 등록일
                 if REG_DT:
-                    REG_DT = re.sub(r"[-./]", "", REG_DT)
+                    REG_DT = re.sub(r"[-./]", "", REG_DT).replace(";", "")
                 LIST_ARTICLE_TITLE = item.get(title_key, '')  # 제목
                 LIST_ARTICLE_URL = item.get(url_key, '')  # 파일명
                 WRITER = item.get(writer_key, '')  # 작성자
@@ -101,7 +101,7 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
-                    "ATTACH_URL": LIST_ARTICLE_URL,
+                    "ATTACH_URL": ' ',
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
                     "TELEGRAM_URL": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -122,8 +122,10 @@ def ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True):
     return json_data_list
 
 if __name__ == "__main__":
+    firm_info = FirmInfo(sec_firm_order=1, article_board_order=0)
     results = ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True)
-    print(f"Fetched {len(results)} articles from Meritz.")
+    print(results)
+    print(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
     # print(results)
 
     db = SQLiteManager()
