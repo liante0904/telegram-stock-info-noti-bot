@@ -90,7 +90,7 @@ async def fetch_detailed_url(articles):
                         detail_data = await response.json()
                         # 'url' 값을 가져와 TELEGRAM_URL 생성
                         encoded_url = detail_data['data'].get("url", "")
-                        telegram_url = f"https://m.db-fi.com/mod/streamDocs.do?docId={encoded_url}"
+                        telegram_url = f"https://whub.dbsec.co.kr/pv/gate?q={encoded_url}"
                         article["TELEGRAM_URL"] = telegram_url
                     except json.JSONDecodeError:
                         print(f"Failed to parse JSON for {key_url}")
@@ -103,10 +103,12 @@ async def fetch_detailed_url(articles):
 
 async def main():
     articles = await DBfi_checkNewArticle()
+    # print(articles)
     detailed_articles = await fetch_detailed_url(articles)
-    db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
-    print(inserted_count)
+    print(detailed_articles)
+    # db = SQLiteManager()
+    # inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    # print(inserted_count)
 
 
 if __name__ == "__main__":
