@@ -102,70 +102,48 @@ class OracleManagerSQL:
         return result
 
     def insert_json_data_list(self, json_data_list, table_name):
-        """JSON 데이터 리스트 삽입 및 업데이트 (MERGE 사용)"""
+        """JSON 데이터 리스트를 Oracle DB에 삽입 (중복 키 무시)"""
         self.open_connection()
-        inserted_count = 0
-        updated_count = 0
+        query = f"""
+        INSERT /*+ ignore_row_on_dupkey_index({table_name}, KEY) */
+        INTO {table_name} (
+            SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
+            DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME
+        ) VALUES (
+            :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT,
+            :ATTACH_URL, :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN,
+            :DOWNLOAD_URL, :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME
+        )"""
+        params_list = []
         for entry in json_data_list:
-            merge_query = f"""
-            MERGE INTO {table_name} t
-            USING (SELECT :key AS KEY FROM dual) s
-            ON (t.KEY = s.KEY)
-            WHEN MATCHED THEN
-                UPDATE SET
-                    REG_DT = :reg_dt,
-                    WRITER = :writer,
-                    MKT_TP = :mkt_tp,
-                    DOWNLOAD_URL = CASE 
-                        WHEN :download_url IS NOT NULL AND :download_url != '' 
-                        THEN :download_url 
-                        ELSE t.DOWNLOAD_URL 
-                    END,
-                    TELEGRAM_URL = CASE 
-                        WHEN :telegram_url IS NOT NULL AND :telegram_url != '' 
-                        THEN :telegram_url 
-                        ELSE t.TELEGRAM_URL 
-                    END
-            WHEN NOT MATCHED THEN
-                INSERT (
-                    SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-                    ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
-                    DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME
-                )
-                VALUES (
-                    :sec_firm_order, :article_board_order, :firm_nm, :reg_dt,
-                    :attach_url, :article_title, :article_url, :main_ch_send_yn,
-                    :download_url, :telegram_url, :writer, :mkt_tp, :key, :save_time
-                )
-            """
-            params = {
-                "sec_firm_order": entry["SEC_FIRM_ORDER"],
-                "article_board_order": entry["ARTICLE_BOARD_ORDER"],
-                "firm_nm": entry["FIRM_NM"],
-                "reg_dt": entry.get("REG_DT", ""),
-                "attach_url": entry.get("ATTACH_URL", ""),
-                "article_title": entry["ARTICLE_TITLE"],
-                "article_url": entry.get("ARTICLE_URL", None),
-                "main_ch_send_yn": entry.get("MAIN_CH_SEND_YN", "N"),
-                "download_url": entry.get("DOWNLOAD_URL", None),
-                "telegram_url": entry.get("TELEGRAM_URL", None),
-                "writer": entry.get("WRITER", ""),
-                "mkt_tp": entry.get("MKT_TP", "KR"),
-                "key": entry.get("KEY") or entry.get("ATTACH_URL", ""),
-                "save_time": entry["SAVE_TIME"]
-            }
-            self.cursor.execute(merge_query, params)
-            if self.cursor.rowcount > 0:
-                self.cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE KEY = :key", {"key": params["key"]})
-                if self.cursor.fetchone()[0] == 1:
-                    inserted_count += 1
-                else:
-                    updated_count += 1
-        self.conn.commit()
-        self.close_connection()
-        print(f"Oracle: Data inserted successfully: {inserted_count} rows.")
-        print(f"Oracle: Data updated successfully: {updated_count} rows.")
-        return inserted_count, updated_count
+            key_val = entry.get("KEY") or entry.get("ATTACH_URL", "")
+            params_list.append({
+                "SEC_FIRM_ORDER": entry["SEC_FIRM_ORDER"],
+                "ARTICLE_BOARD_ORDER": entry["ARTICLE_BOARD_ORDER"],
+                "FIRM_NM": entry["FIRM_NM"],
+                "REG_DT": entry.get("REG_DT", ""),
+                "ATTACH_URL": entry.get("ATTACH_URL", ""),
+                "ARTICLE_TITLE": entry["ARTICLE_TITLE"],
+                "ARTICLE_URL": entry.get("ARTICLE_URL"),
+                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
+                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
+                "TELEGRAM_URL": entry.get("TELEGRAM_URL"),
+                "WRITER": entry.get("WRITER", ""),
+                "MKT_TP": entry.get("MKT_TP", "KR"),
+                "KEY": key_val,
+                "SAVE_TIME": entry["SAVE_TIME"]
+            })
+        try:
+            self.cursor.executemany(query, params_list)
+            self.conn.commit()
+            print(f"Inserted {len(params_list)} rows (duplicates ignored).")
+        except oracledb.DatabaseError as e:
+            print(f"Error during insert: {e}")
+        finally:
+            self.close_connection()
+        return len(params_list)
+
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """TELEGRAM_URL 갱신이 필요한 레코드 비동기 조회"""
