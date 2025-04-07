@@ -37,8 +37,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print("Updating TELEGRAM_URL for records with SEC_FIRM_ORDER 19")
                     update_records = await fetch_detailed_url(records)  # all_records 대신 records 사용
                     for record in update_records:
-                        await db.update_telegram_url(record['id'], record['TELEGRAM_URL'])
-                        print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
+                        await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
+                        print(f"Updated TELEGRAM_URL for report_id {record['report_id']} with {record['TELEGRAM_URL']}")
                 
                 elif sec_firm_order == 0:
                     # sec_firm_order가 0인 경우 추가 작업 수행
@@ -46,14 +46,14 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print(f"records{len(records)}")
                     for record in records:
                         await LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
-                        r = await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        r = await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
                         print(r)
 
                     # update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용
                     
                     # for record in update_records:
-                    #     await db.update_telegram_url(record['id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
-                    #     print(f"Updated TELEGRAM_URL for id {record['id']} with {record['TELEGRAM_URL']}")
+                    #     await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                    #     print(f"Updated TELEGRAM_URL for report_id {record['report_id']} with {record['TELEGRAM_URL']}")
 
     # 전체 회사들의 레코드가 JSON 리스트로 모임
     if all_records:  # all_records가 비어 있지 않은 경우에만 JSON 변환 및 출력 수행
