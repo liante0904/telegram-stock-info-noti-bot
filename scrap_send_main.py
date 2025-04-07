@@ -76,6 +76,8 @@ async def daily_report(report_type, date_str=None):
             for sendMessageText in formatted_messages:
                 try:
                     print(f"메시지 발송 중: {sendMessageText}")
+                    print("token:", token)
+                    print("chat_id:", chat_id)
                     await sendMarkDownText(token=token,
                                            chat_id=chat_id,
                                            sendMessageText=sendMessageText)
