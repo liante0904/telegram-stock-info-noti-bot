@@ -1,10 +1,13 @@
+#scrap_send_main.py
 import os
 import asyncio
 import argparse
 from utils.sqlite_util import convert_sql_to_telegram_messages
+from utils.oracle_util import convert_oracle_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
 from models.SQLiteManager import SQLiteManager
+from models.OracleManagerSQL import OracleManagerSQL
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,6 +33,8 @@ def format_date(date_str):
     str
         변환된 날짜 문자열입니다.
     """
+    if date_str is None:  # None일 경우 그대로 반환
+        return None
     if len(date_str) == 8 and date_str.isdigit():  # 20241012 형태인지 확인
         return f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
     return date_str  # 이미 'YYYY-MM-DD'인 경우 그대로 반환
@@ -57,11 +62,13 @@ async def daily_report(report_type, date_str=None):
     date_str : str, optional
         처리할 날짜 (형식: YYYY-MM-DD). 기본값은 None입니다.
     """
-    db = SQLiteManager()
+    sqliteDB = SQLiteManager()
+    oracleDB = OracleManagerSQL()
     if report_type == 'send':
-        rows = await db.daily_select_data(date_str=date_str, type=report_type)
+        # rows = await sqliteDB.daily_select_data(date_str=date_str, type=report_type)
+        rows = await oracleDB.daily_select_data(date_str=date_str, type=report_type)
         if rows:
-            formatted_messages = await convert_sql_to_telegram_messages(rows)
+            formatted_messages = await convert_oracle_to_telegram_messages(rows)
             print('=' * 30)
 
             # 메시지 발송
@@ -78,14 +85,22 @@ async def daily_report(report_type, date_str=None):
 
             # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
             if send_success:
-                r = await db.daily_update_data(date_str=date_str, fetched_rows=rows, type=report_type)
-                if r:
-                    print('DB 업데이트 성공')
+                for row in rows:
+                    try:
+                        # r = await sqliteDB.daily_update_data(date_str=date_str, fetched_rows=[row], type=report_type)
+                        r = await oracleDB.daily_update_data(date_str=date_str, fetched_rows=[row], type=report_type)
+                        if r:
+                            print(f"DB 업데이트 성공: report_id={row['report_id']}")
+                        else:
+                            print(f"DB 업데이트 실패: report_id={row['report_id']}, 결과 없음")
+                    except Exception as e:
+                        print(f"DB 업데이트 실패: report_id={row['report_id']}, 오류: {e}")
             else:
                 print('일부 메시지 발송 실패, DB 업데이트 생략')
 
     elif report_type == 'download':
-        rows = await db.daily_select_data(date_str=date_str, type='download')
+        # rows = await sqliteDB.daily_select_data(date_str=date_str, type='download')
+        # rows = await oracleDB.daily_select_data(date_str=date_str, type='download')
         # print(rows)
 
         # 파일 다운로드 처리
@@ -97,22 +112,28 @@ async def daily_report(report_type, date_str=None):
                 
                 if download_success:
                     # 파일이 정상적으로 다운로드되었거나 이미 존재하는 경우
-                    r = await db.daily_update_data(date_str=date_str, fetched_rows=row, type='download')
+                    # r = await sqliteDB.daily_update_data(date_str=date_str, fetched_rows=row, type='download')
+                    r = await oracleDB.daily_update_data(date_str=date_str, fetched_rows=row, type='download')
                 else:
                     print(f"파일 다운로드 실패: {row.get('file_name', '')}")  # 실패한 파일 로그 출력
                     continue
 
-
 async def main(date_str=None):
-    # date_str = format_date(date_str)  # 날짜 형식 변환
     print('===================scrap_send_main===============')
-    # 발송될 내역
+    date_str = format_date(date_str)  # 날짜 형식 변환 추가
     await daily_report(report_type='send', date_str=date_str)
-    # await daily_report(report_type='download', date_str=date_str)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daily report script.')
     parser.add_argument('date', type=str, nargs='?', default=None, help='Date in YYYY-MM-DD format.')
-
     args = parser.parse_args()
-    asyncio.run(main(date_str=args.date))
+
+    # 이벤트 루프를 수동으로 관리
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main(date_str=args.date))
+    except Exception as e:
+        print(f"프로그램 실행 중 오류 발생: {e}")
+    finally:
+        if not loop.is_closed():
+            loop.close()

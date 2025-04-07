@@ -103,38 +103,49 @@ class OracleManagerSQL:
 
     def insert_json_data_list(self, json_data_list, table_name):
         """JSON 데이터 리스트를 Oracle DB에 삽입 (중복 키 무시)"""
+        print(f"json_data_list: {json_data_list}")
         self.open_connection()
+        
         query = f"""
         INSERT /*+ ignore_row_on_dupkey_index({table_name}, KEY) */
         INTO {table_name} (
+            REPORT_ID,  -- 추가됨
             SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
             DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME
         ) VALUES (
+            SEQ_REPORT_ID.NEXTVAL,  -- 시퀀스를 직접 사용
             :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT,
             :ATTACH_URL, :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN,
             :DOWNLOAD_URL, :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME
         )"""
+        
         params_list = []
         for entry in json_data_list:
+            print(f"entry: {entry}")
             key_val = entry.get("KEY") or entry.get("ATTACH_URL", "")
+            print(f"key_val: {key_val}")
             params_list.append({
+                # REPORT_ID는 넣지 않음 (Oracle 시퀀스로 처리)
                 "SEC_FIRM_ORDER": entry["SEC_FIRM_ORDER"],
                 "ARTICLE_BOARD_ORDER": entry["ARTICLE_BOARD_ORDER"],
                 "FIRM_NM": entry["FIRM_NM"],
-                "REG_DT": entry.get("REG_DT", ""),
-                "ATTACH_URL": entry.get("ATTACH_URL", ""),
+                "REG_DT": entry.get("REG_DT", " "),
+                "ATTACH_URL": entry.get("ATTACH_URL", " "),
                 "ARTICLE_TITLE": entry["ARTICLE_TITLE"],
-                "ARTICLE_URL": entry.get("ARTICLE_URL"),
+                "ARTICLE_URL": entry.get("ARTICLE_URL", " "),
                 "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
-                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
-                "TELEGRAM_URL": entry.get("TELEGRAM_URL"),
-                "WRITER": entry.get("WRITER", ""),
+                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL", " "),
+                "TELEGRAM_URL": entry.get("TELEGRAM_URL", "  "),
+                "WRITER": entry.get("WRITER", " "),
                 "MKT_TP": entry.get("MKT_TP", "KR"),
                 "KEY": key_val,
                 "SAVE_TIME": entry["SAVE_TIME"]
             })
+
         try:
+            print(f"Executing query: {query}")
+            print(f"With parameters: {params_list}")
             self.cursor.executemany(query, params_list)
             self.conn.commit()
             print(f"Inserted {len(params_list)} rows (duplicates ignored).")
@@ -142,8 +153,8 @@ class OracleManagerSQL:
             print(f"Error during insert: {e}")
         finally:
             self.close_connection()
+        
         return len(params_list)
-
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """TELEGRAM_URL 갱신이 필요한 레코드 비동기 조회"""
@@ -156,7 +167,7 @@ class OracleManagerSQL:
                 firmInfo = firm_info.get_state()
                 query = f"""
                 SELECT 
-                    id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                    report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
                     DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
                 FROM 
@@ -233,36 +244,40 @@ class OracleManagerSQL:
                 if type not in ['send', 'download']:
                     raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
+                # 날짜 처리
                 if date_str is None:
-                    query_date = datetime.now().strftime('%Y-%m-%d')
-                    query_reg_dt = (datetime.now() + timedelta(days=2)).strftime('%Y%m%d')
+                    base_date = datetime.now()
                 else:
-                    query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-                    query_reg_dt = (datetime.strptime(date_str, '%Y%m%d') + timedelta(days=2)).strftime('%Y%m%d')
+                    base_date = datetime.strptime(date_str, '%Y%m%d')
 
-                three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
+                query_date = base_date.strftime('%Y-%m-%d')
+                three_days_ago = (base_date - timedelta(days=3)).strftime('%Y%m%d')
+                query_reg_dt = (base_date + timedelta(days=2)).strftime('%Y%m%d')
+
+                # 쿼리 조건 분기
                 if type == 'send':
                     query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL <> ''))"
-                elif type == 'download':
+                else:  # download
                     query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
 
+                # SQL 쿼리 작성
                 query = f"""
                 SELECT 
-                    id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                    report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
                     DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, MAIN_CH_SEND_YN
                 FROM 
                     data_main_daily_send 
                 WHERE 
-                    TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = '{query_date}'
+                    SUBSTR(SAVE_TIME, 1, 10) = '{query_date}'
                     AND REG_DT >= '{three_days_ago}'
                     AND REG_DT <= '{query_reg_dt}'
                     AND {query_condition}
                 ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
                 """
-                print('='*30)
+                print('=' * 30)
                 print(query)
-                print('='*30)
+                print('=' * 30)
                 await cursor.execute(query)
                 rows = await cursor.fetchall()
                 columns = [desc[0].lower() for desc in cursor.description]
@@ -287,23 +302,23 @@ class OracleManagerSQL:
                     update_query = """
                     UPDATE data_main_daily_send
                     SET MAIN_CH_SEND_YN = 'Y'
-                    WHERE id = :id
+                    WHERE report_id = :report_id
                     """
                     for row in fetched_rows:
                         print(f"Row data: {row}")
                         print(f"Executing query: {update_query}")
-                        print(f"With parameters: {{'id': {row['id']}}}")
-                        await cursor.execute(update_query, {"id": row["id"]})
+                        print(f"With parameters: {{'report_id': {row['report_id']}}}")
+                        await cursor.execute(update_query, {"report_id": row["report_id"]})
                 elif type == 'download':
                     update_query = """
                     UPDATE data_main_daily_send
                     SET DOWNLOAD_STATUS_YN = 'Y'
-                    WHERE id = :id
+                    WHERE report_id = :report_id
                     """
                     print(f"Single row for download: {fetched_rows}")
                     print(f"Executing query: {update_query}")
-                    print(f"With parameters: {{'id': {fetched_rows['id']}}}")
-                    await cursor.execute(update_query, {"id": fetched_rows["id"]})
+                    print(f"With parameters: {{'report_id': {fetched_rows['report_id']}}}")
+                    await cursor.execute(update_query, {"report_id": fetched_rows["report_id"]})
 
                 await conn.commit()
                 return {"status": "success", "affected_rows": cursor.rowcount}

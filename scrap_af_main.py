@@ -4,6 +4,7 @@ import os
 import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.SQLiteManager import SQLiteManager
+from models.OracleManagerSQL import OracleManagerSQL
 from models.FirmInfo import FirmInfo
 from modules.LS_0 import LS_detail
 from modules.DBfi_19 import fetch_detailed_url
@@ -15,7 +16,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
     firm_names 배열의 모든 인덱스를 순회하며, telegram_update_required가 True인 경우 TELEGRAM_URL 컬럼을 업데이트합니다.
     """
     print('update_firm_telegram_url_by_date')
-    db = SQLiteManager()
+    sqliteDB = SQLiteManager()
+    oracleDB = OracleManagerSQL()
     all_records = []  # 모든 회사의 레코드를 저장할 리스트
 
     # firm_names 배열의 모든 인덱스를 순회
@@ -24,7 +26,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
 
         # 회사 이름이 공백이 아니고, telegram_update_required가 True인 경우만 처리
         if firm_info.get_firm_name() and firm_info.telegram_update_required:
-            records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
+            # records = await sqliteDB.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
+            records = await oracleDB.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
             print(f"Total records count{len(records)}")
             # records가 빈 리스트가 아닌 경우에만 처리 진행
             if records:
@@ -37,7 +40,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print("Updating TELEGRAM_URL for records with SEC_FIRM_ORDER 19")
                     update_records = await fetch_detailed_url(records)  # all_records 대신 records 사용
                     for record in update_records:
-                        await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
+                        # await sqliteDB.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
+                        await oracleDB.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
                         print(f"Updated TELEGRAM_URL for report_id {record['report_id']} with {record['TELEGRAM_URL']}")
                 
                 elif sec_firm_order == 0:
@@ -46,7 +50,8 @@ async def update_firm_telegram_url_by_date(date_str=None):
                     print(f"records{len(records)}")
                     for record in records:
                         await LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
-                        r = await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        # r = await sqliteDB.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        r = await oracleDB.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
                         print(r)
 
                     # update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용

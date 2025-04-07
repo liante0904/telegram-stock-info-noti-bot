@@ -6,6 +6,8 @@ import asyncio
 from send_error import send_message_to_shell
 
 from models.SQLiteManager import SQLiteManager
+from models.OracleManagerSQL import OracleManagerSQL
+
 from utils.date_util import GetCurrentDate
 
 # business
@@ -136,35 +138,35 @@ async def main():
 
         # 동기 함수 리스트
         sync_check_functions = [
-            LS_checkNewArticle,
-            ShinHanInvest_checkNewArticle,
-            Samsung_checkNewArticle,
-            Shinyoung_checkNewArticle,
-            #DS_checkNewArticle,
-            Miraeasset_checkNewArticle,
-            Hmsec_checkNewArticle,
-            TOSSinvest_checkNewArticle,
-            Leading_checkNewArticle,
+            # LS_checkNewArticle,
+            # ShinHanInvest_checkNewArticle,
+            # Samsung_checkNewArticle,
+            # Shinyoung_checkNewArticle,
+            # #DS_checkNewArticle,
+            # Miraeasset_checkNewArticle,
+            # Hmsec_checkNewArticle,
+            # TOSSinvest_checkNewArticle,
+            # Leading_checkNewArticle,
         ]
 
         # 비동기 함수 리스트
         async_check_functions = [
             NHQV_checkNewArticle,
-            HANA_checkNewArticle,
-            KB_checkNewArticle,
-            Sangsanginib_checkNewArticle,
-            Kiwoom_checkNewArticle,
-            Koreainvestment_selenium_checkNewArticle,
-            eugene_checkNewArticle,
-            DAOL_checkNewArticle,
-            Daeshin_checkNewArticle,
-            iMfnsec_checkNewArticle,
-            DBfi_checkNewArticle,
-            MERITZ_checkNewArticle,
-            Hanwha_checkNewArticle,
-            Hanyang_checkNewArticle,
-            BNK_checkNewArticle,
-            Kyobo_checkNewArticle
+            # HANA_checkNewArticle,
+            # KB_checkNewArticle,
+            # Sangsanginib_checkNewArticle,
+            # Kiwoom_checkNewArticle,
+            # Koreainvestment_selenium_checkNewArticle,
+            # eugene_checkNewArticle,
+            # DAOL_checkNewArticle,
+            # Daeshin_checkNewArticle,
+            # iMfnsec_checkNewArticle,
+            # DBfi_checkNewArticle,
+            # MERITZ_checkNewArticle,
+            # Hanwha_checkNewArticle,
+            # Hanyang_checkNewArticle,
+            # BNK_checkNewArticle,
+            # Kyobo_checkNewArticle
         ]
 
         total_data = []  # 전체 데이터를 저장할 리스트
@@ -201,11 +203,13 @@ async def main():
         print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
         if total_data:
-            db = SQLiteManager()
+            sqliteDB = SQLiteManager()
+            oracleDB = OracleManagerSQL()
 
             # 데이터 삽입 시도
             try:
-                inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
+                inserted_count, updated_count = sqliteDB.insert_json_data_list(total_data, 'data_main_daily_send')
+                oracleDB.insert_json_data_list(total_data, 'data_main_daily_send')
                 print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
                 print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
             except Exception as e:
@@ -214,7 +218,7 @@ async def main():
 
                 # 메모리에서 데이터를 보관하며 재시도
                 print("DB 삽입 실패, 일정 시간 후 재시도합니다...")
-                success = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
+                success = await retry_db_insert_in_memory(sqliteDB, total_data, 'data_main_daily_send', retries=3, delay=60)
                 if success:
                     print("DB 재삽입 성공.")
                 else:
