@@ -1,14 +1,20 @@
+# -*- coding:utf-8 -*- 
 import requests
 import asyncio
+import os
 from bs4 import BeautifulSoup
 
 from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 from utils.telegram_util import sendMarkDownText
-from models.SecretKey import SecretKey
 
-SECRET_KEY = SecretKey()
-token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
-# -*- coding:utf-8 -*- 
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN = os.getenv('TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN')
+TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
 
 JSON_FILE_NAME = './json/hankyungconsen_research.json'
 
@@ -72,7 +78,7 @@ async def HankyungConsen_checkNewArticle():
                 print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
                 print(sendMessageText)
                 await sendMarkDownText(token=token,
-                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
+                chat_id=TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
                 sendMessageText=sendMessageText)
                 sendMessageText = ''
             else:
@@ -83,14 +89,14 @@ async def HankyungConsen_checkNewArticle():
         if len(sendMessageText) > 3500:
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.\n", sendMessageText)
             await sendMarkDownText(token=token,
-            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
+            chat_id=TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
             sendMessageText=sendMessageText)
             sendMessageText = ''
 
     if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
-        chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
+        chat_id=TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN,
         sendMessageText=sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
@@ -107,7 +113,7 @@ async def main():
     if lists:
         for sendMessageText in lists:
             await sendMarkDownText(token=token,
-            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+            chat_id=TELEGRAM_CHANNEL_ID_REPORT_ALARM,
             sendMessageText=sendMessageText)
         update_main_ch_send_yn_to_y(JSON_FILE_NAME)
 

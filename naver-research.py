@@ -2,18 +2,25 @@
 import sys
 import requests
 import json
+import os
 import asyncio
 from bs4 import BeautifulSoup
 import urllib.request
 
-from models.SecretKey import SecretKey
 from utils.telegram_util import sendMarkDownText
 from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y # import the function from json_util
 
 ############ global 변수 ############
 
-SECRET_KEY = SecretKey()
-token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+
+from dotenv import load_dotenv
+
+load_dotenv()  # .env 파일의 환경 변수를 로드합니다
+
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM')
+TELEGRAM_CHANNEL_ID_REPORT_ALARM = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
+
 JSON_FILE_NAME = './json/naver_research.json'
 ############ global 변수 끝 ############
 
@@ -84,7 +91,7 @@ async def NAVER_Report_checkNewArticle():
                 print(sendMessageText)
                 # sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
                 await sendMarkDownText(token=token,
-                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM,
+                chat_id=TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM,
                 sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
                 sendMessageText = ''
 
@@ -97,7 +104,7 @@ async def NAVER_Report_checkNewArticle():
             print(sendMessageText)
             # sendText(GetSendMessageTitle(SEC_FIRM_ORDER=SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER=ARTICLE_BOARD_ORDER) + sendMessageText)
             await sendMarkDownText(token=token,
-            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM,
+            chat_id=TELEGRAM_CHANNEL_ID_NAVER_REPORT_ALARM,
             sendMessageText=GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
         else:
@@ -170,7 +177,7 @@ async def main():
     if lists:
         for sendMessageText in lists:
             await sendMarkDownText(token=token,
-            chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM,
+            chat_id=TELEGRAM_CHANNEL_ID_REPORT_ALARM,
             sendMessageText=sendMessageText)
         update_main_ch_send_yn_to_y(JSON_FILE_NAME)
     

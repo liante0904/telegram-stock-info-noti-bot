@@ -13,8 +13,6 @@ from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
 # 프로젝트 내부 모듈 경로 추가
 from utils.sqlite_util import format_message_sql
 from utils.telegram_util import sendMarkDownText
-from models.SecretKey import SecretKey
-
 
 load_dotenv()  # .env 파일의 환경 변수를 로드합니다
 env = os.getenv('ENV')
@@ -41,9 +39,8 @@ db_path = os.path.expanduser('~/sqlite3/telegram.db')
 
 
 
-# 비밀키 불러오기
-SECRET_KEY = SecretKey()
-token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+
 
 # 파일 경로를 현재 디렉토리 기준으로 얻는 함수
 def get_file_path(relative_path):

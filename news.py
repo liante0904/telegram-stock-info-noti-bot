@@ -10,7 +10,10 @@ from datetime import datetime, timedelta
 from utils.json_util import save_data_to_local_json, filter_news_by_save_time
 from utils.date_util import GetCurrentDate
 from utils.telegram_util import sendMarkDownText
-from models.SecretKey import SecretKey
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ############공용 상수############
 
@@ -20,9 +23,12 @@ EMOJI_PICK = u'\U0001F449'
 
 #################### global 변수 정리 끝###################################
 
-SECRET_KEY = SecretKey()
 
-token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+# token = SECRET_KEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT = os.getenv('TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT')
+TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS')
+TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS = os.getenv('TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS')
 
 async def fetch(session, url):
     async with session.get(url, headers={'User-Agent': 'Mozilla/5.0'}) as response:
@@ -91,7 +97,7 @@ async def ChosunBizBot_checkNewArticle():
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             await sendMarkDownText(
                 token=token,
-                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                chat_id=TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
                 sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText
             )
             sendMessageText = ''
@@ -99,7 +105,7 @@ async def ChosunBizBot_checkNewArticle():
     if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
-                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
+                chat_id=TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT,
                 sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
@@ -150,7 +156,7 @@ async def NAVERNews_checkNewArticle_0():
             print("발송 게시물이 남았지만 최대 길이로 인해 중간 발송처리합니다.")
             print(sendMessageText)
             await sendMarkDownText(token=token,
-                                    chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
+                                    chat_id=TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
                                     sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ''
 
@@ -159,7 +165,7 @@ async def NAVERNews_checkNewArticle_0():
     if sendMessageText:
         print(sendMessageText)
         await sendMarkDownText(token=token,
-                                chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
+                                chat_id=TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS,
                                 sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER,  ARTICLE_BOARD_ORDER) + sendMessageText)
     else:
         print('최신 게시글이 채널에 발송 되어 있습니다.')
@@ -252,14 +258,14 @@ async def NAVERNews_checkNewArticle_1():
             if len(sendMessageText) > 3500:
                 print(sendMessageText)
                 await sendMarkDownText(token=token,
-                                       chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
+                                       chat_id=TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
                                        sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
                 sendMessageText = ""
 
         if sendMessageText:
             print(sendMessageText)
             await sendMarkDownText(token=token,
-                                   chat_id=SECRET_KEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
+                                   chat_id=TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS,
                                    sendMessageText= await GetSendMessageTitle(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER) + sendMessageText)
             sendMessageText = ""
 
