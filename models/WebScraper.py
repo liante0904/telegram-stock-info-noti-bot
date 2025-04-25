@@ -1,5 +1,8 @@
 import aiohttp
 import requests
+import json
+import re
+import chardet  # 인코딩 감지용 (필요 시 설치: pip install chardet)
 from bs4 import BeautifulSoup
 
 class SyncWebScraper:
@@ -68,7 +71,29 @@ class SyncWebScraper:
         #     }
         # ... 필요한 경우 다른 회사별 헤더 추가 가능
 
+    def _clean_response_text(self, text):
+            """응답 텍스트에서 제어 문자 및 비표준 문자를 제거하고 정규화"""
+            try:
+                # 제어 문자(ASCII 0x00-0x1F, 0x7F) 제거
+                cleaned_text = re.sub(r'[\x00-\x1F\x7F]+', '', text)
+                # 연속된 공백을 단일 공백으로 변환
+                cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+                return cleaned_text
+            except Exception as e:
+                print(f"[텍스트 정규화 오류] {e}")
+                return text
 
+    def _detect_encoding(self, response):
+        """응답 데이터의 인코딩 감지"""
+        try:
+            result = chardet.detect(response.content)
+            encoding = result['encoding'] or 'utf-8'
+            print(f"[감지된 인코딩] {encoding}")
+            return encoding
+        except Exception as e:
+            print(f"[인코딩 감지 오류] {e}")
+            return 'utf-8'
+         
     def _get_css_selector(self):
         """
         SEC_FIRM_ORDER 값에 따라 CSS 선택자를 반환하는 메서드
@@ -177,13 +202,80 @@ class SyncWebScraper:
         return soup
 
     def GetJson(self, params=None):
-        response = requests.get(self.target_url, headers=self.headers, params=params)
-        print('='*40)
-        print('==================WebScraper GetJson==================' )
-        print('='*40)
-        print('==================WebScraper GetJson==================' )
-        return response.json()
-    
+        """HTTP GET 요청을 보내고 JSON 응답을 반환"""
+        try:
+            # HTTP GET 요청
+            response = requests.get(self.target_url, headers=self.headers, params=params, timeout=10, verify=False)
+            print('='*40)
+            print('==================WebScraper GetJson==================')
+            print('='*40)
+
+            # HTTP 상태 코드 확인
+            response.raise_for_status()
+
+            # 인코딩 감지 및 설정
+            try:
+                result = chardet.detect(response.content)
+                encoding = result['encoding'] or 'utf-8'
+                print(f"[감지된 인코딩] {encoding}")
+            except Exception as e:
+                print(f"[인코딩 감지 오류] {e}")
+                encoding = 'utf-8'
+            response.encoding = encoding
+            raw_text = response.text
+
+            # 응답 텍스트 출력 (디버깅용)
+            print(f"[원본 응답 (앞부분)]: {raw_text[:500]}...")
+
+            # 응답 텍스트 정규화
+            try:
+                # 제어 문자(ASCII 0x00-0x1F, 0x7F) 및 BOM(\uFEFF) 제거
+                cleaned_text = re.sub(r'[\x00-\x1F\x7F-\x9F\uFEFF]+', '', raw_text)
+                # 연속된 공백을 단일 공백으로 변환
+                cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+            except Exception as e:
+                print(f"[텍스트 정규화 오류] {e}")
+                cleaned_text = raw_text
+
+            if raw_text != cleaned_text:
+                print("[경고] 응답 텍스트가 정규화되었습니다. 제어 문자 또는 비표준 문자가 제거됨.")
+
+            # JSON 파싱 시도
+            try:
+                json_data = json.loads(cleaned_text)
+                print("[JSON 파싱 성공] 데이터 크기:", len(str(json_data)))
+                return json_data
+            except json.JSONDecodeError as e:
+                print(f"[JSON 파싱 오류] {e}")
+                print(f"[오류 위치] Line {e.lineno}, Column {e.colno}, Char {e.pos}")
+                print(f"[문제가 되는 응답 내용 일부]: {cleaned_text[max(0, e.pos-100):e.pos+100]}")
+                
+                # 제어 문자 디버깅
+                error_snippet = cleaned_text[max(0, e.pos-10):e.pos+10]
+                print("[오류 위치 근처 문자]:")
+                for i, char in enumerate(error_snippet):
+                    print(f"Char {i}: {char!r} (ASCII: {ord(char)})")
+                
+                # 디버깅용 응답 저장
+                with open("error_response.txt", "w", encoding="utf-8") as f:
+                    f.write(raw_text)
+                print("[디버깅] 원본 응답이 error_response.txt에 저장되었습니다.")
+                
+                return None
+
+        except requests.exceptions.Timeout:
+            print("[HTTP 요청 오류] 요청 시간이 초과되었습니다.")
+            return None
+        except requests.exceptions.HTTPError as e:
+            print(f"[HTTP 요청 오류] 상태 코드: {e.response.status_code}, 메시지: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"[HTTP 요청 오류] {e}")
+            return None
+        except Exception as e:
+            print(f"[알 수 없는 오류] {e}")
+            return None
+
     def Post(self, data=None):
         """
         POST 요청을 통해 데이터를 가져오는 메서드

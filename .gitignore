@@ -165,3 +165,4 @@ token.*
 *.pickle
 *.db
 *.*Zone.Identifier
+error_response.txt
