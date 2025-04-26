@@ -21,9 +21,6 @@ jobs:
       with:
         python-version: '3.10.12'  # Python 3.10.12 버전 설정
         cache: 'pip' # caching pip dependencies
-    - name: Run setup script
-      run: |
-        bash setup.sh
 
     - name: Add SSH key
       uses: webfactory/ssh-agent@v0.5.3
@@ -59,10 +56,8 @@ jobs:
           echo 'eval "$(pyenv virtualenv-init -)"' >> $GITHUB_ENV
           pyenv activate pyenv  # 사용할 가상환경 이름
 
-          # setup.sh 스크립트 실행
-          if [ -f setup.sh ]; then
-            echo "Running setup.sh in $PROJECT_DIR..."
-            bash setup.sh
-          fi
+          echo 'pip install start...'
+          pip install -r requirements.txt
+          
           echo "Deployment completed in $PROJECT_DIR."
         EOF
