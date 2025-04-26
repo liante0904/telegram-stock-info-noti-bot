@@ -90,6 +90,12 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 WRITER = list.select_one('div.con > ul > li.mb7.m-info.info > span.none.m-name').get_text()
                 time_str = list.select_one('div.con > ul > li.mb7.m-info.info > span.hide-on-mobile.txtbasic.r-side-bar').get_text()
 
+                # MKT_TP 세팅 (인덱스 기반 직접 지정)
+                if article_board_order in (9, 10, 11):
+                    market_type = 'GLOBAL'
+                else:
+                    market_type = 'KR'
+
                 json_data_list.append({
                     "SEC_FIRM_ORDER": sec_firm_order,
                     "ARTICLE_BOARD_ORDER": article_board_order,
@@ -101,7 +107,8 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "WRITER": WRITER,
                     "KEY:": LIST_ARTICLE_URL,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "SAVE_TIME": datetime.now().isoformat(),
+                    "MKT_TP": market_type   # ← 여기 추가
                 })
             except Exception as e:
                 print(f"Error parsing article: {e}")
