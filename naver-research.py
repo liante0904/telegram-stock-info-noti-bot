@@ -135,10 +135,9 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
 
     # "원문 보기" 버튼이 포함된 <a> 태그 찾기
     a_tag = soup.find("a", class_="ResearchHeaderTools_button_text__5E_Qj")
-
     # href 값 가져오기
     if a_tag and "href" in a_tag.attrs:
-        strUrl = a_tag["href"]
+        strUrl = f"https://m.stock.naver.com{a_tag['href']}"
         print("찾은 링크:", strUrl)
     else:
         print("해당 태그를 찾을 수 없습니다.")
