@@ -138,7 +138,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
                     COALESCE(TELEGRAM_URL, DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
                     SAVE_TIME, SEND_USER
                 FROM {table['name']}
-                WHERE ARTICLE_TITLE LIKE '%{keyword}%'
+                WHERE (ARTICLE_TITLE LIKE '%{keyword}%' or WRITER LIKE '%{keyword}%')
                 AND DATE(SAVE_TIME) = '{date}'
                 AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
             """)
@@ -149,7 +149,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
                     COALESCE(DOWNLOAD_URL, ATTACH_URL) AS TELEGRAM_URL, 
                     SAVE_TIME, SEND_USER
                 FROM {table['name']}
-                WHERE ARTICLE_TITLE LIKE '%{keyword}%'
+                WHERE (ARTICLE_TITLE LIKE '%{keyword}%' or WRITER LIKE '%{keyword}%')
                 AND DATE(SAVE_TIME) = '{date}'
                 AND (SEND_USER IS NULL OR SEND_USER NOT LIKE '%"{user_id}"%')
             """)
@@ -212,7 +212,8 @@ def update_data(date=None, keyword=None, user_ids=None):
         update_query = f"""
             UPDATE {table}
             SET SEND_USER = '{user_ids_json}'
-            WHERE ARTICLE_TITLE LIKE '%{keyword}%' AND DATE(SAVE_TIME) = '{date}'
+            WHERE (ARTICLE_TITLE LIKE '%{keyword}%' or WRITER LIKE '%{keyword}%')
+                AND DATE(SAVE_TIME) = '{date}'
         """
 
         # 쿼리 출력
