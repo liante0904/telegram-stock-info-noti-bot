@@ -133,14 +133,40 @@ def NAVER_Report_parseURL(LIST_ARTICLE_URL):
     # HTML 파싱
     soup = BeautifulSoup(html_decoded, "html.parser")
 
-    # "원문 보기" 버튼이 포함된 <a> 태그 찾기
-    a_tag = soup.find("a", class_="ResearchHeaderTools_button_text__5E_Qj")
+    # 방법 1: 텍스트로 "원문 보기" 버튼 찾기
+    a_tag = soup.find("a", string="원문 보기")
+    
+    # 방법 1이 실패하면 방법 2: 텍스트를 포함하는 a 태그 찾기
+    if not a_tag:
+        a_tag = soup.find("a", string=lambda text: text and "원문 보기" in text)
+    
+    # 방법 2도 실패하면 방법 3: a 태그 안의 하위 요소에서 "원문 보기" 텍스트 찾기
+    if not a_tag:
+        a_tags = soup.find_all("a")
+        for tag in a_tags:
+            if tag.get_text(strip=True) == "원문 보기":
+                a_tag = tag
+                break
+    
+    # 방법 3도 실패하면 방법 4: "원문 보기"를 포함하는 a 태그 찾기
+    if not a_tag:
+        a_tags = soup.find_all("a")
+        for tag in a_tags:
+            if "원문 보기" in tag.get_text(strip=True):
+                a_tag = tag
+                break
+    
     # href 값 가져오기
     if a_tag and "href" in a_tag.attrs:
         strUrl = f"https://m.stock.naver.com{a_tag['href']}"
         print("찾은 링크:", strUrl)
     else:
-        print("해당 태그를 찾을 수 없습니다.")
+        print("원문 보기 링크를 찾을 수 없습니다.")
+        # 디버깅을 위해 모든 a 태그 출력
+        print("페이지의 모든 a 태그:")
+        a_tags = soup.find_all("a")
+        for i, tag in enumerate(a_tags[:10]):  # 처음 10개만 출력
+            print(f"{i+1}: {tag.get_text(strip=True)} - {tag.get('href', 'href 없음')}")
 
     return strUrl
 
