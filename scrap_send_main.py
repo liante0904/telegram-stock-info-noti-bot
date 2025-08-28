@@ -1,6 +1,7 @@
 import os
 import asyncio
 import argparse
+import telegram.error
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
@@ -72,9 +73,12 @@ async def daily_report(report_type, date_str=None):
                     await sendMarkDownText(token=token,
                                            chat_id=chat_id,
                                            sendMessageText=sendMessageText)
-                except Exception as e:
-                    print(f"메시지 발송 실패: {sendMessageText}, 오류: {e}")
+                except telegram.error.TelegramError as e:
+                    print(f"텔레그램 API 오류로 메시지 발송 실패: {sendMessageText}, 오류: {e}")
                     send_success = False  # 실패한 경우, 성공 플래그를 False로 설정
+                except Exception as e:
+                    print(f"예상치 못한 오류 발생: {sendMessageText}, 오류: {e}")
+                    send_success = False # 예상치 못한 오류도 실패로 처리
 
             # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
             if send_success:
