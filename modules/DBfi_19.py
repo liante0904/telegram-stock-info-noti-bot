@@ -2,7 +2,6 @@ import asyncio
 import aiohttp
 import json
 import ssl
-import certifi
 from datetime import datetime
 import os
 import sys

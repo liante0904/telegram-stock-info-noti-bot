@@ -4,8 +4,6 @@ import re
 import subprocess
 # from package.googledrive import *
 from utils.date_util import GetCurrentDate
-import sys
-import os
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # 로그 파일 경로는 환경 변수로부터 가져옵니다

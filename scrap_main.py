@@ -37,7 +37,6 @@ from modules.Kyobo_24 import Kyobo_checkNewArticle
 
 import scrap_af_main
 import scrap_send_main
-import scrap_upload_pdf
 #################### global 변수 정리 ###################################
 ############공용 상수############
 

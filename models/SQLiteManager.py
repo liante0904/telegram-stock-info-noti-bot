@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import os
 import sys
 from dotenv import load_dotenv
-from datetime import datetime
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
