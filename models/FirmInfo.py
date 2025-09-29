@@ -51,7 +51,17 @@ class FirmInfo:
         ["산업분석",      # ARTICLE_BOARD_ORDER 0
         "기업분석",      # ARTICLE_BOARD_ORDER 1
         "스몰캡",        # ARTICLE_BOARD_ORDER 2
-        "해외주식"],     # ARTICLE_BOARD_ORDER 3
+        "해외주식",     # ARTICLE_BOARD_ORDER 3
+        "대체투자",      # ARTICLE_BOARD_ORDER 4
+        "해외 채권",    # ARTICLE_BOARD_ORDER 5
+        "채권/신용분석", # ARTICLE_BOARD_ORDER 6
+        "주식전략/시황", # ARTICLE_BOARD_ORDER 7
+        "경제",          # ARTICLE_BOARD_ORDER 8
+        "기술적분석/파생시황", # ARTICLE_BOARD_ORDER 9
+        "주식 포트폴리오", # ARTICLE_BOARD_ORDER 10
+        "Daily 신한생각", # ARTICLE_BOARD_ORDER 11
+        "의무리포트",    # ARTICLE_BOARD_ORDER 12
+        "신한 속보"],    # ARTICLE_BOARD_ORDER 13
         
         # SEC_FIRM_ORDER 2
         ["오늘의레포트"], # ARTICLE_BOARD_ORDER 0
