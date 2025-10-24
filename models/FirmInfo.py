@@ -31,6 +31,8 @@ class FirmInfo:
         "BNK투자증권",      # 23
         "교보증권",      # 24
         "IBK투자증권",      # 25
+        "SK증권",      # 26 => 유안타는 26에서 변경할것
+        
     ]
 
     # 게시판 이름을 담은 2차원 배열
@@ -189,6 +191,17 @@ class FirmInfo:
         "산업분석",    # ARTICLE_BOARD_ORDER 2,
         "경제/채권",      # ARTICLE_BOARD_ORDER 3,
         "해외리서치"     # ARTICLE_BOARD_ORDER 4
+        ],
+        # SEC_FIRM_ORDER 26
+        ["",    # ARTICLE_BOARD_ORDER 0,
+        "",    # ARTICLE_BOARD_ORDER 1,
+        "",    # ARTICLE_BOARD_ORDER 2,
+        "기업분석",    # ARTICLE_BOARD_ORDER 3,
+        "기업분석",    # ARTICLE_BOARD_ORDER 4,
+        "",    # ARTICLE_BOARD_ORDER 5,
+        "산업분석",    # ARTICLE_BOARD_ORDER 6,
+        "아침에 슼",    # ARTICLE_BOARD_ORDER 7,
+        "산업분석",    # ARTICLE_BOARD_ORDER 8,
         ]
     ]
 
