@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-
+from models.SQLiteManager import SQLiteManager
 
 
 def Sks_checkNewArticle():
@@ -56,7 +56,7 @@ def Sks_checkNewArticle():
         ARTICLE_BOARD_ORDER = int(item.get("CATEGYID", "").strip())
         CATEGYID_NAME = item.get("CATEGYID_NAME", "").strip()
         reg_date = item.get("CURNDATE", "").strip().replace('.', '')
-        print(f"ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}, CATEGYID_NAME: {CATEGYID_NAME}")
+        
         # 🔗 PDF 다운로드 URL
         # https://www.sks.co.kr/data1/research/qna_file/{pdfpath}
         download_url = f"https://www.sks.co.kr/data1/research/qna_file/{pdfpath}"
@@ -87,8 +87,12 @@ def Sks_checkNewArticle():
 
 def main():
     result = Sks_checkNewArticle()
-    # print(result)
-
+    if not result:
+        print("No articles found.")
+    else:
+        db = SQLiteManager()
+        inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
+        print(f"Inserted {inserted_count} articles.")
 
 if __name__ == '__main__':
     main()
