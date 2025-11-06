@@ -35,6 +35,8 @@ from modules.Hygood_22 import Hanyang_checkNewArticle
 from modules.BNKfn_23 import BNK_checkNewArticle
 from modules.Kyobo_24 import Kyobo_checkNewArticle
 
+from modules.SKS_26 import Sks_checkNewArticle
+
 import scrap_af_main
 import scrap_send_main
 #################### global 변수 정리 ###################################
@@ -144,6 +146,7 @@ async def main():
             Hmsec_checkNewArticle,
             TOSSinvest_checkNewArticle,
             Leading_checkNewArticle,
+            Sks_checkNewArticle,
         ]
 
         # 비동기 함수 리스트
