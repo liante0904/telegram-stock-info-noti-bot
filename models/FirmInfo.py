@@ -193,16 +193,11 @@ class FirmInfo:
         "해외리서치"     # ARTICLE_BOARD_ORDER 4
         ],
         # SEC_FIRM_ORDER 26
-        ["",    # ARTICLE_BOARD_ORDER 0,
-        "",    # ARTICLE_BOARD_ORDER 1,
-        "",    # ARTICLE_BOARD_ORDER 2,
-        "기업분석",    # ARTICLE_BOARD_ORDER 3,
-        "기업분석",    # ARTICLE_BOARD_ORDER 4,
-        "",    # ARTICLE_BOARD_ORDER 5,
-        "산업분석",    # ARTICLE_BOARD_ORDER 6,
-        "아침에 슼",    # ARTICLE_BOARD_ORDER 7,
-        "산업분석",    # ARTICLE_BOARD_ORDER 8,
-        ]
+        ["투자전략",      # ARTICLE_BOARD_ORDER 0,
+        "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+        "기업분석(국내)",    # ARTICLE_BOARD_ORDER 1,
+        "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+        "채권분석"]       # ARTICLE_BOARD_ORDER 3,
     ]
 
     # 라벨 이름을 담은 2차원 배열
@@ -313,7 +308,24 @@ class FirmInfo:
         "채권분석"],       # ARTICLE_BOARD_ORDER 5,
         # SEC_FIRM_ORDER 19
         [""],              # ARTICLE_BOARD_ORDER 0,
-
+        # SEC_FIRM_ORDER 20
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 21
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 22
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 23
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 24
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 25
+        [""],              # ARTICLE_BOARD_ORDER 0,
+        # SEC_FIRM_ORDER 26
+        ["투자전략",      # ARTICLE_BOARD_ORDER 0,
+        "산업분석(국내)",         # ARTICLE_BOARD_ORDER 1,
+        "기업분석(국내)",    # ARTICLE_BOARD_ORDER 1,
+        "기업분석(해외)",       # ARTICLE_BOARD_ORDER 2,
+        "채권분석"]       # ARTICLE_BOARD_ORDER 3,
     ]
 
     def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
@@ -367,8 +379,11 @@ class FirmInfo:
         }
 # 테스트 코드
 if __name__ == "__main__":
-    firm_info = FirmInfo()
+    firm_info = FirmInfo(sec_firm_order=26, article_board_order=0)
+    
     print(firm_info.get_state())
+    print(firm_info.get_board_name())
+    
     # # 증권사 이름 출력
     # print(firm_info.get_firm_name())  # LS증권
     

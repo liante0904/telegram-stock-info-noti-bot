@@ -13,7 +13,7 @@ from models.WebScraper import SyncWebScraper
 from models.SQLiteManager import SQLiteManager
 
 
-def Sks_checkNewArticle():
+def Sks_checkNewArticle_before():
     SEC_FIRM_ORDER = 26   # SK증권 (원하시는 번호로)
     ARTICLE_BOARD_ORDER = 0
     json_data_list = []
@@ -47,7 +47,7 @@ def Sks_checkNewArticle():
     soupList = jres.get('list', [])
 
     for item in soupList:
-        # print(item)
+        print(item)
         # return 
         # PDF 파일명 예: "20251020073057027_0_ko.pdf"
         pdfpath = item.get("PDFPATH", "").strip()
@@ -85,8 +85,81 @@ def Sks_checkNewArticle():
     return json_data_list
 
 
+def Sks_checkNewArticle():
+    SEC_FIRM_ORDER = 26   # SK증권 (원하시는 번호로)
+    ARTICLE_BOARD_ORDER = 0
+    json_data_list = []
+
+    requests.packages.urllib3.disable_warnings()
+    
+    sks_urls = [
+        os.getenv('SKS_URL_1'),
+        os.getenv('SKS_URL_2'),
+        os.getenv('SKS_URL_3'),
+        os.getenv('SKS_URL_4'),
+    ]
+
+    firm_info = FirmInfo(
+        sec_firm_order=SEC_FIRM_ORDER,
+        article_board_order=ARTICLE_BOARD_ORDER # Default
+    )
+
+    for ARTICLE_BOARD_ORDER, target_url in enumerate(sks_urls):
+        scraper = SyncWebScraper(target_url, firm_info)
+
+        # ⚙️ POST 요청 파라미터 (검색어 없음, 1페이지)
+        payload = {
+            "searchVal": "",
+            "searchType": "",
+            "page": 1,
+            "rowPerPage": 2000,
+            "_r_": "0.999"
+        }
+
+        # 🔹 JSON 응답 받기
+        jres = scraper.PostJson(params=payload)
+        soupList = jres.get('list', [])
+
+        for item in soupList:
+            # print(item)
+            # PDF 파일명 예: "20251020073057027_0_ko.pdf"
+            pdfpath = item.get("PDFPATH", "").strip()
+            subject = item.get("ASUBJECT", "").strip() 
+            writer = item.get("RESECHNM", "").strip() 
+            reg_date = item.get("CURNDATE", "").strip().replace('.', '')
+            
+            # 🔗 PDF 다운로드 URL
+            # https://www.sks.co.kr/data1/research/qna_file/{pdfpath}
+            download_url = f"https://www.sks.co.kr/data1/research/qna_file/{pdfpath}"
+
+            # 📰 뷰어 URL (pdf 바로보기용, 동일하게 사용)
+            article_url = download_url
+
+            json_data_list.append({
+                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                "FIRM_NM": firm_info.get_firm_name(),
+                "ARTICLE_TITLE": subject,
+                "REG_DT": reg_date,
+                "ATTACH_URL": article_url,
+                "ARTICLE_URL": article_url,
+                "DOWNLOAD_URL": download_url,
+                "TELEGRAM_URL": article_url,
+                "KEY": download_url,
+                "WRITER": writer,
+                "SAVE_TIME": datetime.now().isoformat()
+            })
+
+        del soupList
+        gc.collect()
+
+    return json_data_list
+
+
 def main():
     result = Sks_checkNewArticle()
+    print(f"Fetched {len(result)} articles from SK증권.")
+    # print(result)
     if not result:
         print("No articles found.")
     else:
