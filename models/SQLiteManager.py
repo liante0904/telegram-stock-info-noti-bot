@@ -285,6 +285,7 @@ class SQLiteManager:
             AND REG_DT >= '{three_days_ago}'
             AND REG_DT <= '{query_reg_dt}'
             AND {query_condition}
+        GROUP BY (CASE WHEN TELEGRAM_URL IS NULL OR TELEGRAM_URL = '' THEN id ELSE TELEGRAM_URL END)
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
         
@@ -329,23 +330,31 @@ class SQLiteManager:
 
         # 'send' 타입에 대한 업데이트 처리
         if type == 'send':
-            update_query = """
-                UPDATE data_main_daily_send
-                SET 
-                    MAIN_CH_SEND_YN = 'Y'
-                WHERE 
-                    id = ?  -- id를 기준으로 업데이트
-            """
             # 여러 건의 데이터를 업데이트
             for row in fetched_rows:
-                print(f"Row data: {row}")
+                telegram_url = row.get('TELEGRAM_URL')
                 
-                # 쿼리와 파라미터를 출력
+                if telegram_url:
+                    update_query = """
+                        UPDATE data_main_daily_send
+                        SET MAIN_CH_SEND_YN = 'Y'
+                        WHERE TELEGRAM_URL = ?
+                    """
+                    param = (telegram_url,)
+                else:
+                    update_query = """
+                        UPDATE data_main_daily_send
+                        SET MAIN_CH_SEND_YN = 'Y'
+                        WHERE id = ?
+                    """
+                    param = (row['id'],)
+
+                print(f"Row data: {row}")
                 print(f"Executing query: {update_query}")
-                print(f"With parameters: {(row['id'],)}")
+                print(f"With parameters: {param}")
                 
                 # 업데이트 쿼리 실행
-                rows = await self.execute_query(update_query, (row['id'],))
+                rows = await self.execute_query(update_query, param)
 
         # 'download' 타입에 대한 업데이트 처리
         elif type == 'download':
