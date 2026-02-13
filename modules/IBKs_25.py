@@ -10,6 +10,7 @@ from datetime import datetime
 # FirmInfo 등을 위해 path 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.SQLiteManager import SQLiteManager
 
 SEC_FIRM_ORDER = 25
 
@@ -133,7 +134,7 @@ async def IBK_checkNewArticle(page=1, board_idx=None, full_fetch=False):
             if full_fetch:
                 current_page = 1
                 while True:
-                    print(f"Fetching IBK reports for [{info['name']}] - Board Index {idx}, Page {current_page} (Full Fetch)")
+                    print(f"Fetching IBK reports for [{info['name']}] - Board Index {idx}, Page {current_page} (Full Fetch Mode)")
                     results = await process_reports(session, info, current_page, idx)
                     if not results:
                         break
@@ -149,17 +150,37 @@ async def IBK_checkNewArticle(page=1, board_idx=None, full_fetch=False):
     return all_results
 
 async def main():
-    # 1페이지 조회 테스트 (기존 방식)
-    # result = await IBK_checkNewArticle(page=1)
+    board_idx = None
+    full_fetch = False
     
-    # 전체 수집 테스트 (파라미터 추가 시)
-    # 특정 게시판(예: 경제/채권 index 3)만 전체 수집 테스트 시
-    result = await IBK_checkNewArticle(board_idx=3, full_fetch=True)
+    # 명령행 인자 처리 (예: python3 modules/IBKs_25.py 0)
+    if len(sys.argv) > 1:
+        try:
+            board_idx = int(sys.argv[1])
+            full_fetch = True
+            print(f"--- Full Fetch Mode for Board Index {board_idx} ({URL_INFO[board_idx]['name']}) ---")
+        except (ValueError, IndexError):
+            print("Usage: python3 modules/IBKs_25.py [board_index(0-5)]")
+            print("Example: python3 modules/IBKs_25.py 0 (Full fetch for '전략/시황')")
+            return
+
+    # 데이터 수집
+    # 인자가 없으면 전체 게시판 1페이지씩만 수집 (기존 동작)
+    result = await IBK_checkNewArticle(board_idx=board_idx, full_fetch=full_fetch)
     
     print(f"\nTotal articles fetched: {len(result)}")
+    
     if result:
-        print("\n--- Last record of fetched data ---")
-        print(json.dumps(result[-1], indent=4, ensure_ascii=False))
+        # 인자가 있어서 full_fetch를 수행한 경우 DB에 즉시 저장
+        if full_fetch:
+            print(f"Inserting {len(result)} articles into database...")
+            db = SQLiteManager()
+            inserted, updated = db.insert_json_data_list(result, 'data_main_daily_send')
+            print(f"Done: {inserted} inserted, {updated} updated.")
+        else:
+            # 테스트 모드일 때는 샘플만 출력
+            print("\n--- Sample of fetched data (First record) ---")
+            print(json.dumps(result[0], indent=4, ensure_ascii=False))
 
 if __name__ == '__main__':
     asyncio.run(main())
