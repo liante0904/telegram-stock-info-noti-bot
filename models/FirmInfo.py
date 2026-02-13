@@ -190,7 +190,8 @@ class FirmInfo:
         "기업분석",    # ARTICLE_BOARD_ORDER 1,
         "산업분석",    # ARTICLE_BOARD_ORDER 2,
         "경제/채권",      # ARTICLE_BOARD_ORDER 3,
-        "해외리서치"     # ARTICLE_BOARD_ORDER 4
+        "해외기업분석",     # ARTICLE_BOARD_ORDER 4
+        "글로벌ETF"     # ARTICLE_BOARD_ORDER 5
         ],
         # SEC_FIRM_ORDER 26
         ["",    # ARTICLE_BOARD_ORDER 0,

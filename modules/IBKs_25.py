@@ -3,49 +3,78 @@ import gc
 import aiohttp
 import json
 import asyncio
+import re
+import sys
 from datetime import datetime
 
-# IBK 투자증권 리서치 URL 및 공통 헤더
-URLS = {
-    "전략/시황": "https://m.ibks.com/iko/IKO010101/getInvReportList.do",
-    "기업분석": "https://m.ibks.com/iko/IKO010201/getBusReportList.do",
-    "산업분석": "https://m.ibks.com/iko/IKO010301/getIndReportList.do",
-    "경제/채권": "https://m.ibks.com/iko/IKO010401/getCommentList.do",
-    "해외리서치": "https://m.ibks.com/iko/IKO010501/getReportList.do"
-}
+# FirmInfo 등을 위해 path 추가
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from models.FirmInfo import FirmInfo
+
+SEC_FIRM_ORDER = 25
+
+# IBK 투자증권 리서치 게시판 정보 (인덱스는 FirmInfo.py의 board_names[25] 순서와 일치해야 함)
+# path: download.ibks.com/emsdata/tradeinfo/{path}/ 파일경로 매핑용
+URL_INFO = [
+    {"name": "전략/시황", "url": "https://m.ibks.com/iko/IKO010101/getInvReportList.do", "screen": "IKO010101", "path": "invreport"},
+    {"name": "기업분석", "url": "https://m.ibks.com/iko/IKO010201/getBusReportList.do", "screen": "IKO010201", "path": "busreport"},
+    {"name": "산업분석", "url": "https://m.ibks.com/iko/IKO010301/getIndReportList.do", "screen": "IKO010301", "path": "indreport"},
+    {"name": "경제/채권", "url": "https://m.ibks.com/iko/IKO010401/getCommentList.do", "screen": "IKO010401", "path": "comment"},
+    {"name": "해외기업분석", "url": "https://m.ibks.com/iko/IKO010501/getReportList.do", "screen": "IKO010501", "path": "overseasreport", "menu_tp": "0"},
+    {"name": "글로벌ETF", "url": "https://m.ibks.com/iko/IKO010501/getReportList.do", "screen": "IKO010501", "path": "overseasreport", "menu_tp": "1"}
+]
 
 # 공통 헤더
-headers = {
+BASE_HEADERS = {
     "Accept": "application/json, text/javascript, */*; q=0.01",
     "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
     "Cache-Control": "no-cache",
     "Content-Type": "application/json; charset=UTF-8",
     "Origin": "https://m.ibks.com",
-    "Referer": "https://m.ibks.com/iko/IKO010101.do",
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest"
 }
 
 async def fetch_data(session: aiohttp.ClientSession, url: str, headers: dict, payload: dict) -> dict:
     try:
-        async with session.post(url, headers=headers, json=payload, timeout=10) as response:
+        async with session.post(url, headers=headers, json=payload, timeout=15) as response:
+            if response.status != 200:
+                return {}
             response_text = await response.text()
             return json.loads(response_text)
     except Exception as e:
         print(f"Error during request to {url}: {e}")
         return {}
 
-async def process_reports(session: aiohttp.ClientSession, target_url: str, headers: dict):
+async def process_reports(session: aiohttp.ClientSession, info: dict, page: int, board_idx: int):
+    category_name = info["name"]
+    target_url = info["url"]
+    screen_code = info["screen"]
+    path_name = info["path"]
+
+    firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_idx)
+    
+    headers = BASE_HEADERS.copy()
+    headers["Referer"] = f"https://m.ibks.com/iko/{screen_code}.do"
+
+    row_size = 50 # 대량 수집 시 효율을 위해 50개씩 요청
+    start_row = (page - 1) * row_size + 1
+    end_row = page * row_size
+
     payload = {
-        "screen": "IKO010101",  # 화면 코드, 필요에 따라 동적으로 수정 가능
+        "screen": screen_code,
         "data": {
-            "start_row": 1,
-            "end_row": 10,
-            "row_size": 10,
-            "pageNo": 1,
+            "start_row": start_row,
+            "end_row": end_row,
+            "row_size": row_size,
+            "pageNo": page,
             "search_value": ""
         }
     }
+
+    # 해외리서치 세부 카테고리 처리
+    if "menu_tp" in info:
+        payload["data"]["menu_tp"] = info["menu_tp"]
 
     response = await fetch_data(session, target_url, headers, payload)
     if not response:
@@ -55,43 +84,82 @@ async def process_reports(session: aiohttp.ClientSession, target_url: str, heade
     json_data_list = []
 
     for report in report_list:
-        print(report)
-        REG_DT = report.get('REG_ID', '')
-        ATTACH_URL = f"https://m.ibks.com/iko/IKO010101/getFile.do?file_nm={report.get('ATTATCH1', '')}"
-        ARTICLE_TITLE = report.get('REG_NAME', 'No Title')
+        REG_DT = report.get('REG_DATE', '')
+        REG_DT = re.sub(r"[-./]", "", REG_DT)
+        
+        # 파일명 추출 (ATTATCH1 필드 사용)
+        file_name = report.get('ATTATCH1', '')
+        
+        # 실제 다운로드 URL 구성 (요청하신 download.ibks.com 기반 직링크)
+        LIST_ARTICLE_URL = f"https://download.ibks.com/emsdata/tradeinfo/{path_name}/{file_name}"
+        
+        ARTICLE_TITLE = report.get('TITLE', 'No Title').strip()
+        WRITER = report.get('REG_NAME', '').strip()
+        
+        market_type = 'GLOBAL' if category_name in ["해외기업분석", "글로벌ETF"] else 'KR'
+        
         json_data_list.append({
             "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+            "ARTICLE_BOARD_ORDER": board_idx,
             "FIRM_NM": firm_info.get_firm_name(),
-            "REG_DT": re.sub(r"[-./]", "", list_item['makeDt']),
+            "REG_DT": REG_DT,
             "ATTACH_URL": LIST_ARTICLE_URL,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
-            "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+            "ARTICLE_TITLE": ARTICLE_TITLE,
             "WRITER": WRITER,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
             "KEY": LIST_ARTICLE_URL,
+            "MKT_TP": market_type,
             "SAVE_TIME": datetime.now().isoformat()
         })
 
     return json_data_list
 
-async def IBK_checkNewReports():
+async def IBK_checkNewArticle(page=1, board_idx=None, full_fetch=False):
+    """
+    IBK투자증권 새 게시글 확인
+    :param page: 조회할 페이지 번호 (full_fetch=False일 때 사용)
+    :param board_idx: 특정 게시판만 조회할 경우 인덱스 (0~5)
+    :param full_fetch: True인 경우 모든 페이지의 데이터를 순회하며 수집
+    """
     async with aiohttp.ClientSession() as session:
-        # 모든 카테고리별로 데이터를 가져오는 작업
-        all_results = {}
-        for category, url in URLS.items():
-            print(f"Fetching data for category: {category}")
-            results = await process_reports(session, url, headers)
-            all_results[category] = results
-            gc.collect()  # 메모리 정리
+        all_results = []
+        
+        for idx, info in enumerate(URL_INFO):
+            # 특정 게시판만 요청받은 경우 필터링
+            if board_idx is not None and idx != board_idx:
+                continue
+
+            if full_fetch:
+                current_page = 1
+                while True:
+                    print(f"Fetching IBK reports for [{info['name']}] - Board Index {idx}, Page {current_page} (Full Fetch)")
+                    results = await process_reports(session, info, current_page, idx)
+                    if not results:
+                        break
+                    all_results.extend(results)
+                    current_page += 1
+                    gc.collect()
+            else:
+                print(f"Fetching IBK reports for [{info['name']}] - Board Index {idx}, Page {page}")
+                results = await process_reports(session, info, page, idx)
+                all_results.extend(results)
+                gc.collect()
 
     return all_results
 
-# 비동기 함수 실행
 async def main():
-    result = await IBK_checkNewReports()
-    print(result)
-    # print(json.dumps(result, indent=4, ensure_ascii=False))
+    # 1페이지 조회 테스트 (기존 방식)
+    # result = await IBK_checkNewArticle(page=1)
+    
+    # 전체 수집 테스트 (파라미터 추가 시)
+    # 특정 게시판(예: 경제/채권 index 3)만 전체 수집 테스트 시
+    result = await IBK_checkNewArticle(board_idx=3, full_fetch=True)
+    
+    print(f"\nTotal articles fetched: {len(result)}")
+    if result:
+        print("\n--- Last record of fetched data ---")
+        print(json.dumps(result[-1], indent=4, ensure_ascii=False))
 
 if __name__ == '__main__':
     asyncio.run(main())
