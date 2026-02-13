@@ -119,6 +119,63 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
+def save_data_list_to_local_json(filename, items_to_save):
+    """
+    여러 건의 데이터를 한 번에 효율적으로 저장합니다.
+    """
+    if not items_to_save:
+        return []
+
+    directory = os.path.dirname(filename)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    # 기존 데이터 로드
+    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+        with open(filename, 'r', encoding='utf-8') as json_file:
+            existing_data = json.load(json_file)
+    else:
+        existing_data = []
+
+    # 빠른 중복 체크를 위한 set 구성 (FIRM_NM + ARTICLE_TITLE 조합)
+    existing_keys = { (item["FIRM_NM"], item["ARTICLE_TITLE"]) for item in existing_data }
+    
+    new_records = []
+    messages = []
+    current_time = datetime.now().isoformat()
+
+    for item in items_to_save:
+        key = (item["firm_nm"], item["article_title"])
+        if key not in existing_keys:
+            new_data = {
+                "SEC_FIRM_ORDER": item.get("sec_firm_order", 0),
+                "ARTICLE_BOARD_ORDER": item.get("article_board_order", 0),
+                "FIRM_NM": item["firm_nm"],
+                "ATTACH_URL": item["attach_url"],
+                "ARTICLE_TITLE": item["article_title"],
+                "ARTICLE_URL": item.get("article_url") or item["attach_url"],
+                "SEND_USER": item.get("send_users", []),
+                "MAIN_CH_SEND_YN": item.get("main_ch_send_yn", "N"),
+                "DOWNLOAD_URL": item.get("download_url") or item["attach_url"],
+                "SAVE_TIME": current_time
+            }
+            existing_data.append(new_data)
+            new_records.append(new_data)
+            existing_keys.add(key)
+            
+            # 메시지 포맷팅
+            msg = format_message(new_data)
+            if '네이버' in item["firm_nm"] or '조선비즈' in item["firm_nm"]:
+                msg += '\n'
+            messages.append(msg)
+
+    if new_records:
+        with open(filename, 'w', encoding='utf-8') as json_file:
+            json.dump(existing_data, json_file, ensure_ascii=False, indent=4)
+        print(f"\n{len(new_records)}개의 새 데이터가 {filename}에 저장되었습니다.")
+
+    return messages
+
 def get_unsent_main_ch_data_to_local_json(filename):
 
     directory = os.path.dirname(filename)
