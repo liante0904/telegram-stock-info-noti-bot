@@ -31,8 +31,8 @@ class FirmInfo:
         "BNK투자증권",      # 23
         "교보증권",      # 24
         "IBK투자증권",      # 25
-        "SK증권",      # 26 => 유안타는 26에서 변경할것
-        
+        "SK증권",      # 26
+        "유안타증권"       # 27,
     ]
 
     # 게시판 이름을 담은 2차원 배열
@@ -204,6 +204,40 @@ class FirmInfo:
         "아침에 슼",    # ARTICLE_BOARD_ORDER 7,
         "산업분석",    # ARTICLE_BOARD_ORDER 8,
         ]
+
+        # SEC_FIRM_ORDER 27
+        ["기업분석", "산업분석", "한국 투자전략", "글로벌 투자전략", "경제분석", "채권분석"]
+    ]
+
+    board_codes = [
+        [], # 0
+        [], # 1
+        [], # 2
+        [], # 3
+        [], # 4
+        [], # 5
+        [], # 6
+        [], # 7
+        [], # 8
+        [], # 9
+        [], # 10
+        [], # 11
+        [], # 12
+        [], # 13
+        [], # 14
+        [], # 15
+        [], # 16
+        [], # 17
+        [], # 18
+        [], # 19
+        [], # 20
+        [], # 21
+        [], # 22
+        [], # 23
+        [], # 24
+        [], # 25
+        [], # 26
+        ["RE01", "RE02", "RB30A", "RB30B", "RB30C", "RF09"], # 27 Yuanta
     ]
 
     # 라벨 이름을 담은 2차원 배열
@@ -315,6 +349,16 @@ class FirmInfo:
         # SEC_FIRM_ORDER 19
         [""],              # ARTICLE_BOARD_ORDER 0,
 
+
+        # Fill empty lists to match firm_names length
+        [], # 20
+        [], # 21
+        [], # 22
+        [], # 23
+        [], # 24
+        [], # 25
+        [], # 26
+        [], # 27
     ]
 
     def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
@@ -344,7 +388,13 @@ class FirmInfo:
             return self.board_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
         else:
             return ""
-    
+
+    def get_board_code(self):
+        if 0 <= self.SEC_FIRM_ORDER < len(self.board_codes) and 0 <= self.ARTICLE_BOARD_ORDER < len(self.board_codes[self.SEC_FIRM_ORDER]):
+            return self.board_codes[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
+        else:
+            return ""
+            
     def get_label_name(self):
         if 0 <= self.SEC_FIRM_ORDER < len(self.label_names) and 0 <= self.ARTICLE_BOARD_ORDER < len(self.label_names[self.SEC_FIRM_ORDER]):
             return self.label_names[self.SEC_FIRM_ORDER][self.ARTICLE_BOARD_ORDER]
@@ -368,20 +418,6 @@ class FirmInfo:
         }
 # 테스트 코드
 if __name__ == "__main__":
-    firm_info = FirmInfo()
+    firm_info = FirmInfo(sec_firm_order=27, article_board_order=0)
     print(firm_info.get_state())
-    # # 증권사 이름 출력
-    # print(firm_info.get_firm_name())  # LS증권
-    
-    # # 게시판 이름 출력
-    # print(firm_info.get_board_name())  # 이슈브리프
-    
-    # # 라벨 이름 출력
-    # print(firm_info.get_label_name())  # ""
-    
-    # # 상태값 변경 후 출력
-    # firm_info.set_sec_firm_order(1)
-    # firm_info.set_article_board_order(2)
-    # print(firm_info.get_firm_name())  # 신한증권
-    # print(firm_info.get_board_name())  # 스몰캡
-    # print(firm_info.get_label_name())  # ""
+    print(firm_info.get_board_code())
