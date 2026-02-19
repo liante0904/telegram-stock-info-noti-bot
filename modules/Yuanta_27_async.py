@@ -192,9 +192,10 @@ async def main():
             inserted_count = db.insert_json_data_list(processed_articles, 'data_main_daily_send')
             print(f"Inserted {inserted_count} articles into the database.")
         else:
-            print("Printing first 5 articles for review (not saving to DB):")
-            for p_article in processed_articles[:5]:
-                print(p_article)
+            print("Saving all recent scraped articles to the database...")
+            db = SQLiteManager()
+            inserted_count = db.insert_json_data_list(processed_articles, 'data_main_daily_send')
+            print(f"Inserted {inserted_count} articles into the database.")
 
 if __name__ == "__main__":
     # Ensure you have dateutil installed: pip install python-dateutil
