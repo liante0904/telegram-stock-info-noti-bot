@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import argparse
 
 # 전역 변수로 필터링할 증권사 목록 정의
-EXCLUDED_FORWARD_REPORT_FIRMS = {"교보증권","IBK투자증권","SK증권","하나증권", "신한투자증권", "이베스트증권","이베스트투자증권", "미래에셋증권", "iM증권", "대신증권", "상상인증권", "LS증권","키움증권", "유진투자증권", "메리츠증권", "한화투자증권"}
+EXCLUDED_FORWARD_REPORT_FIRMS = {"교보증권","IBK투자증권","SK증권","하나증권", "신한투자증권", "이베스트증권","이베스트투자증권", "미래에셋증권", "iM증권", "대신증권", "상상인증권", "LS증권","키움증권", "유진투자증권", "메리츠증권", "한화투자증권", "유안타증권"}
 
 def format_message(data_list):
     EMOJI_PICK = u'\U0001F449'  # 이모지 설정
