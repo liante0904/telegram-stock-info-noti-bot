@@ -202,8 +202,8 @@ class FirmInfo:
         "",    # ARTICLE_BOARD_ORDER 5,
         "산업분석",    # ARTICLE_BOARD_ORDER 6,
         "아침에 슼",    # ARTICLE_BOARD_ORDER 7,
-        "산업분석",    # ARTICLE_BOARD_ORDER 8,
-        ]
+        "산업분석"    # ARTICLE_BOARD_ORDER 8,
+        ],
 
         # SEC_FIRM_ORDER 27
         ["기업분석", "산업분석", "한국 투자전략", "글로벌 투자전략", "경제분석", "채권분석"]
