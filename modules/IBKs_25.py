@@ -88,8 +88,8 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
         REG_DT = report.get('REG_DATE', '')
         REG_DT = re.sub(r"[-./]", "", REG_DT)
         
-        # PDF 다운로드 URL 구성 (download.do 핸들러 사용)
-        seq = report.get('SEQ')
+        # 파일명 추출 (ATTATCH1 필드 사용)
+        file_name = report.get('ATTATCH1', '')
         
         # 리포트 타입(gubun) 설정
         if board_idx == 0:
@@ -101,12 +101,19 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
         else:
             # 나머지 국내 리포트는 'DAIL' 사용
             gubun = 'DAIL'
+
+        # gubun에 따라 path_name 설정
+        if gubun == 'DAIL':
+            path_name = 'invrespect'
+        else:
+            path_name = 'invreport'
         
         # menuCode는 각 게시판의 screen 코드를 사용
         menu_code = screen_code
         
         # attatchCd는 'ATTATCH1'로 고정된 것으로 보임
-        LIST_ARTICLE_URL = f"https://m.ibks.com/iko/IKO01/download.do?seq={seq}&gubun={gubun}&menuCode={menu_code}&attatchCd=ATTATCH1"
+        # 실제 다운로드 URL 구성 (요청하신 download.ibks.com 기반 직링크)
+        LIST_ARTICLE_URL = f"https://download.ibks.com/emsdata/tradeinfo/{path_name}/{file_name}"
         
         ARTICLE_TITLE = report.get('TITLE', 'No Title').strip()
         WRITER = report.get('REG_NAME', '').strip()
