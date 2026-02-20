@@ -34,7 +34,7 @@ from modules.Hanwhawm_21 import Hanwha_checkNewArticle
 from modules.Hygood_22 import Hanyang_checkNewArticle
 from modules.BNKfn_23 import BNK_checkNewArticle
 from modules.Kyobo_24 import Kyobo_checkNewArticle
-
+from modules.IBKs_25 import IBK_checkNewArticle
 from modules.SKS_26 import Sks_checkNewArticle
 from modules.Yuanta_27 import Yuanta_checkNewArticle
 
@@ -168,7 +168,8 @@ async def main():
             Hanwha_checkNewArticle,
             Hanyang_checkNewArticle,
             BNK_checkNewArticle,
-            Kyobo_checkNewArticle
+            Kyobo_checkNewArticle,
+            IBK_checkNewArticle
         ]
 
         total_data = []  # 전체 데이터를 저장할 리스트
