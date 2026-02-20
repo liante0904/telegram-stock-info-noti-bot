@@ -202,6 +202,9 @@ async def main():
             # 테스트 모드일 때는 샘플만 출력
             print("\n--- Sample of fetched data (First record) ---")
             print(json.dumps(result[0], indent=4, ensure_ascii=False))
+            db = SQLiteManager()
+            inserted, updated = db.insert_json_data_list(result, 'data_main_daily_send')
+            print(f"Done: {inserted} inserted, {updated} updated.")
 
 if __name__ == '__main__':
     asyncio.run(main())
