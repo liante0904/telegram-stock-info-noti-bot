@@ -17,7 +17,7 @@ SEC_FIRM_ORDER = 25
 # IBK 투자증권 리서치 게시판 정보 (인덱스는 FirmInfo.py의 board_names[25] 순서와 일치해야 함)
 # path: download.ibks.com/emsdata/tradeinfo/{path}/ 파일경로 매핑용
 URL_INFO = [
-    {"name": "전략/시황", "url": "https://m.ibks.com/iko/IKO010101/getInvReportList.do", "screen": "IKO010101", "path": "invrespect"},
+    {"name": "전략/시황", "url": "https://m.ibks.com/iko/IKO010101/getInvReportList.do", "screen": "IKO010101", "path": "invreport"},
     {"name": "기업분석", "url": "https://m.ibks.com/iko/IKO010201/getBusReportList.do", "screen": "IKO010201", "path": "busreport"},
     {"name": "산업분석", "url": "https://m.ibks.com/iko/IKO010301/getIndReportList.do", "screen": "IKO010301", "path": "indreport"},
     {"name": "경제/채권", "url": "https://m.ibks.com/iko/IKO010401/getCommentList.do", "screen": "IKO010401", "path": "comment"},
