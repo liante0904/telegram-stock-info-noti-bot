@@ -85,32 +85,21 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
     json_data_list = []
 
     for report in report_list:
+        print(report)
         REG_DT = report.get('REG_DATE', '')
         REG_DT = re.sub(r"[-./]", "", REG_DT)
         
         # 파일명 추출 (ATTATCH1 필드 사용)
         file_name = report.get('ATTATCH1', '')
-        
+        gubun = report.get('GUBUN', '')
         # 리포트 타입(gubun) 설정
-        if board_idx == 0:
-            # '전략/시황' 게시판은 'invrespect' 사용
-            gubun = 'invrespect'
-        elif board_idx in [4, 5]:
-            # 해외 리포트는 'GLOB' 사용
-            gubun = 'GLOB'
-        else:
-            # 나머지 국내 리포트는 'DAIL' 사용
-            gubun = 'DAIL'
+        if board_idx == 0: # '전략/시황' 게시판은 구분에 따라 url 처리
+            # gubun에 따라 path_name 설정
+            if gubun == 'DAIL':
+                path_name = 'invrespect'
+            else:
+                path_name = 'invreport'
 
-        # gubun에 따라 path_name 설정
-        if gubun == 'DAIL':
-            path_name = 'invrespect'
-        else:
-            path_name = 'invreport'
-        
-        # menuCode는 각 게시판의 screen 코드를 사용
-        menu_code = screen_code
-        
         # attatchCd는 'ATTATCH1'로 고정된 것으로 보임
         # 실제 다운로드 URL 구성 (요청하신 download.ibks.com 기반 직링크)
         LIST_ARTICLE_URL = f"https://download.ibks.com/emsdata/tradeinfo/{path_name}/{file_name}"
