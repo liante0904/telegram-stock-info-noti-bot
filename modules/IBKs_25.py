@@ -99,6 +99,8 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
                 path_name = 'invrespect'
             else:
                 path_name = 'invreport'
+        else:
+            path_name = info["path"]
 
         # attatchCd는 'ATTATCH1'로 고정된 것으로 보임
         # 실제 다운로드 URL 구성 (요청하신 download.ibks.com 기반 직링크)
