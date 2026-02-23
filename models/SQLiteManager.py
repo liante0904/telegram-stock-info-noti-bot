@@ -176,6 +176,23 @@ class SQLiteManager:
         
         return [dict(row) for row in rows]
 
+    async def fetch_ls_detail_targets(self):
+        """
+        LS증권(SEC_FIRM_ORDER=0) 레포트 중 TELEGRAM_URL이 .pdf로 끝나지 않는 대상을 조회합니다.
+        """
+        query = """
+        SELECT 
+            id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
+            DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY
+        FROM 
+            data_main_daily_send
+        WHERE 
+            SEC_FIRM_ORDER = 0
+            AND (TELEGRAM_URL NOT LIKE '%.pdf' OR TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
+        """
+        return await self.execute_query(query)
+
     async def update_telegram_url(self, record_id, telegram_url, article_title=None):
         """id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
         async with aiosqlite.connect(self.db_path) as db:

@@ -253,8 +253,41 @@ async def LS_detail(articles, firm_info=None):
         tasks = [process_article(session, article, headers) for article in articles]
         await asyncio.gather(*tasks)
 
-    print(articles)
+    # print(articles)
     return articles
+
+async def LS_detailAll(articles=None, firm_info=None):
+    db = SQLiteManager()
+    
+    # 전달받은 articles가 없으면 DB에서 직접 조회
+    if articles is None:
+        articles = await db.fetch_ls_detail_targets()
+    
+    if not articles:
+        print("Detail 처리가 필요한 LS 레포트가 없습니다.")
+        return []
+
+    # TELEGRAM_URL이 .pdf로 끝나지 않는 레포트들만 필터링
+    target_articles = [a for a in articles if not str(a.get('TELEGRAM_URL', '')).lower().endswith('.pdf')]
+    
+    if not target_articles:
+        return articles
+
+    print(f"총 {len(target_articles)}개의 LS 레포트에 대해 상세 정보를 추출합니다.")
+    updated_articles = await LS_detail(target_articles, firm_info)
+    
+    # 추출된 정보를 DB에 업데이트
+    for article in updated_articles:
+        # TELEGRAM_URL이 제대로 추출되었고 .pdf로 끝나는 경우만 업데이트
+        if article.get('TELEGRAM_URL') and str(article.get('TELEGRAM_URL')).lower().endswith('.pdf'):
+            await db.update_telegram_url(
+                record_id=article['id'], 
+                telegram_url=article['TELEGRAM_URL'],
+                article_title=article.get('ARTICLE_TITLE')
+            )
+            print(f"DB 업데이트 완료: {article.get('ARTICLE_TITLE')}")
+            
+    return updated_articles
 
 async def get_valid_url(new_filename, date_part, article, headers):
     """
@@ -303,20 +336,24 @@ async def create_fallback_url(article):
     return ATTACH_URL
 
 if __name__ == "__main__":
-    page = 1
-    all_articles = []
-
-    while True:
-        print(f"Page:{page}.. Process..")
-        articles = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
-        if not any(articles):
-            break  # Exit loop if no articles found
-        all_articles.extend(articles)
-        page += 1
-
-    if not all_articles:
-        print("No articles found.")
+    if len(sys.argv) > 1 and sys.argv[1] == 'fix':
+        print("상세 정보 누락 건 복구 모드(fix) 실행...")
+        asyncio.run(LS_detailAll())
     else:
-        db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
-        print(f"Inserted {inserted_count} articles.")
+        page = 1
+        all_articles = []
+
+        while True:
+            print(f"Page:{page}.. Process..")
+            articles = LS_checkNewArticle(page, is_imported=False, skip_boards=skip_boards)
+            if not any(articles):
+                break  # Exit loop if no articles found
+            all_articles.extend(articles)
+            page += 1
+
+        if not all_articles:
+            print("No articles found.")
+        else:
+            db = SQLiteManager()
+            inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
+            print(f"Inserted {inserted_count} articles.")
