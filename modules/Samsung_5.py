@@ -66,7 +66,7 @@ def Samsung_checkNewArticle():
                     continue
 
                 a_href_path = a_href_parts[0].strip()  # PDF 파일 경로
-                REG_DT = a_href_parts[2].strip()       # REG_DT 값 추출
+                REG_DT = a_href_parts[2].strip().replace(";", "")       # REG_DT 값 추출 및 세미콜론 제거
 
                 LIST_ARTICLE_URL = f'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName={a_href_path}&contentType=application/pdf&inlineYn=Y'
 
