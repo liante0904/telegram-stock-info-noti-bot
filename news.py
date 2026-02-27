@@ -5,6 +5,19 @@ import json
 import asyncio
 import aiohttp
 import logging
+import tempfile
+
+def safe_json_dump(data, filename):
+    """임시 파일을 사용하여 JSON을 안전하게 저장합니다 (Atomic Write)."""
+    directory = os.path.dirname(filename)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+    # 임시 파일 생성
+    with tempfile.NamedTemporaryFile('w', dir=directory, delete=False, encoding='utf-8') as tf:
+        json.dump(data, tf, ensure_ascii=False, indent=4)
+        tempname = tf.name
+    # 원자적 파일 교체
+    os.replace(tempname, filename)
 
 from datetime import datetime, timedelta
 from utils.json_util import save_data_to_local_json, filter_news_by_save_time
@@ -177,18 +190,23 @@ async def NAVERNews_checkNewArticle_0():
 existing_titles = set()
 async def load_existing_data_into_memory(filename):
     global existing_titles
-    if os.path.exists(filename):
-        with open(filename, 'r', encoding='utf-8') as f:
-            saved_jres = json.load(f)
-        existing_titles = {item['tit'] for item in saved_jres['newsList']}
-        print(f"Loaded {len(existing_titles)} articles into memory")
+    if os.path.exists(filename) and os.path.getsize(filename) > 0:
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                saved_jres = json.load(f)
+            existing_titles = {item['tit'] for item in saved_jres.get('newsList', [])}
+            print(f"Loaded {len(existing_titles)} articles into memory")
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"Error loading {filename}: {e}. Starting fresh.")
+            existing_titles = set()
     else:
-        print("No existing file found. Starting fresh.")
+        print("No existing file found or file is empty. Starting fresh.")
+        existing_titles = set()
 
 # 중복 체크를 메모리 내에서 처리
 async def check_for_duplicates_in_memory(jres):
     global existing_titles
-    new_unique_data = [item for item in jres['newsList'] if item.get('tit') not in existing_titles]
+    new_unique_data = [item for item in jres.get('newsList', []) if item.get('tit') not in existing_titles]
     # 메모리에 중복된 기사 추가
     existing_titles.update([item['tit'] for item in new_unique_data])
     return new_unique_data
@@ -198,16 +216,21 @@ async def check_for_duplicates_in_memory(jres):
 # 기존 파일에 중복되지 않은 새로운 데이터를 저장
 async def save_new_data_to_file(filename, new_data):
     if new_data:  # 새로운 데이터가 있을 때만 저장
-        if os.path.exists(filename):
-            with open(filename, 'r+', encoding='utf-8') as f:
-                saved_jres = json.load(f)
-                saved_jres['newsList'].extend(new_data)
-                f.seek(0)  # 파일 시작 위치로 이동
-                json.dump(saved_jres, f, ensure_ascii=False, indent=4)
-        else:
-            # 파일이 존재하지 않으면 새로운 파일을 생성
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump({'newsList': new_data}, f, ensure_ascii=False, indent=4)
+        saved_jres = {'newsList': []}
+        if os.path.exists(filename) and os.path.getsize(filename) > 0:
+            try:
+                with open(filename, 'r', encoding='utf-8') as f:
+                    saved_jres = json.load(f)
+            except json.JSONDecodeError:
+                print(f"Warning: {filename} is corrupted. Recreating file.")
+        
+        if 'newsList' not in saved_jres:
+            saved_jres['newsList'] = []
+            
+        saved_jres['newsList'].extend(new_data)
+        
+        # 안전한 쓰기 방식 적용
+        safe_json_dump(saved_jres, filename)
         print(f"Saved {len(new_data)} new articles to {filename}")
 
 # 새로운 데이터를 체크하고 저장하는 함수
@@ -225,8 +248,8 @@ async def NAVERNews_checkNewArticle_1():
 
     try:
         jres = jres['result']
-    except KeyError as e:
-        print(f"KeyError in jres: {e}")
+    except (KeyError, TypeError) as e:
+        print(f"Error in jres structure: {e}")
         return True
 
     directory = './json'
@@ -271,9 +294,16 @@ async def NAVERNews_checkNewArticle_1():
 
 
 def filter_news_by_date(filename):
+    if not os.path.exists(filename) or os.path.getsize(filename) == 0:
+        return
+
     # 파일에서 JSON 데이터 읽기
-    with open(filename, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        print(f"Warning: {filename} is corrupted during filter. Initializing.")
+        data = {'newsList': []}
 
     # 오늘 날짜
     today = datetime.now()
@@ -283,16 +313,15 @@ def filter_news_by_date(filename):
 
     # 뉴스 리스트 필터링
     filtered_news_list = [
-        news for news in data['newsList']
-        if datetime.strptime(news['dt'], '%Y%m%d%H%M%S') >= one_week_ago
+        news for news in data.get('newsList', [])
+        if datetime.strptime(news.get('dt', '19000101000000'), '%Y%m%d%H%M%S') >= one_week_ago
     ]
 
     # 필터링된 데이터를 원래 구조에 맞게 업데이트
     data['newsList'] = filtered_news_list
 
-    # 필터링된 데이터를 다시 JSON 파일로 저장
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    # 안전한 쓰기 방식 적용
+    safe_json_dump(data, filename)
          
 
 # 본문 생성
