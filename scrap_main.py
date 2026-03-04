@@ -159,7 +159,7 @@ async def main():
             Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
             Koreainvestment_selenium_checkNewArticle,
-            eugene_checkNewArticle,
+            # eugene_checkNewArticle,
             DAOL_checkNewArticle,
             Daeshin_checkNewArticle,
             iMfnsec_checkNewArticle,
