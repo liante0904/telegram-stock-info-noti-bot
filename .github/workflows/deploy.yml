@@ -50,10 +50,10 @@ jobs:
           git pull origin master
 
           # pyenv 가상환경 활성화
-          echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> $GITHUB_ENV
-          echo 'eval "$(pyenv init --path)"' >> $GITHUB_ENV
-          echo 'eval "$(pyenv init -)"' >> $GITHUB_ENV
-          echo 'eval "$(pyenv virtualenv-init -)"' >> $GITHUB_ENV
+          export PATH="$HOME/.pyenv/bin:$PATH"
+          eval "$(pyenv init --path)"
+          eval "$(pyenv init -)"
+          eval "$(pyenv virtualenv-init -)"
           pyenv activate pyenv  # 사용할 가상환경 이름
 
           echo 'pip install start...'
