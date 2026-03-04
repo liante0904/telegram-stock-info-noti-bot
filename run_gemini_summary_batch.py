@@ -34,9 +34,9 @@ async def run_batch_summary(batch_limit=10):
         
         # 유효한 PDF URL 확인
         download_url = report.get('ATTACH_URL') or report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
-        if not download_url or not ('.pdf' in download_url.lower() or '.PDF' in download_url.lower()):
-            print(f"⚠️ 유효한 PDF URL이 아님: {download_url}")
-            continue
+        # if not download_url or not ('.pdf' in download_url.lower() or '.PDF' in download_url.lower()):
+        #     print(f"⚠️ 유효한 PDF URL이 아님: {download_url}")
+        #     continue
 
         file_name = f"temp_batch_{report['id']}.pdf"
         
