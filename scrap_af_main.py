@@ -3,7 +3,7 @@ import sys
 import os
 import json
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from models.SQLiteManager import SQLiteManager
+from models.DataManager import DataManager
 from models.FirmInfo import FirmInfo
 from modules.LS_0 import LS_detail
 from modules.DBfi_19 import fetch_detailed_url
@@ -15,7 +15,7 @@ async def update_firm_telegram_url_by_date(date_str=None):
     firm_names 배열의 모든 인덱스를 순회하며, telegram_update_required가 True인 경우 TELEGRAM_URL 컬럼을 업데이트합니다.
     """
     print('update_firm_telegram_url_by_date')
-    db = SQLiteManager()
+    db = DataManager()
     all_records = []  # 모든 회사의 레코드를 저장할 리스트
 
     # firm_names 배열의 모든 인덱스를 순회

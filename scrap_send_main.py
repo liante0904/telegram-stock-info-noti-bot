@@ -5,7 +5,7 @@ import telegram.error
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from utils.telegram_util import sendMarkDownText
 from utils.file_util import download_file_wget
-from models.SQLiteManager import SQLiteManager
+from models.DataManager import DataManager
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -58,7 +58,7 @@ async def daily_report(report_type, date_str=None):
     date_str : str, optional
         처리할 날짜 (형식: YYYY-MM-DD). 기본값은 None입니다.
     """
-    db = SQLiteManager()
+    db = DataManager()
     if report_type == 'send':
         rows = await db.daily_select_data(date_str=date_str, type=report_type)
         if rows:

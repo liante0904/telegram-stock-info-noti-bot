@@ -5,7 +5,7 @@ import time
 import asyncio
 from send_error import send_message_to_shell
 
-from models.SQLiteManager import SQLiteManager
+from models.DataManager import DataManager
 from utils.date_util import GetCurrentDate
 
 # business
@@ -111,11 +111,11 @@ async def async_check_main(async_check_functions, total_data):
 
     return totalCnt
 
-async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
+async def retry_db_insert_in_memory(db: DataManager, data, table_name, retries=3, delay=60):
     """메모리에서 데이터를 보관한 채로 일정 시간 뒤 DB 삽입 재시도"""
     for attempt in range(retries):
         try:
-            inserted_count, updated_count = db.insert_json_data_list(data, table_name)
+            inserted_count, updated_count = await db.insert_json_data_list(data, table_name)
             print(f"DB 재삽입 성공: {inserted_count}개의 새로운 게시글, {updated_count}개의 게시글 업데이트.")
             return True  # 성공 시 함수 종료
         except Exception as e:
@@ -206,11 +206,11 @@ async def main():
         print('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
         if total_data:
-            db = SQLiteManager()
+            db = DataManager()
 
             # 데이터 삽입 시도
             try:
-                inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
+                inserted_count, updated_count = await db.insert_json_data_list(total_data, 'data_main_daily_send')
                 print(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
                 print(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
             except Exception as e:
