@@ -71,10 +71,14 @@ class SQLiteManager:
 
     def fetch_all(self, table_name):
         """모든 데이터 조회"""
-        query = f"SELECT * FROM {table_name}"
-        self.cursor.execute(query)
-        rows = self.cursor.fetchall()
-        return [dict(row) for row in rows]
+        self.open_connection()
+        try:
+            query = f"SELECT * FROM {table_name}"
+            self.cursor.execute(query)
+            rows = self.cursor.fetchall()
+            return [dict(row) for row in rows]
+        finally:
+            self.close_connection()
 
     def insert_json_data_list(self, json_data_list, table_name):
         """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""

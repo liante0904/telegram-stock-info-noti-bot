@@ -51,8 +51,7 @@ async def migrate_all_to_oracle():
         except Exception as e:
             print(f"❌ [{table_name}] 이관 중 오류 발생: {e}")
 
-    print(f"
-🎉 [Migration Finished] 총 {total_migrated}건의 데이터가 Oracle로 동기화되었습니다.")
+    print(f"🎉 [Migration Finished] 총 {total_migrated}건의 데이터가 Oracle로 동기화되었습니다.")
 
 if __name__ == "__main__":
     asyncio.run(migrate_all_to_oracle())
