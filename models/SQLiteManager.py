@@ -393,37 +393,6 @@ class SQLiteManager:
             rows = await self.execute_query(update_query, (fetched_rows['id'],))
         return rows
 
-    async def update_report_summary(self, record_id, summary, model_name):
-        """data_main_daily_send 테이블의 특정 id 레코드에 제미나이 요약 내용을 업데이트합니다."""
-        query = """
-        UPDATE data_main_daily_send
-        SET GEMINI_SUMMARY = ?, 
-            SUMMARY_TIME = ?, 
-            SUMMARY_MODEL = ?
-        WHERE id = ?
-        """
-        now = datetime.now().isoformat()
-        params = (summary, now, model_name, record_id)
-        
-        return await self.execute_query(query, params)
-
-    async def fetch_pending_summary_reports(self, limit=10):
-        """요약이 아직 생성되지 않은 최근 레포트 목록을 조회합니다. (보안 PDF 증권사 등은 제외)"""
-        # 제외 대상: 19(DB금융투자)
-        exclude_firms = (19,) 
-        
-        query = """
-        SELECT *
-        FROM data_main_daily_send
-        WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '')
-        AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '')
-        AND SEC_FIRM_ORDER NOT IN ({})
-        ORDER BY SAVE_TIME DESC
-        LIMIT ?
-        """.format(", ".join(map(str, exclude_firms)))
-        
-        return await self.execute_query(query, (limit,))
-
 async def main():
     db_manager = SQLiteManager()
     rows = await db_manager.daily_select_data(date_str='20241230', type='send')

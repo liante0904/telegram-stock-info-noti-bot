@@ -138,38 +138,38 @@ async def main():
 
         # 동기 함수 리스트
         sync_check_functions = [
-            LS_checkNewArticle,
-            ShinHanInvest_checkNewArticle,
-            Samsung_checkNewArticle,
-            Shinyoung_checkNewArticle,
-            #DS_checkNewArticle,
-            Miraeasset_checkNewArticle,
-            Hmsec_checkNewArticle,
-            TOSSinvest_checkNewArticle,
-            Leading_checkNewArticle,
-            Sks_checkNewArticle,
-            Yuanta_checkNewArticle,
+            # LS_checkNewArticle,
+            # ShinHanInvest_checkNewArticle,
+            # Samsung_checkNewArticle,
+            # Shinyoung_checkNewArticle,
+            DS_checkNewArticle,
+            # Miraeasset_checkNewArticle,
+            # Hmsec_checkNewArticle,
+            # TOSSinvest_checkNewArticle,
+            # Leading_checkNewArticle,
+            # Sks_checkNewArticle,
+            # Yuanta_checkNewArticle,
         ]
 
         # 비동기 함수 리스트
         async_check_functions = [
             NHQV_checkNewArticle,
-            HANA_checkNewArticle,
-            KB_checkNewArticle,
-            Sangsanginib_checkNewArticle,
-            Kiwoom_checkNewArticle,
-            Koreainvestment_selenium_checkNewArticle,
-            # eugene_checkNewArticle,
-            DAOL_checkNewArticle,
-            Daeshin_checkNewArticle,
-            iMfnsec_checkNewArticle,
-            DBfi_checkNewArticle,
-            MERITZ_checkNewArticle,
-            Hanwha_checkNewArticle,
-            Hanyang_checkNewArticle,
-            BNK_checkNewArticle,
-            Kyobo_checkNewArticle,
-            IBK_checkNewArticle
+            # HANA_checkNewArticle,
+            # KB_checkNewArticle,
+            # Sangsanginib_checkNewArticle,
+            # Kiwoom_checkNewArticle,
+            # Koreainvestment_selenium_checkNewArticle,
+            # # eugene_checkNewArticle,
+            # DAOL_checkNewArticle,
+            # Daeshin_checkNewArticle,
+            # iMfnsec_checkNewArticle,
+            # DBfi_checkNewArticle,
+            # MERITZ_checkNewArticle,
+            # Hanwha_checkNewArticle,
+            # Hanyang_checkNewArticle,
+            # BNK_checkNewArticle,
+            # Kyobo_checkNewArticle,
+            # IBK_checkNewArticle
         ]
 
         total_data = []  # 전체 데이터를 저장할 리스트
