@@ -120,7 +120,6 @@ class OracleManager:
             return 0
             
         conn = self._get_connection_sync()
-        # VALUES 절에는 APPEND_VALUES 힌트가 훨씬 강력합니다 (11.2 이상)
         query = """
         INSERT /*+ APPEND_VALUES */ INTO DATA_MAIN_DAILY_SEND (
             REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
@@ -135,6 +134,20 @@ class OracleManager:
         )
         """
         
+        def parse_dt(dt_str):
+            """날짜 문자열을 datetime 객체로 안전하게 변환"""
+            if not dt_str or str(dt_str).strip() in ['', ' ', 'None']:
+                return None
+            dt_str = str(dt_str).replace('T', ' ').strip()
+            # 대표적인 형식들 시도
+            formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y%m%d%H%M%S', '%Y-%m-%d', '%Y%m%d']
+            for fmt in formats:
+                try:
+                    return datetime.strptime(dt_str, fmt)
+                except ValueError:
+                    continue
+            return None
+
         params_list = []
         for entry in json_data_list:
             params_list.append({
@@ -152,23 +165,21 @@ class OracleManager:
                 "WRITER": str(entry.get("WRITER") or " ")[:200],
                 "MKT_TP": entry.get("MKT_TP") or "KR",
                 "KEY": str(entry.get("KEY") or " ")[:1000],
-                "SAVE_TIME": str(entry.get("SAVE_TIME") or "").replace("T", " ")[:30],
+                "SAVE_TIME": parse_dt(entry.get("SAVE_TIME")), # datetime 객체로 전달
                 "GEMINI_SUMMARY": str(entry.get("GEMINI_SUMMARY") or " "),
-                "SUMMARY_TIME": str(entry.get("SUMMARY_TIME") or " ").replace("T", " ")[:30],
+                "SUMMARY_TIME": parse_dt(entry.get("SUMMARY_TIME")), # datetime 객체로 전달
                 "SUMMARY_MODEL": str(entry.get("SUMMARY_MODEL") or " ")[:100]
             })
             
         try:
             with conn.cursor() as cursor:
-                # 대량 인서트 성능의 핵심: 입력 사이즈를 미리 정의하여 바인딩 오버헤드 제거
                 cursor.setinputsizes(
                     REPORT_ID=oracledb.DB_TYPE_NUMBER,
                     SEC_FIRM_ORDER=oracledb.DB_TYPE_NUMBER,
                     ARTICLE_BOARD_ORDER=oracledb.DB_TYPE_NUMBER,
-                    FIRM_NM=300, REG_DT=20, ATTACH_URL=1000, ARTICLE_TITLE=1000, ARTICLE_URL=1000,
-                    MAIN_CH_SEND_YN=1, DOWNLOAD_URL=1000, TELEGRAM_URL=1000, WRITER=200,
-                    MKT_TP=10, KEY=1000, SAVE_TIME=30, GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB,
-                    SUMMARY_TIME=30, SUMMARY_MODEL=100
+                    SAVE_TIME=oracledb.DB_TYPE_TIMESTAMP,
+                    SUMMARY_TIME=oracledb.DB_TYPE_TIMESTAMP,
+                    GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB
                 )
                 cursor.executemany(query, params_list)
                 conn.commit()
