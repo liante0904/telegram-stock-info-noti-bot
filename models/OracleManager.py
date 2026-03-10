@@ -150,25 +150,40 @@ class OracleManager:
 
         params_list = []
         for entry in json_data_list:
+            # 대소문자 구분 없이 데이터 추출
+            def get_val(key, default=" "):
+                return entry.get(key) or entry.get(key.lower()) or default
+
+            title = get_val("ARTICLE_TITLE", "")
+            save_time_raw = get_val("SAVE_TIME", "")
+            reg_dt = get_val("REG_DT", "").strip()
+            
+            # REG_DT가 없으면 SAVE_TIME에서 날짜만 추출 (예: 2024-03-10T...)
+            if not reg_dt or reg_dt == "":
+                if "-" in str(save_time_raw):
+                    reg_dt = str(save_time_raw).split('T')[0].replace('-', '')
+                elif len(str(save_time_raw)) >= 8:
+                    reg_dt = str(save_time_raw)[:8]
+
             params_list.append({
-                "REPORT_ID": entry.get("id"),
-                "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
-                "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": str(entry.get("FIRM_NM") or " ")[:300],
-                "REG_DT": str(entry.get("REG_DT") or " ")[:20],
-                "ATTACH_URL": str(entry.get("ATTACH_URL") or " ")[:1000],
-                "ARTICLE_TITLE": str(entry.get("ARTICLE_TITLE") or " ")[:1000],
-                "ARTICLE_URL": str(entry.get("ARTICLE_URL") or " ")[:1000],
-                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN") or "N",
-                "DOWNLOAD_URL": str(entry.get("DOWNLOAD_URL") or " ")[:1000],
-                "TELEGRAM_URL": str(entry.get("TELEGRAM_URL") or " ")[:1000],
-                "WRITER": str(entry.get("WRITER") or " ")[:200],
-                "MKT_TP": entry.get("MKT_TP") or "KR",
-                "KEY": str(entry.get("KEY") or " ")[:1000],
-                "SAVE_TIME": parse_dt(entry.get("SAVE_TIME")), # datetime 객체로 전달
-                "GEMINI_SUMMARY": str(entry.get("GEMINI_SUMMARY") or " "),
-                "SUMMARY_TIME": parse_dt(entry.get("SUMMARY_TIME")), # datetime 객체로 전달
-                "SUMMARY_MODEL": str(entry.get("SUMMARY_MODEL") or " ")[:100]
+                "REPORT_ID": get_val("id") or get_val("report_id"),
+                "SEC_FIRM_ORDER": get_val("SEC_FIRM_ORDER"),
+                "ARTICLE_BOARD_ORDER": get_val("ARTICLE_BOARD_ORDER"),
+                "FIRM_NM": str(get_val("FIRM_NM", " "))[:300],
+                "REG_DT": str(reg_dt or " ")[:20],
+                "ATTACH_URL": str(get_val("ATTACH_URL", " "))[:1000],
+                "ARTICLE_TITLE": str(title or " ")[:1000],
+                "ARTICLE_URL": str(get_val("ARTICLE_URL", " "))[:1000],
+                "MAIN_CH_SEND_YN": get_val("MAIN_CH_SEND_YN", "N"),
+                "DOWNLOAD_URL": str(get_val("DOWNLOAD_URL", " "))[:1000],
+                "TELEGRAM_URL": str(get_val("TELEGRAM_URL", " "))[:1000],
+                "WRITER": str(get_val("WRITER", " "))[:200],
+                "MKT_TP": get_val("MKT_TP", "KR"),
+                "KEY": str(get_val("KEY", " "))[:1000],
+                "SAVE_TIME": parse_dt(save_time_raw),
+                "GEMINI_SUMMARY": str(get_val("GEMINI_SUMMARY", " ")),
+                "SUMMARY_TIME": parse_dt(get_val("SUMMARY_TIME")),
+                "SUMMARY_MODEL": str(get_val("SUMMARY_MODEL", " "))[:100]
             })
             
         try:
