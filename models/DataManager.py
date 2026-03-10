@@ -19,10 +19,8 @@ class DataManager:
 
     async def insert_json_data_list(self, json_data_list, table_name='data_main_daily_send'):
         """SQLite에 저장하고 Oracle(신규/기존)에 동기화 시도"""
-        # 1. SQLite 저장 (로컬 원장 우선)
         inserted_count, updated_count = self.sqlite.insert_json_data_list(json_data_list, table_name)
         
-        # 2. Oracle 동기화 (비동기 처리)
         try:
             await self.oracle.insert_json_data_list(json_data_list)
         except Exception as e:
@@ -71,17 +69,24 @@ class DataManager:
 
     async def update_report_summary(self, record_id, summary, model_name, telegram_url=None):
         """Gemini 요약 업데이트 (Triple-Write)
-        telegram_url이 있으면 run_gemini 로직(URL 기준)으로 업데이트합니다.
+        결과를 딕셔너리로 반환하여 어떤 DB가 성공했는지 알 수 있게 합니다.
         """
+        results = {"sqlite": False, "oracle_new": False, "oracle_old": False}
+        
         # 1. SQLite 업데이트
-        if telegram_url:
-            await self.sqlite.update_report_summary_by_telegram_url(telegram_url, summary, model_name)
-        else:
-            await self.sqlite.update_report_summary(record_id, summary, model_name)
+        try:
+            if telegram_url:
+                await self.sqlite.update_report_summary_by_telegram_url(telegram_url, summary, model_name)
+            else:
+                await self.sqlite.update_report_summary(record_id, summary, model_name)
+            results["sqlite"] = True
+        except Exception as e:
+            self.logger.error(f"SQLite Update Error: {str(e)}")
         
         # 2. 신규 Oracle 업데이트 (REPORT_ID 기준)
         try:
             await self.oracle.update_report_summary(record_id, summary, model_name)
+            results["oracle_new"] = True
         except Exception as e:
             self.logger.error(f"Oracle Sync Error (Summary New): {str(e)}")
 
@@ -91,10 +96,11 @@ class DataManager:
                 await self.oracle_old.update_report_summary_by_telegram_url(telegram_url, summary, model_name)
             else:
                 await self.oracle_old.update_report_summary(record_id, summary, model_name)
+            results["oracle_old"] = True
         except Exception as e:
             self.logger.error(f"Oracle Sync Error (Summary Old): {str(e)}")
             
-        return True
+        return results
 
     # 기타 SQLite 전용 메서드 브릿지
     def open_connection(self): self.sqlite.open_connection()
