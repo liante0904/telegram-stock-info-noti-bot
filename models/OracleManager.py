@@ -47,15 +47,15 @@ class OracleManager:
             
         conn = self._get_connection_sync()
         query = """
-        MERGE INTO TB_SEC_REPORTS t
+        MERGE INTO DATA_MAIN_DAILY_SEND t
         USING (SELECT :SEC_FIRM_ORDER as SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, 
                       :FIRM_NM as FIRM_NM, :REG_DT as REG_DT, :ATTACH_URL as ATTACH_URL, 
                       :ARTICLE_TITLE as ARTICLE_TITLE, :ARTICLE_URL as ARTICLE_URL, 
                       :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, :DOWNLOAD_URL as DOWNLOAD_URL, 
                       :TELEGRAM_URL as TELEGRAM_URL, :WRITER as WRITER, :MKT_TP as MKT_TP, 
-                      :REPORT_KEY as REPORT_KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD"T"HH24:MI:SS.FF') as SAVE_TIME
+                      :KEY as KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD"T"HH24:MI:SS.FF') as SAVE_TIME
                FROM DUAL) s
-        ON (t.REPORT_KEY = s.REPORT_KEY)
+        ON (t.KEY = s.KEY)
         WHEN MATCHED THEN
             UPDATE SET 
                 t.REG_DT = s.REG_DT,
@@ -66,10 +66,10 @@ class OracleManager:
         WHEN NOT MATCHED THEN
             INSERT (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
                     ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
-                    TELEGRAM_URL, WRITER, MKT_TP, REPORT_KEY, SAVE_TIME)
+                    TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME)
             VALUES (s.SEC_FIRM_ORDER, s.ARTICLE_BOARD_ORDER, s.FIRM_NM, s.REG_DT, s.ATTACH_URL, 
                     s.ARTICLE_TITLE, s.ARTICLE_URL, s.MAIN_CH_SEND_YN, s.DOWNLOAD_URL, 
-                    s.TELEGRAM_URL, s.WRITER, s.MKT_TP, s.REPORT_KEY, s.SAVE_TIME)
+                    s.TELEGRAM_URL, s.WRITER, s.MKT_TP, s.KEY, s.SAVE_TIME)
         """
         
         params_list = []
@@ -95,19 +95,18 @@ class OracleManager:
             st = st.replace(" ", "T")
             
             # Oracle TIMESTAMP에 적합하도록 형식 보정 (YYYY-MM-DD"T"HH24:MI:SS.FF)
-            # 마이크로초 부분의 길이를 맞추기 위해 정제 (필요시)
             if "T" in st and len(st) > 19:
-                pass # 이미 소수점 포함인 경우 그대로 사용
+                pass
             elif "T" in st and len(st) == 19:
                 st = st + ".000000"
-            elif len(st) == 8 and "-" not in st: # yyyymmdd 형태
+            elif len(st) == 8 and "-" not in st:
                 st = f"{st[:4]}-{st[4:6]}-{st[6:8]}T00:00:00.000000"
 
-            # REPORT_KEY 생성 (Hash 적용으로 길이 제한 및 중복 해결)
-            report_key = entry.get("KEY") or entry.get("ATTACH_URL")
-            if not report_key:
+            # KEY 생성 (Hash 적용으로 길이 제한 및 중복 해결)
+            key_val = entry.get("KEY") or entry.get("ATTACH_URL")
+            if not key_val:
                 raw_key = f"{entry['FIRM_NM']}_{title}_{entry.get('REG_DT', '')}"
-                report_key = hashlib.md5(raw_key.encode('utf-8')).hexdigest()
+                key_val = hashlib.md5(raw_key.encode('utf-8')).hexdigest()
 
             params_list.append({
                 "SEC_FIRM_ORDER": entry["SEC_FIRM_ORDER"],
@@ -115,14 +114,14 @@ class OracleManager:
                 "FIRM_NM": entry["FIRM_NM"],
                 "REG_DT": entry.get("REG_DT", ""),
                 "ATTACH_URL": entry.get("ATTACH_URL", ""),
-                "ARTICLE_TITLE": title[:1000],  # 컬럼 사이즈 고려
+                "ARTICLE_TITLE": title[:1000],
                 "ARTICLE_URL": entry.get("ARTICLE_URL"),
                 "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
                 "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
                 "TELEGRAM_URL": entry.get("TELEGRAM_URL", ""),
                 "WRITER": entry.get("WRITER", ""),
                 "MKT_TP": mkt_tp,
-                "REPORT_KEY": report_key,
+                "KEY": key_val,
                 "SAVE_TIME": st
             })
             
@@ -156,14 +155,16 @@ class OracleManager:
         conn = self._get_connection_sync()
         # Oracle의 Direct Path Insert와 APPEND 힌트 사용
         query = """
-        INSERT /*+ APPEND */ INTO TB_SEC_REPORTS (
+        INSERT /*+ APPEND */ INTO DATA_MAIN_DAILY_SEND (
             SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
-            TELEGRAM_URL, WRITER, MKT_TP, REPORT_KEY, SAVE_TIME
+            TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
+            GEMINI_SUMMARY, SUMMARY_TIME, SUMMARY_MODEL
         ) VALUES (
             :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT, :ATTACH_URL, 
             :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN, :DOWNLOAD_URL, 
-            :TELEGRAM_URL, :WRITER, :MKT_TP, :REPORT_KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD HH24:MI:SS.FF')
+            :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD HH24:MI:SS.FF'),
+            :GEMINI_SUMMARY, :SUMMARY_TIME, :SUMMARY_MODEL
         )
         """
         
@@ -175,20 +176,19 @@ class OracleManager:
                 if ".JP" in title: mkt_tp = "JP"
                 elif ".US" in title: mkt_tp = "US"
             
-            # 이미 정제된 데이터라고 가정 (NUL 제거 및 날짜 형식 보정)
             st = str(entry.get("SAVE_TIME", "")).replace("T", " ")
             if len(st) == 19: st += ".000000"
             elif len(st) == 8 and "-" not in st: st = f"{st[:4]}-{st[4:6]}-{st[6:8]} 00:00:00.000000"
 
-            report_key = entry.get("KEY") or entry.get("ATTACH_URL")
-            if not report_key:
+            key_val = entry.get("KEY") or entry.get("ATTACH_URL")
+            if not key_val:
                 raw_key = f"{entry['FIRM_NM']}_{title}_{entry.get('REG_DT', '')}"
-                report_key = hashlib.md5(raw_key.encode('utf-8')).hexdigest()
+                key_val = hashlib.md5(raw_key.encode('utf-8')).hexdigest()
 
             params_list.append({
-                "SEC_FIRM_ORDER": entry["SEC_FIRM_ORDER"],
-                "ARTICLE_BOARD_ORDER": entry["ARTICLE_BOARD_ORDER"],
-                "FIRM_NM": entry["FIRM_NM"],
+                "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
+                "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
+                "FIRM_NM": entry.get("FIRM_NM"),
                 "REG_DT": entry.get("REG_DT", ""),
                 "ATTACH_URL": entry.get("ATTACH_URL", ""),
                 "ARTICLE_TITLE": title[:1000],
@@ -198,13 +198,15 @@ class OracleManager:
                 "TELEGRAM_URL": entry.get("TELEGRAM_URL", ""),
                 "WRITER": entry.get("WRITER", ""),
                 "MKT_TP": mkt_tp,
-                "REPORT_KEY": report_key,
-                "SAVE_TIME": st
+                "KEY": key_val,
+                "SAVE_TIME": st,
+                "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY"),
+                "SUMMARY_TIME": entry.get("SUMMARY_TIME"),
+                "SUMMARY_MODEL": entry.get("SUMMARY_MODEL")
             })
             
         try:
             with conn.cursor() as cursor:
-                # 25만 건을 한 번에 전송 (Oracle이 알아서 최적화함)
                 cursor.executemany(query, params_list)
                 conn.commit()
             print(f"✅ Oracle Bulk Insert Success: {len(params_list)} rows.")
@@ -246,11 +248,11 @@ class OracleManager:
     async def update_report_summary(self, record_id, summary, model_name):
         """Gemini 요약 결과 업데이트"""
         query = """
-        UPDATE TB_SEC_REPORTS
+        UPDATE DATA_MAIN_DAILY_SEND
         SET GEMINI_SUMMARY = :summary, 
             SUMMARY_TIME = :st, 
             SUMMARY_MODEL = :model
-        WHERE REPORT_ID = :id
+        WHERE id = :id
         """
         params = {
             "summary": summary,
@@ -265,9 +267,9 @@ class OracleManager:
         conn = self._get_connection_sync()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("TRUNCATE TABLE TB_SEC_REPORTS")
+                cursor.execute("TRUNCATE TABLE DATA_MAIN_DAILY_SEND")
                 conn.commit()
-            print("✅ Table TB_SEC_REPORTS truncated successfully.")
+            print("✅ Table DATA_MAIN_DAILY_SEND truncated successfully.")
             return True
         except Exception as e:
             print(f"❌ Truncate Error: {e}")
@@ -276,14 +278,14 @@ class OracleManager:
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 TB_SEC_REPORTS로 전체 동기화"""
+        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화"""
         from models.SQLiteManager import SQLiteManager
         
         print("🚀 Starting full sync from SQLite to Oracle...")
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
         # SQLite에서 모든 데이터 조회
-        sqlite_db.cursor.execute("SELECT * FROM data_main_daily_send")
+        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
         rows = sqlite_db.cursor.fetchall()
         sqlite_data = [dict(row) for row in rows]
         sqlite_db.close_connection()
@@ -307,7 +309,7 @@ if __name__ == "__main__":
             count = await om.full_sync_from_sqlite()
             print(f"✨ Total {count} rows synchronized to Oracle.")
         else:
-            res = await om.execute_query("SELECT count(*) FROM TB_SEC_REPORTS")
+            res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
             print(f"Test Result: {res}")
             
     asyncio.run(main())
