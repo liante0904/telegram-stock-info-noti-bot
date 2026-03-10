@@ -260,9 +260,54 @@ class OracleManager:
         }
         return await self.execute_query(query, params)
 
+    def truncate_table(self):
+        """테이블의 모든 데이터 삭제 (TRUNCATE)"""
+        conn = self._get_connection_sync()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("TRUNCATE TABLE TB_SEC_REPORTS")
+                conn.commit()
+            print("✅ Table TB_SEC_REPORTS truncated successfully.")
+            return True
+        except Exception as e:
+            print(f"❌ Truncate Error: {e}")
+            return False
+        finally:
+            conn.close()
+
+    async def full_sync_from_sqlite(self):
+        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 TB_SEC_REPORTS로 전체 동기화"""
+        from models.SQLiteManager import SQLiteManager
+        
+        print("🚀 Starting full sync from SQLite to Oracle...")
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        # SQLite에서 모든 데이터 조회
+        sqlite_db.cursor.execute("SELECT * FROM data_main_daily_send")
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data:
+            print("⚠️ No data found in SQLite to sync.")
+            return 0
+            
+        print(f"📦 Fetched {len(sqlite_data)} rows from SQLite. Truncating Oracle table...")
+        self.truncate_table()
+        
+        print("⚡ Performing high-speed bulk insert to Oracle...")
+        return await self.bulk_insert(sqlite_data)
+
 if __name__ == "__main__":
-    async def test():
+    import sys
+    async def main():
         om = OracleManager()
-        res = await om.execute_query("SELECT count(*) FROM TB_SEC_REPORTS")
-        print(f"Test Result: {res}")
-    asyncio.run(test())
+        if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
+            print("!!! FULL INSERT MODE !!!")
+            count = await om.full_sync_from_sqlite()
+            print(f"✨ Total {count} rows synchronized to Oracle.")
+        else:
+            res = await om.execute_query("SELECT count(*) FROM TB_SEC_REPORTS")
+            print(f"Test Result: {res}")
+            
+    asyncio.run(main())
