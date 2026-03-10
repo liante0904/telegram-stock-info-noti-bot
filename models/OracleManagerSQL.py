@@ -101,30 +101,55 @@ class OracleManagerSQL:
         self.close_connection()
         return result
 
-    def insert_json_data_list(self, json_data_list, table_name):
-        """JSON 데이터 리스트를 Oracle DB에 삽입 (중복 키 무시)"""
+    def truncate_table(self, table_name):
+        """테이블의 모든 데이터 삭제 (TRUNCATE)"""
         self.open_connection()
+        query = f"TRUNCATE TABLE {table_name}"
+        try:
+            self.cursor.execute(query)
+            self.conn.commit()
+            print(f"Table {table_name} truncated successfully.")
+            return {"status": "success", "query": query}
+        except oracledb.DatabaseError as e:
+            print(f"Error truncating table {table_name}: {e}")
+            return {"status": "error", "error": str(e), "query": query}
+        finally:
+            self.close_connection()
+
+    def insert_json_data_list(self, json_data_list, table_name, full_insert=False):
+        """JSON 데이터 리스트를 Oracle DB에 삽입 (중복 키 무시 또는 전체 삭제 후 삽입)"""
+        if full_insert:
+            print(f"Full insert requested. Truncating {table_name}...")
+            self.truncate_table(table_name)
+
+        self.open_connection()
+        
+        # full_insert가 True이면 중복 무시 힌트 제외 (이미 TRUNCATE 했으므로)
+        hint = "" if full_insert else f"/*+ ignore_row_on_dupkey_index({table_name}, KEY) */"
+        
         query = f"""
-        INSERT /*+ ignore_row_on_dupkey_index({table_name}, KEY) */
+        INSERT {hint}
         INTO {table_name} (
             SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
-            DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME
+            DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
+            GEMINI_SUMMARY, SUMMARY_TIME, SUMMARY_MODEL
         ) VALUES (
             :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT,
             :ATTACH_URL, :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN,
-            :DOWNLOAD_URL, :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME
+            :DOWNLOAD_URL, :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME,
+            :GEMINI_SUMMARY, :SUMMARY_TIME, :SUMMARY_MODEL
         )"""
         params_list = []
         for entry in json_data_list:
             key_val = entry.get("KEY") or entry.get("ATTACH_URL", "")
             params_list.append({
-                "SEC_FIRM_ORDER": entry["SEC_FIRM_ORDER"],
-                "ARTICLE_BOARD_ORDER": entry["ARTICLE_BOARD_ORDER"],
-                "FIRM_NM": entry["FIRM_NM"],
+                "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
+                "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
+                "FIRM_NM": entry.get("FIRM_NM"),
                 "REG_DT": entry.get("REG_DT", ""),
                 "ATTACH_URL": entry.get("ATTACH_URL", ""),
-                "ARTICLE_TITLE": entry["ARTICLE_TITLE"],
+                "ARTICLE_TITLE": entry.get("ARTICLE_TITLE"),
                 "ARTICLE_URL": entry.get("ARTICLE_URL"),
                 "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
                 "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
@@ -132,17 +157,40 @@ class OracleManagerSQL:
                 "WRITER": entry.get("WRITER", ""),
                 "MKT_TP": entry.get("MKT_TP", "KR"),
                 "KEY": key_val,
-                "SAVE_TIME": entry["SAVE_TIME"]
+                "SAVE_TIME": entry.get("SAVE_TIME"),
+                "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY"),
+                "SUMMARY_TIME": entry.get("SUMMARY_TIME"),
+                "SUMMARY_MODEL": entry.get("SUMMARY_MODEL")
             })
         try:
             self.cursor.executemany(query, params_list)
             self.conn.commit()
-            print(f"Inserted {len(params_list)} rows (duplicates ignored).")
+            print(f"Inserted {len(params_list)} rows into {table_name}.")
         except oracledb.DatabaseError as e:
-            print(f"Error during insert: {e}")
+            print(f"Error during insert into {table_name}: {e}")
         finally:
             self.close_connection()
         return len(params_list)
+
+    async def full_sync_from_sqlite(self):
+        """SQLite의 DATA_MAIN_DAILY_SEND 테이블 데이터를 Oracle로 전체 동기화"""
+        from models.SQLiteManager import SQLiteManager
+        
+        print("Starting full sync from SQLite to Oracle...")
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        # 모든 데이터 조회
+        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data:
+            print("No data found in SQLite to sync.")
+            return 0
+            
+        print(f"Fetched {len(sqlite_data)} rows from SQLite. Performing full insert to Oracle...")
+        return self.insert_json_data_list(sqlite_data, 'DATA_MAIN_DAILY_SEND', full_insert=True)
 
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
