@@ -18,18 +18,16 @@ class OracleManager:
     def _init_thick_mode(self):
         """Thick 모드 초기화 시도 (Wallet 연동을 위해 필요한 경우)"""
         try:
-            # 환경에 따라 instantclient 경로가 다를 수 있음
             lib_dir = "/opt/oracle/instantclient_19_10"
             if os.path.exists(lib_dir):
                 oracledb.init_oracle_client(lib_dir=lib_dir)
             else:
-                # 기본 경로 시도
                 oracledb.init_oracle_client()
         except Exception:
             pass
 
     def _get_connection_sync(self):
-        """동기 방식으로 연결 객체 생성 (검증된 방식)"""
+        """동기 방식으로 연결 객체 생성"""
         wl = os.path.expanduser(os.getenv('WALLET_LOCATION'))
         return oracledb.connect(
             user=os.getenv('DB_USER'),
@@ -74,34 +72,26 @@ class OracleManager:
         
         params_list = []
         for entry in json_data_list:
-            title = entry.get("ARTICLE_TITLE", "")
-            mkt_tp = entry.get("MKT_TP", "KR")
-            
-            # SAVE_TIME 처리
-            st = entry.get("SAVE_TIME", "")
-            reg_dt = entry.get("REG_DT", "")
-            if st.startswith("--T"):
-                if len(reg_dt) == 8: st = f"{reg_dt[:4]}-{reg_dt[4:6]}-{reg_dt[6:8]}T{st[3:]}"
-                else: st = f"2024-01-01T{st[3:]}"
-            st = st.replace(" ", "T")
+            title = entry.get("ARTICLE_TITLE") or ""
+            st = str(entry.get("SAVE_TIME") or "").replace(" ", "T")
             if "T" in st and len(st) == 19: st = st + ".000000"
             elif len(st) == 8 and "-" not in st: st = f"{st[:4]}-{st[4:6]}-{st[6:8]}T00:00:00.000000"
 
             params_list.append({
-                "REPORT_ID": entry.get("id"), # SQLite id -> Oracle REPORT_ID
+                "REPORT_ID": entry.get("id"),
                 "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
                 "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": entry.get("FIRM_NM"),
-                "REG_DT": entry.get("REG_DT", ""),
-                "ATTACH_URL": entry.get("ATTACH_URL", ""),
+                "FIRM_NM": entry.get("FIRM_NM") or " ",
+                "REG_DT": entry.get("REG_DT") or " ",
+                "ATTACH_URL": entry.get("ATTACH_URL") or " ",
                 "ARTICLE_TITLE": title[:1000],
-                "ARTICLE_URL": entry.get("ARTICLE_URL"),
-                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
-                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
-                "TELEGRAM_URL": entry.get("TELEGRAM_URL", ""),
-                "WRITER": entry.get("WRITER", ""),
-                "MKT_TP": mkt_tp,
-                "KEY": entry.get("KEY"), # SQLite KEY 원본 유지
+                "ARTICLE_URL": entry.get("ARTICLE_URL") or " ",
+                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN") or "N",
+                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL") or " ",
+                "TELEGRAM_URL": entry.get("TELEGRAM_URL") or " ",
+                "WRITER": entry.get("WRITER") or " ",
+                "MKT_TP": entry.get("MKT_TP") or "KR",
+                "KEY": entry.get("KEY") or " ",
                 "SAVE_TIME": st
             })
             
@@ -118,17 +108,14 @@ class OracleManager:
             conn.close()
 
     async def insert_json_data_list(self, json_data_list):
-        """비동기 인터페이스 유지 (내부는 안정적인 동기 로직 실행)"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._insert_sync_process, json_data_list)
 
     async def bulk_insert(self, json_data_list):
-        """[이관 전용] 대용량 고속 삽입을 위한 별도 함수"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._bulk_insert_sync, json_data_list)
 
     def _bulk_insert_sync(self, json_data_list):
-        """[이관 전용] MERGE 없이 INSERT /*+ APPEND */를 사용하는 고속 동기 로직"""
         if not json_data_list:
             return 0
             
@@ -149,37 +136,36 @@ class OracleManager:
         
         params_list = []
         for entry in json_data_list:
-            title = entry.get("ARTICLE_TITLE", "")
-            st = str(entry.get("SAVE_TIME", "")).replace("T", " ")
+            title = entry.get("ARTICLE_TITLE") or ""
+            st = str(entry.get("SAVE_TIME") or "").replace("T", " ")
             if len(st) == 19: st += ".000000"
             elif len(st) == 8 and "-" not in st: st = f"{st[:4]}-{st[4:6]}-{st[6:8]} 00:00:00.000000"
 
             params_list.append({
-                "REPORT_ID": entry.get("id"), # SQLite id -> Oracle REPORT_ID
+                "REPORT_ID": entry.get("id"),
                 "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
                 "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": entry.get("FIRM_NM"),
-                "REG_DT": entry.get("REG_DT", ""),
-                "ATTACH_URL": entry.get("ATTACH_URL", ""),
+                "FIRM_NM": entry.get("FIRM_NM") or " ",
+                "REG_DT": entry.get("REG_DT") or " ",
+                "ATTACH_URL": entry.get("ATTACH_URL") or " ",
                 "ARTICLE_TITLE": title[:1000],
-                "ARTICLE_URL": entry.get("ARTICLE_URL"),
-                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN", "N"),
-                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL"),
-                "TELEGRAM_URL": entry.get("TELEGRAM_URL", ""),
-                "WRITER": entry.get("WRITER", ""),
-                "MKT_TP": entry.get("MKT_TP", "KR"),
-                "KEY": entry.get("KEY"), # SQLite KEY 원본 유지
+                "ARTICLE_URL": entry.get("ARTICLE_URL") or " ",
+                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN") or "N",
+                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL") or " ",
+                "TELEGRAM_URL": entry.get("TELEGRAM_URL") or " ",
+                "WRITER": entry.get("WRITER") or " ",
+                "MKT_TP": entry.get("MKT_TP") or "KR",
+                "KEY": entry.get("KEY") or " ",
                 "SAVE_TIME": st,
-                "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY"),
-                "SUMMARY_TIME": entry.get("SUMMARY_TIME"),
-                "SUMMARY_MODEL": entry.get("SUMMARY_MODEL")
+                "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY") or " ",
+                "SUMMARY_TIME": entry.get("SUMMARY_TIME") or " ",
+                "SUMMARY_MODEL": entry.get("SUMMARY_MODEL") or " "
             })
             
         try:
             with conn.cursor() as cursor:
                 cursor.executemany(query, params_list)
                 conn.commit()
-            print(f"✅ Oracle Bulk Insert Success: {len(params_list)} rows.")
             return len(params_list)
         except Exception as e:
             print(f"❌ Oracle Bulk Insert Error: {e}")
@@ -188,13 +174,11 @@ class OracleManager:
             conn.close()
 
     def _execute_query_sync(self, query, params=None):
-        """동기 쿼리 실행 로직"""
         conn = self._get_connection_sync()
         try:
             with conn.cursor() as cursor:
                 if params: cursor.execute(query, params)
                 else: cursor.execute(query)
-                
                 if query.strip().upper().startswith("SELECT"):
                     columns = [col[0] for col in cursor.description]
                     res = cursor.fetchall()
@@ -209,12 +193,10 @@ class OracleManager:
             conn.close()
 
     async def execute_query(self, query, params=None):
-        """비동기 인터페이스 유지"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._execute_query_sync, query, params)
 
     async def update_report_summary(self, record_id, summary, model_name):
-        """Gemini 요약 결과 업데이트"""
         query = """
         UPDATE DATA_MAIN_DAILY_SEND
         SET GEMINI_SUMMARY = :summary, 
@@ -222,73 +204,58 @@ class OracleManager:
             SUMMARY_MODEL = :model
         WHERE REPORT_ID = :id
         """
-        params = {
-            "summary": summary,
-            "st": datetime.now().isoformat(),
-            "model": model_name,
-            "id": record_id
-        }
+        params = {"summary": summary, "st": datetime.now().isoformat(), "model": model_name, "id": record_id}
         return await self.execute_query(query, params)
 
     def truncate_table(self):
-        """테이블의 모든 데이터 삭제 (TRUNCATE)"""
         conn = self._get_connection_sync()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("TRUNCATE TABLE DATA_MAIN_DAILY_SEND")
+                try:
+                    cursor.execute("TRUNCATE TABLE DATA_MAIN_DAILY_SEND")
+                    print("✅ Table DATA_MAIN_DAILY_SEND truncated successfully.")
+                except oracledb.DatabaseError as e:
+                    if "ORA-00054" in str(e):
+                        print("⚠️ Resource busy, using DELETE instead...")
+                        cursor.execute("DELETE FROM DATA_MAIN_DAILY_SEND")
+                        print("✅ Table DATA_MAIN_DAILY_SEND deleted successfully.")
+                    else: raise e
                 conn.commit()
-            print("✅ Table DATA_MAIN_DAILY_SEND truncated successfully.")
             return True
         except Exception as e:
-            print(f"❌ Truncate Error: {e}")
+            print(f"❌ Clean Table Error: {e}")
             return False
         finally:
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화 (청크 방식)"""
         from models.SQLiteManager import SQLiteManager
-        
         print("🚀 Starting full sync from SQLite to Oracle...")
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        
-        # 전체 개수 확인
-        sqlite_db.cursor.execute("SELECT count(*) as total FROM DATA_MAIN_DAILY_SEND")
+        sqlite_db.cursor.execute("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
         total_rows = sqlite_db.cursor.fetchone()[0]
-        print(f"📊 Total rows to sync from SQLite: {total_rows}")
-        
-        if not total_rows:
-            print("⚠️ No data found in SQLite to sync.")
+        print(f"📊 Total rows to sync: {total_rows:,}")
+        if total_rows == 0:
+            print("⚠️ No data found in SQLite.")
             sqlite_db.close_connection()
             return 0
-            
-        print("📦 Truncating Oracle table...")
         self.truncate_table()
-        
         chunk_size = 10000
         offset = 0
         total_synced = 0
-        
-        print(f"⚡ Performing high-speed bulk insert in chunks (Batch Size: {chunk_size})...")
-        
+        print(f"⚡ Bulk inserting in chunks of {chunk_size:,}...")
         while offset < total_rows:
-            # SQLite에서 청크 단위로 데이터 조회
             sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
             rows = sqlite_db.cursor.fetchall()
             if not rows: break
-            
             sqlite_data = [dict(row) for row in rows]
-            
-            # Oracle에 청크 인서트 (bulk_insert 호출)
             count = await self.bulk_insert(sqlite_data)
             total_synced += count
             offset += chunk_size
-            
             print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced...")
-            
         sqlite_db.close_connection()
-        print(f"✨ Successfully synchronized total {total_synced:,} rows to Oracle.")
+        print(f"✨ Successfully synced total {total_synced:,} rows.")
         return total_synced
 
 if __name__ == "__main__":
@@ -297,85 +264,8 @@ if __name__ == "__main__":
         om = OracleManager()
         if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
             print("!!! FULL INSERT MODE !!!")
-            count = await om.full_sync_from_sqlite()
-            print(f"✨ Total {count} rows synchronized to Oracle.")
+            await om.full_sync_from_sqlite()
         else:
             res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
             print(f"Test Result: {res}")
-            
-    asyncio.run(main())
-
-    def truncate_table(self):
-        """테이블의 모든 데이터 삭제 (TRUNCATE)"""
-        conn = self._get_connection_sync()
-        try:
-            with conn.cursor() as cursor:
-                cursor.execute("TRUNCATE TABLE DATA_MAIN_DAILY_SEND")
-                conn.commit()
-            print("✅ Table DATA_MAIN_DAILY_SEND truncated successfully.")
-            return True
-        except Exception as e:
-            print(f"❌ Truncate Error: {e}")
-            return False
-        finally:
-            conn.close()
-
-    async def full_sync_from_sqlite(self):
-        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화 (청크 방식)"""
-        from models.SQLiteManager import SQLiteManager
-        
-        print("🚀 Starting full sync from SQLite to Oracle...")
-        sqlite_db = SQLiteManager()
-        sqlite_db.open_connection()
-        
-        # 전체 개수 확인
-        sqlite_db.cursor.execute("SELECT count(*) as total FROM DATA_MAIN_DAILY_SEND")
-        total_rows = sqlite_db.cursor.fetchone()[0]
-        print(f"📊 Total rows to sync from SQLite: {total_rows}")
-        
-        if not total_rows:
-            print("⚠️ No data found in SQLite to sync.")
-            sqlite_db.close_connection()
-            return 0
-            
-        print("📦 Truncating Oracle table...")
-        self.truncate_table()
-        
-        chunk_size = 10000
-        offset = 0
-        total_synced = 0
-        
-        print(f"⚡ Performing high-speed bulk insert in chunks (Batch Size: {chunk_size})...")
-        
-        while offset < total_rows:
-            # SQLite에서 청크 단위로 데이터 조회
-            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
-            rows = sqlite_db.cursor.fetchall()
-            if not rows: break
-            
-            sqlite_data = [dict(row) for row in rows]
-            
-            # Oracle에 청크 인서트 (bulk_insert 호출)
-            count = await self.bulk_insert(sqlite_data)
-            total_synced += count
-            offset += chunk_size
-            
-            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced...")
-            
-        sqlite_db.close_connection()
-        print(f"✨ Successfully synchronized total {total_synced:,} rows to Oracle.")
-        return total_synced
-
-if __name__ == "__main__":
-    import sys
-    async def main():
-        om = OracleManager()
-        if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
-            print("!!! FULL INSERT MODE !!!")
-            count = await om.full_sync_from_sqlite()
-            print(f"✨ Total {count} rows synchronized to Oracle.")
-        else:
-            res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
-            print(f"Test Result: {res}")
-            
     asyncio.run(main())
