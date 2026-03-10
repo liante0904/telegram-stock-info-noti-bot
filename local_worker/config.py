@@ -12,7 +12,7 @@ WALLET_LOCATION = "/Users/seunghoonshin/wallet"
 # 로컬 설정
 LOCAL_TEMP_PDF = "./temp_report.pdf"
 LOCAL_TEMP_SUMMARY = "./temp_summary.txt"
-OLLAMA_MODEL = "llama3.1:8b" 
+OLLAMA_MODEL = "gemma2:9b" 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 # 요약 프롬프트 (기존 GeminiManager와 동일하게 설정)
