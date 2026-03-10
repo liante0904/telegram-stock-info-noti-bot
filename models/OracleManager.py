@@ -129,7 +129,7 @@ class OracleManager:
         ) VALUES (
             :REPORT_ID, :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT, :ATTACH_URL, 
             :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN, :DOWNLOAD_URL, 
-            :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD HH24:MI:SS.FF'),
+            :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME,
             :GEMINI_SUMMARY, :SUMMARY_TIME, :SUMMARY_MODEL
         )
         """
@@ -137,9 +137,9 @@ class OracleManager:
         params_list = []
         for entry in json_data_list:
             title = entry.get("ARTICLE_TITLE") or ""
+            # SAVE_TIME을 단순 문자열로 처리 (T를 공백으로 치환하여 가독성 확보)
             st = str(entry.get("SAVE_TIME") or "").replace("T", " ")
-            if len(st) == 19: st += ".000000"
-            elif len(st) == 8 and "-" not in st: st = f"{st[:4]}-{st[4:6]}-{st[6:8]} 00:00:00.000000"
+            sm_time = str(entry.get("SUMMARY_TIME") or "").replace("T", " ")
 
             params_list.append({
                 "REPORT_ID": entry.get("id"),
@@ -158,7 +158,7 @@ class OracleManager:
                 "KEY": entry.get("KEY") or " ",
                 "SAVE_TIME": st,
                 "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY") or " ",
-                "SUMMARY_TIME": entry.get("SUMMARY_TIME") or " ",
+                "SUMMARY_TIME": sm_time,
                 "SUMMARY_MODEL": entry.get("SUMMARY_MODEL") or " "
             })
             
