@@ -120,8 +120,9 @@ class OracleManager:
             return 0
             
         conn = self._get_connection_sync()
+        # VALUES 절에는 APPEND_VALUES 힌트가 훨씬 강력합니다 (11.2 이상)
         query = """
-        INSERT /*+ APPEND */ INTO DATA_MAIN_DAILY_SEND (
+        INSERT /*+ APPEND_VALUES */ INTO DATA_MAIN_DAILY_SEND (
             REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
             TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
@@ -136,34 +137,39 @@ class OracleManager:
         
         params_list = []
         for entry in json_data_list:
-            title = entry.get("ARTICLE_TITLE") or ""
-            # SAVE_TIME을 단순 문자열로 처리 (T를 공백으로 치환하여 가독성 확보)
-            st = str(entry.get("SAVE_TIME") or "").replace("T", " ")
-            sm_time = str(entry.get("SUMMARY_TIME") or "").replace("T", " ")
-
             params_list.append({
                 "REPORT_ID": entry.get("id"),
                 "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
                 "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": entry.get("FIRM_NM") or " ",
-                "REG_DT": entry.get("REG_DT") or " ",
-                "ATTACH_URL": entry.get("ATTACH_URL") or " ",
-                "ARTICLE_TITLE": title[:1000],
-                "ARTICLE_URL": entry.get("ARTICLE_URL") or " ",
+                "FIRM_NM": str(entry.get("FIRM_NM") or " ")[:300],
+                "REG_DT": str(entry.get("REG_DT") or " ")[:20],
+                "ATTACH_URL": str(entry.get("ATTACH_URL") or " ")[:1000],
+                "ARTICLE_TITLE": str(entry.get("ARTICLE_TITLE") or " ")[:1000],
+                "ARTICLE_URL": str(entry.get("ARTICLE_URL") or " ")[:1000],
                 "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN") or "N",
-                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL") or " ",
-                "TELEGRAM_URL": entry.get("TELEGRAM_URL") or " ",
-                "WRITER": entry.get("WRITER") or " ",
+                "DOWNLOAD_URL": str(entry.get("DOWNLOAD_URL") or " ")[:1000],
+                "TELEGRAM_URL": str(entry.get("TELEGRAM_URL") or " ")[:1000],
+                "WRITER": str(entry.get("WRITER") or " ")[:200],
                 "MKT_TP": entry.get("MKT_TP") or "KR",
-                "KEY": entry.get("KEY") or " ",
-                "SAVE_TIME": st,
-                "GEMINI_SUMMARY": entry.get("GEMINI_SUMMARY") or " ",
-                "SUMMARY_TIME": sm_time,
-                "SUMMARY_MODEL": entry.get("SUMMARY_MODEL") or " "
+                "KEY": str(entry.get("KEY") or " ")[:1000],
+                "SAVE_TIME": str(entry.get("SAVE_TIME") or "").replace("T", " ")[:30],
+                "GEMINI_SUMMARY": str(entry.get("GEMINI_SUMMARY") or " "),
+                "SUMMARY_TIME": str(entry.get("SUMMARY_TIME") or " ").replace("T", " ")[:30],
+                "SUMMARY_MODEL": str(entry.get("SUMMARY_MODEL") or " ")[:100]
             })
             
         try:
             with conn.cursor() as cursor:
+                # 대량 인서트 성능의 핵심: 입력 사이즈를 미리 정의하여 바인딩 오버헤드 제거
+                cursor.setinputsizes(
+                    REPORT_ID=oracledb.DB_TYPE_NUMBER,
+                    SEC_FIRM_ORDER=oracledb.DB_TYPE_NUMBER,
+                    ARTICLE_BOARD_ORDER=oracledb.DB_TYPE_NUMBER,
+                    FIRM_NM=300, REG_DT=20, ATTACH_URL=1000, ARTICLE_TITLE=1000, ARTICLE_URL=1000,
+                    MAIN_CH_SEND_YN=1, DOWNLOAD_URL=1000, TELEGRAM_URL=1000, WRITER=200,
+                    MKT_TP=10, KEY=1000, SAVE_TIME=30, GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB,
+                    SUMMARY_TIME=30, SUMMARY_MODEL=100
+                )
                 cursor.executemany(query, params_list)
                 conn.commit()
             return len(params_list)
