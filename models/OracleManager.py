@@ -136,10 +136,9 @@ class OracleManager:
         
         def parse_dt(dt_str):
             """날짜 문자열을 datetime 객체로 안전하게 변환"""
-            if not dt_str or str(dt_str).strip() in ['', ' ', 'None']:
+            if not dt_str or str(dt_str).strip() in ['', 'None']:
                 return None
             dt_str = str(dt_str).replace('T', ' ').strip()
-            # 대표적인 형식들 시도
             formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y%m%d%H%M%S', '%Y-%m-%d', '%Y%m%d']
             for fmt in formats:
                 try:
@@ -150,40 +149,63 @@ class OracleManager:
 
         params_list = []
         for entry in json_data_list:
-            # 대소문자 구분 없이 데이터 추출
-            def get_val(key, default=" "):
-                return entry.get(key) or entry.get(key.lower()) or default
+            # 안전한 추출을 위해 키를 소문자로 통일
+            ci = {k.lower(): v for k, v in entry.items()}
 
-            title = get_val("ARTICLE_TITLE", "")
-            save_time_raw = get_val("SAVE_TIME", "")
-            reg_dt = get_val("REG_DT", "").strip()
-            
-            # REG_DT가 없으면 SAVE_TIME에서 날짜만 추출 (예: 2024-03-10T...)
-            if not reg_dt or reg_dt == "":
-                if "-" in str(save_time_raw):
-                    reg_dt = str(save_time_raw).split('T')[0].replace('-', '')
-                elif len(str(save_time_raw)) >= 8:
-                    reg_dt = str(save_time_raw)[:8]
+            def get_val(key):
+                return ci.get(key.lower())
+
+            def get_str(key, max_len=1000, default_if_null=None):
+                """원본 값 유지, 지정된 경우에만 널 방지"""
+                val = ci.get(key.lower())
+                if val is None or str(val).strip() == "":
+                    return default_if_null
+                return str(val)[:max_len]
+
+            def get_num(key, default=None):
+                """숫자 값 유지 (0 포함)"""
+                val = ci.get(key.lower())
+                if val is None or str(val).strip() == "":
+                    return default
+                try:
+                    return int(val)
+                except:
+                    return default
+
+            # ID 추출
+            r_id = get_num("id")
+            if r_id is None:
+                r_id = get_num("report_id")
+
+            # REG_DT 자동 보정
+            reg_dt = get_str("reg_dt", 20)
+            st_raw = get_val("save_time")
+            if not reg_dt:
+                if st_raw and "-" in str(st_raw):
+                    reg_dt = str(st_raw).split('T')[0].replace('-', '')
+                elif st_raw and len(str(st_raw)) >= 8:
+                    reg_dt = str(st_raw)[:8]
 
             params_list.append({
-                "REPORT_ID": get_val("id") or get_val("report_id"),
-                "SEC_FIRM_ORDER": get_val("SEC_FIRM_ORDER"),
-                "ARTICLE_BOARD_ORDER": get_val("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": str(get_val("FIRM_NM", " "))[:300],
-                "REG_DT": str(reg_dt or " ")[:20],
-                "ATTACH_URL": str(get_val("ATTACH_URL", " "))[:1000],
-                "ARTICLE_TITLE": str(title or " ")[:1000],
-                "ARTICLE_URL": str(get_val("ARTICLE_URL", " "))[:1000],
-                "MAIN_CH_SEND_YN": get_val("MAIN_CH_SEND_YN", "N"),
-                "DOWNLOAD_URL": str(get_val("DOWNLOAD_URL", " "))[:1000],
-                "TELEGRAM_URL": str(get_val("TELEGRAM_URL", " "))[:1000],
-                "WRITER": str(get_val("WRITER", " "))[:200],
-                "MKT_TP": get_val("MKT_TP", "KR"),
-                "KEY": str(get_val("KEY", " "))[:1000],
-                "SAVE_TIME": parse_dt(save_time_raw),
-                "GEMINI_SUMMARY": str(get_val("GEMINI_SUMMARY", " ")),
-                "SUMMARY_TIME": parse_dt(get_val("SUMMARY_TIME")),
-                "SUMMARY_MODEL": str(get_val("SUMMARY_MODEL", " "))[:100]
+                "REPORT_ID": r_id,
+                "SEC_FIRM_ORDER": get_num("sec_firm_order"),
+                "ARTICLE_BOARD_ORDER": get_num("article_board_order"),
+                "FIRM_NM": get_str("firm_nm", 300),
+                "REG_DT": reg_dt,
+                "ATTACH_URL": get_str("attach_url", 1000),
+                "ARTICLE_TITLE": get_str("article_title", 1000),
+                "ARTICLE_URL": get_str("article_url", 1000),
+                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1, "N"),
+                # Oracle NOT NULL 제약조건이 걸려있는 컬럼들만 최소한의 공백 우회
+                "DOWNLOAD_URL": get_str("download_url", 1000, " "), 
+                "TELEGRAM_URL": get_str("telegram_url", 1000),
+                "WRITER": get_str("writer", 200),
+                "MKT_TP": get_str("mkt_tp", 10, "KR"),
+                "KEY": get_str("key", 1000, " "), # 필수 컬럼 우회
+                "SAVE_TIME": parse_dt(st_raw),
+                "GEMINI_SUMMARY": get_str("gemini_summary", 4000),
+                "SUMMARY_TIME": parse_dt(get_val("summary_time")),
+                "SUMMARY_MODEL": get_str("summary_model", 100)
             })
             
         try:
