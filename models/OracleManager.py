@@ -246,27 +246,50 @@ class OracleManager:
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화"""
+        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화 (청크 방식)"""
         from models.SQLiteManager import SQLiteManager
         
         print("🚀 Starting full sync from SQLite to Oracle...")
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        # SQLite에서 모든 데이터 조회
-        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
-        rows = sqlite_db.cursor.fetchall()
-        sqlite_data = [dict(row) for row in rows]
-        sqlite_db.close_connection()
         
-        if not sqlite_data:
+        # 전체 개수 확인
+        sqlite_db.cursor.execute("SELECT count(*) as total FROM DATA_MAIN_DAILY_SEND")
+        total_rows = sqlite_db.cursor.fetchone()[0]
+        print(f"📊 Total rows to sync from SQLite: {total_rows}")
+        
+        if not total_rows:
             print("⚠️ No data found in SQLite to sync.")
+            sqlite_db.close_connection()
             return 0
             
-        print(f"📦 Fetched {len(sqlite_data)} rows from SQLite. Truncating Oracle table...")
+        print("📦 Truncating Oracle table...")
         self.truncate_table()
         
-        print("⚡ Performing high-speed bulk insert to Oracle...")
-        return await self.bulk_insert(sqlite_data)
+        chunk_size = 10000
+        offset = 0
+        total_synced = 0
+        
+        print(f"⚡ Performing high-speed bulk insert in chunks (Batch Size: {chunk_size})...")
+        
+        while offset < total_rows:
+            # SQLite에서 청크 단위로 데이터 조회
+            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
+            rows = sqlite_db.cursor.fetchall()
+            if not rows: break
+            
+            sqlite_data = [dict(row) for row in rows]
+            
+            # Oracle에 청크 인서트 (bulk_insert 호출)
+            count = await self.bulk_insert(sqlite_data)
+            total_synced += count
+            offset += chunk_size
+            
+            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced...")
+            
+        sqlite_db.close_connection()
+        print(f"✨ Successfully synchronized total {total_synced:,} rows to Oracle.")
+        return total_synced
 
 if __name__ == "__main__":
     import sys
@@ -298,27 +321,50 @@ if __name__ == "__main__":
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화"""
+        """SQLite의 DATA_MAIN_DAILY_SEND 데이터를 Oracle의 DATA_MAIN_DAILY_SEND로 전체 동기화 (청크 방식)"""
         from models.SQLiteManager import SQLiteManager
         
         print("🚀 Starting full sync from SQLite to Oracle...")
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        # SQLite에서 모든 데이터 조회
-        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
-        rows = sqlite_db.cursor.fetchall()
-        sqlite_data = [dict(row) for row in rows]
-        sqlite_db.close_connection()
         
-        if not sqlite_data:
+        # 전체 개수 확인
+        sqlite_db.cursor.execute("SELECT count(*) as total FROM DATA_MAIN_DAILY_SEND")
+        total_rows = sqlite_db.cursor.fetchone()[0]
+        print(f"📊 Total rows to sync from SQLite: {total_rows}")
+        
+        if not total_rows:
             print("⚠️ No data found in SQLite to sync.")
+            sqlite_db.close_connection()
             return 0
             
-        print(f"📦 Fetched {len(sqlite_data)} rows from SQLite. Truncating Oracle table...")
+        print("📦 Truncating Oracle table...")
         self.truncate_table()
         
-        print("⚡ Performing high-speed bulk insert to Oracle...")
-        return await self.bulk_insert(sqlite_data)
+        chunk_size = 10000
+        offset = 0
+        total_synced = 0
+        
+        print(f"⚡ Performing high-speed bulk insert in chunks (Batch Size: {chunk_size})...")
+        
+        while offset < total_rows:
+            # SQLite에서 청크 단위로 데이터 조회
+            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
+            rows = sqlite_db.cursor.fetchall()
+            if not rows: break
+            
+            sqlite_data = [dict(row) for row in rows]
+            
+            # Oracle에 청크 인서트 (bulk_insert 호출)
+            count = await self.bulk_insert(sqlite_data)
+            total_synced += count
+            offset += chunk_size
+            
+            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced...")
+            
+        sqlite_db.close_connection()
+        print(f"✨ Successfully synchronized total {total_synced:,} rows to Oracle.")
+        return total_synced
 
 if __name__ == "__main__":
     import sys
