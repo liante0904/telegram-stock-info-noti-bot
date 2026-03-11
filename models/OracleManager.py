@@ -270,9 +270,9 @@ class OracleManager:
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """오라클을 비우고(Truncate) SQLite 전체 데이터를 단 한 번의 네트워크 왕복으로 일괄 삽입"""
+        """오라클을 비우고(Truncate) 안정적인 청크 단위로 고속 일괄 삽입"""
         from models.SQLiteManager import SQLiteManager
-        print("🚀 Starting High-Speed Batch Sync (All-at-once) from SQLite to Oracle ATP...")
+        print("🚀 Starting Optimized Chunked Sync (10k Batch) to Oracle ATP...")
         
         # 1. 오라클 테이블 초기화 (데이터 변조 및 불안정성 제거)
         self.truncate_table()
@@ -280,25 +280,36 @@ class OracleManager:
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
         
-        # 2. SQLite 모든 데이터 한 번에 로드 (네트워크 왕복 최소화를 위해 일괄 추출)
-        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
-        rows = sqlite_db.cursor.fetchall()
+        # 2. 전체 데이터 건수 확인
+        sqlite_db.cursor.execute("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
+        total_rows = sqlite_db.cursor.fetchone()[0]
         
-        if not rows:
+        if total_rows == 0:
             print("⚠️ No data found in SQLite.")
             sqlite_db.close_connection()
             return 0
             
-        total_rows = len(rows)
-        sqlite_data = [dict(row) for row in rows]
-        print(f"📊 Total {total_rows:,} rows loaded from SQLite. Sending in ONE batch...")
+        print(f"📊 Total {total_rows:,} rows to sync. Processing in 10,000 unit chunks...")
         
-        # 3. 최고속 일괄 삽입 (Single exec_many 호출로 네트워크 Latency 극복)
-        # APPEND_VALUES 힌트와 Single Round-trip으로 성능 최적화
-        total_synced = await self.bulk_insert(sqlite_data)
+        # 3. 10,000건씩 끊어서 처리 (메모리 및 오라클 부하 방지)
+        chunk_size = 10000
+        offset = 0
+        total_synced = 0
         
+        while offset < total_rows:
+            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
+            rows = sqlite_db.cursor.fetchall()
+            if not rows: break
+            
+            sqlite_data = [dict(row) for row in rows]
+            # 개선된 bulk_insert 호출 (executemany + commit)
+            count = await self.bulk_insert(sqlite_data)
+            total_synced += count
+            offset += chunk_size
+            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced (Batch OK)")
+            
         sqlite_db.close_connection()
-        print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP in one go.")
+        print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP.")
         return total_synced
 
 if __name__ == "__main__":
