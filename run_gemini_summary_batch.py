@@ -38,7 +38,7 @@ async def run_batch_summary(batch_limit=10):
         # 유효한 PDF URL 확인
         download_url = report.get('ATTACH_URL') or report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
         
-        file_name = f"temp_batch_{report['id']}.pdf"
+        file_name = f"temp_batch_{report['report_id']}.pdf"
         
         try:
             # 1. PDF 다운로드

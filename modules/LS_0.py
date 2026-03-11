@@ -281,7 +281,7 @@ async def LS_detailAll(articles=None, firm_info=None):
         # TELEGRAM_URL이 제대로 추출되었고 .pdf로 끝나는 경우만 업데이트
         if article.get('TELEGRAM_URL') and str(article.get('TELEGRAM_URL')).lower().endswith('.pdf'):
             await db.update_telegram_url(
-                record_id=article['id'], 
+                record_id=article['report_id'], 
                 telegram_url=article['TELEGRAM_URL'],
                 article_title=article.get('ARTICLE_TITLE')
             )

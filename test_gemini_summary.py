@@ -37,7 +37,7 @@ async def test_summary():
             continue
 
         print(f"📥 PDF 다운로드 중... ({download_url})")
-        file_name = f"temp_test_{report['id']}.pdf"
+        file_name = f"temp_test_{report['report_id']}.pdf"
         
         try:
             success = await download_file_wget(report, URL=download_url, FILE_NAME=file_name)
@@ -61,7 +61,7 @@ async def test_summary():
                 # 4. DB 업데이트
                 print("💾 DB에 요약 내용 저장 중...")
                 await db_manager.update_report_summary(
-                    record_id=report['id'],
+                    record_id=report['report_id'],
                     summary=summary,
                     model_name=result['model']
                 )
