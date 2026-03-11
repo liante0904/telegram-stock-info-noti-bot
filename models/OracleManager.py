@@ -39,67 +39,93 @@ class OracleManager:
         )
 
     def _insert_sync_process(self, json_data_list):
-        """데이터 삽입을 수행하는 동기 메서드 (MERGE 방식)"""
+        """데이터 삽입/업데이트를 수행하는 동기 메서드 (데이터 보호형 MERGE)"""
         if not json_data_list:
             return 0
             
         conn = self._get_connection_sync()
+        # Oracle 스키마에 기반한 MERGE 쿼리
+        # NVL(s.COL, t.COL)을 사용하여 소스 데이터가 빈 값(NULL)일 경우 기존 오라클 데이터를 유지함
         query = """
         MERGE INTO DATA_MAIN_DAILY_SEND t
-        USING (SELECT :REPORT_ID as REPORT_ID, :SEC_FIRM_ORDER as SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, 
-                      :FIRM_NM as FIRM_NM, :REG_DT as REG_DT, :ATTACH_URL as ATTACH_URL, 
-                      :ARTICLE_TITLE as ARTICLE_TITLE, :ARTICLE_URL as ARTICLE_URL, 
-                      :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, :DOWNLOAD_URL as DOWNLOAD_URL, 
-                      :TELEGRAM_URL as TELEGRAM_URL, :WRITER as WRITER, :MKT_TP as MKT_TP, 
-                      :KEY as KEY, TO_TIMESTAMP(:SAVE_TIME, 'YYYY-MM-DD"T"HH24:MI:SS.FF') as SAVE_TIME
+        USING (SELECT :REPORT_ID as REPORT_ID, :SEC_FIRM_ORDER as SEC_FIRM_ORDER, 
+                      :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, :FIRM_NM as FIRM_NM, 
+                      :SEND_USER as SEND_USER, :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, 
+                      :DOWNLOAD_STATUS_YN as DOWNLOAD_STATUS_YN, :SAVE_TIME_STR as SAVE_TIME_STR,
+                      :REG_DT as REG_DT, :WRITER as WRITER, :KEY as KEY, :MKT_TP as MKT_TP, 
+                      :ATTACH_URL as ATTACH_URL, :ARTICLE_TITLE as ARTICLE_TITLE, 
+                      :TELEGRAM_URL as TELEGRAM_URL, :ARTICLE_URL as ARTICLE_URL, 
+                      :DOWNLOAD_URL as DOWNLOAD_URL
                FROM DUAL) s
-        ON (t.KEY = s.KEY)
+        ON (t.REPORT_ID = s.REPORT_ID)
         WHEN MATCHED THEN
             UPDATE SET 
-                t.REG_DT = s.REG_DT,
-                t.WRITER = s.WRITER,
-                t.MKT_TP = s.MKT_TP,
-                t.DOWNLOAD_URL = CASE WHEN s.DOWNLOAD_URL IS NOT NULL THEN s.DOWNLOAD_URL ELSE t.DOWNLOAD_URL END,
-                t.TELEGRAM_URL = CASE WHEN s.TELEGRAM_URL IS NOT NULL AND s.TELEGRAM_URL != '' THEN s.TELEGRAM_URL ELSE t.TELEGRAM_URL END
+                t.SEC_FIRM_ORDER = NVL(s.SEC_FIRM_ORDER, t.SEC_FIRM_ORDER),
+                t.ARTICLE_BOARD_ORDER = NVL(s.ARTICLE_BOARD_ORDER, t.ARTICLE_BOARD_ORDER),
+                t.FIRM_NM = NVL(s.FIRM_NM, t.FIRM_NM),
+                t.SEND_USER = NVL(s.SEND_USER, t.SEND_USER),
+                t.MAIN_CH_SEND_YN = NVL(s.MAIN_CH_SEND_YN, t.MAIN_CH_SEND_YN),
+                t.DOWNLOAD_STATUS_YN = NVL(s.DOWNLOAD_STATUS_YN, t.DOWNLOAD_STATUS_YN),
+                t.SAVE_TIME = NVL(s.SAVE_TIME_STR, t.SAVE_TIME),
+                t.REG_DT = NVL(s.REG_DT, t.REG_DT),
+                t.WRITER = NVL(s.WRITER, t.WRITER),
+                t.KEY = NVL(s.KEY, t.KEY),
+                t.MKT_TP = NVL(s.MKT_TP, t.MKT_TP),
+                t.TELEGRAM_URL = NVL(s.TELEGRAM_URL, t.TELEGRAM_URL),
+                t.ATTACH_URL = NVL(s.ATTACH_URL, t.ATTACH_URL),
+                t.ARTICLE_TITLE = NVL(s.ARTICLE_TITLE, t.ARTICLE_TITLE),
+                t.ARTICLE_URL = NVL(s.ARTICLE_URL, t.ARTICLE_URL),
+                t.DOWNLOAD_URL = NVL(s.DOWNLOAD_URL, t.DOWNLOAD_URL)
         WHEN NOT MATCHED THEN
-            INSERT (REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
-                    ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
-                    TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME)
-            VALUES (s.REPORT_ID, s.SEC_FIRM_ORDER, s.ARTICLE_BOARD_ORDER, s.FIRM_NM, s.REG_DT, s.ATTACH_URL, 
-                    s.ARTICLE_TITLE, s.ARTICLE_URL, s.MAIN_CH_SEND_YN, s.DOWNLOAD_URL, 
-                    s.TELEGRAM_URL, s.WRITER, s.MKT_TP, s.KEY, s.SAVE_TIME)
+            INSERT (REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, SEND_USER,
+                    MAIN_CH_SEND_YN, DOWNLOAD_STATUS_YN, SAVE_TIME, REG_DT, WRITER, 
+                    KEY, MKT_TP, ATTACH_URL, ARTICLE_TITLE, TELEGRAM_URL, 
+                    ARTICLE_URL, DOWNLOAD_URL)
+            VALUES (s.REPORT_ID, s.SEC_FIRM_ORDER, s.ARTICLE_BOARD_ORDER, s.FIRM_NM, s.SEND_USER,
+                    s.MAIN_CH_SEND_YN, s.DOWNLOAD_STATUS_YN, s.SAVE_TIME_STR, s.REG_DT, s.WRITER, 
+                    s.KEY, s.MKT_TP, s.ATTACH_URL, s.ARTICLE_TITLE, s.TELEGRAM_URL, 
+                    s.ARTICLE_URL, s.DOWNLOAD_URL)
         """
         
         params_list = []
         for entry in json_data_list:
-            title = entry.get("ARTICLE_TITLE") or ""
-            st = str(entry.get("SAVE_TIME") or "").replace(" ", "T")
-            if "T" in st and len(st) == 19: st = st + ".000000"
-            elif len(st) == 8 and "-" not in st: st = f"{st[:4]}-{st[4:6]}-{st[6:8]}T00:00:00.000000"
+            # 키 소문자 대응 및 널 처리 최적화
+            ci = {k.lower(): v for k, v in entry.items()}
+            
+            def get_val(key, max_len=None):
+                val = ci.get(key.lower())
+                if val is None or str(val).strip() == "":
+                    return None # 오라클에서 NULL로 인식됨
+                return str(val)[:max_len] if max_len else str(val)
 
+            # SQLite의 id 또는 report_id를 Oracle의 REPORT_ID로 매핑
+            r_id = ci.get("report_id") or ci.get("id")
+            
             params_list.append({
-                "REPORT_ID": entry.get("id"),
-                "SEC_FIRM_ORDER": entry.get("SEC_FIRM_ORDER"),
-                "ARTICLE_BOARD_ORDER": entry.get("ARTICLE_BOARD_ORDER"),
-                "FIRM_NM": entry.get("FIRM_NM") or " ",
-                "REG_DT": entry.get("REG_DT") or " ",
-                "ATTACH_URL": entry.get("ATTACH_URL") or " ",
-                "ARTICLE_TITLE": title[:1000],
-                "ARTICLE_URL": entry.get("ARTICLE_URL") or " ",
-                "MAIN_CH_SEND_YN": entry.get("MAIN_CH_SEND_YN") or "N",
-                "DOWNLOAD_URL": entry.get("DOWNLOAD_URL") or " ",
-                "TELEGRAM_URL": entry.get("TELEGRAM_URL") or " ",
-                "WRITER": entry.get("WRITER") or " ",
-                "MKT_TP": entry.get("MKT_TP") or "KR",
-                "KEY": entry.get("KEY") or " ",
-                "SAVE_TIME": st
+                "REPORT_ID": r_id,
+                "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
+                "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
+                "FIRM_NM": get_val("firm_nm", 100),
+                "SEND_USER": get_val("send_user", 100),
+                "MAIN_CH_SEND_YN": get_val("main_ch_send_yn", 100),
+                "DOWNLOAD_STATUS_YN": get_val("download_status_yn", 100),
+                "SAVE_TIME_STR": get_val("save_time", 100),
+                "REG_DT": get_val("reg_dt", 100),
+                "WRITER": get_val("writer", 100),
+                "KEY": get_val("key", 4000),
+                "MKT_TP": get_val("mkt_tp", 100),
+                "ATTACH_URL": get_val("attach_url", 4000),
+                "ARTICLE_TITLE": get_val("article_title", 4000),
+                "TELEGRAM_URL": get_val("telegram_url", 4000),
+                "ARTICLE_URL": get_val("article_url", 4000),
+                "DOWNLOAD_URL": get_val("download_url", 4000)
             })
             
         try:
             with conn.cursor() as cursor:
                 cursor.executemany(query, params_list)
                 conn.commit()
-            print(f"✅ Oracle Sync Success: {len(params_list)} rows processed.")
+            print(f"✅ Oracle Merge Success: {len(params_list)} rows processed.")
             return len(params_list)
         except Exception as e:
             print(f"❌ Oracle Merge Error: {e}")
@@ -135,7 +161,6 @@ class OracleManager:
         """
         
         def parse_dt(dt_str):
-            """날짜 문자열을 datetime 객체로 안전하게 변환"""
             if not dt_str or str(dt_str).strip() in ['', 'None']:
                 return None
             dt_str = str(dt_str).replace('T', ' ').strip()
@@ -149,75 +174,37 @@ class OracleManager:
 
         params_list = []
         for entry in json_data_list:
-            # 안전한 추출을 위해 키를 소문자로 통일
             ci = {k.lower(): v for k, v in entry.items()}
-
-            def get_val(key):
-                return ci.get(key.lower())
-
-            def get_str(key, max_len=1000, default_if_null=None):
-                """원본 값 유지, 지정된 경우에만 널 방지"""
+            def get_str(key, max_len=1000):
                 val = ci.get(key.lower())
                 if val is None or str(val).strip() == "":
-                    return default_if_null
+                    return None # 공백 대신 실제 NULL 전달
                 return str(val)[:max_len]
 
-            def get_num(key, default=None):
-                """숫자 값 유지 (0 포함)"""
-                val = ci.get(key.lower())
-                if val is None or str(val).strip() == "":
-                    return default
-                try:
-                    return int(val)
-                except:
-                    return default
-
-            # ID 추출
-            r_id = get_num("id")
-            if r_id is None:
-                r_id = get_num("report_id")
-
-            # REG_DT 자동 보정
-            reg_dt = get_str("reg_dt", 20)
-            st_raw = get_val("save_time")
-            if not reg_dt:
-                if st_raw and "-" in str(st_raw):
-                    reg_dt = str(st_raw).split('T')[0].replace('-', '')
-                elif st_raw and len(str(st_raw)) >= 8:
-                    reg_dt = str(st_raw)[:8]
-
             params_list.append({
-                "REPORT_ID": r_id,
-                "SEC_FIRM_ORDER": get_num("sec_firm_order"),
-                "ARTICLE_BOARD_ORDER": get_num("article_board_order"),
+                "REPORT_ID": ci.get("report_id") or ci.get("id"),
+                "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
+                "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 300),
-                "REG_DT": reg_dt,
+                "REG_DT": get_str("reg_dt", 20),
                 "ATTACH_URL": get_str("attach_url", 1000),
                 "ARTICLE_TITLE": get_str("article_title", 1000),
                 "ARTICLE_URL": get_str("article_url", 1000),
-                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1, "N"),
-                # Oracle NOT NULL 제약조건이 걸려있는 컬럼들만 최소한의 공백 우회
-                "DOWNLOAD_URL": get_str("download_url", 1000, " "), 
+                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1) or "N",
+                "DOWNLOAD_URL": get_str("download_url", 1000), 
                 "TELEGRAM_URL": get_str("telegram_url", 1000),
                 "WRITER": get_str("writer", 200),
-                "MKT_TP": get_str("mkt_tp", 10, "KR"),
-                "KEY": get_str("key", 1000, " "), # 필수 컬럼 우회
-                "SAVE_TIME": parse_dt(st_raw),
+                "MKT_TP": get_str("mkt_tp", 10) or "KR",
+                "KEY": get_str("key", 1000),
+                "SAVE_TIME": parse_dt(ci.get("save_time")),
                 "GEMINI_SUMMARY": get_str("gemini_summary", 4000),
-                "SUMMARY_TIME": parse_dt(get_val("summary_time")),
+                "SUMMARY_TIME": parse_dt(ci.get("summary_time")),
                 "SUMMARY_MODEL": get_str("summary_model", 100)
             })
             
         try:
             with conn.cursor() as cursor:
-                cursor.setinputsizes(
-                    REPORT_ID=oracledb.DB_TYPE_NUMBER,
-                    SEC_FIRM_ORDER=oracledb.DB_TYPE_NUMBER,
-                    ARTICLE_BOARD_ORDER=oracledb.DB_TYPE_NUMBER,
-                    SAVE_TIME=oracledb.DB_TYPE_TIMESTAMP,
-                    SUMMARY_TIME=oracledb.DB_TYPE_TIMESTAMP,
-                    GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB
-                )
+                cursor.setinputsizes(GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB)
                 cursor.executemany(query, params_list)
                 conn.commit()
             return len(params_list)
@@ -283,33 +270,35 @@ class OracleManager:
             conn.close()
 
     async def full_sync_from_sqlite(self):
+        """오라클을 비우고(Truncate) SQLite 전체 데이터를 단 한 번의 네트워크 왕복으로 일괄 삽입"""
         from models.SQLiteManager import SQLiteManager
-        print("🚀 Starting full sync from SQLite to Oracle...")
+        print("🚀 Starting High-Speed Batch Sync (All-at-once) from SQLite to Oracle ATP...")
+        
+        # 1. 오라클 테이블 초기화 (데이터 변조 및 불안정성 제거)
+        self.truncate_table()
+        
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        sqlite_db.cursor.execute("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
-        total_rows = sqlite_db.cursor.fetchone()[0]
-        print(f"📊 Total rows to sync: {total_rows:,}")
-        if total_rows == 0:
+        
+        # 2. SQLite 모든 데이터 한 번에 로드 (네트워크 왕복 최소화를 위해 일괄 추출)
+        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
+        rows = sqlite_db.cursor.fetchall()
+        
+        if not rows:
             print("⚠️ No data found in SQLite.")
             sqlite_db.close_connection()
             return 0
-        self.truncate_table()
-        chunk_size = 10000
-        offset = 0
-        total_synced = 0
-        print(f"⚡ Bulk inserting in chunks of {chunk_size:,}...")
-        while offset < total_rows:
-            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
-            rows = sqlite_db.cursor.fetchall()
-            if not rows: break
-            sqlite_data = [dict(row) for row in rows]
-            count = await self.bulk_insert(sqlite_data)
-            total_synced += count
-            offset += chunk_size
-            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced...")
+            
+        total_rows = len(rows)
+        sqlite_data = [dict(row) for row in rows]
+        print(f"📊 Total {total_rows:,} rows loaded from SQLite. Sending in ONE batch...")
+        
+        # 3. 최고속 일괄 삽입 (Single exec_many 호출로 네트워크 Latency 극복)
+        # APPEND_VALUES 힌트와 Single Round-trip으로 성능 최적화
+        total_synced = await self.bulk_insert(sqlite_data)
+        
         sqlite_db.close_connection()
-        print(f"✨ Successfully synced total {total_synced:,} rows.")
+        print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP in one go.")
         return total_synced
 
 if __name__ == "__main__":
