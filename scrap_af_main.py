@@ -41,6 +41,14 @@ async def update_firm_telegram_url_by_date(date_str=None, target_firm_order=None
                 if sec_firm_order == 19:
                     # sec_firm_order가 19인 경우 업데이트 수행
                     print("Updating TELEGRAM_URL for records with SEC_FIRM_ORDER 19")
+                    
+                    # 19번 회사 테스트 시 데이터가 너무 많을 수 있어 5건만 임시 제한
+                    test_limit = 5
+                    if len(records) > test_limit:
+                        print(f"Limiting processing records from {len(records)} to {test_limit} for testing.")
+                        records = records[:test_limit]
+                        all_records = all_records[:len(all_records) - len(records) + test_limit] # all_records도 맞춰줌
+                        
                     update_records = await fetch_detailed_url(records)  # all_records 대신 records 사용
                     for record in update_records:
                         await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
