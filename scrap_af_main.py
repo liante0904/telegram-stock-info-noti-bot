@@ -10,7 +10,7 @@ from modules.DBfi_19 import fetch_detailed_url
 
 
 # TELEGRAM_URL을 얻고 업데이트하는 함수
-async def update_firm_telegram_url_by_date(date_str=None):
+async def update_firm_telegram_url_by_date(date_str=None, target_firm_order=None):
     """
     firm_names 배열의 모든 인덱스를 순회하며, telegram_update_required가 True인 경우 TELEGRAM_URL 컬럼을 업데이트합니다.
     """
@@ -20,11 +20,17 @@ async def update_firm_telegram_url_by_date(date_str=None):
 
     # firm_names 배열의 모든 인덱스를 순회
     for sec_firm_order in range(len(FirmInfo.firm_names)):
+        if target_firm_order is not None and sec_firm_order != target_firm_order:
+            continue
+
         firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=0)
 
         # 회사 이름이 공백이 아니고, telegram_update_required가 True인 경우만 처리
         if firm_info.get_firm_name() and firm_info.telegram_update_required:
-            records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
+            if target_firm_order is not None:
+                records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info)
+            else:
+                records = await db.fetch_daily_articles_by_date(firm_info=firm_info, date_str=date_str)
             print(f"Total records count{len(records)}")
             # records가 빈 리스트가 아닌 경우에만 처리 진행
             if records:
@@ -61,14 +67,23 @@ async def update_firm_telegram_url_by_date(date_str=None):
         print(f"Combined JSON Records size:\n{len(json_records)}")
 
 # 메인 함수
-async def main():
+async def main(target_firm_order=None):
     # firm_info = FirmInfo(
     #     sec_firm_order=19,
     #     article_board_order=0
     # )
     # TELEGRAM_URL 업데이트 함수 호출
     print('?????????????')
-    await update_firm_telegram_url_by_date()
+    await update_firm_telegram_url_by_date(target_firm_order=target_firm_order)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    target_firm_order = None
+    if len(sys.argv) > 1:
+        try:
+            target_firm_order = int(sys.argv[1])
+            print(f"Target firm order provided: {target_firm_order}")
+        except ValueError:
+            print("Invalid argument. sec_firm_order must be an integer.")
+            sys.exit(1)
+            
+    asyncio.run(main(target_firm_order))
