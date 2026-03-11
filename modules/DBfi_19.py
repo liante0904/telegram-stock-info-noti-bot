@@ -33,7 +33,8 @@ async def DBfi_checkNewArticle():
     ]
     json_data_list = []
 
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
+    timeout = aiohttp.ClientTimeout(total=15)
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
         for ARTICLE_BOARD_ORDER, url_path in enumerate(urls):
             firm_info = FirmInfo(
                 sec_firm_order=SEC_FIRM_ORDER,
@@ -46,55 +47,62 @@ async def DBfi_checkNewArticle():
             }
 
             print(f"Fetching articles from {url_path} with ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}")
-            async with session.post(f"{BASE_URL}{url_path}", headers=headers) as response:
-                print(f"Response status for URL {url_path}: {response.status}")
-                if response.status == 200:
-                    try:
-                        jres = await response.json()
-                        data_items = jres.get("data", [])
-                    except (json.JSONDecodeError, KeyError):
-                        print(f"No items found on the page for URL {url_path}.")
-                        continue
+            try:
+                async with session.post(f"{BASE_URL}{url_path}", headers=headers) as response:
+                    print(f"Response status for URL {url_path}: {response.status}")
+                    if response.status == 200:
+                        try:
+                            jres = await response.json()
+                            data_items = jres.get("data", [])
+                        except (json.JSONDecodeError, KeyError):
+                            print(f"No items found on the page for URL {url_path}.")
+                            continue
 
-                    for item in data_items:
-                        detail_url = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
-                        json_data_list.append({
-                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                            "FIRM_NM": firm_info.get_firm_name(),
-                            "REG_DT": item['rdt'][:8],
-                            "ARTICLE_URL": "",
-                            "TELEGRAM_URL": "",
-                            "ARTICLE_TITLE": item['tit'],
-                            "WRITER": item['wnm'],
-                            "CATEGORY": item['div'],
-                            "KEY": detail_url,
-                            "SAVE_TIME": datetime.now().isoformat()
-                        })
-                else:
-                    print(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
+                        for item in data_items:
+                            detail_url = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
+                            json_data_list.append({
+                                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                                "FIRM_NM": firm_info.get_firm_name(),
+                                "REG_DT": item['rdt'][:8],
+                                "ARTICLE_URL": "",
+                                "TELEGRAM_URL": "",
+                                "ARTICLE_TITLE": item['tit'],
+                                "WRITER": item['wnm'],
+                                "CATEGORY": item['div'],
+                                "KEY": detail_url,
+                                "SAVE_TIME": datetime.now().isoformat()
+                            })
+                    else:
+                        print(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
+            except Exception as e:
+                print(f"Network or timeout error while fetching {url_path}: {e}")
 
     return json_data_list
 
 
 # 상세 URL로 후처리 데이터 획득 함수
 async def fetch_detailed_url(articles):
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
+    timeout = aiohttp.ClientTimeout(total=15)
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
         for article in articles:
             key_url = article["KEY"]
 
-            async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
-                if response.status == 200:
-                    try:
-                        detail_data = await response.json()
-                        # 'url' 값을 가져와 TELEGRAM_URL 생성
-                        encoded_url = detail_data['data'].get("url", "")
-                        telegram_url = f"https://whub.dbsec.co.kr/pv/gate?q={encoded_url}"
-                        article["TELEGRAM_URL"] = telegram_url
-                    except json.JSONDecodeError:
-                        print(f"Failed to parse JSON for {key_url}")
-                else:
-                    print(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+            try:
+                async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
+                    if response.status == 200:
+                        try:
+                            detail_data = await response.json()
+                            # 'url' 값을 가져와 TELEGRAM_URL 생성
+                            encoded_url = detail_data['data'].get("url", "")
+                            telegram_url = f"https://whub.dbsec.co.kr/pv/gate?q={encoded_url}"
+                            article["TELEGRAM_URL"] = telegram_url
+                        except json.JSONDecodeError:
+                            print(f"Failed to parse JSON for {key_url}")
+                    else:
+                        print(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+            except Exception as e:
+                print(f"Network or timeout error while fetching {key_url}: {e}")
 
     print(articles)
     return articles
