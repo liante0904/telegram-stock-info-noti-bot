@@ -89,36 +89,45 @@ class OracleManager:
         
         params_list = []
         for entry in json_data_list:
-            # 키 소문자 대응 및 널 처리 최적화
             ci = {k.lower(): v for k, v in entry.items()}
             
-            def get_val(key, max_len=None):
+            def get_str(key, max_len=None):
                 val = ci.get(key.lower())
                 if val is None or str(val).strip() == "":
-                    return None # 오라클에서 NULL로 인식됨
+                    return None
                 return str(val)[:max_len] if max_len else str(val)
 
-            # SQLite의 id 또는 report_id를 Oracle의 REPORT_ID로 매핑
+            def get_url_val(key, max_len=4000):
+                """URL 컬럼 유효성 체크 및 Fallback 로직: 원본 -> TELEGRAM_URL -> KEY"""
+                val = get_str(key, max_len)
+                if val: return val
+                
+                tg_url = get_str("telegram_url", max_len)
+                if tg_url: return tg_url
+                
+                key_val = get_str("key", max_len)
+                return key_val if key_val else "N/A"
+
             r_id = ci.get("report_id") or ci.get("id")
             
             params_list.append({
                 "REPORT_ID": r_id,
                 "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
                 "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
-                "FIRM_NM": get_val("firm_nm", 100),
-                "SEND_USER": get_val("send_user", 100),
-                "MAIN_CH_SEND_YN": get_val("main_ch_send_yn", 100),
-                "DOWNLOAD_STATUS_YN": get_val("download_status_yn", 100),
-                "SAVE_TIME_STR": get_val("save_time", 100),
-                "REG_DT": get_val("reg_dt", 100),
-                "WRITER": get_val("writer", 100),
-                "KEY": get_val("key", 4000),
-                "MKT_TP": get_val("mkt_tp", 100),
-                "ATTACH_URL": get_val("attach_url", 4000),
-                "ARTICLE_TITLE": get_val("article_title", 4000),
-                "TELEGRAM_URL": get_val("telegram_url", 4000),
-                "ARTICLE_URL": get_val("article_url", 4000),
-                "DOWNLOAD_URL": get_val("download_url", 4000)
+                "FIRM_NM": get_str("firm_nm", 100),
+                "SEND_USER": get_str("send_user", 100),
+                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 100),
+                "DOWNLOAD_STATUS_YN": get_str("download_status_yn", 100),
+                "SAVE_TIME_STR": get_str("save_time", 100),
+                "REG_DT": get_str("reg_dt", 100),
+                "WRITER": get_str("writer", 100),
+                "KEY": get_str("key", 4000),
+                "MKT_TP": get_str("mkt_tp", 100),
+                "ATTACH_URL": get_url_val("attach_url", 4000),
+                "ARTICLE_TITLE": get_str("article_title", 4000) or "No Title",
+                "TELEGRAM_URL": get_str("telegram_url", 4000),
+                "ARTICLE_URL": get_url_val("article_url", 4000),
+                "DOWNLOAD_URL": get_url_val("download_url", 4000)
             })
             
         try:
@@ -175,11 +184,23 @@ class OracleManager:
         params_list = []
         for entry in json_data_list:
             ci = {k.lower(): v for k, v in entry.items()}
+            
             def get_str(key, max_len=1000):
                 val = ci.get(key.lower())
                 if val is None or str(val).strip() == "":
-                    return None # 공백 대신 실제 NULL 전달
+                    return None
                 return str(val)[:max_len]
+
+            def get_url_val(key, max_len=4000):
+                """URL 컬럼 유효성 체크 및 Fallback 로직: 원본 -> TELEGRAM_URL -> KEY"""
+                val = get_str(key, max_len)
+                if val: return val
+                
+                tg_url = get_str("telegram_url", max_len)
+                if tg_url: return tg_url
+                
+                key_val = get_str("key", max_len)
+                return key_val if key_val else "N/A"
 
             params_list.append({
                 "REPORT_ID": ci.get("report_id") or ci.get("id"),
@@ -187,11 +208,11 @@ class OracleManager:
                 "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 300),
                 "REG_DT": get_str("reg_dt", 20),
-                "ATTACH_URL": get_str("attach_url", 1000),
-                "ARTICLE_TITLE": get_str("article_title", 1000),
-                "ARTICLE_URL": get_str("article_url", 1000),
+                "ATTACH_URL": get_url_val("attach_url", 1000),
+                "ARTICLE_TITLE": get_str("article_title", 1000) or "No Title",
+                "ARTICLE_URL": get_url_val("article_url", 1000),
                 "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1) or "N",
-                "DOWNLOAD_URL": get_str("download_url", 1000), 
+                "DOWNLOAD_URL": get_url_val("download_url", 1000), 
                 "TELEGRAM_URL": get_str("telegram_url", 1000),
                 "WRITER": get_str("writer", 200),
                 "MKT_TP": get_str("mkt_tp", 10) or "KR",
