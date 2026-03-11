@@ -204,7 +204,7 @@ class OracleManagerSQL:
                 firmInfo = firm_info.get_state()
                 query = f"""
                 SELECT 
-                    id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                    report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
                     DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
                 FROM 
@@ -233,14 +233,14 @@ class OracleManagerSQL:
                     query = """
                     UPDATE data_main_daily_send
                     SET TELEGRAM_URL = :telegram_url, ARTICLE_TITLE = :article_title
-                    WHERE id = :record_id
+                    WHERE report_id = :record_id
                     """
                     params = {"telegram_url": telegram_url, "article_title": article_title, "record_id": record_id}
                 else:
                     query = """
                     UPDATE data_main_daily_send
                     SET TELEGRAM_URL = :telegram_url
-                    WHERE id = :record_id
+                    WHERE report_id = :record_id
                     """
                     params = {"telegram_url": telegram_url, "record_id": record_id}
                 await cursor.execute(query, params)
@@ -248,7 +248,7 @@ class OracleManagerSQL:
             return {"status": "success", "query": query, "record_id": record_id, "telegram_url": telegram_url, "article_title": article_title}
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
-        """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 ID가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
+        """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
         query = """
         UPDATE data_main_daily_send
         SET GEMINI_SUMMARY = :summary, 
@@ -256,8 +256,8 @@ class OracleManagerSQL:
             SUMMARY_MODEL = :model_name
         WHERE TELEGRAM_URL = :telegram_url
           AND MAIN_CH_SEND_YN = 'Y'
-          AND id = (
-              SELECT MAX(id) 
+          AND report_id = (
+              SELECT MAX(report_id) 
               FROM data_main_daily_send 
               WHERE TELEGRAM_URL = :telegram_url 
                 AND MAIN_CH_SEND_YN = 'Y'
@@ -273,13 +273,13 @@ class OracleManagerSQL:
         return await self.execute_query(query, params)
 
     async def update_report_summary(self, record_id, summary, model_name):
-        """data_main_daily_send 테이블의 특정 id 레코드에 제미나이 요약 내용을 업데이트합니다."""
+        """data_main_daily_send 테이블의 특정 report_id 레코드에 제미나이 요약 내용을 업데이트합니다."""
         query = """
         UPDATE data_main_daily_send
         SET GEMINI_SUMMARY = :summary, 
             SUMMARY_TIME = :summary_time, 
             SUMMARY_MODEL = :model_name
-        WHERE id = :record_id
+        WHERE report_id = :record_id
         """
         now = datetime.now()
         params = {
@@ -339,7 +339,7 @@ class OracleManagerSQL:
 
                 query = f"""
                 SELECT 
-                    id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                    report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
                     DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, MAIN_CH_SEND_YN
                 FROM 
@@ -378,23 +378,23 @@ class OracleManagerSQL:
                     update_query = """
                     UPDATE data_main_daily_send
                     SET MAIN_CH_SEND_YN = 'Y'
-                    WHERE id = :id
+                    WHERE report_id = :id
                     """
                     for row in fetched_rows:
                         print(f"Row data: {row}")
                         print(f"Executing query: {update_query}")
-                        print(f"With parameters: {{'id': {row['id']}}}")
-                        await cursor.execute(update_query, {"id": row["id"]})
+                        print(f"With parameters: {{'id': {row['report_id']}}}")
+                        await cursor.execute(update_query, {"id": row["report_id"]})
                 elif type == 'download':
                     update_query = """
                     UPDATE data_main_daily_send
                     SET DOWNLOAD_STATUS_YN = 'Y'
-                    WHERE id = :id
+                    WHERE report_id = :id
                     """
                     print(f"Single row for download: {fetched_rows}")
                     print(f"Executing query: {update_query}")
-                    print(f"With parameters: {{'id': {fetched_rows['id']}}}")
-                    await cursor.execute(update_query, {"id": fetched_rows["id"]})
+                    print(f"With parameters: {{'id': {fetched_rows['report_id']}}}")
+                    await cursor.execute(update_query, {"id": fetched_rows["report_id"]})
 
                 await conn.commit()
                 return {"status": "success", "affected_rows": cursor.rowcount}

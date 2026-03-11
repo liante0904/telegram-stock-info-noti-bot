@@ -182,7 +182,7 @@ class SQLiteManager:
         """
         query = """
         SELECT 
-            id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY
         FROM 
@@ -194,13 +194,13 @@ class SQLiteManager:
         return await self.execute_query(query)
 
     async def update_telegram_url(self, record_id, telegram_url, article_title=None):
-        """id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
+        """report_id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
         async with aiosqlite.connect(self.db_path) as db:
             # 기본 쿼리 구성
             query = """
             UPDATE data_main_daily_send
             SET TELEGRAM_URL = ?
-            WHERE id = ?
+            WHERE report_id = ?
             """
             params = [telegram_url, record_id]  # 기본 매개변수
 
@@ -209,7 +209,7 @@ class SQLiteManager:
                 query = """
                 UPDATE data_main_daily_send
                 SET TELEGRAM_URL = ?, ARTICLE_TITLE = ?
-                WHERE id = ?
+                WHERE report_id = ?
                 """
                 params = [telegram_url, article_title, record_id]
 
@@ -281,7 +281,7 @@ class SQLiteManager:
         # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
         query = f"""
         SELECT 
-            id,
+            report_id,
             SEC_FIRM_ORDER, 
             ARTICLE_BOARD_ORDER, 
             FIRM_NM, 
@@ -302,7 +302,7 @@ class SQLiteManager:
             AND REG_DT >= '{three_days_ago}'
             AND REG_DT <= '{query_reg_dt}'
             AND {query_condition}
-        GROUP BY (CASE WHEN TELEGRAM_URL IS NULL OR TELEGRAM_URL = '' THEN id ELSE TELEGRAM_URL END)
+        GROUP BY (CASE WHEN TELEGRAM_URL IS NULL OR TELEGRAM_URL = '' THEN report_id ELSE TELEGRAM_URL END)
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
         
@@ -362,9 +362,9 @@ class SQLiteManager:
                     update_query = """
                         UPDATE data_main_daily_send
                         SET MAIN_CH_SEND_YN = 'Y'
-                        WHERE id = ?
+                        WHERE report_id = ?
                     """
-                    param = (row['id'],)
+                    param = (row['report_id'],)
 
                 print(f"Row data: {row}")
                 print(f"Executing query: {update_query}")
@@ -380,21 +380,21 @@ class SQLiteManager:
                 SET 
                     DOWNLOAD_STATUS_YN = 'Y'
                 WHERE 
-                    id = ?  -- id를 기준으로 업데이트
+                    report_id = ?  -- report_id를 기준으로 업데이트
             """
             # 단일 행 데이터 업데이트
             print(f"Single row for download: {fetched_rows}")
             
             # 쿼리와 파라미터를 출력합니다.
             print(f"Executing query: {update_query}")
-            print(f"With parameters: {(fetched_rows['id'],)}")
+            print(f"With parameters: {(fetched_rows['report_id'],)}")
             
             # 업데이트 쿼리 실행
-            rows = await self.execute_query(update_query, (fetched_rows['id'],))
+            rows = await self.execute_query(update_query, (fetched_rows['report_id'],))
         return rows
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
-        """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 ID가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
+        """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
         query = """
         UPDATE data_main_daily_send
         SET GEMINI_SUMMARY = ?, 
@@ -402,8 +402,8 @@ class SQLiteManager:
             SUMMARY_MODEL = ?
         WHERE TELEGRAM_URL = ?
           AND MAIN_CH_SEND_YN = 'Y'
-          AND id = (
-              SELECT MAX(id) 
+          AND report_id = (
+              SELECT MAX(report_id) 
               FROM data_main_daily_send 
               WHERE TELEGRAM_URL = ? 
                 AND MAIN_CH_SEND_YN = 'Y'
@@ -414,13 +414,13 @@ class SQLiteManager:
         return await self.execute_query(query, params)
 
     async def update_report_summary(self, record_id, summary, model_name):
-        """data_main_daily_send 테이블의 특정 id 레코드에 제미나이 요약 내용을 업데이트합니다."""
+        """data_main_daily_send 테이블의 특정 report_id 레코드에 제미나이 요약 내용을 업데이트합니다."""
         query = """
         UPDATE data_main_daily_send
         SET GEMINI_SUMMARY = ?, 
             SUMMARY_TIME = ?, 
             SUMMARY_MODEL = ?
-        WHERE id = ?
+        WHERE report_id = ?
         """
         now = datetime.now().isoformat()
         params = (summary, now, model_name, record_id)

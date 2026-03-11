@@ -108,7 +108,7 @@ class OracleManager:
                 key_val = get_str("key", max_len)
                 return key_val if key_val else "N/A"
 
-            r_id = ci.get("report_id") or ci.get("id")
+            r_id = ci.get("report_id")
             
             params_list.append({
                 "REPORT_ID": r_id,
@@ -203,7 +203,7 @@ class OracleManager:
                 return key_val if key_val else "N/A"
 
             params_list.append({
-                "REPORT_ID": ci.get("report_id") or ci.get("id"),
+                "REPORT_ID": ci.get("report_id"),
                 "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
                 "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 300),
