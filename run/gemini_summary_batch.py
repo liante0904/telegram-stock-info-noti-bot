@@ -5,8 +5,8 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 
-# 프로젝트 루트 경로 추가
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# 프로젝트 루트 경로 추가 (run 폴더의 상위 경로)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.SQLiteManager import SQLiteManager
 from models.OracleManagerSQL import OracleManagerSQL
