@@ -333,14 +333,79 @@ class OracleManager:
         print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP.")
         return total_synced
 
+    async def sync_recent_from_sqlite(self, hours=3):
+        """최근 N시간 이내의 데이터만 안전하게 Safe MERGE (실시간용)"""
+        from models.SQLiteManager import SQLiteManager
+        print(f"🚀 Starting Recent Sync (Last {hours} hours) from SQLite to Oracle...")
+        
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        # SAVE_TIME 기준 최근 데이터 추출
+        query = f"SELECT * FROM DATA_MAIN_DAILY_SEND WHERE SAVE_TIME >= datetime('now', '-{hours} hour', 'localtime')"
+        sqlite_db.cursor.execute(query)
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data:
+            print(f"✅ No recent data (last {hours} hours) found in SQLite.")
+            return 0
+            
+        print(f"📊 Processing {len(sqlite_data):,} recent rows...")
+        return await self.insert_json_data_list(sqlite_data)
+
+    async def sync_all_from_sqlite(self):
+        """전체 데이터를 Safe MERGE (기존 데이터 보존하며 업데이트)"""
+        from models.SQLiteManager import SQLiteManager
+        print("🚀 Starting Full Safe MERGE (No Truncate) from SQLite to Oracle...")
+        
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data:
+            print("⚠️ No data found in SQLite.")
+            return 0
+
+        chunk_size = 10000
+        total_processed = 0
+        for i in range(0, len(sqlite_data), chunk_size):
+            chunk = sqlite_data[i:i + chunk_size]
+            count = await self.insert_json_data_list(chunk)
+            total_processed += count
+            print(f"✅ Progress: {total_processed:,} / {len(sqlite_data):,} rows merged...")
+            
+        print(f"✨ Successfully merged total {total_processed:,} rows.")
+        return total_processed
+
 if __name__ == "__main__":
     import sys
     async def main():
         om = OracleManager()
-        if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
-            print("!!! FULL INSERT MODE !!!")
-            await om.full_sync_from_sqlite()
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1]
+            if cmd == "full_insert":
+                print("!!! FULL REFRESH MODE (Truncate & Insert) !!!")
+                await om.full_sync_from_sqlite()
+            elif cmd == "sync_all":
+                print("!!! FULL SAFE MERGE MODE (No Truncate) !!!")
+                await om.sync_all_from_sqlite()
+            elif cmd == "sync_recent":
+                hours = int(sys.argv[2]) if len(sys.argv) > 2 else 3
+                print(f"!!! RECENT SYNC MODE ({hours} hours) !!!")
+                await om.sync_recent_from_sqlite(hours)
+            else:
+                print(f"Unknown command: {cmd}")
         else:
-            res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
-            print(f"Test Result: {res}")
+            print("\nUsage:")
+            print("  python models/OracleManager.py full_insert         # Truncate & Bulk Insert (High Speed)")
+            print("  python models/OracleManager.py sync_all           # Safe MERGE all rows (No Truncate)")
+            print("  python models/OracleManager.py sync_recent [hrs]  # Safe MERGE recent rows (Lightweight)")
+            print("")
+            res = await om.execute_query("SELECT count(*) as cnt FROM DATA_MAIN_DAILY_SEND")
+            print(f"Current Oracle Row Count: {res[0]['CNT'] if res else 0}")
+
     asyncio.run(main())
