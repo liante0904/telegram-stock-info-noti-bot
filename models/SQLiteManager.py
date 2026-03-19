@@ -90,8 +90,8 @@ class SQLiteManager:
                 INSERT INTO {table_name} (
                     SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                     ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-                    DOWNLOAD_URL, TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME 
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    DOWNLOAD_URL, TELEGRAM_URL, PDF_URL, WRITER, MKT_TP, KEY, SAVE_TIME 
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(KEY) DO UPDATE SET
                     REG_DT = excluded.REG_DT,  -- 항상 갱신
                     WRITER = excluded.WRITER,  -- 항상 갱신
@@ -105,6 +105,11 @@ class SQLiteManager:
                         WHEN excluded.TELEGRAM_URL IS NOT NULL AND excluded.TELEGRAM_URL != '' 
                         THEN excluded.TELEGRAM_URL 
                         ELSE TELEGRAM_URL -- 기존 값을 유지
+                    END,
+                    PDF_URL = CASE 
+                        WHEN excluded.PDF_URL IS NOT NULL AND excluded.PDF_URL != '' 
+                        THEN excluded.PDF_URL 
+                        ELSE PDF_URL -- 기존 값을 유지
                     END
             ''', (
                 entry["SEC_FIRM_ORDER"],
@@ -117,6 +122,7 @@ class SQLiteManager:
                 entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
                 entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
                 entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
+                entry.get("PDF_URL") or entry.get("TELEGRAM_URL", None),  # PDF_URL이 없으면 TELEGRAM_URL을 넣음
                 entry.get("WRITER", ''),
                 entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
                 entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
@@ -226,25 +232,29 @@ class SQLiteManager:
         """
         return await self.execute_query(query)
 
-    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
         """report_id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
         async with aiosqlite.connect(self.db_path) as db:
+            # pdf_url이 없으면 telegram_url을 기본값으로 사용
+            if pdf_url is None:
+                pdf_url = telegram_url
+
             # 기본 쿼리 구성
             query = """
             UPDATE data_main_daily_send
-            SET TELEGRAM_URL = ?
+            SET TELEGRAM_URL = ?, PDF_URL = ?
             WHERE report_id = ?
             """
-            params = [telegram_url, record_id]  # 기본 매개변수
+            params = [telegram_url, pdf_url, record_id]  # 기본 매개변수
 
             # article_title이 주어진 경우 쿼리에 추가
             if article_title is not None:
                 query = """
                 UPDATE data_main_daily_send
-                SET TELEGRAM_URL = ?, ARTICLE_TITLE = ?
+                SET TELEGRAM_URL = ?, PDF_URL = ?, ARTICLE_TITLE = ?
                 WHERE report_id = ?
                 """
-                params = [telegram_url, article_title, record_id]
+                params = [telegram_url, pdf_url, article_title, record_id]
 
             # 쿼리 실행 및 커밋
             await db.execute(query, params)
@@ -255,6 +265,7 @@ class SQLiteManager:
             "query": query,
             "record_id": record_id,
             "telegram_url": telegram_url,
+            "pdf_url": pdf_url,
             "article_title": article_title
         }
     

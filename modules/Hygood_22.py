@@ -96,6 +96,7 @@ async def Hanyang_checkNewArticle():
                     "ARTICLE_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
                     "TELEGRAM_URL": ATTACH_URL,
+                        "PDF_URL": ATTACH_URL,
                     "SAVE_TIME": datetime.now().isoformat(),
                     "KEY":ATTACH_URL
                 })

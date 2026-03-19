@@ -67,6 +67,7 @@ def Shinyoung_checkNewArticle():
             "WRITER":WRITER,
             "ATTACH_URL":LIST_ARTICLE_URL,
             "TELEGRAM_URL": DOWNLOAD_URL,
+            "PDF_URL": DOWNLOAD_URL,
             "MKT_TP": MKT_TP,
             "KEY":LIST_ARTICLE_URL,
             "SAVE_TIME": datetime.now().isoformat()

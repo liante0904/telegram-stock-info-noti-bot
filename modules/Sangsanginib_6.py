@@ -56,6 +56,7 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
             "ATTACH_URL": LIST_ARTICLE_URL,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
+                        "PDF_URL": LIST_ARTICLE_URL,
             "KEY": LIST_ARTICLE_URL,
             "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()

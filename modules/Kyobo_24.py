@@ -131,6 +131,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "ATTACH_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
                     "TELEGRAM_URL": ATTACH_URL,
+                        "PDF_URL": ATTACH_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "CATEGORY": CATEGORY,
                     "WRITER": WRITER,

@@ -87,6 +87,7 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                             "ATTACH_URL": DOWNLOAD_URL,
                             "DOWNLOAD_URL": DOWNLOAD_URL,
                             "TELEGRAM_URL": '',
+                        "PDF_URL": '',
                             "WRITER": WRITER,
                             "KEY": LIST_ARTICLE_URL,
                             "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -107,6 +108,7 @@ def yuanta_detail(articles):
     for article in articles:
         if not article.get("TELEGRAM_URL"):
              article["TELEGRAM_URL"] = article.get("DOWNLOAD_URL", "")
+        article["PDF_URL"] = article.get("DOWNLOAD_URL", "")
     return articles
 
 async def main():
