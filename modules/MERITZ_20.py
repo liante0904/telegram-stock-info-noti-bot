@@ -82,14 +82,15 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                         file_name = file_name.replace(" 파일 다운로드", "").strip()  # 필요 없는 텍스트 제거
                         DOWNLOAD_URL = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
                         TELEGRAM_URL = DOWNLOAD_URL
+                        PDF_URL = DOWNLOAD_URL
                         # print(f"Constructed DOWNLOAD_URL: {DOWNLOAD_URL}")
                     else:
                         print("No 'title' attribute found in download tag.")
-                        DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL  # 기본 URL로 설정
+                        DOWNLOAD_URL = TELEGRAM_URL = PDF_URL = LIST_ARTICLE_URL  # 기본 URL로 설정
 
                 except Exception as e:
                     print(f"Error fetching DOWNLOAD_URL from {LIST_ARTICLE_URL}: {e}")
-                    DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL
+                    DOWNLOAD_URL = TELEGRAM_URL = PDF_URL = LIST_ARTICLE_URL
 
                 # JSON 데이터 생성
                 article_data = {
@@ -101,6 +102,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     "ATTACH_URL": TELEGRAM_URL,
                     "DOWNLOAD_URL": DOWNLOAD_URL,
                     "TELEGRAM_URL": TELEGRAM_URL,
+                    "PDF_URL": PDF_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "WRITER": WRITER,
                     "CATEGORY": CATEGORY,

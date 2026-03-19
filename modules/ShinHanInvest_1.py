@@ -208,6 +208,7 @@ def ShinHanInvest_checkNewArticle():
                         "ATTACH_URL": ' ',
                         "DOWNLOAD_URL": download_url,
                         "TELEGRAM_URL": download_url,
+                        "PDF_URL": download_url,
                         "ARTICLE_TITLE": item.get('TITLE', ''),
                         "WRITER": item.get('REGISTER_NICKNAME', ''),
                         "KEY": download_url,

@@ -67,6 +67,7 @@ async def DBfi_checkNewArticle():
                                 "REG_DT": item['rdt'][:8],
                                 "ARTICLE_URL": "",
                                 "TELEGRAM_URL": "",
+                        "PDF_URL": "",
                                 "ARTICLE_TITLE": item['tit'],
                                 "WRITER": item['wnm'],
                                 "CATEGORY": item['div'],
@@ -97,6 +98,7 @@ async def fetch_detailed_url(articles):
                             encoded_url = detail_data['data'].get("url", "")
                             telegram_url = f"__DBFI_VIEWER_BASE_URL____DBFI_GATE_PATH__?q={encoded_url}"
                             article["TELEGRAM_URL"] = telegram_url
+        article["PDF_URL"] = telegram_url
                         except json.JSONDecodeError:
                             print(f"Failed to parse JSON for {key_url}")
                     else:

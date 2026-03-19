@@ -93,6 +93,7 @@ async def Daeshin_checkNewArticle():
                     "ARTICLE_URL": article_url,
                     "DOWNLOAD_URL": attach_url,
                     "TELEGRAM_URL": attach_url,
+                        "PDF_URL": attach_url,
                     "KEY": attach_url,
                     "ARTICLE_TITLE": title,
                     "WRITER": author,

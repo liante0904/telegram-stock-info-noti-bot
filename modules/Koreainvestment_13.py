@@ -42,30 +42,28 @@ async def Koreainvestment_selenium_checkNewArticle():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--remote-allow-origins=*")
+    chrome_options.add_argument("--disable-software-rasterizer")
     
-    # ARM 서버(Oracle ARM 등) 대응: 시스템 설치된 chromedriver 우선 사용
-    # 보통 /usr/bin/chromedriver 또는 /usr/lib/chromium-browser/chromedriver 에 위치함
-    service = None
-    common_paths = [
-        "/usr/bin/chromedriver",
-        "/usr/lib/chromium-browser/chromedriver",
-        "/usr/local/bin/chromedriver"
-    ]
-    
-    for path in common_paths:
-        if os.path.exists(path):
-            service = Service(executable_path=path)
-            print(f"Using system chromedriver: {path}")
-            break
-            
-    if not service:
+    # ARM(aarch64) 환경 대응: 
+    # ChromeDriverManager가 x86용 드라이버를 받아오는 경우가 많아(Exec format error 발생),
+    # 시스템 패키지로 설치된 ARM64용 chromedriver를 최우선으로 사용함.
+    # 설치: sudo apt install chromium-chromedriver
+    system_chromedriver = "/usr/bin/chromedriver"
+    if os.path.exists(system_chromedriver):
+        service = Service(executable_path=system_chromedriver)
+    else:
         try:
-            from webdriver_manager.chrome import ChromeDriverManager
             service = Service(ChromeDriverManager().install())
-        except Exception as e:
-            print(f"Failed to initialize ChromeDriverManager: {e}")
-            # 마지막 수단으로 시스템 PATH에 있기를 기대하며 기본 생성
+        except:
             service = Service()
+
+    # 브라우저 바이너리 위치 설정
+    binary_paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]
+    for bp in binary_paths:
+        if os.path.exists(bp):
+            chrome_options.binary_location = bp
+            break
 
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
@@ -121,6 +119,7 @@ async def Koreainvestment_selenium_checkNewArticle():
                         "ATTACH_URL":LIST_ARTICLE_URL,
                         "DOWNLOAD_URL": LIST_ARTICLE_URL,
                         "TELEGRAM_URL": LIST_ARTICLE_URL,
+                        "PDF_URL": LIST_ARTICLE_URL,
                         "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                         "WRITER": article_info_str[0],
                         "KEY": LIST_ARTICLE_URL,
