@@ -45,28 +45,27 @@ async def Koreainvestment_selenium_checkNewArticle():
     chrome_options.add_argument("--remote-allow-origins=*")
     chrome_options.add_argument("--disable-software-rasterizer")
     
-    # ARM 아키텍처 대응: 시스템에 설치된 Chromium 바이너리 경로 탐색
-    # Oracle ARM 등에서는 chromium-browser 패키지를 설치하여 사용하는 것이 가장 안정적임
+    # ARM(aarch64) 환경 대응: 
+    # ChromeDriverManager가 x86용 드라이버를 받아오는 경우가 많아(Exec format error 발생),
+    # 시스템 패키지로 설치된 ARM64용 chromedriver를 최우선으로 사용함.
+    # 설치: sudo apt install chromium-chromedriver
+    system_chromedriver = "/usr/bin/chromedriver"
+    if os.path.exists(system_chromedriver):
+        service = Service(executable_path=system_chromedriver)
+    else:
+        try:
+            service = Service(ChromeDriverManager().install())
+        except:
+            service = Service()
+
+    # 브라우저 바이너리 위치 설정
     binary_paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]
     for bp in binary_paths:
         if os.path.exists(bp):
             chrome_options.binary_location = bp
             break
 
-    # Selenium 4.6+ 부터는 service에 경로를 지정하지 않으면 내장 'Selenium Manager'가 
-    # OS 및 아키텍처(ARM64 등)에 맞는 드라이버를 자동으로 탐색하고 다운로드함.
-    # ChromeDriverManager가 ARM에서 오작동하는 경우가 있어 Selenium Manager를 우선 권장함.
-    try:
-        service = Service()
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-    except Exception as e:
-        print(f"Default Selenium Manager failed: {e}. Trying fallback with ChromeDriverManager...")
-        try:
-            service = Service(ChromeDriverManager().install())
-            driver = webdriver.Chrome(service=service, options=chrome_options)
-        except Exception as ee:
-            print(f"Critical error: All Selenium initialization attempts failed. {ee}")
-            raise ee
+    driver = webdriver.Chrome(service=service, options=chrome_options)
 
     try:
         for idx, cat in enumerate(CATEGORIES):
