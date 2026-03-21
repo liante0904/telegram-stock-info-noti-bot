@@ -5,6 +5,9 @@ S1="$1"
 S2="$2"
 S3="$3"
 
+# 현재 스크립트(sh/runPy_back.sh) 위치 기준으로 프로젝트 루트 찾기
+SH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( cd "$SH_DIR/.." && pwd )"
 HOME_DIR=$HOME
 DATE=$(date +"%Y%m%d")
 
@@ -32,17 +35,22 @@ fi
 
 # 파이썬 가상환경 활성화
 echo "=====파이썬 가상환경 활성화===="
-. ${HOME_DIR}/dev/telegram-stock-info-noti-bot/venv/bin/activate
+if [ -d "$PROJECT_ROOT/venv" ]; then
+    source "$PROJECT_ROOT/venv/bin/activate"
+elif [ -d "$PROJECT_ROOT/.venv" ]; then
+    source "$PROJECT_ROOT/.venv/bin/activate"
+fi
 
 echo "=====프로젝트 경로 이동===="
-echo "cd ${HOME_DIR}/dev/telegram-stock-info-noti-bot/"
-cd ${HOME_DIR}/dev/telegram-stock-info-noti-bot/
+echo "cd $PROJECT_ROOT"
+cd "$PROJECT_ROOT"
 
 echo "=========파이썬 스크립트 실행========="
-echo "=====>  python3 ${HOME_DIR}/dev/telegram-stock-info-noti-bot/${SCRIPT_NAME} ${S2} >> ${HOME_DIR}/log/${DATE}/${DATE}_${S1}.log"
+echo "=====>  python3 $PROJECT_ROOT/$SCRIPT_NAME $S2 >> $LOG_DIR/${DATE}_$S1.log"
 
 # 실행시킬 파이썬 파일 넣기
-python3 ${HOME_DIR}/dev/telegram-stock-info-noti-bot/${SCRIPT_NAME} ${S2} >> ${HOME_DIR}/log/${DATE}/${DATE}_${S1}.log
+python3 "$PROJECT_ROOT/$SCRIPT_NAME" "$S2" >> "$LOG_DIR/${DATE}_$S1.log" 2>&1
+
 
 # 가상환경 비활성화
 deactivate
