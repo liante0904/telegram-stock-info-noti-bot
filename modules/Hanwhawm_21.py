@@ -107,6 +107,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                         "MKT_TP": mkt_tp,
                         "KEY": download_url,
                         "TELEGRAM_URL": download_url,
+                        "PDF_URL": download_url,
                         "SAVE_TIME": datetime.now().isoformat()
                     })
                 except Exception as e:

@@ -58,6 +58,7 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
                     "ATTACH_URL": '',  # 필요시 변경
                     "DOWNLOAD_URL": url,  # 필요시 변경
                     "TELEGRAM_URL": url,
+                        "PDF_URL": url,
                     "ARTICLE_TITLE": title,
                     "KEY": url,
                     "SAVE_TIME": datetime.now().isoformat()

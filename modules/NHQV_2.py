@@ -77,6 +77,7 @@ async def NHQV_checkNewArticle(target_date=None):
                     "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
                     "WRITER": article['rshPprDruEmpFnm'],
                     "TELEGRAM_URL": article['hpgeFleUrlCts'],
+                        "PDF_URL": article['hpgeFleUrlCts'],
                     "ARTICLE_TITLE": article['rshPprTilCts'],
                     "KEY": article['hpgeFleUrlCts'],
                     "SAVE_TIME": datetime.now().isoformat()
