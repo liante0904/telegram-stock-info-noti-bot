@@ -99,6 +99,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     "ATTACH_URL": '',
                     "DOWNLOAD_URL": '',
                     "TELEGRAM_URL": '',
+                    "PDF_URL": '',
                     "WRITER": WRITER,
                     "KEY": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -159,6 +160,7 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
     if ".pdf" in TARGET_URL:
         article["ARTICLE_URL"] = TARGET_URL
         article["TELEGRAM_URL"] = TARGET_URL
+        article["PDF_URL"] = TARGET_URL
         article["DOWNLOAD_URL"] = TARGET_URL
         return
 
@@ -201,11 +203,13 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                             url = await get_valid_url(new_filename, date_part, article, headers)
                             article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                             article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
                             article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                         else:
                             url = await create_fallback_url(article)
                             article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                             article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
                             article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                     else:
                         # url = create_fallback_url(article)
@@ -221,6 +225,7 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                         url = ATTACH_URL.format(URL_PARAM_0, URL_PARAM_1)
                         article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
                         article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
+                        article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
                         article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                 else:
                     # img가 None인 경우 대체 로직 실행
@@ -236,6 +241,7 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
 
                     article['ARTICLE_URL'] = urllib.parse.quote(url, safe=':/')
                     article['TELEGRAM_URL'] = urllib.parse.quote(url, safe=':/')
+                    article['PDF_URL'] = urllib.parse.quote(url, safe=':/')
                     article['DOWNLOAD_URL'] = urllib.parse.quote(url, safe=':/')
 
 async def LS_detail(articles, firm_info=None):
@@ -283,7 +289,8 @@ async def LS_detailAll(articles=None, firm_info=None):
             await db.update_telegram_url(
                 record_id=article['report_id'], 
                 telegram_url=article['TELEGRAM_URL'],
-                article_title=article.get('ARTICLE_TITLE')
+                article_title=article.get('ARTICLE_TITLE'),
+                pdf_url=article.get('PDF_URL') or article.get('TELEGRAM_URL')
             )
             print(f"DB 업데이트 완료: {article.get('ARTICLE_TITLE')}")
             

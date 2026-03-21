@@ -51,7 +51,7 @@ async def update_firm_telegram_url_by_date(date_str=None, target_firm_order=None
                         
                     update_records = await fetch_detailed_url(records)  # all_records 대신 records 사용
                     for record in update_records:
-                        await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'])
+                        await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], pdf_url=record.get('PDF_URL') or record['TELEGRAM_URL'])
                         print(f"Updated TELEGRAM_URL for report_id {record['report_id']} with {record['TELEGRAM_URL']}")
                 
                 elif sec_firm_order == 0:
@@ -60,7 +60,7 @@ async def update_firm_telegram_url_by_date(date_str=None, target_firm_order=None
                     print(f"records{len(records)}")
                     for record in records:
                         await LS_detail(articles=record, firm_info=firm_info)  # all_records 대신 records 사용
-                        r = await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'])
+                        r = await db.update_telegram_url(record['report_id'], record['TELEGRAM_URL'], record['ARTICLE_TITLE'], pdf_url=record.get('PDF_URL') or record['TELEGRAM_URL'])
                         print(r)
 
                     # update_records = LS_detail(articles=records, firm_info=firm_info)  # all_records 대신 records 사용

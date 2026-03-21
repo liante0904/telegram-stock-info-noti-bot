@@ -86,6 +86,7 @@ def Samsung_checkNewArticle():
                     "REG_DT": REG_DT,
                     "DOWNLOAD_URL": '',
                     "TELEGRAM_URL": LIST_ARTICLE_URL,
+                        "PDF_URL": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "WRITER": author,
                     "BOARD_NM": category,

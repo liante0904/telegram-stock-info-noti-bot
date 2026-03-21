@@ -121,6 +121,7 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
             "ARTICLE_TITLE": ARTICLE_TITLE,
             "WRITER": WRITER,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
+                        "PDF_URL": LIST_ARTICLE_URL,
             "KEY": LIST_ARTICLE_URL,
             "MKT_TP": market_type,
             "SAVE_TIME": datetime.now().isoformat()

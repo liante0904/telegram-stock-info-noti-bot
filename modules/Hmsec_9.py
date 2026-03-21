@@ -85,6 +85,7 @@ def Hmsec_checkNewArticle():
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
+                "PDF_URL": DOWNLOAD_URL,
                 "KEY": LIST_ARTICLE_URL,
                 "WRITER": WRITER,
                 "SAVE_TIME": datetime.now().isoformat()

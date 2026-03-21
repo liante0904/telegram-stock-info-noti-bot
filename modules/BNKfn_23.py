@@ -89,6 +89,7 @@ async def BNK_checkNewArticle():
                     "ARTICLE_URL": ARTICLE_URL,
                     "DOWNLOAD_URL": ARTICLE_URL,
                     "TELEGRAM_URL": ARTICLE_URL,
+                        "PDF_URL": ARTICLE_URL,
                     "WRITER": WRITER,
                     "SAVE_TIME": datetime.now().isoformat(),
                     "KEY": ARTICLE_URL

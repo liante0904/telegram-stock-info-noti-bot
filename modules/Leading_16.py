@@ -87,6 +87,7 @@ def Leading_checkNewArticle():
                 "ATTACH_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": DOWNLOAD_URL,
+                        "PDF_URL": DOWNLOAD_URL,
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "SAVE_TIME": datetime.now().isoformat(),
                 "KEY": attachment_link
