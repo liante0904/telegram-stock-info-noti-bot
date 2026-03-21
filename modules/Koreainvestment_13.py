@@ -119,6 +119,7 @@ async def Koreainvestment_selenium_checkNewArticle():
                         "ATTACH_URL":LIST_ARTICLE_URL,
                         "DOWNLOAD_URL": LIST_ARTICLE_URL,
                         "TELEGRAM_URL": LIST_ARTICLE_URL,
+                        "PDF_URL": LIST_ARTICLE_URL,
                         "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                         "WRITER": article_info_str[0],
                         "KEY": LIST_ARTICLE_URL,

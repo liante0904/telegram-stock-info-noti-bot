@@ -74,6 +74,7 @@ def Sks_checkNewArticle():
             "ARTICLE_URL": article_url,
             "DOWNLOAD_URL": download_url,
             "TELEGRAM_URL": article_url,
+            "PDF_URL": article_url,
             "KEY": download_url,
             "WRITER": writer,
             "SAVE_TIME": datetime.now().isoformat()

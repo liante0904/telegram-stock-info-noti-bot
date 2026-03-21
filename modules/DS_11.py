@@ -67,6 +67,7 @@ def DS_checkNewArticle():
                 "ARTICLE_TITLE": title,
                 "ARTICLE_URL": article_url,
                 "TELEGRAM_URL": telegram_url,
+                "PDF_URL": telegram_url,
                 "REG_DT": re.sub(r"[-./]", "", date),
                 "SAVE_TIME": datetime.now().isoformat()
             })
