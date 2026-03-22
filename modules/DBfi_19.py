@@ -98,7 +98,7 @@ async def fetch_detailed_url(articles):
                             encoded_url = detail_data['data'].get("url", "")
                             telegram_url = f"https://whub.dbsec.co.kr/pv/gate?q={encoded_url}"
                             article["TELEGRAM_URL"] = telegram_url
-        article["PDF_URL"] = telegram_url
+                            article["PDF_URL"] = telegram_url
                         except json.JSONDecodeError:
                             print(f"Failed to parse JSON for {key_url}")
                     else:
