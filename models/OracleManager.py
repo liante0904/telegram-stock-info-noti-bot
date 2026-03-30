@@ -266,8 +266,99 @@ class OracleManager:
             SUMMARY_MODEL = :model
         WHERE REPORT_ID = :id
         """
-        params = {"summary": summary, "st": datetime.now().isoformat(), "model": model_name, "id": record_id}
+        params = {"summary": summary, "st": datetime.now(), "model": model_name, "id": record_id}
         return await self.execute_query(query, params)
+
+    async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
+        """TELEGRAM_URL 기준 요약 업데이트 (발송 완료된 최신 건 우선)"""
+        query = """
+        UPDATE DATA_MAIN_DAILY_SEND
+        SET GEMINI_SUMMARY = :summary, 
+            SUMMARY_TIME = :st, 
+            SUMMARY_MODEL = :model
+        WHERE TELEGRAM_URL = :url
+          AND MAIN_CH_SEND_YN = 'Y'
+          AND REPORT_ID = (
+              SELECT MAX(REPORT_ID) FROM DATA_MAIN_DAILY_SEND 
+              WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
+          )
+        """
+        params = {"summary": summary, "st": datetime.now(), "model": model_name, "url": telegram_url}
+        return await self.execute_query(query, params)
+
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
+        """텔레그램 URL 및 PDF 경로 업데이트"""
+        if article_title:
+            query = """
+            UPDATE DATA_MAIN_DAILY_SEND 
+            SET TELEGRAM_URL = :t_url, ARTICLE_TITLE = :title, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
+            WHERE REPORT_ID = :id
+            """
+            params = {"t_url": telegram_url, "title": article_title, "pdf": pdf_url, "id": record_id}
+        else:
+            query = """
+            UPDATE DATA_MAIN_DAILY_SEND 
+            SET TELEGRAM_URL = :t_url, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
+            WHERE REPORT_ID = :id
+            """
+            params = {"t_url": telegram_url, "pdf": pdf_url, "id": record_id}
+        return await self.execute_query(query, params)
+
+    async def daily_select_data(self, date_str=None, type='send'):
+        """일자별 발송/다운로드 대상 조회"""
+        if date_str is None:
+            q_date = datetime.now().strftime('%Y-%m-%d')
+        else:
+            q_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+            
+        if type == 'send':
+            cond = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
+        else:
+            cond = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+            
+        query = f"""
+        SELECT * FROM DATA_MAIN_DAILY_SEND 
+        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {cond}
+        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        """
+        return await self.execute_query(query, {"dt": q_date})
+
+    async def daily_update_data(self, fetched_rows=None, type='send'):
+        """발송/다운로드 상태 일괄 업데이트"""
+        if not fetched_rows: return 0
+        
+        ids = []
+        if isinstance(fetched_rows, list):
+            ids = [r['REPORT_ID'] if 'REPORT_ID' in r else r['report_id'] for r in fetched_rows]
+        else:
+            ids = [fetched_rows['REPORT_ID'] if 'REPORT_ID' in fetched_rows else fetched_rows['report_id']]
+            
+        col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
+        query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"
+        
+        # executemany 스타일로 처리하기 위해 execute_query 확장 필요할 수 있으나 
+        # 일단 루프로 처리 (데이터 건수가 작음)
+        count = 0
+        for rid in ids:
+            await self.execute_query(query, {"id": rid})
+            count += 1
+        return count
+
+    async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
+        """특정 회사의 텔레그램 URL 미지정 기사 조회"""
+        q_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+        f_info = firm_info.get_state()
+        
+        query = """
+        SELECT * FROM DATA_MAIN_DAILY_SEND
+        WHERE REG_DT BETWEEN TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') - 3, 'YYYYMMDD')
+                         AND TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') + 2, 'YYYYMMDD')
+          AND SEC_FIRM_ORDER = :sfo
+          AND KEY IS NOT NULL
+          AND (TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
+        ORDER BY SAVE_TIME
+        """
+        return await self.execute_query(query, {"dt": q_date, "sfo": f_info["SEC_FIRM_ORDER"]})
 
     def truncate_table(self):
         conn = self._get_connection_sync()
@@ -333,79 +424,14 @@ class OracleManager:
         print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP.")
         return total_synced
 
-    async def sync_recent_from_sqlite(self, hours=3):
-        """최근 N시간 이내의 데이터만 안전하게 Safe MERGE (실시간용)"""
-        from models.SQLiteManager import SQLiteManager
-        print(f"🚀 Starting Recent Sync (Last {hours} hours) from SQLite to Oracle...")
-        
-        sqlite_db = SQLiteManager()
-        sqlite_db.open_connection()
-        # SAVE_TIME 기준 최근 데이터 추출
-        query = f"SELECT * FROM DATA_MAIN_DAILY_SEND WHERE SAVE_TIME >= datetime('now', '-{hours} hour', 'localtime')"
-        sqlite_db.cursor.execute(query)
-        rows = sqlite_db.cursor.fetchall()
-        sqlite_data = [dict(row) for row in rows]
-        sqlite_db.close_connection()
-        
-        if not sqlite_data:
-            print(f"✅ No recent data (last {hours} hours) found in SQLite.")
-            return 0
-            
-        print(f"📊 Processing {len(sqlite_data):,} recent rows...")
-        return await self.insert_json_data_list(sqlite_data)
-
-    async def sync_all_from_sqlite(self):
-        """전체 데이터를 Safe MERGE (기존 데이터 보존하며 업데이트)"""
-        from models.SQLiteManager import SQLiteManager
-        print("🚀 Starting Full Safe MERGE (No Truncate) from SQLite to Oracle...")
-        
-        sqlite_db = SQLiteManager()
-        sqlite_db.open_connection()
-        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
-        rows = sqlite_db.cursor.fetchall()
-        sqlite_data = [dict(row) for row in rows]
-        sqlite_db.close_connection()
-        
-        if not sqlite_data:
-            print("⚠️ No data found in SQLite.")
-            return 0
-
-        chunk_size = 10000
-        total_processed = 0
-        for i in range(0, len(sqlite_data), chunk_size):
-            chunk = sqlite_data[i:i + chunk_size]
-            count = await self.insert_json_data_list(chunk)
-            total_processed += count
-            print(f"✅ Progress: {total_processed:,} / {len(sqlite_data):,} rows merged...")
-            
-        print(f"✨ Successfully merged total {total_processed:,} rows.")
-        return total_processed
-
 if __name__ == "__main__":
     import sys
     async def main():
         om = OracleManager()
-        if len(sys.argv) > 1:
-            cmd = sys.argv[1]
-            if cmd == "full_insert":
-                print("!!! FULL REFRESH MODE (Truncate & Insert) !!!")
-                await om.full_sync_from_sqlite()
-            elif cmd == "sync_all":
-                print("!!! FULL SAFE MERGE MODE (No Truncate) !!!")
-                await om.sync_all_from_sqlite()
-            elif cmd == "sync_recent":
-                hours = int(sys.argv[2]) if len(sys.argv) > 2 else 3
-                print(f"!!! RECENT SYNC MODE ({hours} hours) !!!")
-                await om.sync_recent_from_sqlite(hours)
-            else:
-                print(f"Unknown command: {cmd}")
+        if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
+            print("!!! FULL INSERT MODE !!!")
+            await om.full_sync_from_sqlite()
         else:
-            print("\nUsage:")
-            print("  python models/OracleManager.py full_insert         # Truncate & Bulk Insert (High Speed)")
-            print("  python models/OracleManager.py sync_all           # Safe MERGE all rows (No Truncate)")
-            print("  python models/OracleManager.py sync_recent [hrs]  # Safe MERGE recent rows (Lightweight)")
-            print("")
-            res = await om.execute_query("SELECT count(*) as cnt FROM DATA_MAIN_DAILY_SEND")
-            print(f"Current Oracle Row Count: {res[0]['CNT'] if res else 0}")
-
+            res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
+            print(f"Test Result: {res}")
     asyncio.run(main())
