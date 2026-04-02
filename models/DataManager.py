@@ -13,23 +13,18 @@ from models.OracleManagerSQL import OracleManagerSQL
 class DataManager:
     def __init__(self):
         self.sqlite = SQLiteManager()
-        self.oracle = OracleManager()         # 신규 테이블 (TB_SEC_REPORTS)
-        self.oracle_old = OracleManagerSQL()  # 기존 테이블 (data_main_daily_send)
+        self.oracle = OracleManager()         # 최신 Oracle 매니저 (TB_SEC_REPORTS / DATA_MAIN_DAILY_SEND 통합 관리)
         self.logger = logging.getLogger("DataManager")
 
     async def insert_json_data_list(self, json_data_list, table_name='data_main_daily_send'):
-        """SQLite에 저장하고 Oracle(신규/기존)에 동기화 시도"""
+        """SQLite에 저장하고 Oracle에 동기화 시도"""
         inserted_count, updated_count = self.sqlite.insert_json_data_list(json_data_list, table_name)
         
         try:
+            # OracleManager 내부에서 MERGE 문을 통해 처리함
             await self.oracle.insert_json_data_list(json_data_list)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Insert New): {str(e)}")
-
-        try:
-            self.oracle_old.insert_json_data_list(json_data_list, table_name)
-        except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Insert Old): {str(e)}")
+            self.logger.error(f"Oracle Sync Error: {str(e)}")
 
         return inserted_count, updated_count
 
@@ -43,24 +38,16 @@ class DataManager:
         try:
             await self.oracle.daily_update_data(fetched_rows, type)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Update Status New): {str(e)}")
-        try:
-            await self.oracle_old.daily_update_data(date_str, fetched_rows, type)
-        except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Update Status Old): {str(e)}")
+            self.logger.error(f"Oracle Sync Error (Status Update): {str(e)}")
         return res
 
-    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
         """텔레그램 URL 및 제목 업데이트 (Dual-Write)"""
-        res = await self.sqlite.update_telegram_url(record_id, telegram_url, article_title)
+        res = await self.sqlite.update_telegram_url(record_id, telegram_url, article_title, pdf_url=pdf_url)
         try:
-            await self.oracle.update_telegram_url(record_id, telegram_url, article_title)
+            await self.oracle.update_telegram_url(record_id, telegram_url, article_title, pdf_url=pdf_url)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Telegram URL New): {str(e)}")
-        try:
-            await self.oracle_old.update_telegram_url(record_id, telegram_url, article_title)
-        except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Telegram URL Old): {str(e)}")
+            self.logger.error(f"Oracle Sync Error (Telegram URL): {str(e)}")
         return res
 
     async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
@@ -68,10 +55,8 @@ class DataManager:
         return await self.sqlite.fetch_daily_articles_by_date(firm_info, date_str)
 
     async def update_report_summary(self, record_id, summary, model_name, telegram_url=None):
-        """Gemini 요약 업데이트 (Triple-Write)
-        결과를 딕셔너리로 반환하여 어떤 DB가 성공했는지 알 수 있게 합니다.
-        """
-        results = {"sqlite": False, "oracle_new": False, "oracle_old": False}
+        """Gemini 요약 업데이트 (Dual-Write: SQLite & Oracle)"""
+        results = {"sqlite": False, "oracle": False}
         
         # 1. SQLite 업데이트
         try:
@@ -83,22 +68,15 @@ class DataManager:
         except Exception as e:
             self.logger.error(f"SQLite Update Error: {str(e)}")
         
-        # 2. 신규 Oracle 업데이트 (REPORT_ID 기준)
-        try:
-            await self.oracle.update_report_summary(record_id, summary, model_name)
-            results["oracle_new"] = True
-        except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Summary New): {str(e)}")
-
-        # 3. 기존 Oracle 업데이트 (run_gemini 로직 - URL 기준 우선)
+        # 2. Oracle 업데이트
         try:
             if telegram_url:
-                await self.oracle_old.update_report_summary_by_telegram_url(telegram_url, summary, model_name)
+                await self.oracle.update_report_summary_by_telegram_url(telegram_url, summary, model_name)
             else:
-                await self.oracle_old.update_report_summary(record_id, summary, model_name)
-            results["oracle_old"] = True
+                await self.oracle.update_report_summary(record_id, summary, model_name)
+            results["oracle"] = True
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Summary Old): {str(e)}")
+            self.logger.error(f"Oracle Update Error: {str(e)}")
             
         return results
 
