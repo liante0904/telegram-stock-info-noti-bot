@@ -266,8 +266,99 @@ class OracleManager:
             SUMMARY_MODEL = :model
         WHERE REPORT_ID = :id
         """
-        params = {"summary": summary, "st": datetime.now().isoformat(), "model": model_name, "id": record_id}
+        params = {"summary": summary, "st": datetime.now(), "model": model_name, "id": record_id}
         return await self.execute_query(query, params)
+
+    async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
+        """TELEGRAM_URL 기준 요약 업데이트 (발송 완료된 최신 건 우선)"""
+        query = """
+        UPDATE DATA_MAIN_DAILY_SEND
+        SET GEMINI_SUMMARY = :summary, 
+            SUMMARY_TIME = :st, 
+            SUMMARY_MODEL = :model
+        WHERE TELEGRAM_URL = :url
+          AND MAIN_CH_SEND_YN = 'Y'
+          AND REPORT_ID = (
+              SELECT MAX(REPORT_ID) FROM DATA_MAIN_DAILY_SEND 
+              WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
+          )
+        """
+        params = {"summary": summary, "st": datetime.now(), "model": model_name, "url": telegram_url}
+        return await self.execute_query(query, params)
+
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
+        """텔레그램 URL 및 PDF 경로 업데이트"""
+        if article_title:
+            query = """
+            UPDATE DATA_MAIN_DAILY_SEND 
+            SET TELEGRAM_URL = :t_url, ARTICLE_TITLE = :title, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
+            WHERE REPORT_ID = :id
+            """
+            params = {"t_url": telegram_url, "title": article_title, "pdf": pdf_url, "id": record_id}
+        else:
+            query = """
+            UPDATE DATA_MAIN_DAILY_SEND 
+            SET TELEGRAM_URL = :t_url, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
+            WHERE REPORT_ID = :id
+            """
+            params = {"t_url": telegram_url, "pdf": pdf_url, "id": record_id}
+        return await self.execute_query(query, params)
+
+    async def daily_select_data(self, date_str=None, type='send'):
+        """일자별 발송/다운로드 대상 조회"""
+        if date_str is None:
+            q_date = datetime.now().strftime('%Y-%m-%d')
+        else:
+            q_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+            
+        if type == 'send':
+            cond = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
+        else:
+            cond = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+            
+        query = f"""
+        SELECT * FROM DATA_MAIN_DAILY_SEND 
+        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {cond}
+        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        """
+        return await self.execute_query(query, {"dt": q_date})
+
+    async def daily_update_data(self, fetched_rows=None, type='send'):
+        """발송/다운로드 상태 일괄 업데이트"""
+        if not fetched_rows: return 0
+        
+        ids = []
+        if isinstance(fetched_rows, list):
+            ids = [r['REPORT_ID'] if 'REPORT_ID' in r else r['report_id'] for r in fetched_rows]
+        else:
+            ids = [fetched_rows['REPORT_ID'] if 'REPORT_ID' in fetched_rows else fetched_rows['report_id']]
+            
+        col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
+        query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"
+        
+        # executemany 스타일로 처리하기 위해 execute_query 확장 필요할 수 있으나 
+        # 일단 루프로 처리 (데이터 건수가 작음)
+        count = 0
+        for rid in ids:
+            await self.execute_query(query, {"id": rid})
+            count += 1
+        return count
+
+    async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
+        """특정 회사의 텔레그램 URL 미지정 기사 조회"""
+        q_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+        f_info = firm_info.get_state()
+        
+        query = """
+        SELECT * FROM DATA_MAIN_DAILY_SEND
+        WHERE REG_DT BETWEEN TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') - 3, 'YYYYMMDD')
+                         AND TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') + 2, 'YYYYMMDD')
+          AND SEC_FIRM_ORDER = :sfo
+          AND KEY IS NOT NULL
+          AND (TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
+        ORDER BY SAVE_TIME
+        """
+        return await self.execute_query(query, {"dt": q_date, "sfo": f_info["SEC_FIRM_ORDER"]})
 
     def truncate_table(self):
         conn = self._get_connection_sync()

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.SQLiteManager import SQLiteManager
-from models.OracleManagerSQL import OracleManagerSQL
+from models.OracleManager import OracleManager
 from models.GeminiManager import GeminiManager
 from utils.file_util import download_file_wget
 
@@ -17,7 +17,7 @@ async def run_batch_summary(batch_limit=10):
     print(f"🚀 [{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] AI 요약 배치 작업을 시작합니다...")
     
     db_manager = SQLiteManager()
-    oracle_manager = OracleManagerSQL()
+    oracle_manager = OracleManager()
 
     # 요약이 없는 최신 레포트 목록 조회
     pending_reports = await db_manager.fetch_pending_summary_reports(limit=batch_limit)
@@ -82,7 +82,7 @@ async def run_batch_summary(batch_limit=10):
                     model_name=summary_result['model']
                 )
                 
-                # Oracle 업데이트
+                # Oracle 업데이트 (통합된 OracleManager 사용)
                 await oracle_manager.update_report_summary_by_telegram_url(
                     telegram_url=target_url,
                     summary=summary_result['summary'],
