@@ -73,48 +73,35 @@ def setup_logger():
                format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
     return LOG_PATH
 
-async def daily_report(report_type, date_str=None):
+async def daily_send_report(date_str=None):
     db = SQLiteManager()
-    if report_type == 'send':
-        rows = await db.daily_select_data(date_str=date_str, type=report_type)
-        if rows:
-            formatted_messages = await convert_sql_to_telegram_messages(rows)
-            logger.info(f"Prepared {len(formatted_messages)} messages to send.")
+    rows = await db.daily_select_data(date_str=date_str, type='send')
+    if rows:
+        formatted_messages = await convert_sql_to_telegram_messages(rows)
+        logger.info(f"Prepared {len(formatted_messages)} messages to send.")
 
-            # 메시지 발송
-            send_success = True  # 모든 메시지가 성공했는지 여부를 추적
-            for sendMessageText in formatted_messages:
-                try:
-                    logger.debug(f"Sending message: {sendMessageText[:50]}...")
-                    await sendMarkDownText(token=token,
-                                           chat_id=chat_id,
-                                           sendMessageText=sendMessageText)
-                except telegram.error.TelegramError as e:
-                    logger.error(f"Telegram API Error: {e} | Message: {sendMessageText[:50]}")
-                    send_success = False
-                except Exception as e:
-                    logger.exception(f"Unexpected error while sending message: {e}")
-                    send_success = False
+        # 메시지 발송
+        send_success = True  # 모든 메시지가 성공했는지 여부를 추적
+        for sendMessageText in formatted_messages:
+            try:
+                logger.debug(f"Sending message: {sendMessageText[:50]}...")
+                await sendMarkDownText(token=token,
+                                       chat_id=chat_id,
+                                       sendMessageText=sendMessageText)
+            except telegram.error.TelegramError as e:
+                logger.error(f"Telegram API Error: {e} | Message: {sendMessageText[:50]}")
+                send_success = False
+            except Exception as e:
+                logger.exception(f"Unexpected error while sending message: {e}")
+                send_success = False
 
-            # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
-            if send_success:
-                r = await db.daily_update_data(date_str=date_str, fetched_rows=rows, type=report_type)
-                if r:
-                    logger.info('DB daily_update_data successful.')
-            else:
-                logger.warning('Some messages failed to send. DB update skipped.')
-
-    elif report_type == 'download':
-        rows = await db.daily_select_data(date_str=date_str, type='download')
-        if rows:
-            logger.info(f"Starting download for {len(rows)} files.")
-            for row in rows:
-                download_success = await download_file_wget(report_info_row=row)
-                if download_success:
-                    await db.daily_update_data(date_str=date_str, fetched_rows=row, type='download')
-                    logger.debug(f"Downloaded and updated DB for: {row.get('ARTICLE_TITLE', 'Unknown')}")
-                else:
-                    logger.error(f"Failed to download file: {row.get('ARTICLE_TITLE', 'Unknown')}")
+        # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
+        if send_success:
+            r = await db.daily_update_data(date_str=date_str, fetched_rows=rows, type='send')
+            if r:
+                logger.info('DB daily_update_data successful.')
+        else:
+            logger.warning('Some messages failed to send. DB update skipped.')
     
 def sync_check_main(sync_check_functions, total_data):
     totalCnt = 0
@@ -267,7 +254,7 @@ async def main(date_str=None):
             logger.warning("새로운 게시글 스크랩 실패.")
         
         # 발송 작업 수행 (날짜가 지정된 경우 해당 날짜 기준, 아니면 오늘 기준)
-        await daily_report(report_type='send', date_str=date_str)
+        await daily_send_report(date_str=date_str)
 
     except Exception as e:
         # 전체 프로세스 에러 처리
