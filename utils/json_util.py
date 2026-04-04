@@ -1,7 +1,6 @@
 import os
 import json
-from datetime import datetime, timedelta
-import argparse
+from datetime import datetime
 import tempfile
 
 def safe_json_dump(data, filename):
@@ -267,45 +266,3 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
         print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
     except json.JSONDecodeError:
         print(f"Error updating {file_path}: File is corrupted.")
-
-
-def filter_news_by_save_time(filename):
-    if not os.path.exists(filename):
-        return
-        
-    # 파일에서 JSON 데이터 읽기
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if not isinstance(data, list):
-            return
-    except (json.JSONDecodeError, FileNotFoundError):
-        return
-
-    # 오늘 날짜
-    today = datetime.now()
-
-    # 1주일 이내 날짜 계산
-    one_week_ago = today - timedelta(days=1)
-
-    # 뉴스 리스트 필터링
-    filtered_news_list = [
-        news for news in data
-        if datetime.fromisoformat(news.get('SAVE_TIME', today.isoformat())) >= one_week_ago
-    ]
-
-    # 안전한 쓰기 방식 적용
-    safe_json_dump(filtered_news_list, filename)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
-    parser.add_argument('action', choices=['update', 'send'], help='Action to perform: update or send')
-    parser.add_argument('file_path', type=str, help='Path to the JSON file to process')
-
-    args = parser.parse_args()
-
-    if args.action == 'send':
-        results = get_unsent_main_ch_data_to_local_json(args.file_path)
-        for result in results:
-            print(result)
-            print("\n" + "="*50 + "\n")  # 구분선 추가

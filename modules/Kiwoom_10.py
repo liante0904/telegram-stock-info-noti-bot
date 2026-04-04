@@ -4,25 +4,24 @@ import gc
 import requests
 import re
 import asyncio
-from datetime import datetime
+import datetime
 
-import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper  # Assuming there is an async version of the scraper
 from models.SQLiteManager import SQLiteManager
-from utils.date_util import GetCurrentDate
 
 def get_start_of_year():
-    return datetime(datetime.now().year, 1, 1).strftime("%Y%m%d")
+    return datetime.datetime(datetime.datetime.now().year, 1, 1).strftime("%Y%m%d")
 
 async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
     if stdate is None:
         stdate = get_start_of_year()
     if eddate is None:
-        eddate = GetCurrentDate("yyyymmdd")
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        eddate = datetime.datetime.now(KST).strftime("%Y%m%d")
 
     SEC_FIRM_ORDER = 10
     ARTICLE_BOARD_ORDER = 0
@@ -83,9 +82,9 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                 "WRITER": WRITER,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
-                        "PDF_URL": LIST_ARTICLE_URL,
+                "PDF_URL": LIST_ARTICLE_URL,
                 "KEY": LIST_ARTICLE_URL,
-                "SAVE_TIME": datetime.now().isoformat()
+                "SAVE_TIME": datetime.datetime.now().isoformat()
             })
 
         # Clean up memory
@@ -103,14 +102,11 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
     return json_data_list
 
 if __name__ == "__main__":
-    # Main function to set parameters
-    stdate = None  # Default to system year start if None
-    eddate = None  # Default to system date if None
-    page_size = 100000  # Default value
+    stdate = None
+    eddate = None
+    page_size = 100000
 
-    # Run the async function with specified parameters
     result = asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
-    print(result)
     
     if not result:
         print("No articles found.")

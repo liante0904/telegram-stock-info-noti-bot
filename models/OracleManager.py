@@ -329,9 +329,10 @@ class OracleManager:
         
         ids = []
         if isinstance(fetched_rows, list):
-            ids = [r['REPORT_ID'] if 'REPORT_ID' in r else r['report_id'] for r in fetched_rows]
+            # Oracle은 REPORT_ID(대문자), SQLite는 report_id(소문자)를 사용하므로 둘 다 체크
+            ids = [r.get('REPORT_ID') or r.get('report_id') for r in fetched_rows]
         else:
-            ids = [fetched_rows['REPORT_ID'] if 'REPORT_ID' in fetched_rows else fetched_rows['report_id']]
+            ids = [fetched_rows.get('REPORT_ID') or fetched_rows.get('report_id')]
             
         col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
         query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"

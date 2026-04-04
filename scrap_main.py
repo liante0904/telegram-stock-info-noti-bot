@@ -2,11 +2,16 @@
 import os
 import asyncio
 import time
+import argparse
+import telegram.error
 from loguru import logger
-from send_error import send_message_to_shell
+from utils.telegram_util import send_admin_alert_sync, sendMarkDownText
+from utils.sqlite_util import convert_sql_to_telegram_messages
+from utils.file_util import download_file_wget
+from dotenv import load_dotenv
 
 from models.SQLiteManager import SQLiteManager
-from utils.date_util import GetCurrentDate
+import datetime
 
 # business
 from modules.LS_0 import LS_checkNewArticle
@@ -39,7 +44,12 @@ from modules.SKS_26 import Sks_checkNewArticle
 from modules.Yuanta_27 import Yuanta_checkNewArticle
 
 import scrap_af_main
-import scrap_send_main
+
+load_dotenv()
+
+token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+chat_id = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
+
 #################### global 변수 정리 ###################################
 ############공용 상수############
 
@@ -52,7 +62,8 @@ FIRST_ARTICLE_INDEX = 0
 # 로그 설정
 def setup_logger():
     HOME_PATH = os.path.expanduser("~")
-    log_date = GetCurrentDate('YYYYMMDD')
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    log_date = datetime.datetime.now(KST).strftime('%Y%m%d')
     LOG_PATH = os.path.join(HOME_PATH, "log", log_date)
     os.makedirs(LOG_PATH, exist_ok=True)
     
@@ -61,6 +72,36 @@ def setup_logger():
     logger.add(log_file, rotation="00:00", retention="30 days", level="DEBUG", 
                format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
     return LOG_PATH
+
+async def daily_send_report(date_str=None):
+    db = SQLiteManager()
+    rows = await db.daily_select_data(date_str=date_str, type='send')
+    if rows:
+        formatted_messages = await convert_sql_to_telegram_messages(rows)
+        logger.info(f"Prepared {len(formatted_messages)} messages to send.")
+
+        # 메시지 발송
+        send_success = True  # 모든 메시지가 성공했는지 여부를 추적
+        for sendMessageText in formatted_messages:
+            try:
+                logger.debug(f"Sending message: {sendMessageText[:50]}...")
+                await sendMarkDownText(token=token,
+                                       chat_id=chat_id,
+                                       sendMessageText=sendMessageText)
+            except telegram.error.TelegramError as e:
+                logger.error(f"Telegram API Error: {e} | Message: {sendMessageText[:50]}")
+                send_success = False
+            except Exception as e:
+                logger.exception(f"Unexpected error while sending message: {e}")
+                send_success = False
+
+        # 모든 메시지가 성공적으로 전송된 경우에만 데이터 업데이트
+        if send_success:
+            r = await db.daily_update_data(date_str=date_str, fetched_rows=rows, type='send')
+            if r:
+                logger.info('DB daily_update_data successful.')
+        else:
+            logger.warning('Some messages failed to send. DB update skipped.')
     
 def sync_check_main(sync_check_functions, total_data):
     totalCnt = 0
@@ -111,30 +152,36 @@ async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
     logger.error("모든 DB 삽입 시도가 실패했습니다.")
     return False
 
-async def main():
+async def main(date_str=None):
     try:
         setup_logger()
         logger.info('=================== scrap_main START ===================')
-        
         # 동기 함수 리스트
         sync_check_functions = [
             LS_checkNewArticle,
-            ShinHanInvest_checkNewArticle,
-            Samsung_checkNewArticle,
-            Shinyoung_checkNewArticle,
+            # ShinHanInvest_checkNewArticle,
+            # Samsung_checkNewArticle,
+            # Shinyoung_checkNewArticle,
             #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
-            Hmsec_checkNewArticle,
-            TOSSinvest_checkNewArticle,
-            Leading_checkNewArticle,
+            # Hmsec_checkNewArticle,
+            # TOSSinvest_checkNewArticle,
+            # Leading_checkNewArticle,
             Sks_checkNewArticle,
             Yuanta_checkNewArticle,
         ]
 
         # 비동기 함수 리스트
         async_check_functions = [
+            ShinHanInvest_checkNewArticle,
+            Samsung_checkNewArticle,
+            Shinyoung_checkNewArticle,
+            Hmsec_checkNewArticle,
+            TOSSinvest_checkNewArticle,
+            Leading_checkNewArticle,
             NHQV_checkNewArticle,
             HANA_checkNewArticle,
+        ...
             KB_checkNewArticle,
             Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
@@ -168,7 +215,7 @@ async def main():
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
                 logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_message_to_shell(f"Error in sync function {func.__name__}: {str(e)}")
+                send_admin_alert_sync(f"Error in sync function {func.__name__}: {str(e)}")
 
         # 비동기 함수 실행
         logger.info("Running asynchronous functions...")
@@ -181,7 +228,7 @@ async def main():
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
                 logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_message_to_shell(f"Error in async function {func.__name__}: {str(e)}")
+                send_admin_alert_sync(f"Error in async function {func.__name__}: {str(e)}")
 
         logger.info('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
@@ -208,14 +255,21 @@ async def main():
             if inserted_count or updated_count:
                 # 추가 비동기 작업 실행
                 await scrap_af_main.main()
-                await scrap_send_main.main()
                 # await scrap_upload_pdf.main()
         else:
             logger.warning("새로운 게시글 스크랩 실패.")
+        
+        # 발송 작업 수행 (날짜가 지정된 경우 해당 날짜 기준, 아니면 오늘 기준)
+        await daily_send_report(date_str=date_str)
+
     except Exception as e:
         # 전체 프로세스 에러 처리
         logger.exception("An error occurred in the main process")
-        send_message_to_shell(f"Error in main: {str(e)}")
+        send_admin_alert_sync(f"Error in main: {str(e)}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='Scrap and send main script.')
+    parser.add_argument('date', type=str, nargs='?', default=None, help='Date in YYYY-MM-DD format.')
+
+    args = parser.parse_args()
+    asyncio.run(main(date_str=args.date))
