@@ -15,7 +15,6 @@ from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper  # 비동기 웹 스크래퍼가 필요합니다.
 from models.SQLiteManager import SQLiteManager
 from package.json_to_sqlite import insert_json_data_list
-from utils.date_util import GetCurrentDate
 
 async def fetch_html(session, url):
     async with session.get(url, ssl=False) as response:

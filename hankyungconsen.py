@@ -7,7 +7,7 @@ from loguru import logger
 
 from utils.json_util import save_data_to_local_json, get_unsent_main_ch_data_to_local_json, update_main_ch_send_yn_to_y
 from utils.telegram_util import sendMarkDownText
-from utils.date_util import GetCurrentDate
+import datetime
 
 from dotenv import load_dotenv
 
@@ -21,7 +21,8 @@ JSON_FILE_NAME = './json/hankyungconsen_research.json'
 
 def setup_logger():
     HOME_PATH = os.path.expanduser("~")
-    log_date = GetCurrentDate('YYYYMMDD')
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    log_date = datetime.datetime.now(KST).strftime('%Y%m%d')
     LOG_PATH = os.path.join(HOME_PATH, "log", log_date)
     os.makedirs(LOG_PATH, exist_ok=True)
     

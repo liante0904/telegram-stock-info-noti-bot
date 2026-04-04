@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from utils.date_util import GetCurrentDate_NH
 from models.SQLiteManager import SQLiteManager
 
 # 주말이 아닌 평일을 확인하는 함수
@@ -37,7 +36,15 @@ async def NHQV_checkNewArticle(target_date=None):
 
     # 기본적으로 target_date가 없으면 현재 날짜로 설정
     if target_date is None:
-        target_date = GetCurrentDate_NH()
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        now_kst = datetime.now(KST)
+        current_weekday = now_kst.weekday()
+        if current_weekday == 5:  # 토요일인 경우
+            target_date = (now_kst + timedelta(days=2)).strftime('%Y%m%d')
+        elif current_weekday == 6:  # 일요일인 경우
+            target_date = (now_kst + timedelta(days=1)).strftime('%Y%m%d')
+        else:
+            target_date = now_kst.strftime('%Y%m%d')
 
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,
