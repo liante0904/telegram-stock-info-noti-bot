@@ -3,7 +3,7 @@ import os
 import asyncio
 import time
 from loguru import logger
-from send_error import send_message_to_shell
+from utils.telegram_util import send_admin_alert_sync
 
 from models.SQLiteManager import SQLiteManager
 import datetime
@@ -169,7 +169,7 @@ async def main():
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
                 logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_message_to_shell(f"Error in sync function {func.__name__}: {str(e)}")
+                send_admin_alert_sync(f"Error in sync function {func.__name__}: {str(e)}")
 
         # 비동기 함수 실행
         logger.info("Running asynchronous functions...")
@@ -182,7 +182,7 @@ async def main():
                     totalCnt += len(data)  # 카운트 증가
             except Exception as e:
                 logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_message_to_shell(f"Error in async function {func.__name__}: {str(e)}")
+                send_admin_alert_sync(f"Error in async function {func.__name__}: {str(e)}")
 
         logger.info('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
@@ -216,7 +216,7 @@ async def main():
     except Exception as e:
         # 전체 프로세스 에러 처리
         logger.exception("An error occurred in the main process")
-        send_message_to_shell(f"Error in main: {str(e)}")
+        send_admin_alert_sync(f"Error in main: {str(e)}")
 
 if __name__ == "__main__":
     asyncio.run(main())
