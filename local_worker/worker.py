@@ -111,7 +111,7 @@ try:
         stats = {{'success': 0, 'fail': 0, 'oracle_ok': 0}}
         
         for item in data_list:
-            report_id = item['id']
+            report_id = item['report_id']
             summary = item['summary']
             
             try:
@@ -168,7 +168,7 @@ async def process_report(session, report, semaphore):
 
         text = ""
         is_pdf = '.pdf' in report['url'].lower()
-        temp_pdf = f"./temp_{report['id']}.pdf"
+        temp_pdf = f"./temp_{report['report_id']}.pdf"
 
         try:
             if is_pdf:
@@ -184,7 +184,7 @@ async def process_report(session, report, semaphore):
             
             summary = await summarize_with_ollama_async(session, text, report['title'])
             if summary:
-                return {"id": report['id'], "summary": summary, "title": report['title']}
+                return {"report_id": report['report_id'], "summary": summary, "title": report['title']}
         except Exception as e:
             print(f"🔥 에러 ({report['title'][:20]}): {e}")
         return None
@@ -199,7 +199,7 @@ def run_remote_sql(sql_query):
 
 def fetch_pending_reports(limit=FETCH_LIMIT):
     sql = f"""
-    SELECT id, ARTICLE_TITLE, ATTACH_URL, FIRM_NM, TELEGRAM_URL, DOWNLOAD_URL
+    SELECT report_id, ARTICLE_TITLE, ATTACH_URL, FIRM_NM, TELEGRAM_URL, DOWNLOAD_URL
     FROM data_main_daily_send 
     WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '') 
     AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '') 
@@ -215,7 +215,7 @@ def fetch_pending_reports(limit=FETCH_LIMIT):
             if len(parts) >= 3:
                 candidates = [u for u in [parts[5] if len(parts)>5 else None, parts[2], parts[4] if len(parts)>4 else None] if u]
                 url = next((u for u in candidates if '.pdf' in u.lower()), candidates[0] if candidates else None)
-                reports.append({"id": parts[0], "title": parts[1], "url": url})
+                reports.append({"report_id": parts[0], "title": parts[1], "url": url})
     return reports
 
 async def main():
