@@ -6,7 +6,7 @@ from loguru import logger
 from send_error import send_message_to_shell
 
 from models.SQLiteManager import SQLiteManager
-from utils.date_util import GetCurrentDate
+import datetime
 
 # business
 from modules.LS_0 import LS_checkNewArticle
@@ -52,7 +52,8 @@ FIRST_ARTICLE_INDEX = 0
 # 로그 설정
 def setup_logger():
     HOME_PATH = os.path.expanduser("~")
-    log_date = GetCurrentDate('YYYYMMDD')
+    KST = datetime.timezone(datetime.timedelta(hours=9))
+    log_date = datetime.datetime.now(KST).strftime('%Y%m%d')
     LOG_PATH = os.path.join(HOME_PATH, "log", log_date)
     os.makedirs(LOG_PATH, exist_ok=True)
     

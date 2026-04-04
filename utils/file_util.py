@@ -2,9 +2,7 @@
 import os
 import re
 import subprocess
-# from package.googledrive import *
-from utils.date_util import GetCurrentDate
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import datetime
 
 # 로그 파일 경로는 환경 변수로부터 가져옵니다
 LOG_FILE = os.getenv('LOG_FILE', '~/log/logfile.log')
@@ -27,27 +25,30 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
 
     BOARD_NM = ''
     URL = (
-    report_info_row['DOWNLOAD_URL'] if report_info_row['DOWNLOAD_URL']
-    else report_info_row['ATTACH_URL'] if report_info_row['ATTACH_URL']
-    else report_info_row['ARTICLE_URL'] if report_info_row['ARTICLE_URL']
-    else report_info_row['TELEGRAM_URL']
+        report_info_row.get('DOWNLOAD_URL') if report_info_row.get('DOWNLOAD_URL')
+        else report_info_row.get('ATTACH_URL') if report_info_row.get('ATTACH_URL')
+        else report_info_row.get('ARTICLE_URL') if report_info_row.get('ARTICLE_URL')
+        else report_info_row.get('TELEGRAM_URL')
     )
-
 
     if FILE_NAME is None:
         # FILE_NAME이 None인 경우 기존 로직으로 파일 이름 생성
-        FILE_NAME = report_info_row['ARTICLE_TITLE']
-        FIRM_NAME = report_info_row['FIRM_NM']
+        FILE_NAME = report_info_row.get('ARTICLE_TITLE', 'Unknown')
+        FIRM_NAME = report_info_row.get('FIRM_NM', 'Unknown')
+        
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        now_kst = datetime.datetime.now(KST)
+        today_str = now_kst.strftime('%Y%m%d')
         
         # report_info_row['REG_DT'] 값이 있으면 이를 사용하고 없으면 현재 날짜 사용
-        DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else GetCurrentDate('YYYYMMDD')[2:8]
+        DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else today_str[2:8]
 
         # DATE_PART가 비어 있는 경우 현재 날짜를 기본값으로 설정
         if not DATE_PART:
-            DATE_PART = GetCurrentDate('YYYYMMDD')[2:8]
+            DATE_PART = today_str[2:8]
             
         # 파일명 지정
-        FILE_NAME = FILE_NAME.replace(DATE_PART, "").replace(GetCurrentDate('YYYYMMDD'), "")
+        FILE_NAME = FILE_NAME.replace(DATE_PART, "").replace(today_str, "")
         FILE_NAME = DATE_PART + "_" + BOARD_NM + "_" + FILE_NAME + "_" + FIRM_NAME
 
         # 파일명 길이 제한 처리
@@ -78,8 +79,8 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     if os.path.exists(ATTACH_FILE_NAME):
         log_message = f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다."
         print(log_message)
-        if not os.path.exists(LOG_FILE):
-            os.makedirs(LOG_FILE)
+        if not os.path.exists(os.path.dirname(LOG_FILE)):
+            os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(log_message + '\n')
         return True  # 파일이 이미 존재하므로 성공으로 처리
@@ -104,6 +105,8 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         print(log_message)
         
         # 로그 파일에 기록
+        if not os.path.exists(os.path.dirname(LOG_FILE)):
+            os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(log_message + '\n')
             log_file.write(result.stdout + '\n')  # 성공 시 출력도 로그에 기록
@@ -116,6 +119,8 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         print(error_message)
         
         # 에러 메시지를 로그 파일에 기록
+        if not os.path.exists(os.path.dirname(LOG_FILE)):
+            os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
         with open(LOG_FILE, 'a') as log_file:
             log_file.write(error_message + '\n')
             log_file.write(e.stderr + '\n')  # 에러 메시지도 로그에 기록
