@@ -89,14 +89,14 @@ async def LS_checkNewArticle():
                     result = db_manager.execute_query(select_query, params)
 
                     if result and "status" not in result:
-                        record_id = result[0]['id']
+                        record_id = result[0]['report_id']
                         update_query = """
                         UPDATE data_main_daily_send 
                         SET REG_DT = ?, KEY = ? 
-                        WHERE id = ?
+                        WHERE report_id = ?
                         """
                         db_manager.execute_query(update_query, (REG_DT, LIST_ARTICLE_URL, record_id))
-                        print(f"Updated record with id {record_id}: REG_DT={REG_DT}, KEY={LIST_ARTICLE_URL}")
+                        print(f"Updated record with report_id {record_id}: REG_DT={REG_DT}, KEY={LIST_ARTICLE_URL}")
 
                 page += 1
                 print(f"{page} 진행중...")
