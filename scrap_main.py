@@ -107,30 +107,39 @@ def sync_check_main(sync_check_functions, total_data):
     totalCnt = 0
     # 동기 함수 실행
     for check_function in sync_check_functions:
-        logger.info(f"{check_function.__name__} => 새 게시글 정보 확인")
-        json_data_list = check_function()  # 각 함수가 반환한 json_data_list
-        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-            logger.info('=' * 40)
-            logger.info(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-            total_data.extend(json_data_list)  # 전체 리스트에 추가
-            totalCnt += len(json_data_list)
-        time.sleep(1)  # 과도한 요청 방지를 위한 딜레이
+        try:
+            logger.info(f"{check_function.__name__} => 새 게시글 정보 확인")
+            json_data_list = check_function()  # 각 함수가 반환한 json_data_list
+            if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
+                logger.info(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
+                total_data.extend(json_data_list)  # 전체 리스트에 추가
+                totalCnt += len(json_data_list)
+            time.sleep(1)  # 과도한 요청 방지를 위한 딜레이
+        except Exception as e:
+            logger.exception(f"Error in sync function {check_function.__name__}: {str(e)}")
+            send_admin_alert_sync(f"Error in sync function {check_function.__name__}: {str(e)}")
     return totalCnt
 
 async def async_check_main(async_check_functions, total_data):
     totalCnt = 0
     # 비동기 함수 리스트 실행
+    logger.info(f"Starting {len(async_check_functions)} asynchronous tasks in parallel...")
     tasks = [func() for func in async_check_functions]  # 비동기 함수 호출을 태스크로 생성
-    results = await asyncio.gather(*tasks)  # 태스크 병렬 실행 및 결과 수집
+    results = await asyncio.gather(*tasks, return_exceptions=True)  # 태스크 병렬 실행 및 결과 수집
 
-    for idx, json_data_list in enumerate(results):
+    for idx, result in enumerate(results):
         async_check_function = async_check_functions[idx]
-        logger.info(f"{async_check_function.__name__} => 새 게시글 정보 확인")
-        if json_data_list:  # 유효한 데이터가 있을 경우에만 처리
-            logger.info('=' * 40)
-            logger.info(f"{async_check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
-            total_data.extend(json_data_list)  # 전체 리스트에 추가
-            totalCnt += len(json_data_list)
+        func_name = async_check_function.__name__
+        
+        if isinstance(result, Exception):
+            logger.error(f"Error in async function {func_name}: {result}")
+            send_admin_alert_sync(f"Error in async function {func_name}: {str(result)}")
+        elif result:  # 유효한 데이터가 있을 경우에만 처리
+            logger.info(f"{func_name} => {len(result)}개의 유효한 게시글 발견")
+            total_data.extend(result)  # 전체 리스트에 추가
+            totalCnt += len(result)
+        else:
+            logger.debug(f"{func_name} => 새 게시글 없음")
 
     return totalCnt
 
@@ -181,7 +190,6 @@ async def main(date_str=None):
             Leading_checkNewArticle,
             NHQV_checkNewArticle,
             HANA_checkNewArticle,
-        ...
             KB_checkNewArticle,
             Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
@@ -206,29 +214,11 @@ async def main(date_str=None):
 
         # 동기 함수 실행
         logger.info("Running synchronous functions...")
-        for func in sync_check_functions:
-            try:
-                logger.info(f"Running {func.__name__}")
-                data = func()  # 동기 함수 호출
-                if data:
-                    total_data.extend(data)  # 데이터 병합
-                    totalCnt += len(data)  # 카운트 증가
-            except Exception as e:
-                logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_admin_alert_sync(f"Error in sync function {func.__name__}: {str(e)}")
+        totalCnt += sync_check_main(sync_check_functions, total_data)
 
         # 비동기 함수 실행
         logger.info("Running asynchronous functions...")
-        for func in async_check_functions:
-            try:
-                logger.info(f"Running {func.__name__}")
-                data = await func()  # 비동기 함수 호출
-                if data:
-                    total_data.extend(data)  # 데이터 병합
-                    totalCnt += len(data)  # 카운트 증가
-            except Exception as e:
-                logger.exception(f"Error in {func.__name__}: {str(e)}")
-                send_admin_alert_sync(f"Error in async function {func.__name__}: {str(e)}")
+        totalCnt += await async_check_main(async_check_functions, total_data)
 
         logger.info('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
