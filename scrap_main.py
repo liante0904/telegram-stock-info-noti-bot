@@ -296,15 +296,16 @@ async def main(date_str=None):
                 inserted_count, updated_count = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
 
             if inserted_count > 0 or updated_count > 0:
-                # 데이터 강화(후처리) 작업 실행 (주석 처리)
-                # await enrich_data()
-                pass
+                # 데이터 강화(후처리) 작업 실행
+                await enrich_data()
+
         else:
             logger.warning("새로운 게시글 스크랩 실패 또는 데이터 없음.")
         
-        # 발송 전 최종적으로 한 번 더 후처리가 필요한 항목이 있는지 체크 (주석 처리)
-        # if not (inserted_count > 0 or updated_count > 0):
-        #     await enrich_data()
+        # 발송 전 최종적으로 한 번 더 후처리가 필요한 항목이 있는지 체크
+        if not (inserted_count > 0 or updated_count > 0):
+            await enrich_data()
+
 
         # 발송 작업 수행 (날짜가 지정된 경우 해당 날짜 기준, 아니면 오늘 기준)
         await daily_send_report(date_str=date_str)
