@@ -1,6 +1,6 @@
 services:
   stock-noti-bot:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-your-github-username}/stock-noti-bot:latest
+    image: ghcr.io/liante0904/stock-noti-bot:latest
     container_name: stock-noti-bot
     build: .
     restart: always
