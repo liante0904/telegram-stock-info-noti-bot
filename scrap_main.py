@@ -14,7 +14,7 @@ from models.SQLiteManager import SQLiteManager
 import datetime
 
 # business
-from modules.LS_0 import LS_checkNewArticle
+from modules.LS_0 import LS_checkNewArticle, LS_detail
 from modules.ShinHanInvest_1 import ShinHanInvest_checkNewArticle
 from modules.NHQV_2 import NHQV_checkNewArticle
 from modules.HANA_3 import HANA_checkNewArticle
@@ -33,7 +33,7 @@ from modules.TOSSinvest_15 import TOSSinvest_checkNewArticle
 from modules.Leading_16 import Leading_checkNewArticle
 from modules.Daeshin_17 import Daeshin_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
-from modules.DBfi_19 import DBfi_checkNewArticle
+from modules.DBfi_19 import DBfi_checkNewArticle, fetch_detailed_url
 from modules.MERITZ_20 import MERITZ_checkNewArticle
 from modules.Hanwhawm_21 import Hanwha_checkNewArticle
 from modules.Hygood_22 import Hanyang_checkNewArticle
@@ -42,8 +42,6 @@ from modules.Kyobo_24 import Kyobo_checkNewArticle
 from modules.IBKs_25 import IBK_checkNewArticle
 from modules.SKS_26 import Sks_checkNewArticle
 from modules.Yuanta_27 import Yuanta_checkNewArticle
-
-import scrap_af_main
 
 load_dotenv()
 
@@ -72,6 +70,50 @@ def setup_logger():
     logger.add(log_file, rotation="00:00", retention="30 days", level="DEBUG", 
                format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
     return LOG_PATH
+
+async def enrich_data():
+    """
+    상세 정보(PDF URL 등)가 누락된 게시글을 찾아 후처리를 수행합니다.
+    """
+    logger.info("Starting data enrichment (fetching detailed URLs)...")
+    db = SQLiteManager()
+    
+    from models.FirmInfo import FirmInfo
+    
+    for sec_firm_order in range(len(FirmInfo.firm_names)):
+        firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=0)
+
+        if firm_info.get_firm_name() and firm_info.telegram_update_required:
+            # 최근 7일 이내의 빈 URL 레코드 조회
+            records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info, days_limit=7)
+            
+            if not records:
+                continue
+
+            logger.info(f"Enriching {len(records)} records for {firm_info.get_firm_name()} (Order: {sec_firm_order})")
+
+            try:
+                if sec_firm_order == 19:  # DB금융투자
+                    update_records = await fetch_detailed_url(records)
+                    update_tasks = [
+                        db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'])
+                        for r in update_records if r.get('TELEGRAM_URL')
+                    ]
+                    if update_tasks:
+                        await asyncio.gather(*update_tasks)
+
+                elif sec_firm_order == 0:  # LS증권
+                    # LS_detail은 리스트를 인자로 받을 수 있도록 설계되어 있음
+                    update_records = await LS_detail(articles=records, firm_info=firm_info)
+                    update_tasks = [
+                        db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'])
+                        for r in update_records if r.get('TELEGRAM_URL')
+                    ]
+                    if update_tasks:
+                        await asyncio.gather(*update_tasks)
+                
+            except Exception as e:
+                logger.error(f"Error during enrichment for firm {sec_firm_order}: {str(e)}")
 
 async def daily_send_report(date_str=None):
     db = SQLiteManager()
@@ -254,12 +296,15 @@ async def main(date_str=None):
                 inserted_count, updated_count = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
 
             if inserted_count > 0 or updated_count > 0:
-                # 추가 비동기 작업 실행 (삽입이나 업데이트가 있었을 때만)
-                await scrap_af_main.main()
-                # await scrap_upload_pdf.main()
+                # 데이터 강화(후처리) 작업 실행
+                await enrich_data()
         else:
             logger.warning("새로운 게시글 스크랩 실패 또는 데이터 없음.")
         
+        # 발송 전 최종적으로 한 번 더 후처리가 필요한 항목이 있는지 체크 (이전에 실패한 항목 구제)
+        if not (inserted_count > 0 or updated_count > 0):
+            await enrich_data()
+
         # 발송 작업 수행 (날짜가 지정된 경우 해당 날짜 기준, 아니면 오늘 기준)
         await daily_send_report(date_str=date_str)
 
