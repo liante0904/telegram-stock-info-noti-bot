@@ -1,78 +1,71 @@
-name: Deploy to server
+name: Build and Deploy to GHCR
 
 on:
   push:
     branches:
       - master
-      - 'dev-*'
-  workflow_dispatch: # 수동 배포 버튼 활성화
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/stock-noti-bot
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Add SSH key
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
 
-    - name: Deploy to Server
-      env:
-        SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        SERVER_USER: ${{ secrets.SERVER_USER }}
-      run: |
-        if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
-          TARGET_DIR=${{ secrets.PROJECT_DIR }}
-        else
-          TARGET_DIR="/home/ubuntu/dev/telegram-test-bot"
-        fi
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-        echo "Deploying branch ${{ github.ref_name }} to $TARGET_DIR..."
-
-        # SSH 접속 시 HostKey 체크를 완전히 무시하고 접속
-        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SERVER_USER@$SERVER_HOST "TARGET_DIR=$TARGET_DIR REF_NAME=${{ github.ref_name }} bash -s" << 'EOF'
-        set -e
-        
-        # 폴더가 없으면 생성
-        if [ ! -d "$TARGET_DIR" ]; then
-          echo "Directory $TARGET_DIR does not exist. Creating..."
-          mkdir -p "$TARGET_DIR"
-          git clone git@github.com:${{ github.repository }}.git "$TARGET_DIR"
-        fi
-
-        cd "$TARGET_DIR"
-        
-        # Git 안전 디렉토리 설정
-        git config --global --add safe.directory "$TARGET_DIR" || true
-
-        # 소스 강제 업데이트
-        git fetch origin
-        git checkout -B $REF_NAME origin/$REF_NAME
-        git reset --hard origin/$REF_NAME
-
-        # uv 설치 확인 및 동기화
-        export PATH="$HOME/.local/bin:$PATH"
-
-        if command -v uv &> /dev/null; then
-          echo "uv sync start..."
-          uv sync --frozen
-        else
-          echo "Error: uv is not installed or not in PATH on the server."
-          echo "Please install uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
-          exit 1
-        fi
-        
-        echo "Deployment of $REF_NAME completed in $TARGET_DIR."
-        EOF
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.PROJECT_DIR }}
+            # 최신 docker-compose.yml과 .env 등을 업데이트하기 위해 git pull
+            git pull origin master
+            
+            # GHCR 로그인 (서버에서도 필요함)
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # 새 이미지 pull 및 컨테이너 재시작
+            docker-compose pull
+            docker-compose up -d
+            
+            # 사용하지 않는 오래된 이미지 삭제
+            docker image prune -f

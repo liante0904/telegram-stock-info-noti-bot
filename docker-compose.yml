@@ -1,0 +1,15 @@
+services:
+  stock-noti-bot:
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
+    container_name: stock-noti-bot
+    build: .
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ~/log:/log
+      - ~/sqlite3:/root/sqlite3
+    environment:
+      - TZ=Asia/Seoul
+    stdin_open: true
+    tty: true
