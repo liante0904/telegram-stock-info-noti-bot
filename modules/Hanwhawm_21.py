@@ -2,9 +2,7 @@
 import os
 import urllib.parse
 import aiohttp
-import asyncio
-import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from xml.etree import ElementTree as ET
 import os
 import sys
@@ -12,6 +10,8 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
+from utils.date_util import GetCurrentDate
+
 def get_start_of_year():
     return datetime(datetime.now().year, 1, 1).strftime("%Y%m%d")
 
@@ -19,7 +19,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
     if stdate is None:
         stdate = get_start_of_year()
     if eddate is None:
-        KST = datetime.timezone(datetime.timedelta(hours=9))
+        KST = timezone(timedelta(hours=9))
         eddate = datetime.now(KST).strftime("%Y%m%d")
     if page_size is None:
         page_size = 1000

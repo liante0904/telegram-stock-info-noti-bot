@@ -3,7 +3,7 @@ import os
 import sys
 import asyncio
 import aiohttp
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -36,7 +36,7 @@ async def NHQV_checkNewArticle(target_date=None):
 
     # 기본적으로 target_date가 없으면 현재 날짜로 설정
     if target_date is None:
-        KST = datetime.timezone(datetime.timedelta(hours=9))
+        KST = timezone(timedelta(hours=9))
         now_kst = datetime.now(KST)
         current_weekday = now_kst.weekday()
         if current_weekday == 5:  # 토요일인 경우
