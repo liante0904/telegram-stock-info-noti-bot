@@ -4,7 +4,7 @@ import gc
 import requests
 import re
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import os
 import sys
@@ -13,6 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper  # Assuming there is an async version of the scraper
 from models.SQLiteManager import SQLiteManager
+
 def get_start_of_year():
     return datetime(datetime.now().year, 1, 1).strftime("%Y%m%d")
 
@@ -20,7 +21,7 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
     if stdate is None:
         stdate = get_start_of_year()
     if eddate is None:
-        KST = datetime.timezone(datetime.timedelta(hours=9))
+        KST = timezone(timedelta(hours=9))
         eddate = datetime.now(KST).strftime("%Y%m%d")
 
     SEC_FIRM_ORDER = 10
