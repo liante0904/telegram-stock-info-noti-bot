@@ -149,7 +149,7 @@ async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
         try:
             inserted_count, updated_count = db.insert_json_data_list(data, table_name)
             logger.info(f"DB 재삽입 성공: {inserted_count}개의 새로운 게시글, {updated_count}개의 게시글 업데이트.")
-            return True  # 성공 시 함수 종료
+            return inserted_count, updated_count  # 성공 시 건수 반환
         except Exception as e:
             logger.error(f"DB 삽입 실패 (시도 {attempt + 1}/{retries}): {str(e)}")
             logger.exception("DB Insert retry failed details:")
@@ -159,12 +159,12 @@ async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
 
     # 모든 시도 실패 시
     logger.error("모든 DB 삽입 시도가 실패했습니다.")
-    return False
+    return 0, 0
 
 async def main(date_str=None):
     try:
-        setup_logger()
-        logger.info('=================== scrap_main START ===================')
+        log_path = setup_logger()
+        logger.info(f'=================== scrap_main START (Log: {log_path}) ===================')
         # 동기 함수 리스트
         sync_check_functions = [
             LS_checkNewArticle,
@@ -214,40 +214,51 @@ async def main(date_str=None):
 
         # 동기 함수 실행
         logger.info("Running synchronous functions...")
-        totalCnt += sync_check_main(sync_check_functions, total_data)
+        sync_check_main(sync_check_functions, total_data)
 
         # 비동기 함수 실행
         logger.info("Running asynchronous functions...")
-        totalCnt += await async_check_main(async_check_functions, total_data)
+        await async_check_main(async_check_functions, total_data)
 
         logger.info('==============전체 레포트 제공 회사 게시글 조회 완료==============')
 
         if total_data:
+            # 5번 개선: 메모리 레벨 중복 제거 (KEY 기준)
+            unique_data = {}
+            for entry in total_data:
+                # SQLiteManager의 KEY 생성 로직과 동일하게 적용
+                key = entry.get("KEY") or entry.get("ATTACH_URL", '')
+                if key not in unique_data:
+                    unique_data[key] = entry
+            
+            deduplicated_data = list(unique_data.values())
+            if len(deduplicated_data) < len(total_data):
+                logger.info(f"메모리 내 중복 제거 완료: {len(total_data)} -> {len(deduplicated_data)}")
+            
+            total_data = deduplicated_data
+            totalCnt = len(total_data)
+
             db = SQLiteManager()
 
             # 데이터 삽입 시도
             try:
                 inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
-                logger.info(f"총 {totalCnt}개의 게시글을 스크랩하여.. DB에 Insert 시도합니다.")
-                logger.info(f"총 {inserted_count}개의 새로운 게시글을 DB에 삽입했고, {updated_count}개의 게시글을 업데이트했습니다.")
+                logger.info(f"총 {totalCnt}개의 게시글을 DB에 Insert/Update 시도합니다.")
+                logger.info(f"결과: {inserted_count}개 삽입, {updated_count}개 업데이트.")
             except Exception as e:
                 logger.error(f"DB 삽입 중 오류 발생: {str(e)}")
                 logger.exception("DB Insert Error details:")
 
                 # 메모리에서 데이터를 보관하며 재시도
                 logger.info("DB 삽입 실패, 일정 시간 후 재시도합니다...")
-                success = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
-                if success:
-                    logger.info("DB 재삽입 성공.")
-                else:
-                    logger.error("DB 재삽입 실패. 데이터를 확인하세요.")
+                inserted_count, updated_count = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
 
-            if inserted_count or updated_count:
-                # 추가 비동기 작업 실행
+            if inserted_count > 0 or updated_count > 0:
+                # 추가 비동기 작업 실행 (삽입이나 업데이트가 있었을 때만)
                 await scrap_af_main.main()
                 # await scrap_upload_pdf.main()
         else:
-            logger.warning("새로운 게시글 스크랩 실패.")
+            logger.warning("새로운 게시글 스크랩 실패 또는 데이터 없음.")
         
         # 발송 작업 수행 (날짜가 지정된 경우 해당 날짜 기준, 아니면 오늘 기준)
         await daily_send_report(date_str=date_str)
