@@ -5,13 +5,20 @@ from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-# 로그 설정
+# 로그 설정 (디렉토리 자동 생성 포함)
+def get_log_path():
+    today = datetime.now().strftime('%Y%m%d')
+    log_dir = f"/log/{today}"
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    return f"{log_dir}/{today}_scheduler.log"
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(f"/app/logs/scheduler_{datetime.now().strftime('%Y%m%d')}.log")
+        logging.FileHandler(get_log_path())
     ]
 )
 
