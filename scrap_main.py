@@ -156,7 +156,6 @@ async def main(date_str=None):
     try:
         setup_logger()
         logger.info('=================== scrap_main START ===================')
-        
         # 동기 함수 리스트
         sync_check_functions = [
             LS_checkNewArticle,
@@ -165,9 +164,9 @@ async def main(date_str=None):
             # Shinyoung_checkNewArticle,
             #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
-            Hmsec_checkNewArticle,
-            TOSSinvest_checkNewArticle,
-            Leading_checkNewArticle,
+            # Hmsec_checkNewArticle,
+            # TOSSinvest_checkNewArticle,
+            # Leading_checkNewArticle,
             Sks_checkNewArticle,
             Yuanta_checkNewArticle,
         ]
@@ -177,8 +176,12 @@ async def main(date_str=None):
             ShinHanInvest_checkNewArticle,
             Samsung_checkNewArticle,
             Shinyoung_checkNewArticle,
+            Hmsec_checkNewArticle,
+            TOSSinvest_checkNewArticle,
+            Leading_checkNewArticle,
             NHQV_checkNewArticle,
             HANA_checkNewArticle,
+        ...
             KB_checkNewArticle,
             Sangsanginib_checkNewArticle,
             Kiwoom_checkNewArticle,
