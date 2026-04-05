@@ -182,19 +182,21 @@ class SQLiteManager:
         
         return [dict(row) for row in rows]
 
-    async def fetch_all_empty_telegram_url_articles(self, firm_info: FirmInfo):
+    async def fetch_all_empty_telegram_url_articles(self, firm_info: FirmInfo, days_limit: int = None):
         """
-        TELEGRAM_URL 갱신이 필요한 전체 레코드를 조회합니다. (날짜 제한 없음)
+        TELEGRAM_URL 갱신이 필요한 전체 레코드를 조회합니다.
         
         Args:
             firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
+            days_limit (int, optional): 최근 며칠 이내의 데이터를 조회할지 여부.
         
         Returns:
             list[dict]: 조회된 기사 목록
         """
         self.open_connection()
         firmInfo = firm_info.get_state()
-        print(firmInfo["SEC_FIRM_ORDER"])
+        print(f"Fetching articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
+        
         query = f"""
         SELECT 
             report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
@@ -206,8 +208,15 @@ class SQLiteManager:
             SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
             AND (TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
-        ORDER BY REG_DT DESC, SAVE_TIME DESC
         """
+        
+        if days_limit:
+            # SAVE_TIME 또는 REG_DT를 기준으로 필터링할 수 있음. 
+            # REG_DT는 YYYYMMDD 형식이므로 이를 사용하거나 SAVE_TIME(YYYY-MM-DD HH:MM:SS)을 사용.
+            # 여기서는 SAVE_TIME을 기준으로 처리
+            query += f" AND SAVE_TIME >= datetime('now', '-{days_limit} days', 'localtime')"
+
+        query += " ORDER BY REG_DT DESC, SAVE_TIME DESC"
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
