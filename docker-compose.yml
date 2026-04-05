@@ -1,9 +1,11 @@
 services:
-  stock-noti-bot:
+  gemini-pdf-batch:
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
-    container_name: stock-noti-bot
-    build: .
-    restart: always
+    container_name: gemini-pdf-batch
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
@@ -11,5 +13,12 @@ services:
       - ~/sqlite3:/root/sqlite3
     environment:
       - TZ=Asia/Seoul
+      - LOG_BASE_DIR=/log
+      - LOG_FILE=/log/logfile.log
     stdin_open: true
     tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

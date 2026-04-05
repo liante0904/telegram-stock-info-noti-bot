@@ -17,11 +17,14 @@ from utils.file_util import download_file_wget
 # 로그 설정 (디렉토리 자동 생성 포함)
 def setup_logging():
     today = datetime.now().strftime('%Y%m%d')
-    log_dir = f"/log/{today}"
+    # 환경변수 LOG_BASE_DIR이 있으면 사용, 없으면 홈 디렉토리의 log 폴더 사용
+    log_base = os.getenv("LOG_BASE_DIR", os.path.expanduser("~/log"))
+    log_dir = os.path.join(log_base, today)
+    
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
     
-    log_file = f"{log_dir}/{today}_gemini_summary.log"
+    log_file = os.path.join(log_dir, f"{today}_gemini_summary.log")
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(message)s',
