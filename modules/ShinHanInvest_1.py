@@ -1,11 +1,14 @@
 # -*- coding:utf-8 -*- 
 import gc
+import aiohttp
+import asyncio
 import requests
 import re
 from datetime import datetime
 import os
 import sys
 import json
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -140,7 +143,7 @@ board_map = {
     'shinhannews': 13,      # 신한 속보
 }
 
-def ShinHanInvest_checkNewArticle():
+async def ShinHanInvest_checkNewArticle():
     SEC_FIRM_ORDER = 1
     json_data_list = []
     
@@ -175,49 +178,50 @@ def ShinHanInvest_checkNewArticle():
         }
     }
 
-    with requests.Session() as session:
-        response = session.post(url, headers=headers, data=json.dumps(data))
+    logger.debug(f"ShinHanInvest Scraper Start: {url}")
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, headers=headers, data=json.dumps(data)) as response:
+            if response.status == 200:
+                result = await response.json()
+                
+                firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=0) # Dummy board order
 
-        if response.ok:
-            result = response.json()
-            
-            firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=0) # Dummy board order
+                collectionList = result.get('body', {}).get('collectionList', [])
+                for collection in collectionList:
+                    # print(collection)
+                    itemList = collection.get('itemList', [])
+                    logger.info(f"ShinHanInvest: Found {len(itemList)} items in collection")
+                    for item in itemList:
+                        board_name = item.get('BOARD_NAME', '')
+                        
+                        article_board_order = board_map.get(board_name, 99)
 
-            collectionList = result.get('body', {}).get('collectionList', [])
-            for collection in collectionList:
-                # print(collection)
-                itemList = collection.get('itemList', [])
-                for item in itemList:
-                    board_name = item.get('BOARD_NAME', '')
-                    
-                    article_board_order = board_map.get(board_name, 99)
+                        reg_dt = item.get('REG_DT', '')[0:8]
+                        if reg_dt:
+                            reg_dt = re.sub(r"[-./]", "", reg_dt)
 
-                    reg_dt = item.get('REG_DT', '')[0:8]
-                    if reg_dt:
-                        reg_dt = re.sub(r"[-./]", "", reg_dt)
-
-                    attachment_id = item.get('ATTACHMENT_ID', '')
-                    
-                    download_url = f"https://bbs2.shinhansec.com/board/message/file.pdf.do?attachmentId={attachment_id}"
-                                    
-                    json_data_list.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": article_board_order,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "REG_DT": reg_dt,
-                        "ATTACH_URL": ' ',
-                        "DOWNLOAD_URL": download_url,
-                        "TELEGRAM_URL": download_url,
-                        "PDF_URL": download_url,
-                        "ARTICLE_TITLE": item.get('TITLE', ''),
-                        "WRITER": item.get('REGISTER_NICKNAME', ''),
-                        "KEY": download_url,
-                        "SAVE_TIME": datetime.now().isoformat()
-                    })
-            return json_data_list
-        else:
-            print("Request failed:", response.status_code)
-            return []
+                        attachment_id = item.get('ATTACHMENT_ID', '')
+                        
+                        download_url = f"https://bbs2.shinhansec.com/board/message/file.pdf.do?attachmentId={attachment_id}"
+                                        
+                        json_data_list.append({
+                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                            "ARTICLE_BOARD_ORDER": article_board_order,
+                            "FIRM_NM": firm_info.get_firm_name(),
+                            "REG_DT": reg_dt,
+                            "ATTACH_URL": ' ',
+                            "DOWNLOAD_URL": download_url,
+                            "TELEGRAM_URL": download_url,
+                            "PDF_URL": download_url,
+                            "ARTICLE_TITLE": item.get('TITLE', ''),
+                            "WRITER": item.get('REGISTER_NICKNAME', ''),
+                            "KEY": download_url,
+                            "SAVE_TIME": datetime.now().isoformat()
+                        })
+                return json_data_list
+            else:
+                logger.error(f"ShinHanInvest Request failed: {response.status}")
+                return []
 
 def get_shinhan_board_info():
     """
@@ -280,8 +284,8 @@ def get_shinhan_board_info():
 
 if __name__ == "__main__":
     firm_info = FirmInfo(sec_firm_order=1, article_board_order=0)
-    # results = ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True)
-    results = ShinHanInvest_checkNewArticle()
+    # results = asyncio.run(ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True))
+    results = asyncio.run(ShinHanInvest_checkNewArticle())
     # print(results)
     print(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
     # print(results)

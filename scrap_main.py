@@ -160,9 +160,9 @@ async def main(date_str=None):
         # 동기 함수 리스트
         sync_check_functions = [
             LS_checkNewArticle,
-            ShinHanInvest_checkNewArticle,
-            Samsung_checkNewArticle,
-            Shinyoung_checkNewArticle,
+            # ShinHanInvest_checkNewArticle,
+            # Samsung_checkNewArticle,
+            # Shinyoung_checkNewArticle,
             #DS_checkNewArticle,
             Miraeasset_checkNewArticle,
             Hmsec_checkNewArticle,
@@ -174,6 +174,9 @@ async def main(date_str=None):
 
         # 비동기 함수 리스트
         async_check_functions = [
+            ShinHanInvest_checkNewArticle,
+            Samsung_checkNewArticle,
+            Shinyoung_checkNewArticle,
             NHQV_checkNewArticle,
             HANA_checkNewArticle,
             KB_checkNewArticle,
