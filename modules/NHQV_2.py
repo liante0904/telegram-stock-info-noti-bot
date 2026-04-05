@@ -3,24 +3,24 @@ import os
 import sys
 import asyncio
 import aiohttp
-from datetime import datetime, timedelta, timezone
+import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
 # 주말이 아닌 평일을 확인하는 함수
-def is_weekday(date: datetime):
-    return date.weekday() < 5  # 월=0, 금=4, 토=5, 일=6
+def is_weekday(date_obj: datetime.datetime):
+    return date_obj.weekday() < 5  # 월=0, 금=4, 토=5, 일=6
 
 # 시작일부터 종료일까지 평일 리스트 생성
-def generate_workdays(start_date: datetime, end_date: datetime):
+def generate_workdays(start_date: datetime.datetime, end_date: datetime.datetime):
     current_date = start_date
     weekdays = []
     while current_date <= end_date:
         if is_weekday(current_date):
             weekdays.append(current_date.strftime('%Y%m%d'))
-        current_date += timedelta(days=1)
+        current_date += datetime.timedelta(days=1)
     return weekdays
 
 async def NHQV_checkNewArticle(target_date=None):
@@ -36,13 +36,13 @@ async def NHQV_checkNewArticle(target_date=None):
 
     # 기본적으로 target_date가 없으면 현재 날짜로 설정
     if target_date is None:
-        KST = timezone(timedelta(hours=9))
-        now_kst = datetime.now(KST)
+        KST = datetime.timezone(datetime.timedelta(hours=9))
+        now_kst = datetime.datetime.now(KST)
         current_weekday = now_kst.weekday()
         if current_weekday == 5:  # 토요일인 경우
-            target_date = (now_kst + timedelta(days=2)).strftime('%Y%m%d')
+            target_date = (now_kst + datetime.timedelta(days=2)).strftime('%Y%m%d')
         elif current_weekday == 6:  # 일요일인 경우
-            target_date = (now_kst + timedelta(days=1)).strftime('%Y%m%d')
+            target_date = (now_kst + datetime.timedelta(days=1)).strftime('%Y%m%d')
         else:
             target_date = now_kst.strftime('%Y%m%d')
 
@@ -84,10 +84,10 @@ async def NHQV_checkNewArticle(target_date=None):
                     "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
                     "WRITER": article['rshPprDruEmpFnm'],
                     "TELEGRAM_URL": article['hpgeFleUrlCts'],
-                        "PDF_URL": article['hpgeFleUrlCts'],
+                    "PDF_URL": article['hpgeFleUrlCts'],
                     "ARTICLE_TITLE": article['rshPprTilCts'],
                     "KEY": article['hpgeFleUrlCts'],
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "SAVE_TIME": datetime.datetime.now().isoformat()
                 })
 
             # 연속키 확인
@@ -96,12 +96,11 @@ async def NHQV_checkNewArticle(target_date=None):
             else:
                 break
 
-    print(json_data_list)
     return json_data_list
 
 async def main():
-    start_date = datetime(2021, 1, 1)  # 2021년 초
-    end_date = datetime(datetime.now().year, 9, 30)  # 올해 9월 말
+    start_date = datetime.datetime(2021, 1, 1)
+    end_date = datetime.datetime.now()
     workdays = generate_workdays(start_date, end_date)
 
     all_results = []
@@ -112,9 +111,8 @@ async def main():
 
     print(f"Total articles fetched: {len(all_results)}")
     db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(all_results, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    inserted_count = db.insert_json_data_list(all_results, 'data_main_daily_send')
     print(inserted_count)
-    # 여기서 원하는 방식으로 데이터를 저장하거나 처리
     return all_results
 
 if __name__ == "__main__":
