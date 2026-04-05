@@ -8,10 +8,12 @@ from apscheduler.triggers.cron import CronTrigger
 # 로그 설정 (디렉토리 자동 생성 포함)
 def get_log_path():
     today = datetime.now().strftime('%Y%m%d')
-    log_dir = f"/log/{today}"
+    log_base = os.getenv("LOG_BASE_DIR", os.path.expanduser("~/log"))
+    log_dir = os.path.join(log_base, today)
+    
     if not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
-    return f"{log_dir}/{today}_scheduler.log"
+    return os.path.join(log_dir, f"{today}_scheduler.log")
 
 logging.basicConfig(
     level=logging.INFO,
