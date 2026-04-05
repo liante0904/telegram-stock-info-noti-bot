@@ -388,7 +388,7 @@ class AsyncWebScraper:
                 response.raise_for_status()
                 print('=' * 40)
                 print('==================AsyncWebScraper PostJson==================')
-                return await response.json()
+                return await response.json(content_type=None)
         finally:
             if close_session:
                 await session.close()
