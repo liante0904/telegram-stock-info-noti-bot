@@ -11,31 +11,28 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class OracleManager:
     def __init__(self):
-        """Oracle 데이터베이스 연결 초기화 (안정적인 동기 방식 기반)"""
+        """Oracle 데이터베이스 연결 초기화 (Thin 모드 우선)"""
         load_dotenv(override=True)
-        self._init_thick_mode()
-
-    def _init_thick_mode(self):
-        """Thick 모드 초기화 시도 (Wallet 연동을 위해 필요한 경우)"""
-        try:
-            lib_dir = "/opt/oracle/instantclient_19_10"
-            if os.path.exists(lib_dir):
-                oracledb.init_oracle_client(lib_dir=lib_dir)
-            else:
-                oracledb.init_oracle_client()
-        except Exception:
-            pass
+        # Thick 모드 초기화는 지갑 연동이 꼭 필요한 경우에만 사용하므로 주석 처리
+        # self._init_thick_mode()
 
     def _get_connection_sync(self):
-        """동기 방식으로 연결 객체 생성"""
-        wl = os.path.expanduser(os.getenv('WALLET_LOCATION'))
+        """동기 방식으로 연결 객체 생성 (Thin 모드 방식)"""
+        user = os.getenv('DB_USER')
+        password = os.getenv('DB_PASSWORD')
+        # DB_DSN이 없으면 DB_DSN_LOW를 기본값으로 사용
+        dsn = os.getenv('DB_DSN') or os.getenv('DB_DSN_LOW')
+        # Thin 모드에서도 TNS 별칭(oracledb_low 등)을 쓰려면 config_dir 지정이 필요함
+        config_dir = os.path.expanduser(os.getenv('WALLET_LOCATION'))
+        
+        dsn_info = dsn[:50] if dsn else "N/A"
+        print(f"🔗 Attempting Oracle Connection (Thin Mode) -> USER: {user}, DSN: {dsn_info}, Config: {config_dir}...")
+        
         return oracledb.connect(
-            user=os.getenv('DB_USER'),
-            password=os.getenv('DB_PASSWORD'),
-            dsn=os.getenv('DB_DSN'),
-            config_dir=wl,
-            wallet_location=wl,
-            wallet_password=os.getenv('WALLET_PASSWORD')
+            user=user,
+            password=password,
+            dsn=dsn,
+            config_dir=config_dir
         )
 
     def _insert_sync_process(self, json_data_list):
