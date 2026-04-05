@@ -319,58 +319,79 @@ class AsyncWebScraper:
 
     async def Get(self, session=None, params=None):
         """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
-        # 세션이 없으면 새 세션을 생성하여 사용
         close_session = False
         if session is None:
             session = aiohttp.ClientSession()
             close_session = True
 
         try:
-            response = await session.get(self.target_url, headers=self.headers, params=params)
-            response.raise_for_status()
-            html = await response.text()
-            return BeautifulSoup(html, "html.parser")
+            async with session.get(self.target_url, headers=self.headers, params=params) as response:
+                response.raise_for_status()
+                html = await response.text()
+                return BeautifulSoup(html, "html.parser")
         finally:
             if close_session:
-                await session.close()  # 세션을 닫아 메모리 누수 방지
+                await session.close()
                 
     async def Post(self, session=None, data=None):
         """비동기 POST 요청을 통해 데이터를 가져오는 메서드"""
-        async with session or aiohttp.ClientSession() as new_session:
-            response = await (session or new_session).post(self.target_url, headers=self.headers, data=data)
-            response.raise_for_status()
-            html = await response.text()
-            return BeautifulSoup(html, "html.parser")
+        close_session = False
+        if session is None:
+            session = aiohttp.ClientSession()
+            close_session = True
+
+        try:
+            async with session.post(self.target_url, headers=self.headers, data=data) as response:
+                response.raise_for_status()
+                html = await response.text()
+                return BeautifulSoup(html, "html.parser")
+        finally:
+            if close_session:
+                await session.close()
 
     async def GetJson(self, session=None, params=None):
         """비동기 GET 요청을 통해 JSON 데이터를 가져오는 메서드"""
-        async with session or aiohttp.ClientSession() as new_session:
-            response = await (session or new_session).get(self.target_url, headers=self.headers, params=params)
-            response.raise_for_status()
-            print('=' * 40)
-            print('==================AsyncWebScraper GetJson==================')
-            return await response.json()
+        close_session = False
+        if session is None:
+            session = aiohttp.ClientSession()
+            close_session = True
+
+        try:
+            async with session.get(self.target_url, headers=self.headers, params=params) as response:
+                response.raise_for_status()
+                print('=' * 40)
+                print('==================AsyncWebScraper GetJson==================')
+                return await response.json()
+        finally:
+            if close_session:
+                await session.close()
 
     async def PostJson(self, headers=None, session=None, params=None, json_data=None):
         """
         비동기 POST 요청을 통해 JSON 데이터를 가져오는 메서드.
-        :param session: aiohttp ClientSession 인스턴스 (선택적)
-        :param params: 요청 시 보낼 URL 인코딩 데이터 (기본값 None)
-        :param json_data: JSON 데이터 (기본값 None)
         """
-        conn = aiohttp.TCPConnector(ssl=False, force_close=True)  # SSL 인증 비활성화
-        self.headers = headers
-        if headers is None:
-            self.headers = {
+        close_session = False
+        if session is None:
+            conn = aiohttp.TCPConnector(ssl=False, force_close=True)
+            session = aiohttp.ClientSession(connector=conn)
+            close_session = True
+
+        use_headers = headers
+        if use_headers is None:
+            use_headers = {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-                "Referrer": self.target_url  # Referrer 헤더 추가
+                "Referrer": self.target_url
             }
-        async with session or aiohttp.ClientSession(connector=conn) as new_session:
-            response = await (session or new_session).post(self.target_url, headers=self.headers, data=params, json=json_data)
-            response.raise_for_status()
-            print('=' * 40)
-            print('==================AsyncWebScraper PostJson==================')
-            return await response.json()
+
+        try:
+            async with session.post(self.target_url, headers=use_headers, data=params, json=json_data) as response:
+                response.raise_for_status()
+                print('=' * 40)
+                print('==================AsyncWebScraper PostJson==================')
+                return await response.json()
+        finally:
+            if close_session:
+                await session.close()
 
 
 
