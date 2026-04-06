@@ -32,9 +32,9 @@
 
 ## 🛠 기술 스택
 
-- **Language:** Python 3.10+
+- **Language:** Python 3.12+ (uv 관리)
 - **Scraping:** Selenium (Headless Chrome), BeautifulSoup4, Requests
-- **Database:** SQLite3, Oracle
+- **Database:** SQLite3, Oracle, PostgreSQL (키워드 알림용)
 - **Async:** Asyncio, Aiohttp
 - **Environment:** .env 기반 비밀키 관리
 
@@ -42,14 +42,21 @@
 
 ### 패키지 설치
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 환경 변수 설정
-`.env` 파일에 텔레그램 봇 토큰 및 채널 ID를 설정해야 합니다.
+`.env` 파일에 텔레그램 봇 토큰, 채널 ID 및 PostgreSQL 정보를 설정해야 합니다.
 ```env
 TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET=your_token
 TELEGRAM_CHANNEL_ID_REPORT_ALARM=your_channel_id
+
+# PostgreSQL (키워드 알림 설정용)
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=your_db
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
 ```
 
 ### 실행 방법

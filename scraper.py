@@ -185,7 +185,7 @@ async def async_check_main(async_check_functions, total_data):
 
     return totalCnt
 
-async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
+async def retry_db_insert_in_memory(db, data, table_name=None, retries=3, delay=60):
     """메모리에서 데이터를 보관한 채로 일정 시간 뒤 DB 삽입 재시도"""
     for attempt in range(retries):
         try:
@@ -284,7 +284,7 @@ async def main(date_str=None):
 
             # 데이터 삽입 시도
             try:
-                inserted_count, updated_count = db.insert_json_data_list(total_data, 'data_main_daily_send')
+                inserted_count, updated_count = db.insert_json_data_list(total_data)
                 logger.info(f"총 {totalCnt}개의 게시글을 DB에 Insert/Update 시도합니다.")
                 logger.info(f"결과: {inserted_count}개 삽입, {updated_count}개 업데이트.")
             except Exception as e:
@@ -293,7 +293,7 @@ async def main(date_str=None):
 
                 # 메모리에서 데이터를 보관하며 재시도
                 logger.info("DB 삽입 실패, 일정 시간 후 재시도합니다...")
-                inserted_count, updated_count = await retry_db_insert_in_memory(db, total_data, 'data_main_daily_send', retries=3, delay=60)
+                inserted_count, updated_count = await retry_db_insert_in_memory(db, total_data, retries=3, delay=60)
 
             if inserted_count > 0 or updated_count > 0:
                 # 데이터 강화(후처리) 작업 실행

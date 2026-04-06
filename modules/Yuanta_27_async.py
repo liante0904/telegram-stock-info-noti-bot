@@ -191,12 +191,12 @@ async def main():
         if is_imported_flag:
             print("Saving all scraped articles to the database...")
             db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(processed_articles, 'data_main_daily_send')
+            inserted_count = db.insert_json_data_list(processed_articles)
             print(f"Inserted {inserted_count} articles into the database.")
         else:
             print("Saving all recent scraped articles to the database...")
             db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(processed_articles, 'data_main_daily_send')
+            inserted_count = db.insert_json_data_list(processed_articles)
             print(f"Inserted {inserted_count} articles into the database.")
 
 if __name__ == "__main__":
