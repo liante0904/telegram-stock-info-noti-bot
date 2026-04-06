@@ -18,7 +18,9 @@ class OracleManagerSQL(IntegratedOracleManager):
     def close_connection(self):
         pass
 
-    def insert_json_data_list(self, json_data_list, table_name='DATA_MAIN_DAILY_SEND', full_insert=False):
+    def insert_json_data_list(self, json_data_list, table_name=None, full_insert=False):
+        if table_name is None:
+            table_name = self.main_table_name
         # 비동기 메서드를 동기 방식으로 래핑하여 호출 (필요 시)
         import asyncio
         loop = asyncio.get_event_loop()

@@ -170,7 +170,7 @@ async def main():
     print(f"Fetched {len(result)} articles.")
     print(result)
     db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    inserted_count = db.insert_json_data_list(result)  # 모든 데이터를 한 번에 삽입
     print(inserted_count)
 
 

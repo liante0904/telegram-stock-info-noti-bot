@@ -111,7 +111,7 @@ async def main():
 
     print(f"Total articles fetched: {len(all_results)}")
     db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(all_results, 'data_main_daily_send')
+    inserted_count = db.insert_json_data_list(all_results)
     print(inserted_count)
     return all_results
 

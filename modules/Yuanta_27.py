@@ -199,7 +199,7 @@ if __name__ == "__main__":
         if is_imported_flag:
             print("Saving all scraped articles to the database...")
             db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(articles, 'data_main_daily_send')
+            inserted_count = db.insert_json_data_list(articles)
             print(f"Inserted {inserted_count} articles into the database.")
         else:
             print("Printing first 5 articles for review (not saving to DB):")

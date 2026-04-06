@@ -188,14 +188,14 @@ async def main():
         if full_fetch:
             print(f"Inserting {len(result)} articles into database...")
             db = SQLiteManager()
-            inserted, updated = db.insert_json_data_list(result, 'data_main_daily_send')
+            inserted, updated = db.insert_json_data_list(result)
             print(f"Done: {inserted} inserted, {updated} updated.")
         else:
             # 테스트 모드일 때는 샘플만 출력
             print("\n--- Sample of fetched data (First record) ---")
             print(json.dumps(result[0], indent=4, ensure_ascii=False))
             db = SQLiteManager()
-            inserted, updated = db.insert_json_data_list(result, 'data_main_daily_send')
+            inserted, updated = db.insert_json_data_list(result)
             print(f"Done: {inserted} inserted, {updated} updated.")
 
 if __name__ == '__main__':

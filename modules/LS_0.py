@@ -362,5 +362,5 @@ if __name__ == "__main__":
             print("No articles found.")
         else:
             db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(all_articles, 'data_main_daily_send')
+            inserted_count = db.insert_json_data_list(all_articles)
             print(f"Inserted {inserted_count} articles.")
