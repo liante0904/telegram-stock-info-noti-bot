@@ -24,11 +24,18 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.sqlite_util import format_message_sql
 from utils.telegram_util import sendMarkDownText
+from models.PostgreSQLManager import PostgreSQLManager
 
 # 환경 변수 및 설정 로드
 load_dotenv()
-DB_PATH = os.path.expanduser('~/sqlite3/telegram.db')
+DB_PATH = os.getenv('DB_PATH', os.path.expanduser('~/sqlite3/telegram.db'))
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+# CONFIG_PATH는 더 이상 JSON 파일을 읽지 않으므로 필요 시 참고용으로만 남기거나 제거 가능
+CONFIG_PATH = os.getenv('CONFIG_PATH', os.path.abspath(os.path.join(os.getcwd(), '..', 'telegram-stock-info-bot', 'report_alert_keyword.json')))
+INTERVAL = int(os.getenv('INTERVAL', '1800')) # 기본 30분
+
+# PostgreSQL 매니저 인스턴스 생성
+pg_manager = PostgreSQLManager()
 
 def parse_date(date_str):
     """날짜 형식을 YYYY-MM-DD로 통일하는 헬퍼 함수"""
@@ -69,6 +76,11 @@ def fetch_data(date=None, keyword=None, user_id=None):
     user_pattern = f'%"{user_id}"%'
 
     for table_name, url_col in tables:
+        # 테이블 존재 여부 확인
+        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+        if not cursor.fetchone():
+            continue
+
         query_parts.append(f"""
             SELECT FIRM_NM, ARTICLE_TITLE, {url_col} AS TELEGRAM_URL, SAVE_TIME, SEND_USER
             FROM {table_name}
@@ -77,6 +89,10 @@ def fetch_data(date=None, keyword=None, user_id=None):
             AND (SEND_USER IS NULL OR SEND_USER NOT LIKE ?)
         """)
         params.extend([keyword_param, keyword_param, date, user_pattern])
+
+    if not query_parts:
+        conn.close()
+        return []
 
     final_query = " UNION ".join(query_parts) + " ORDER BY SAVE_TIME ASC, FIRM_NM ASC"
     
@@ -95,6 +111,11 @@ def update_data(date=None, keyword=None, user_id=None):
     tables = ['data_main_daily_send', 'hankyungconsen_research', 'naver_research']
 
     for table in tables:
+        # 테이블 존재 여부 확인
+        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+        if not cursor.fetchone():
+            continue
+
         update_query = f"""
             UPDATE {table}
             SET SEND_USER = ?
@@ -109,38 +130,62 @@ def update_data(date=None, keyword=None, user_id=None):
     conn.commit()
     conn.close()
 
-async def main():
-    # 키워드 설정 파일 경로 (상위 폴더의 프로젝트 기준)
-    config_path = os.path.abspath(os.path.join(os.getcwd(), '..', 'telegram-stock-info-bot', 'report_alert_keyword.json'))
-    logger.info(f"Loading config from: {config_path}")
+async def run_once():
+    logger.info("Fetching keywords from PostgreSQL...")
+    try:
+        user_keywords = pg_manager.load_keywords_from_db()
+    except Exception as e:
+        logger.error(f"Failed to load keywords from DB: {e}")
+        return
     
-    if not os.path.exists(config_path):
-        logger.error(f"Config file not found: {config_path}")
+    if not user_keywords:
+        logger.info("No active keywords found in DB.")
         return
 
-    with open(config_path, 'r', encoding='utf-8') as f:
-        user_keywords = json.load(f)
-    
-    logger.info(f"Loaded {len(user_keywords)} users from config.")
+    logger.info(f"Loaded {len(user_keywords)} users from DB.")
 
     for user_id, entries in user_keywords.items():
         user_id_str = str(user_id)
-        logger.info(f"\n>>> Processing User: {user_id_str} ({len(entries)} keywords)")
+        logger.info(f">>> Processing User: {user_id_str} ({len(entries)} keywords)")
         
         for entry in entries:
             keyword = entry['keyword']
             logger.debug(f"  - Checking keyword: '{keyword}'...")
-            found_reports = fetch_data(keyword=keyword, user_id=user_id_str)
+            try:
+                found_reports = fetch_data(keyword=keyword, user_id=user_id_str)
 
-            if found_reports:
-                logger.info(f"    * Found {len(found_reports)} reports for keyword: '{keyword}'")
-                message = f"===== 알림 키워드 : {keyword} =====\n"
-                message += format_message_sql(found_reports)
-                
-                await sendMarkDownText(token=TOKEN, chat_id=user_id_str, sendMessageText=message)
-                update_data(keyword=keyword, user_id=user_id_str)
-            else:
-                logger.debug(f"    * No new reports found for keyword: '{keyword}'")
+                if found_reports:
+                    logger.info(f"    * Found {len(found_reports)} reports for keyword: '{keyword}'")
+                    message = f"===== 알림 키워드 : {keyword} =====\n"
+                    message += format_message_sql(found_reports)
+                    
+                    await sendMarkDownText(token=TOKEN, chat_id=user_id_str, sendMessageText=message)
+                    update_data(keyword=keyword, user_id=user_id_str)
+                else:
+                    logger.debug(f"    * No new reports found for keyword: '{keyword}'")
+            except Exception as e:
+                logger.error(f"Error processing keyword '{keyword}' for user {user_id_str}: {e}")
+
+async def main():
+    logger.info("Starting User Report Keyword Alert Service...")
+    
+    # RUN_ONCE 환경 변수가 설정되어 있으면 한 번만 실행
+    if os.getenv('RUN_ONCE', 'false').lower() == 'true':
+        logger.info("--- [Single Run Start] ---")
+        await run_once()
+        logger.info("--- [Single Run End] ---")
+        return
+
+    while True:
+        now = datetime.now()
+        logger.info(f"--- [Loop Start: {now.strftime('%Y-%m-%d %H:%M:%S')}] ---")
+        try:
+            await run_once()
+        except Exception as e:
+            logger.error(f"Error in run_once: {e}")
+        
+        logger.info(f"Waiting for {INTERVAL}s until next check...")
+        await asyncio.sleep(INTERVAL)
 
 if __name__ == '__main__':
     asyncio.run(main())

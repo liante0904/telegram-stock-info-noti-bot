@@ -11,13 +11,18 @@ from models.OracleManager import OracleManager
 from models.OracleManagerSQL import OracleManagerSQL
 
 class DataManager:
+    MAIN_TABLE_NAME = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send")
+
     def __init__(self):
         self.sqlite = SQLiteManager()
         self.oracle = OracleManager()         # 최신 Oracle 매니저 (TB_SEC_REPORTS / DATA_MAIN_DAILY_SEND 통합 관리)
         self.logger = logging.getLogger("DataManager")
 
-    async def insert_json_data_list(self, json_data_list, table_name='data_main_daily_send'):
+    async def insert_json_data_list(self, json_data_list, table_name=None):
         """SQLite에 저장하고 Oracle에 동기화 시도"""
+        if table_name is None:
+            table_name = self.MAIN_TABLE_NAME
+            
         inserted_count, updated_count = self.sqlite.insert_json_data_list(json_data_list, table_name)
         
         try:

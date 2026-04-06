@@ -13,6 +13,7 @@ class OracleManager:
     def __init__(self):
         """Oracle 데이터베이스 연결 초기화 (Thin 모드 우선)"""
         load_dotenv(override=True)
+        self.main_table_name = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send").upper()
         # Thick 모드 초기화는 지갑 연동이 꼭 필요한 경우에만 사용하므로 주석 처리
         # self._init_thick_mode()
 
@@ -43,8 +44,8 @@ class OracleManager:
         conn = self._get_connection_sync()
         # Oracle 스키마에 기반한 MERGE 쿼리
         # NVL(s.COL, t.COL)을 사용하여 소스 데이터가 빈 값(NULL)일 경우 기존 오라클 데이터를 유지함
-        query = """
-        MERGE INTO DATA_MAIN_DAILY_SEND t
+        query = f"""
+        MERGE INTO {self.main_table_name} t
         USING (SELECT :REPORT_ID as REPORT_ID, :SEC_FIRM_ORDER as SEC_FIRM_ORDER, 
                       :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, :FIRM_NM as FIRM_NM, 
                       :SEND_USER as SEND_USER, :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, 
@@ -152,8 +153,8 @@ class OracleManager:
             return 0
             
         conn = self._get_connection_sync()
-        query = """
-        INSERT /*+ APPEND_VALUES */ INTO DATA_MAIN_DAILY_SEND (
+        query = f"""
+        INSERT /*+ APPEND_VALUES */ INTO {self.main_table_name} (
             REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
             TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
@@ -256,8 +257,8 @@ class OracleManager:
         return await loop.run_in_executor(None, self._execute_query_sync, query, params)
 
     async def update_report_summary(self, record_id, summary, model_name):
-        query = """
-        UPDATE DATA_MAIN_DAILY_SEND
+        query = f"""
+        UPDATE {self.main_table_name}
         SET GEMINI_SUMMARY = :summary, 
             SUMMARY_TIME = :st, 
             SUMMARY_MODEL = :model
@@ -268,15 +269,15 @@ class OracleManager:
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
         """TELEGRAM_URL 기준 요약 업데이트 (발송 완료된 최신 건 우선)"""
-        query = """
-        UPDATE DATA_MAIN_DAILY_SEND
+        query = f"""
+        UPDATE {self.main_table_name}
         SET GEMINI_SUMMARY = :summary, 
             SUMMARY_TIME = :st, 
             SUMMARY_MODEL = :model
         WHERE TELEGRAM_URL = :url
           AND MAIN_CH_SEND_YN = 'Y'
           AND REPORT_ID = (
-              SELECT MAX(REPORT_ID) FROM DATA_MAIN_DAILY_SEND 
+              SELECT MAX(REPORT_ID) FROM {self.main_table_name} 
               WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
           )
         """
@@ -286,15 +287,15 @@ class OracleManager:
     async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
         """텔레그램 URL 및 PDF 경로 업데이트"""
         if article_title:
-            query = """
-            UPDATE DATA_MAIN_DAILY_SEND 
+            query = f"""
+            UPDATE {self.main_table_name} 
             SET TELEGRAM_URL = :t_url, ARTICLE_TITLE = :title, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
             WHERE REPORT_ID = :id
             """
             params = {"t_url": telegram_url, "title": article_title, "pdf": pdf_url, "id": record_id}
         else:
-            query = """
-            UPDATE DATA_MAIN_DAILY_SEND 
+            query = f"""
+            UPDATE {self.main_table_name} 
             SET TELEGRAM_URL = :t_url, ATTACH_URL = NVL(:pdf, ATTACH_URL) 
             WHERE REPORT_ID = :id
             """
@@ -314,8 +315,8 @@ class OracleManager:
             cond = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
             
         query = f"""
-        SELECT * FROM DATA_MAIN_DAILY_SEND 
-        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {cond}
+        SELECT * FROM {self.main_table_name} 
+        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {{cond}}
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
         return await self.execute_query(query, {"dt": q_date})
@@ -332,7 +333,7 @@ class OracleManager:
             ids = [fetched_rows.get('REPORT_ID') or fetched_rows.get('report_id')]
             
         col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
-        query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"
+        query = f"UPDATE {self.main_table_name} SET {{col}} = 'Y' WHERE REPORT_ID = :id"
         
         # executemany 스타일로 처리하기 위해 execute_query 확장 필요할 수 있으나 
         # 일단 루프로 처리 (데이터 건수가 작음)
@@ -347,8 +348,8 @@ class OracleManager:
         q_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
         f_info = firm_info.get_state()
         
-        query = """
-        SELECT * FROM DATA_MAIN_DAILY_SEND
+        query = f"""
+        SELECT * FROM {self.main_table_name}
         WHERE REG_DT BETWEEN TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') - 3, 'YYYYMMDD')
                          AND TO_CHAR(TO_DATE(:dt, 'YYYYMMDD') + 2, 'YYYYMMDD')
           AND SEC_FIRM_ORDER = :sfo
@@ -363,13 +364,13 @@ class OracleManager:
         try:
             with conn.cursor() as cursor:
                 try:
-                    cursor.execute("TRUNCATE TABLE DATA_MAIN_DAILY_SEND")
-                    print("✅ Table DATA_MAIN_DAILY_SEND truncated successfully.")
+                    cursor.execute(f"TRUNCATE TABLE {self.main_table_name}")
+                    print(f"✅ Table {self.main_table_name} truncated successfully.")
                 except oracledb.DatabaseError as e:
                     if "ORA-00054" in str(e):
                         print("⚠️ Resource busy, using DELETE instead...")
-                        cursor.execute("DELETE FROM DATA_MAIN_DAILY_SEND")
-                        print("✅ Table DATA_MAIN_DAILY_SEND deleted successfully.")
+                        cursor.execute(f"DELETE FROM {self.main_table_name}")
+                        print(f"✅ Table {self.main_table_name} deleted successfully.")
                     else: raise e
                 conn.commit()
             return True
@@ -391,7 +392,7 @@ class OracleManager:
         sqlite_db.open_connection()
         
         # 2. 전체 데이터 건수 확인
-        sqlite_db.cursor.execute("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
+        sqlite_db.cursor.execute(f"SELECT count(*) FROM {{sqlite_db.main_table_name}}")
         total_rows = sqlite_db.cursor.fetchone()[0]
         
         if total_rows == 0:
@@ -399,7 +400,7 @@ class OracleManager:
             sqlite_db.close_connection()
             return 0
             
-        print(f"📊 Total {total_rows:,} rows to sync. Processing in 10,000 unit chunks...")
+        print(f"📊 Total {{total_rows:,}} rows to sync. Processing in 10,000 unit chunks...")
         
         # 3. 10,000건씩 끊어서 처리 (메모리 및 오라클 부하 방지)
         chunk_size = 10000
@@ -407,7 +408,7 @@ class OracleManager:
         total_synced = 0
         
         while offset < total_rows:
-            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
+            sqlite_db.cursor.execute(f"SELECT * FROM {{sqlite_db.main_table_name}} LIMIT {{chunk_size}} OFFSET {{offset}}")
             rows = sqlite_db.cursor.fetchall()
             if not rows: break
             
@@ -416,10 +417,10 @@ class OracleManager:
             count = await self.bulk_insert(sqlite_data)
             total_synced += count
             offset += chunk_size
-            print(f"✅ Progress: {min(offset, total_rows):,} / {total_rows:,} rows synced (Batch OK)")
+            print(f"✅ Progress: {{min(offset, total_rows):,}} / {{total_rows:,}} rows synced (Batch OK)")
             
         sqlite_db.close_connection()
-        print(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP.")
+        print(f"✨ Successfully synced total {{total_synced:,}} rows to Oracle ATP.")
         return total_synced
 
 if __name__ == "__main__":
@@ -430,6 +431,6 @@ if __name__ == "__main__":
             print("!!! FULL INSERT MODE !!!")
             await om.full_sync_from_sqlite()
         else:
-            res = await om.execute_query("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
-            print(f"Test Result: {res}")
+            res = await om.execute_query(f"SELECT count(*) FROM {{om.main_table_name}}")
+            print(f"Test Result: {{res}}")
     asyncio.run(main())

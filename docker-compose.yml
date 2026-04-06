@@ -1,5 +1,6 @@
 services:
   gemini-pdf-batch:
+    platform: linux/arm64
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
     container_name: gemini-pdf-batch
     build: 
@@ -22,3 +23,38 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    networks:
+      - default
+      - vscode-network
+
+  report-keyword-alert:
+    platform: linux/arm64
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
+    container_name: report-keyword-alert-bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file: .env
+    volumes:
+      - ~/sqlite3:/app/db
+      - ~/log:/log
+    environment:
+      - DB_PATH=/app/db/telegram.db
+      - LOG_BASE_DIR=/log
+      - TZ=Asia/Seoul
+    command: ["uv", "run", "scheduler_keyword_alert.py"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - default
+      - vscode-network
+
+networks:
+  vscode-network:
+    external: true
+  default:
+    driver: bridge

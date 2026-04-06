@@ -291,7 +291,7 @@ if __name__ == "__main__":
     # print(results)
 
     db = SQLiteManager()
-    inserted_count_results = db.insert_json_data_list(results, 'data_main_daily_send')
+    inserted_count_results = db.insert_json_data_list(results)
 
     print(f"Articles Inserted: {inserted_count_results}")
 
