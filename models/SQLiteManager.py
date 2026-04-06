@@ -29,6 +29,7 @@ class SQLiteManager:
         self.db_path = db_path if db_path else globals()['db_path']
         self.connection = None
         self.cursor = None
+        self.main_table_name = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send")
 
     def open_connection(self):
         """데이터베이스 연결 설정"""
@@ -76,8 +77,11 @@ class SQLiteManager:
         rows = self.cursor.fetchall()
         return [dict(row) for row in rows]
 
-    def insert_json_data_list(self, json_data_list, table_name):
+    def insert_json_data_list(self, json_data_list, table_name=None):
         """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
+        if table_name is None:
+            table_name = self.main_table_name
+
         self.open_connection()  # 데이터베이스 연결 열기
 
         # 삽입 및 업데이트 건수 초기화
@@ -164,7 +168,7 @@ class SQLiteManager:
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
         FROM 
-            data_main_daily_send
+            {self.main_table_name}
         WHERE 
             REG_DT BETWEEN strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '-3 days'))
                     AND strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '+2 days'))
@@ -203,7 +207,7 @@ class SQLiteManager:
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY
         FROM 
-            data_main_daily_send
+            {self.main_table_name}
         WHERE 
             SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
             AND KEY IS NOT NULL
@@ -228,13 +232,13 @@ class SQLiteManager:
         """
         LS증권(SEC_FIRM_ORDER=0) 레포트 중 TELEGRAM_URL이 .pdf로 끝나지 않는 대상을 조회합니다.
         """
-        query = """
+        query = f"""
         SELECT 
             report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY
         FROM 
-            data_main_daily_send
+            {self.main_table_name}
         WHERE 
             SEC_FIRM_ORDER = 0
             AND (TELEGRAM_URL NOT LIKE '%.pdf' OR TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
@@ -249,8 +253,8 @@ class SQLiteManager:
                 pdf_url = telegram_url
 
             # 기본 쿼리 구성
-            query = """
-            UPDATE data_main_daily_send
+            query = f"""
+            UPDATE {self.main_table_name}
             SET TELEGRAM_URL = ?, PDF_URL = ?
             WHERE report_id = ?
             """
@@ -258,8 +262,8 @@ class SQLiteManager:
 
             # article_title이 주어진 경우 쿼리에 추가
             if article_title is not None:
-                query = """
-                UPDATE data_main_daily_send
+                query = f"""
+                UPDATE {self.main_table_name}
                 SET TELEGRAM_URL = ?, PDF_URL = ?, ARTICLE_TITLE = ?
                 WHERE report_id = ?
                 """
@@ -306,7 +310,7 @@ class SQLiteManager:
     
     async def daily_select_data(self, date_str=None, type=None):
         print(f"date_str: {date_str}, type: {type}")
-        """data_main_daily_send 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
+        """{self.main_table_name} 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
         
         # 'type' 파라미터가 필수임을 확인
         if type not in ['send', 'download']:
@@ -349,7 +353,7 @@ class SQLiteManager:
             TELEGRAM_URL,
             MAIN_CH_SEND_YN
         FROM 
-            data_main_daily_send 
+            {self.main_table_name} 
         WHERE 
             DATE(SAVE_TIME) = '{query_date}'
             AND REG_DT >= '{three_days_ago}'
@@ -405,15 +409,15 @@ class SQLiteManager:
                 telegram_url = row.get('TELEGRAM_URL')
                 
                 if telegram_url:
-                    update_query = """
-                        UPDATE data_main_daily_send
+                    update_query = f"""
+                        UPDATE {self.main_table_name}
                         SET MAIN_CH_SEND_YN = 'Y'
                         WHERE TELEGRAM_URL = ?
                     """
                     param = (telegram_url,)
                 else:
-                    update_query = """
-                        UPDATE data_main_daily_send
+                    update_query = f"""
+                        UPDATE {self.main_table_name}
                         SET MAIN_CH_SEND_YN = 'Y'
                         WHERE report_id = ?
                     """
@@ -428,8 +432,8 @@ class SQLiteManager:
 
         # 'download' 타입에 대한 업데이트 처리
         elif type == 'download':
-            update_query = """
-                UPDATE data_main_daily_send
+            update_query = f"""
+                UPDATE {self.main_table_name}
                 SET 
                     DOWNLOAD_STATUS_YN = 'Y'
                 WHERE 
@@ -448,8 +452,8 @@ class SQLiteManager:
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
         """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
-        query = """
-        UPDATE data_main_daily_send
+        query = f"""
+        UPDATE {self.main_table_name}
         SET GEMINI_SUMMARY = ?, 
             SUMMARY_TIME = ?, 
             SUMMARY_MODEL = ?
@@ -457,7 +461,7 @@ class SQLiteManager:
           AND MAIN_CH_SEND_YN = 'Y'
           AND report_id = (
               SELECT MAX(report_id) 
-              FROM data_main_daily_send 
+              FROM {self.main_table_name} 
               WHERE TELEGRAM_URL = ? 
                 AND MAIN_CH_SEND_YN = 'Y'
           )
@@ -467,9 +471,9 @@ class SQLiteManager:
         return await self.execute_query(query, params)
 
     async def update_report_summary(self, record_id, summary, model_name):
-        """data_main_daily_send 테이블의 특정 report_id 레코드에 제미나이 요약 내용을 업데이트합니다."""
-        query = """
-        UPDATE data_main_daily_send
+        """{self.main_table_name} 테이블의 특정 report_id 레코드에 제미나이 요약 내용을 업데이트합니다."""
+        query = f"""
+        UPDATE {self.main_table_name}
         SET GEMINI_SUMMARY = ?, 
             SUMMARY_TIME = ?, 
             SUMMARY_MODEL = ?
@@ -485,12 +489,12 @@ class SQLiteManager:
         # 제외 대상: 19(DB금융투자)
         exclude_firms = (19,) 
         
-        query = """
+        query = f"""
         SELECT *
-        FROM data_main_daily_send
+        FROM {self.main_table_name}
         WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '')
         AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '')
-        AND SEC_FIRM_ORDER NOT IN ({})
+        AND SEC_FIRM_ORDER NOT IN ({{}})
         ORDER BY SAVE_TIME DESC
         LIMIT ?
         """.format(", ".join(map(str, exclude_firms)))
@@ -501,7 +505,7 @@ async def main():
     db_manager = SQLiteManager()
     rows = await db_manager.daily_select_data(date_str='20241230', type='send')
     # 쿼리 실행
-    query_result = db_manager.execute_query("SELECT * FROM data_main_daily_send", close=True)
+    query_result = db_manager.execute_query(f"SELECT * FROM {{db_manager.main_table_name}}", close=True)
     print(query_result)
 
 # 예시 사용법

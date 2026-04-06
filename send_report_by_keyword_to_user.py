@@ -24,13 +24,18 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.sqlite_util import format_message_sql
 from utils.telegram_util import sendMarkDownText
+from models.PostgreSQLManager import PostgreSQLManager
 
 # 환경 변수 및 설정 로드
 load_dotenv()
 DB_PATH = os.getenv('DB_PATH', os.path.expanduser('~/sqlite3/telegram.db'))
 TOKEN = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
+# CONFIG_PATH는 더 이상 JSON 파일을 읽지 않으므로 필요 시 참고용으로만 남기거나 제거 가능
 CONFIG_PATH = os.getenv('CONFIG_PATH', os.path.abspath(os.path.join(os.getcwd(), '..', 'telegram-stock-info-bot', 'report_alert_keyword.json')))
 INTERVAL = int(os.getenv('INTERVAL', '1800')) # 기본 30분
+
+# PostgreSQL 매니저 인스턴스 생성
+pg_manager = PostgreSQLManager()
 
 def parse_date(date_str):
     """날짜 형식을 YYYY-MM-DD로 통일하는 헬퍼 함수"""
@@ -126,20 +131,18 @@ def update_data(date=None, keyword=None, user_id=None):
     conn.close()
 
 async def run_once():
-    logger.info(f"Loading config from: {CONFIG_PATH}")
+    logger.info("Fetching keywords from PostgreSQL...")
+    try:
+        user_keywords = pg_manager.load_keywords_from_db()
+    except Exception as e:
+        logger.error(f"Failed to load keywords from DB: {e}")
+        return
     
-    if not os.path.exists(CONFIG_PATH):
-        logger.error(f"Config file not found: {CONFIG_PATH}")
+    if not user_keywords:
+        logger.info("No active keywords found in DB.")
         return
 
-    try:
-        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-            user_keywords = json.load(f)
-    except Exception as e:
-        logger.error(f"Failed to load config: {e}")
-        return
-    
-    logger.info(f"Loaded {len(user_keywords)} users from config.")
+    logger.info(f"Loaded {len(user_keywords)} users from DB.")
 
     for user_id, entries in user_keywords.items():
         user_id_str = str(user_id)

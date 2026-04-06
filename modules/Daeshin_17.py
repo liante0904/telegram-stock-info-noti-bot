@@ -130,7 +130,7 @@ async def main():
     articles = await Daeshin_checkNewArticle()
     # detailed_articles = await fetch_detailed_url(articles)
     # db = SQLiteManager()
-    # inserted_count = db.insert_json_data_list(detailed_articles, 'data_main_daily_send')  # 모든 데이터를 한 번에 삽입
+    # inserted_count = db.insert_json_data_list(detailed_articles)  # 모든 데이터를 한 번에 삽입
     # print(inserted_count)
     # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
     print(articles)

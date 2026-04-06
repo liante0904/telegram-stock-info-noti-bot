@@ -156,7 +156,7 @@ async def main():
     print(meritz_result)
 
     db = SQLiteManager()
-    inserted_count_meritz = db.insert_json_data_list(meritz_result, 'data_main_daily_send')
+    inserted_count_meritz = db.insert_json_data_list(meritz_result)
 
     print(f"Meritz Articles Inserted: {inserted_count_meritz}")
 
