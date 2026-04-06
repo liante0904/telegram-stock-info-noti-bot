@@ -1,11 +1,12 @@
 # 1. Base Image
 FROM python:3.12-slim
 
-# 2. 필수 시스템 패키지만 설치 (wget: PDF 다운로드용, libaio1: Oracle Client용)
+# 2. 필수 시스템 패키지 설치
 RUN apt-get update && apt-get install -y \
     wget \
-    libaio1 \
+    libaio1t64 \
     ca-certificates \
+    rclone \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. uv 설치
@@ -22,8 +23,8 @@ RUN uv sync --frozen --no-cache
 COPY run/ ./run/
 COPY models/ ./models/
 COPY utils/ ./utils/
-COPY scheduler.py ./
-COPY .env ./ 
+COPY scheduler.py ./ 
+# COPY .env ./ # .env는 docker-compose의 env_file을 통해 주입됩니다.
 
 # 7. 실행 권한 부여 및 디렉토리 준비
 RUN mkdir -p /log
