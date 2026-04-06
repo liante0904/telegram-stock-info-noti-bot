@@ -3,6 +3,10 @@ import os
 import sys
 import time
 import logging
+import re
+import shutil
+import subprocess
+from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -13,6 +17,18 @@ from models.SQLiteManager import SQLiteManager
 from models.OracleManager import OracleManager
 from models.GeminiManager import GeminiManager
 from utils.file_util import download_file_wget
+
+# rclone 설정 (pdf_archiver 참조)
+RCLONE_BIN = shutil.which("rclone") or os.path.expanduser("~/.local/bin/rclone")
+RCLONE_REMOTE = "onedrive:/archive/pdf"
+LOCAL_BUFFER_DIR = os.path.expanduser("~/downloads/pdf_archive_temp")
+
+def _clean_title(title):
+    if not title: return "no_title"
+    # 특수문자 및 불필요한 태그 제거
+    text = re.sub(r'\[.*?\]|\(.*?\)|\【.*?\】', '', title)
+    text = re.sub(r'[\\/:*?"<>|!@#$%^&*.ⓒ,]', ' ', text)
+    return "_".join(text.split())[:60].strip('_')
 
 # 로그 설정 (디렉토리 자동 생성 포함)
 def setup_logging():
@@ -55,6 +71,18 @@ async def run_batch_summary(batch_limit=10):
 
     for report in pending_reports:
         # logging.info(f"\n[작업 시작] {report['ARTICLE_TITLE']} ({report['FIRM_NM']})")
+        
+        # 0. 아카이빙 경로 및 파일명 생성 (pdf_archiver_async.py 로직 참조)
+        report_id = report['report_id']
+        firm = report['FIRM_NM']
+        title = report['ARTICLE_TITLE']
+        reg_dt = report.get('REG_DT', '00000000')
+        
+        clean_dt = re.sub(r'[^0-9]', '', str(reg_dt)) if reg_dt else "00000000"
+        y_m = f"{clean_dt[:4]}-{clean_dt[4:6]}"
+        yy_mm_dd = clean_dt[2:8]
+        clean_title = _clean_title(title)
+        canonical_filename = f"{yy_mm_dd}_{clean_title}_{report_id}.pdf"
         
         # 유효한 PDF URL 확인
         download_url = report.get('ATTACH_URL') or report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
@@ -118,9 +146,47 @@ async def run_batch_summary(batch_limit=10):
                 # 쿼터 에러로 재시도 실패 시 이번 배치 중단
                 if attempt >= max_retries:
                     logging.error("🛑 재시도 횟수 초과 또는 심각한 쿼터 에러. 배치를 중단합니다.")
-                    break
+                    # break는 하되 아카이빙 시도는 할 수 있도록 처리할 것인가? 
+                    # 요약 실패하더라도 다운로드가 성공했다면 아카이빙은 진행하는 것이 효율적
+            
+            # 4. 아카이빙 및 rclone 업로드
+            if os.path.exists(file_name):
+                # 로컬 정리용 경로 생성
+                local_target_dir = Path(LOCAL_BUFFER_DIR) / y_m / firm
+                local_target_dir.mkdir(parents=True, exist_ok=True)
+                local_canonical_path = local_target_dir / canonical_filename
+                
+                # 파일 이동 (임시 -> 로컬 버퍼)
+                shutil.move(file_name, str(local_canonical_path))
+                
+                # rclone 업로드 (move 명령어 사용 시 로컬 파일 삭제됨)
+                remote_dest_dir = f"{RCLONE_REMOTE}/{y_m}/{firm}"
+                rclone_cmd = [
+                    RCLONE_BIN, "move", str(local_canonical_path), remote_dest_dir,
+                    "--quiet", "--ignore-existing"
+                ]
+                
+                try:
+                    proc = await asyncio.create_subprocess_exec(
+                        *rclone_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    _, stderr = await proc.communicate()
+                    
+                    if proc.returncode == 0:
+                        logging.info(f"📁 rclone 업로드 성공: {canonical_filename}")
+                        # SQLite 상태 업데이트 (sync_status = 2)
+                        await db_manager.execute_query(
+                            "UPDATE data_main_daily_send SET sync_status = 2 WHERE report_id = ?",
+                            (report_id,)
+                        )
+                    else:
+                        logging.error(f"❌ rclone 업로드 실패: {stderr.decode().strip()}")
+                except Exception as r_e:
+                    logging.error(f"❌ rclone 예외 발생: {r_e}")
 
-            # 4. API 부하 방지를 위한 대기 (무료 티어 안정성 확보를 위해 20초 권장)
+            # 5. API 부하 방지를 위한 대기 (무료 티어 안정성 확보를 위해 20초 권장)
             await asyncio.sleep(20)
 
         except Exception as e:

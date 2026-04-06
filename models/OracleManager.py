@@ -20,11 +20,13 @@ class OracleManager:
         """동기 방식으로 연결 객체 생성 (Thin 모드 방식)"""
         user = os.getenv('DB_USER')
         password = os.getenv('DB_PASSWORD')
-        dsn = os.getenv('DB_DSN')
-        # Thin 모드에서도 TNS 별칭(oracledb_high 등)을 쓰려면 config_dir 지정이 필요함
+        # DB_DSN이 없으면 DB_DSN_LOW를 기본값으로 사용
+        dsn = os.getenv('DB_DSN') or os.getenv('DB_DSN_LOW')
+        # Thin 모드에서도 TNS 별칭(oracledb_low 등)을 쓰려면 config_dir 지정이 필요함
         config_dir = os.path.expanduser(os.getenv('WALLET_LOCATION'))
         
-        print(f"🔗 Attempting Oracle Connection (Thin Mode) -> USER: {user}, DSN: {dsn[:50]}, Config: {config_dir}...")
+        dsn_info = dsn[:50] if dsn else "N/A"
+        print(f"🔗 Attempting Oracle Connection (Thin Mode) -> USER: {user}, DSN: {dsn_info}, Config: {config_dir}...")
         
         return oracledb.connect(
             user=user,
