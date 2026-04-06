@@ -19,13 +19,12 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-cache
 
-# 6. 필요한 소스 코드만 복사
+# 6. 필요한 소스 코드 복사
 COPY run/ ./run/
 COPY models/ ./models/
 COPY utils/ ./utils/
 COPY modules/ ./modules/
-COPY scheduler.py ./ 
-COPY scraper.py ./
+COPY *.py ./
 # COPY .env ./ # .env는 docker-compose의 env_file을 통해 주입됩니다.
 
 # 7. 실행 권한 부여 및 디렉토리 준비

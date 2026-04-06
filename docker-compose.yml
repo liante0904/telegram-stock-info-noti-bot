@@ -22,3 +22,28 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  report-keyword-alert:
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
+    container_name: report-keyword-alert-bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file: .env
+    volumes:
+      - ~/sqlite3:/app/db
+      - ~/log:/log
+      # 실제 키워드 설정 파일이 위치한 경로로 연결
+      - ~/dev/telegram-stock-info-bot/report_alert_keyword.json:/app/config/report_alert_keyword.json
+    environment:
+      - DB_PATH=/app/db/telegram.db
+      - CONFIG_PATH=/app/config/report_alert_keyword.json
+      - LOG_BASE_DIR=/log
+      - TZ=Asia/Seoul
+    command: ["uv", "run", "scheduler_keyword_alert.py"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
