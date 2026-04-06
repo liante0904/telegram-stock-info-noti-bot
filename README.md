@@ -4,7 +4,7 @@
 
 ## 🚀 주요 기능
 
-### 1. 증권사 리서치 자동 수집 (`scrap_main.py` 등)
+### 1. 증권사 리서치 자동 수집 (`scraper.py` 등)
 - 국내외 27개 주요 증권사의 리서치 센터 데이터를 직접 스크래핑합니다.
 - **한국투자증권 고도화:** 일반 리포트뿐만 아니라 **'미국 현지 리서치(Stifel)'** 데이터를 대량(카테고리당 100건)으로 수집합니다.
 - **국가별 자동 분류:** `MKT_TP` 필드를 통해 국내(KR)와 해외(GLOBAL) 리포트를 스마트하게 구분하여 저장합니다.
@@ -55,7 +55,7 @@ TELEGRAM_CHANNEL_ID_REPORT_ALARM=your_channel_id
 ### 실행 방법
 ```bash
 # 전체 증권사 리서치 수집 및 발송
-python3 scrap_main.py
+python3 scraper.py
 
 # 특정 모듈 개별 실행
 python3 modules/Koreainvestment_13.py
