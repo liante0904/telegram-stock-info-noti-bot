@@ -66,7 +66,7 @@ def setup_logger():
     os.makedirs(LOG_PATH, exist_ok=True)
     
     # loguru 설정: 콘솔(기본)과 파일 모두 출력
-    log_file = os.path.join(LOG_PATH, f"{log_date}_scrap_main.log")
+    log_file = os.path.join(LOG_PATH, f"{log_date}_scraper.log")
     logger.add(log_file, rotation="00:00", retention="30 days", level="DEBUG", 
                format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
     return LOG_PATH
@@ -206,7 +206,7 @@ async def retry_db_insert_in_memory(db, data, table_name, retries=3, delay=60):
 async def main(date_str=None):
     try:
         log_path = setup_logger()
-        logger.info(f'=================== scrap_main START (Log: {log_path}) ===================')
+        logger.info(f'=================== scraper START (Log: {log_path}) ===================')
         # 동기 함수 리스트
         sync_check_functions = [
             LS_checkNewArticle,
