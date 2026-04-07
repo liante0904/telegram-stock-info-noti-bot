@@ -73,7 +73,7 @@ def fetch_data(date=None, keyword=None, user_id=None):
     query_parts = []
     params = []
     keyword_param = f"%{keyword}%"
-    user_pattern = f'%"{user_id}"%'
+    user_id_str = str(user_id)
 
     for table_name, url_col in tables:
         # 테이블 존재 여부 확인
@@ -81,14 +81,17 @@ def fetch_data(date=None, keyword=None, user_id=None):
         if not cursor.fetchone():
             continue
 
+        # json_each를 사용하여 JSON 배열 내에 user_id가 없는 행만 선택
         query_parts.append(f"""
             SELECT FIRM_NM, ARTICLE_TITLE, {url_col} AS TELEGRAM_URL, SAVE_TIME, SEND_USER
             FROM {table_name}
             WHERE (ARTICLE_TITLE LIKE ? OR WRITER LIKE ?)
             AND DATE(SAVE_TIME) = ?
-            AND (SEND_USER IS NULL OR SEND_USER NOT LIKE ?)
+            AND NOT EXISTS (
+                SELECT 1 FROM json_each(COALESCE(SEND_USER, '[]')) WHERE value = ?
+            )
         """)
-        params.extend([keyword_param, keyword_param, date, user_pattern])
+        params.extend([keyword_param, keyword_param, date, user_id_str])
 
     if not query_parts:
         conn.close()
@@ -102,9 +105,9 @@ def fetch_data(date=None, keyword=None, user_id=None):
     return results
 
 def update_data(date=None, keyword=None, user_id=None):
-    """발송 완료한 사용자 ID를 SEND_USER 컬럼에 기록"""
+    """발송 완료한 사용자 ID를 SEND_USER JSON 배열에 추가 (중복 방지)"""
     date = parse_date(date)
-    user_id_json = json.dumps([user_id]) # 리스트 형태로 저장 (기존 호환성 유지)
+    user_id_str = str(user_id)
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -116,16 +119,21 @@ def update_data(date=None, keyword=None, user_id=None):
         if not cursor.fetchone():
             continue
 
+        # json_insert를 사용하여 배열 마지막에 추가. 중복 방지를 위해 WHERE 절에 EXISTS 체크 추가
         update_query = f"""
             UPDATE {table}
-            SET SEND_USER = ?
+            SET SEND_USER = json_insert(COALESCE(SEND_USER, '[]'), '$[#]', ?)
             WHERE (ARTICLE_TITLE LIKE ? OR WRITER LIKE ?)
             AND DATE(SAVE_TIME) = ?
+            AND NOT EXISTS (
+                SELECT 1 FROM json_each(COALESCE(SEND_USER, '[]')) WHERE value = ?
+            )
         """
         keyword_param = f"%{keyword}%"
-        cursor.execute(update_query, (user_id_json, keyword_param, keyword_param, date))
+        
+        cursor.execute(update_query, (user_id_str, keyword_param, keyword_param, date, user_id_str))
         if cursor.rowcount > 0:
-            logger.info(f"[{table}] {cursor.rowcount} rows updated.")
+            logger.info(f"[{table}] {cursor.rowcount} rows updated for user {user_id}.")
 
     conn.commit()
     conn.close()
