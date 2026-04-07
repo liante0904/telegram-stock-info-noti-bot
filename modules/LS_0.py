@@ -44,6 +44,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     if skip_boards is None:
         skip_boards = set()
 
+    soup = None
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         if ARTICLE_BOARD_ORDER in skip_boards:
             continue  # Skip this board if no more articles are available
@@ -53,6 +54,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
+        soupList = []
         retries = 3
         while retries > 0:
             try:
@@ -63,13 +65,13 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 soupList = soup.select('#contents > table > tbody > tr')
                 break  # 성공하면 while loop 탈출
             except (AttributeError, ValueError) as e:
-                print(f"Error fetching data: {e}. Retrying... ({3 - retries} retries left)")
                 retries -= 1
+                print(f"Error fetching data: {e}. Retrying... ({retries} retries left)")
                 time.sleep(1)
                 if retries == 0:
                     skip_boards.add(ARTICLE_BOARD_ORDER)
                     print(f"Skipping board {ARTICLE_BOARD_ORDER} from page {page} onward.")
-                    continue
+                    break # while 루프 탈출
 
         print(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판...")
 
