@@ -6,15 +6,17 @@ import chardet  # 인코딩 감지용 (필요 시 설치: pip install chardet)
 from bs4 import BeautifulSoup
 
 class SyncWebScraper:
-    def __init__(self, target_url, firm_info):
+    def __init__(self, target_url, firm_info, proxies=None):
         """
         WebScraper 클래스의 초기화 메서드
         :param target_url: 요청할 URL
         :param firm_info: FirmInfo 인스턴스 (회사별 정보)
+        :param proxies: 선택적 프록시 설정 (예: {'http': 'socks5h://localhost:9091', ...})
         """
         self.target_url = target_url
         self.firm_info = firm_info
         self.headers = self._set_headers()
+        self.proxies = proxies
 
     def _set_headers(self):
         """
@@ -22,9 +24,20 @@ class SyncWebScraper:
         :return: 적절한 헤더 딕셔너리
         """
         if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
-            # SEC_FIRM_ORDER가 0번에 맞는 헤더 설정
+            # SEC_FIRM_ORDER가 0번에 맞는 헤더 설정 (LS증권)
             return {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Connection": "keep-alive",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+                "Upgrade-Insecure-Requests": "1",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "none",
+                "Sec-Fetch-User": "?1"
             }
         elif self.firm_info.SEC_FIRM_ORDER == 1:
             # 회사 1번에 맞는 헤더 설정
@@ -187,7 +200,7 @@ class SyncWebScraper:
         :return: 파싱된 soupList 또는 None
         """
         try:
-            response = requests.get(self.target_url, params=params, headers=self.headers, verify=False)
+            response = requests.get(self.target_url, params=params, headers=self.headers, verify=False, proxies=self.proxies, timeout=20)
             response.raise_for_status()  # 요청 실패 시 예외 발생
         except requests.exceptions.RequestException as e:
             print(f"GET 요청 에러: {e}")
