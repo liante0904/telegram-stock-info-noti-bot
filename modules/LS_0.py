@@ -20,8 +20,18 @@ from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.SQLiteManager import SQLiteManager
 
+import urllib3
+# SSL 경고 메시지 숨기기 (로그 정돈)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 # 전역 변수 선언
 skip_boards = set()
+
+# Cloudflare WARP SOCKS5 프록시 설정 (9091 포트)
+PROXIES = {
+    'http': 'socks5h://localhost:9091',
+    'https': 'socks5h://localhost:9091'
+}
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     SEC_FIRM_ORDER = 0
@@ -46,7 +56,11 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         if ARTICLE_BOARD_ORDER in skip_boards:
-            continue  # Skip this board if no more articles are available
+            continue
+
+        # 게시판 이동 시 1~2초 랜덤 휴식 (보수적 접근)
+        import random
+        time.sleep(random.uniform(1.0, 2.0))
 
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
@@ -56,19 +70,19 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
         retries = 3
         while retries > 0:
             try:
-                scraper = SyncWebScraper(TARGET_URL, firm_info)
+                # SyncWebScraper에 프록시 전달
+                scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
                 soup = scraper.Get()
                 if soup is None:
                     raise ValueError("Empty response from server.")
                 soupList = soup.select('#contents > table > tbody > tr')
-                break  # 성공하면 while loop 탈출
-            except (AttributeError, ValueError) as e:
-                print(f"Error fetching data: {e}. Retrying... ({3 - retries} retries left)")
+                break
+            except Exception as e:
+                print(f"Error fetching data: {e}. Retrying... ({retries-1} left)")
                 retries -= 1
-                time.sleep(1)
+                time.sleep(5)
                 if retries == 0:
                     skip_boards.add(ARTICLE_BOARD_ORDER)
-                    print(f"Skipping board {ARTICLE_BOARD_ORDER} from page {page} onward.")
                     continue
 
         print(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판...")
@@ -142,14 +156,24 @@ def clean_url(url):
 
 
 async def fetch(session: ClientSession, url: str, headers: dict) -> str:
+    """
+    WARP SOCKS5 프록시(9091)를 경유하여 요청을 수행합니다.
+    aiohttp 대신 requests를 사용하여 SOCKS5H(DNS 우회) 호환성을 확보합니다.
+    """
     try:
-        async with session.get(url, headers=headers, ssl=False) as response:
-            if response.status != 200:
-                print(f"Skipping URL due to status code {response.status}: {url}")
-                return None
-            return await response.text()
+        # 동기 함수인 requests.get을 비동기적으로 실행
+        loop = asyncio.get_event_loop()
+        def sync_get():
+            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
+            response.raise_for_status()
+            return response.text
+        
+        return await loop.run_in_executor(None, sync_get)
     except Exception as e:
-        print(f"Error requesting URL {url}: {e}")
+        if "Timeout" in str(e):
+            print(f"Timeout occurred for URL: {url}")
+        else:
+            print(f"Error requesting URL {url}: {e}")
         return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):
@@ -252,11 +276,24 @@ async def LS_detail(articles, firm_info=None):
         return []
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://www.ls-sec.co.kr/",
+        "Connection": "keep-alive"
     }
 
+    semaphore = asyncio.Semaphore(1)  # 동시에 1개만 처리
+
+    async def sem_process_article(session, article):
+        async with semaphore:
+            await process_article(session, article, headers)
+            # 상세 페이지 요청 후 2.5 ~ 4.5초 랜덤 휴식 (매우 보수적)
+            import random
+            await asyncio.sleep(random.uniform(2.5, 4.5))
+
     async with aiohttp.ClientSession() as session:
-        tasks = [process_article(session, article, headers) for article in articles]
+        tasks = [sem_process_article(session, article) for article in articles]
         await asyncio.gather(*tasks)
 
     # print(articles)
@@ -315,7 +352,8 @@ async def get_valid_url(new_filename, date_part, article, headers):
         test_url = base_url.format(filename=test_filename)
 
         try:
-            response = requests.get(test_url, headers=headers, verify=False)
+            # get_valid_url에도 프록시 적용
+            response = requests.get(test_url, headers=headers, verify=False, proxies=PROXIES, timeout=15)
             if response.status_code == 200:
                 print(f"Valid URL found: {test_url}")
                 return test_url
