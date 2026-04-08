@@ -1,0 +1,11 @@
+.git/
+.venv/
+__pycache__/
+cache/
+logs/
+node_modules/
+*.xlsx
+*.log
+.dockerignore
+Dockerfile
+docker-compose.yml
