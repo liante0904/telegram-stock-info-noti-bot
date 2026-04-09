@@ -4,6 +4,7 @@ import sys
 import asyncio
 import aiohttp
 import datetime
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -50,6 +51,7 @@ async def NHQV_checkNewArticle(target_date=None):
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
+    logger.debug(f"NHQV Scraper Start: {firm_info.get_firm_name()} for date {target_date}")
 
     payload = {
         "trName": "H3211",
@@ -66,54 +68,53 @@ async def NHQV_checkNewArticle(target_date=None):
                     response.raise_for_status()
                     jres = await response.json()
             except Exception as e:
-                print(f"Error fetching articles for {target_date}: {e}")
+                logger.error(f"Error fetching NHQV articles for {target_date}: {e}")
                 return []
 
             # 새 게시글 수 확인
-            new_article_count = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
-            if new_article_count == 0:
-                break
+            try:
+                new_article_count = int(jres['H3211']['H3211OutBlock1'][0]['iqrCnt'])
+                if new_article_count == 0:
+                    logger.info(f"NHQV Scraper: No articles found for {target_date}")
+                    break
 
-            # 새로운 글 목록 가져오기
-            articles = jres['H3211']['H3211OutBlock2']
-            for article in articles:
-                json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
-                    "WRITER": article['rshPprDruEmpFnm'],
-                    "TELEGRAM_URL": article['hpgeFleUrlCts'],
-                    "PDF_URL": article['hpgeFleUrlCts'],
-                    "ARTICLE_TITLE": article['rshPprTilCts'],
-                    "KEY": article['hpgeFleUrlCts'],
-                    "SAVE_TIME": datetime.datetime.now().isoformat()
-                })
+                # 새로운 글 목록 가져오기
+                articles = jres['H3211']['H3211OutBlock2']
+                logger.info(f"NHQV Scraper: Found {len(articles)} articles for {target_date}")
+                
+                for article in articles:
+                    url = article.get('hpgeFleUrlCts')
+                    json_data_list.append({
+                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                        "FIRM_NM": firm_info.get_firm_name(),
+                        "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
+                        "WRITER": article['rshPprDruEmpFnm'],
+                        "TELEGRAM_URL": url,
+                        "PDF_URL": url,
+                        "ARTICLE_TITLE": article['rshPprTilCts'],
+                        "KEY": url,
+                        "SAVE_TIME": datetime.datetime.now().isoformat()
+                    })
 
-            # 연속키 확인
-            if new_article_count == 11:
-                payload['rshPprNo'] = articles[-1]['rshPprNo']
-            else:
+                # 연속키 확인 (NH는 페이지당 최대 11개인 것으로 보임)
+                if new_article_count >= 11:
+                    payload['rshPprNo'] = articles[-1]['rshPprNo']
+                    logger.debug("NHQV Scraper: Fetching next page via continuous key...")
+                else:
+                    break
+            except (KeyError, IndexError) as e:
+                logger.error(f"Unexpected JSON structure from NHQV: {e}")
                 break
 
     return json_data_list
 
 async def main():
-    start_date = datetime.datetime(2021, 1, 1)
-    end_date = datetime.datetime.now()
-    workdays = generate_workdays(start_date, end_date)
-
-    all_results = []
-    for workday in workdays:
-        print(f"Fetching data for {workday}...")
-        daily_results = await NHQV_checkNewArticle(workday)
-        all_results.extend(daily_results)
-
-    print(f"Total articles fetched: {len(all_results)}")
-    db = SQLiteManager()
-    inserted_count = db.insert_json_data_list(all_results)
-    print(inserted_count)
-    return all_results
+    target_date = datetime.datetime.now().strftime('%Y%m%d')
+    result = await NHQV_checkNewArticle(target_date)
+    logger.info(f"Total NHQV articles fetched: {len(result)}")
+    for item in result[:5]:
+        logger.debug(item)
 
 if __name__ == "__main__":
     asyncio.run(main())

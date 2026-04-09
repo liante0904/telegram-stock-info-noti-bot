@@ -7,6 +7,7 @@ import asyncio
 import sys
 from datetime import datetime
 from aiohttp import ClientSession
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -18,7 +19,7 @@ async def fetch_data(session: ClientSession, url: str, headers: dict, data: dict
             response_text = await response.text()
             return json.loads(response_text)
     except Exception as e:
-        print(f"Error during request to {url}: {e}")
+        logger.error(f"Error during request to {url}: {e}")
         return {}
 
 
@@ -27,6 +28,8 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
         sec_firm_order=sec_firm_order,
         article_board_order=article_board_order
     )
+    logger.debug(f"Sangsangin Scraper Start: {firm_info.get_firm_name()} Board {article_board_order} (CMS: {cms_cd})")
+    
     data = {
         "pageNum": "1",
         "src": "all",
@@ -42,6 +45,8 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
         return []
 
     soup_list = response[0].get('getNoticeList', [])
+    logger.info(f"Sangsangin Scraper: Found {len(soup_list)} articles for {cms_cd}")
+    
     json_data_list = []
 
     for list_item in soup_list:
@@ -56,7 +61,7 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
             "ATTACH_URL": LIST_ARTICLE_URL,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
-                        "PDF_URL": LIST_ARTICLE_URL,
+            "PDF_URL": LIST_ARTICLE_URL,
             "KEY": LIST_ARTICLE_URL,
             "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
             "SAVE_TIME": datetime.now().isoformat()
@@ -105,7 +110,9 @@ async def Sangsanginib_checkNewArticle():
 # 비동기 함수 실행
 async def main():
     result = await Sangsanginib_checkNewArticle()
-    print(result)
+    logger.info(f"Total articles fetched: {len(result)}")
+    for article in result:
+        logger.debug(article)
 
 if __name__ == '__main__':
     asyncio.run(main())

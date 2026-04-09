@@ -4,6 +4,7 @@ import aiohttp
 import asyncio
 import re
 from datetime import datetime
+from loguru import logger
 
 from bs4 import BeautifulSoup
 import sys
@@ -45,14 +46,17 @@ async def BNK_checkNewArticle():
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER
             )
+            logger.debug(f"BNK Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+            
             soup = BeautifulSoup(response, "html.parser")
             table = soup.find("table", class_="table01")
 
             if not table:
-                print(f"Table not found in {url}")
+                logger.warning(f"Table not found in {url}")
                 continue
 
             rows = table.select("tbody tr")
+            logger.info(f"BNK Scraper: Found {len(rows)} rows in {firm_info.get_board_name()}")
 
             for row in rows:
                 cells = row.find_all("td")
@@ -76,8 +80,6 @@ async def BNK_checkNewArticle():
                     file_name = match.group(2)
                     ARTICLE_URL = f"https://www.bnkfn.co.kr{base_path}/{file_name}"
 
-                
-                
                 REG_DT = cells[4].get_text(strip=True)
 
                 json_data_list.append({
@@ -89,7 +91,7 @@ async def BNK_checkNewArticle():
                     "ARTICLE_URL": ARTICLE_URL,
                     "DOWNLOAD_URL": ARTICLE_URL,
                     "TELEGRAM_URL": ARTICLE_URL,
-                        "PDF_URL": ARTICLE_URL,
+                    "PDF_URL": ARTICLE_URL,
                     "WRITER": WRITER,
                     "SAVE_TIME": datetime.now().isoformat(),
                     "KEY": ARTICLE_URL
@@ -103,5 +105,6 @@ async def BNK_checkNewArticle():
 # 비동기 함수 실행
 if __name__ == "__main__":
     articles = asyncio.run(BNK_checkNewArticle())
+    logger.info(f"Total articles fetched: {len(articles)}")
     for article in articles:
-        print(article)
+        logger.debug(article)

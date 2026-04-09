@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 import os
 import sys
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -14,18 +15,16 @@ from models.SQLiteManager import SQLiteManager
 async def fetch(session, url, headers):
     """비동기로 HTTP 요청을 보내는 함수"""
     async with session.get(url, headers=headers) as response:
-        raw_data = await response.read()  # 응답 데이터를 바이너리로 읽음
-        # 서버의 인코딩이 UTF-8이 아니면 EUC-KR로 디코딩 시도
+        raw_data = await response.read()
         try:
-            return raw_data.decode('utf-8')  # UTF-8 시도
+            return raw_data.decode('utf-8')
         except UnicodeDecodeError:
-            return raw_data.decode('euc-kr')  # EUC-KR 시도
+            return raw_data.decode('euc-kr')
 
 def adjust_date(REG_DT, time_str):
     reg_date = datetime.strptime(REG_DT, "%Y-%m-%d")
     time_str = time_str.strip()
 
-    # "오전/오후" 형식 또는 24시간제 형식 모두 지원
     match = re.match(r"(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", time_str)
     if not match:
         raise ValueError(f"Invalid time format: {time_str}")
@@ -35,20 +34,17 @@ def adjust_date(REG_DT, time_str):
     minute = int(minute)
     second = int(second) if second else 0
 
-    # "오전/오후"가 없는 경우: 24시간제로 처리
     if period:
         if period == "오후" and hour != 12:
             hour += 12
-        elif period == "오전" and hour == 12:  # 오전 12시는 자정
+        elif period == "오전" and hour == 12:
             hour = 0
 
     reg_date = reg_date + timedelta(hours=hour, minutes=minute, seconds=second)
 
-    # 오후 4시 이후는 다음날로 처리
     if reg_date.hour >= 16:
         reg_date += timedelta(days=1)
 
-    # 주말 처리 (토요일: 5, 일요일: 6)
     while reg_date.weekday() >= 5:
         reg_date += timedelta(days=1)
 
@@ -60,46 +56,40 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
     page = 1
 
     while True:
-        if max_pages and page > max_pages:  # 최대 페이지를 초과하면 종료
+        if max_pages and page > max_pages:
             break
 
         target_url = f"{base_url}&pageNum={page}"
-        print(f"Fetching: {target_url}")
+        logger.debug(f"Kyobo Scraper: Fetching page {page} - {target_url}")
 
         try:
             html_content = await fetch(session, target_url, headers)
         except Exception as e:
-            print(f"Error fetching URL {target_url}: {e}")
+            logger.error(f"Error fetching URL {target_url}: {e}")
             break
 
-        # HTML parse
         soup = BeautifulSoup(html_content, "html.parser")
 
-        # 더 이상 글이 없는 페이지 판별
         no_data_message = soup.select_one('table.pb_Gtable tbody tr td[colspan="8"]')
         if no_data_message and "등록된 글이 없습니다." in no_data_message.get_text(strip=True):
-            print("No data available on this page.")
+            logger.info(f"Kyobo Scraper: No more data on page {page}")
             break
 
         soupList = soup.select('table.pb_Gtable tbody tr')
+        logger.info(f"Kyobo Scraper: Found {len(soupList)} articles on page {page}")
 
         for row in soupList:
             try:
-                # 일자
                 REG_DT = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "")
-                # 제목 및 상세 URL
                 title_cell = row.select_one('td.tLeft a')
+                if not title_cell: continue
+                
                 LIST_ARTICLE_TITLE = title_cell.get_text(strip=True)
-                if not LIST_ARTICLE_TITLE:
-                    print("No more data available.")
-                    break
                 LIST_ARTICLE_URL = "https://www.iprovest.com" + title_cell['href']
 
-                # 종목/업종
                 CATEGORY = row.select_one('td:nth-child(3)').get_text(strip=True)
-
-                # 구분
                 ANALYSIS_TYPE = row.select_one('td:nth-child(4)').get_text(strip=True)
+                
                 if ANALYSIS_TYPE == "기업분석":
                     article_board_order = 0
                     LIST_ARTICLE_TITLE = f"{CATEGORY} : {LIST_ARTICLE_TITLE}"
@@ -112,17 +102,14 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     article_board_order = 3
                 else:
                     article_board_order = 4
-                # 작성자
+                
                 WRITER = row.select_one('td:nth-child(5) a').get_text(strip=True)
 
-                # 첨부파일 (다운로드 URL)
                 attachment_tag = row.select_one('td:nth-child(7) a')
                 ATTACH_URL = None
                 if attachment_tag:
                     ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
                 
-                # print(json_data_list)
-                # JSON 데이터 생성
                 json_data_list.append({
                     "SEC_FIRM_ORDER": sec_firm_order,
                     "ARTICLE_BOARD_ORDER": article_board_order,
@@ -131,7 +118,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "ATTACH_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
                     "TELEGRAM_URL": ATTACH_URL,
-                        "PDF_URL": ATTACH_URL,
+                    "PDF_URL": ATTACH_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "CATEGORY": CATEGORY,
                     "WRITER": WRITER,
@@ -139,23 +126,20 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "SAVE_TIME": datetime.now().isoformat()
                 })
             except Exception as e:
-                print(f"Error parsing article: {e}")
+                logger.error(f"Error parsing Kyobo article: {e}")
                 continue
 
-        page += 1  # 다음 페이지로 이동
+        page += 1
 
     return json_data_list
 
 async def Kyobo_checkNewArticle(full_fetch=False):
     """교보증권 데이터 수집"""
     SEC_FIRM_ORDER = 24
-
     TARGET_URL_TUPLE = [
-        # 교보증권 리서치 데이터 URL
         'https://www.iprovest.com/weblogic/RSReportServlet?scr_id=10&menuCode=1&srch_db=0&QU=&DT1=&DT2=&provestz='
     ]
 
-    # full_fetch가 False이면 최대 3페이지까지만 조회
     max_pages = None if full_fetch else 3
 
     headers = {
@@ -164,7 +148,7 @@ async def Kyobo_checkNewArticle(full_fetch=False):
         "accept-language": "ko,en-US;q=0.9,en;q=0.8",
         "cache-control": "max-age=0",
         "connection": "keep-alive",
-        "cookie": "JSESSIONID=eYlhpdwRSK32tbxaQZLH0LPcaiRI8--jqNMtMC8Glme6oUe6VdB0!-379202731",  # 유효한 쿠키 값 필요
+        "cookie": "JSESSIONID=eYlhpdwRSK32tbxaQZLH0LPcaiRI8--jqNMtMC8Glme6oUe6VdB0!-379202731",
         "host": "www.iprovest.com",
         "referer": "https://www.iprovest.com",
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -173,20 +157,15 @@ async def Kyobo_checkNewArticle(full_fetch=False):
     all_results = []
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):
+            firm_info = FirmInfo(SEC_FIRM_ORDER, article_board_order)
+            logger.debug(f"Kyobo Scraper Start: {firm_info.get_firm_name()}")
             results = await fetch_all_pages(session, base_url, SEC_FIRM_ORDER, article_board_order, headers, max_pages)
             all_results.extend(results)
 
-    # 메모리 정리
     gc.collect()
+    logger.info(f"Kyobo Scraper: Found {len(all_results)} total articles")
     return all_results
 
 if __name__ == "__main__":
-    async def main():
-        result = await Kyobo_checkNewArticle(full_fetch=True)  # main에서는 모든 페이지 조회
-        print(f"Fetched {len(result)} articles.")
-        print(result)
-        db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(result)  # 모든 데이터를 한 번에 삽입
-        print(inserted_count)
-
-    asyncio.run(main())
+    result = asyncio.run(Kyobo_checkNewArticle(full_fetch=True))
+    logger.info(f"Total articles fetched: {len(result)}")

@@ -9,6 +9,7 @@ import os
 import sys
 import random
 import hashlib
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -31,18 +32,22 @@ async def generate_secure_key(session, bid):
         return SECURE_KEY
 
     SECURE_KEY = base64.b64encode(f"sJS{int(time.time() * 1000)}".encode()).decode()
-    async with session.post(
-        f"{BASE_URL}/inc/common/PrivateSecuerKey.jsp",
-        headers={
-            **HEADERS_TEMPLATE,
-            "Referer": f"{BASE_URL}/mobile/invest/invest02.jsp?bid={bid}&isSmartHi=N"
-        },
-        data={"_secureKey": SECURE_KEY}
-    ) as response:
-        if response.status == 200:
-            print("Secure Key generated successfully.")
-        else:
-            print("Failed to set Secure Key.")
+    try:
+        async with session.post(
+            f"{BASE_URL}/inc/common/PrivateSecuerKey.jsp",
+            headers={
+                **HEADERS_TEMPLATE,
+                "Referer": f"{BASE_URL}/mobile/invest/invest02.jsp?bid={bid}&isSmartHi=N"
+            },
+            data={"_secureKey": SECURE_KEY}
+        ) as response:
+            if response.status == 200:
+                logger.debug("Secure Key generated successfully.")
+            else:
+                logger.error(f"Failed to set Secure Key. Status: {response.status}")
+    except Exception as e:
+        logger.error(f"Error generating secure key: {e}")
+        
     return SECURE_KEY
 
 # 쿠키 생성 함수 (비동기)
@@ -60,21 +65,25 @@ async def fetch_attach_url(session, bid, aid):
         "tr_cd": "db/research/twbbacl_attach",
         "secureKey": secure_key
     }
-    async with session.post(
-        f"{BASE_URL}/_json/source.jsp",
-        headers={**HEADERS_TEMPLATE, "Origin": BASE_URL},
-        data=params
-    ) as response:
-        if response.status == 200:
-            try:
-                jres = json.loads(await response.text())[0][0]
-                url = f"https://www.imfnsec.com/upload/{jres['file_dir']}/{jres['file_name']}"
-                return url
-            except (json.JSONDecodeError, IndexError):
-                print("Error decoding JSON or accessing response data.")
-                return None
-        else:
-            print(f"Failed to retrieve attach URL. Status Code: {response.status}")
+    try:
+        async with session.post(
+            f"{BASE_URL}/_json/source.jsp",
+            headers={**HEADERS_TEMPLATE, "Origin": BASE_URL},
+            data=params
+        ) as response:
+            if response.status == 200:
+                try:
+                    res_text = await response.text()
+                    jres = json.loads(res_text)[0][0]
+                    url = f"https://www.imfnsec.com/upload/{jres['file_dir']}/{jres['file_name']}"
+                    return url
+                except (json.JSONDecodeError, IndexError):
+                    logger.error("Error decoding JSON or accessing response data for attach URL.")
+                    return None
+            else:
+                logger.warning(f"Failed to retrieve attach URL. Status Code: {response.status}")
+    except Exception as e:
+        logger.error(f"Error fetching attach URL: {e}")
     return None
 
 # IM증권 기사 체크 함수
@@ -90,6 +99,8 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER
             )
+            logger.debug(f"IMfnsec Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER} (bid: {bid})")
+            
             secure_key = await generate_secure_key(session, bid)
             if not secure_key:
                 continue
@@ -112,60 +123,53 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                     "secureKey": secure_key
                 }
 
-                print(f"Fetching articles for bid: {bid} with ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}, page: {page}")
-                async with session.post(f"{BASE_URL}/_json/source.jsp", headers=headers, data=data) as response:
-                    print(f"Response status for bid {bid}, page {page}: {response.status}")
-                    if response.status == 200:
-                        try:
-                            jres = json.loads(await response.text(encoding='utf-8', errors='ignore'))[0]
-                            # print(jres)
+                try:
+                    async with session.post(f"{BASE_URL}/_json/source.jsp", headers=headers, data=data) as response:
+                        if response.status == 200:
+                            res_text = await response.text(encoding='utf-8', errors='ignore')
+                            jres = json.loads(res_text)[0]
                             if not jres:
                                 break
-                        except (json.JSONDecodeError, IndexError):
-                            print(f"No items found or error parsing response for bid {bid}, page {page}.")
-                            break
+                            
+                            logger.info(f"IMfnsec Scraper: Found {len(jres)} articles for bid {bid} page {page}")
 
-                        for item in jres:
-                            try:
-                                attach_url = await fetch_attach_url(session, item['bid'], item['aid'])
-                                json_data_list.append({
-                                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                                    "FIRM_NM": firm_info.get_firm_name(),
-                                    "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
-                                    "ARTICLE_URL": BASE_URL,
-                                    "ATTACH_URL": attach_url,
-                                    "DOWNLOAD_URL": attach_url,
-                                    "TELEGRAM_URL": attach_url,
-                        "PDF_URL": attach_url,
-                                    "ARTICLE_TITLE": item['title'],
-                                    "WRITER": item['username'],
-                                    "KEY": attach_url,
-                                    "SAVE_TIME": datetime.now().isoformat()
-                                })
-                            except KeyError as e:
-                                print(f"KeyError encountered: {e} for item in bid {bid}, page {page}.")
+                            for item in jres:
+                                try:
+                                    attach_url = await fetch_attach_url(session, item['bid'], item['aid'])
+                                    json_data_list.append({
+                                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                                        "FIRM_NM": firm_info.get_firm_name(),
+                                        "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
+                                        "ARTICLE_URL": BASE_URL,
+                                        "ATTACH_URL": attach_url,
+                                        "DOWNLOAD_URL": attach_url,
+                                        "TELEGRAM_URL": attach_url,
+                                        "PDF_URL": attach_url,
+                                        "ARTICLE_TITLE": item['title'],
+                                        "WRITER": item['username'],
+                                        "KEY": attach_url,
+                                        "SAVE_TIME": datetime.now().isoformat()
+                                    })
+                                except KeyError as e:
+                                    logger.error(f"KeyError encountered: {e} for item in bid {bid}, page {page}.")
 
-                        # 다음 페이지로 이동
-                        if single_page_only:
+                            if single_page_only:
+                                break
+                            page += 1
+                        else:
+                            logger.warning(f"Failed to fetch page data for bid {bid}. Status code: {response.status}")
                             break
-                        page += 1
-                    else:
-                        print(f"Failed to fetch page data for bid {bid}. Status code: {response.status}")
-                        break
+                except Exception as e:
+                    logger.error(f"Error during IMfnsec scraping: {e}")
+                    break
 
     return json_data_list
 
-# main 함수: 파라미터 페이지가 호출되지 않을 때까지 작동
+# main 함수
 async def main():
-    cur_page = "1"
-    results = await iMfnsec_checkNewArticle(cur_page, single_page_only=False)
-    if not results:
-        print("No articles found.")
-    else:
-        db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(results)
-        print(inserted_count)
+    results = await iMfnsec_checkNewArticle(single_page_only=True)
+    logger.info(f"Total IMfnsec articles fetched: {len(results)}")
 
 if __name__ == "__main__":
     asyncio.run(main())

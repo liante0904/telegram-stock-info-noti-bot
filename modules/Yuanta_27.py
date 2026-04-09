@@ -6,6 +6,7 @@ import time
 from datetime import datetime, timedelta, date
 import sys
 from dateutil.relativedelta import relativedelta
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -19,7 +20,7 @@ YUANTA_URL_TEMPLATE_DATED = 'https://www.myasset.com/myasset/research/rs_list/rs
 YUANTA_BOARD_CODES = ["RE01", "RE02", "RB30A", "RB30B", "RB30C", "RF09"]
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
 }
@@ -32,7 +33,7 @@ def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_impor
     firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=article_board_order)
 
     try:
-        response = requests.get(target_url, headers=HEADERS)
+        response = requests.get(target_url, headers=HEADERS, timeout=20)
         response.raise_for_status()
         response.encoding = response.apparent_encoding
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -40,11 +41,11 @@ def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_impor
         soupList = soup.select('div.tblRow tbody tr.js-moveRS')
 
         if not soupList:
-            return [] # No articles on this page
+            return []
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data for {target_url}: {e}.")
-        return None # Indicates an error
+    except Exception as e:
+        logger.error(f"Error fetching data for {target_url}: {e}")
+        return None
 
     for item in soupList:
         try:
@@ -52,6 +53,8 @@ def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_impor
             POST_DATE = datetime.strptime(post_date_str, '%Y/%m/%d').date()
 
             title_tag = item.select_one('td.txtL a')
+            if not title_tag: continue
+            
             LIST_ARTICLE_TITLE = title_tag.get_text(strip=True)
 
             if article_board_order == 0: # 기업분석
@@ -88,14 +91,14 @@ def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_impor
                 "ATTACH_URL": DOWNLOAD_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": '',
-                        "PDF_URL": '',
+                "PDF_URL": '',
                 "WRITER": WRITER,
                 "KEY": LIST_ARTICLE_URL,
                 "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                 "SAVE_TIME": final_save_time_str
             })
         except Exception as e:
-            print(f"Error parsing an article item: {e}")
+            logger.error(f"Error parsing Yuanta article row: {e}")
             continue
             
     return json_data_list
@@ -114,17 +117,14 @@ def Yuanta_checkNewArticle(is_imported_flag=False):
     SEC_FIRM_ORDER = 27
 
     if is_imported_flag:
-        # --- Full historical scrape logic ---
-        print("--- Starting full historical scrape for Yuanta Securities ---")
-        
+        logger.info("--- Starting full historical scrape for Yuanta Securities ---")
         end_date = date.today()
         consecutive_months_with_no_articles = 0
 
         while True:
             start_date = end_date.replace(day=1)
             articles_found_this_month = 0
-            
-            print(f"\n--- Scraping date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')} ---")
+            logger.debug(f"Scraping range: {start_date} to {end_date}")
 
             for i, board_code in enumerate(YUANTA_BOARD_CODES):
                 page = 1
@@ -135,73 +135,50 @@ def Yuanta_checkNewArticle(is_imported_flag=False):
                         end_date=end_date.strftime('%Y%m%d'),
                         page=page
                     )
-                    
-                    firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=i)
-                    print(f"Fetching {firm_info.get_board_name()} - Page {page}")
-
                     new_articles = scrape_yuanta_page(target_url, SEC_FIRM_ORDER, i, is_imported_flag)
-
                     if new_articles:
                         all_articles.extend(new_articles)
                         articles_found_this_month += len(new_articles)
                         page += 1
                         time.sleep(0.5)
                     else:
-                        # No more articles for this board in this date range
                         break
             
             if articles_found_this_month == 0:
                 consecutive_months_with_no_articles += 1
-                print(f"No articles found for this month. Consecutive empty months: {consecutive_months_with_no_articles}")
             else:
                 consecutive_months_with_no_articles = 0
 
             if consecutive_months_with_no_articles >= 3:
-                print("Found 3 consecutive months with no articles. Assuming end of historical data.")
                 break
-
-            # Move to the previous month
             end_date = start_date - timedelta(days=1)
 
     else:
-        # --- Recent articles scrape logic ---
-        print("--- Starting scrape for recent Yuanta Securities articles ---")
+        logger.info("--- Starting scrape for recent Yuanta Securities articles ---")
         for i, board_code in enumerate(YUANTA_BOARD_CODES):
             page = 1
-            while page <= 5: # Scrape first 5 pages for recent data
+            while page <= 5:
                 target_url = YUANTA_URL_TEMPLATE_DEFAULT.format(board_code=board_code, page=page)
-                
-                firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=i)
-                print(f"Fetching {firm_info.get_board_name()} - Page {page}")
-
                 new_articles = scrape_yuanta_page(target_url, SEC_FIRM_ORDER, i, is_imported_flag)
-                
                 if new_articles:
                     all_articles.extend(new_articles)
                 else:
-                    # No more articles for this board
                     break
                 page += 1
                 time.sleep(0.5)
 
     if not all_articles:
-        print("No articles were scraped.")
+        logger.info("No Yuanta articles found.")
         return []
     else:
         processed_articles = yuanta_detail(all_articles)
-        print(f"\n--- Scraped {len(processed_articles)} Total Articles ---")
+        logger.info(f"Yuanta Scraper: Total {len(processed_articles)} articles scraped")
         return processed_articles
 
 if __name__ == "__main__":
     is_imported_flag = "--all" in sys.argv
     articles = Yuanta_checkNewArticle(is_imported_flag)
     if articles:
-        if is_imported_flag:
-            print("Saving all scraped articles to the database...")
-            db = SQLiteManager()
-            inserted_count = db.insert_json_data_list(articles)
-            print(f"Inserted {inserted_count} articles into the database.")
-        else:
-            print("Printing first 5 articles for review (not saving to DB):")
-            for p_article in articles[:5]:
-                print(p_article)
+        db = SQLiteManager()
+        inserted_count, updated_count = db.insert_json_data_list(articles)
+        logger.success(f"Yuanta: Inserted {inserted_count}, Updated {updated_count} articles.")

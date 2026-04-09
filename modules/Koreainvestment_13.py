@@ -7,7 +7,7 @@ import urllib.request
 import asyncio
 from datetime import datetime
 import time
-
+from loguru import logger
 
 # selenium
 from selenium import webdriver
@@ -15,7 +15,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -27,11 +26,8 @@ async def Koreainvestment_selenium_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 한국투자증권 리서치 모바일
-    TARGET_URL_0 =  "https://securities.koreainvestment.com/main/research/research/Search.jsp?schType=report"
+    TARGET_URL_0 = "https://securities.koreainvestment.com/main/research/research/Search.jsp?schType=report"
     
-    # 카테고리 리스트 (기본, 미국 현지 리서치)
-    # 0: 전체보고서, 10: 미국 현지 리서치
     CATEGORIES = [
         {"name": "전체", "board_order": 0, "script": None, "mkt_tp": "KR"},
         {"name": "미국 현지 리서치", "board_order": 10, "script": "onTab1Selected('stifel', 1);", "mkt_tp": "GLOBAL"}
@@ -45,63 +41,53 @@ async def Koreainvestment_selenium_checkNewArticle():
     chrome_options.add_argument("--remote-allow-origins=*")
     chrome_options.add_argument("--disable-software-rasterizer")
     
-    # ARM(aarch64) 환경 대응: 
-    # ChromeDriverManager가 x86용 드라이버를 받아오는 경우가 많아(Exec format error 발생),
-    # 시스템 패키지로 설치된 ARM64용 chromedriver를 최우선으로 사용함.
-    # 설치: sudo apt install chromium-chromedriver
     system_chromedriver = "/usr/bin/chromedriver"
     if os.path.exists(system_chromedriver):
         service = Service(executable_path=system_chromedriver)
     else:
         try:
             service = Service(ChromeDriverManager().install())
-        except:
+        except Exception as e:
+            logger.error(f"Failed to install ChromeDriver: {e}")
             service = Service()
 
-    # 브라우저 바이너리 위치 설정
     binary_paths = ["/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome"]
     for bp in binary_paths:
         if os.path.exists(bp):
             chrome_options.binary_location = bp
             break
 
+    logger.debug("KoreaInvestment Scraper: Launching headless browser...")
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     try:
-        for idx, cat in enumerate(CATEGORIES):
+        for cat in CATEGORIES:
             ARTICLE_BOARD_ORDER = cat["board_order"]
-            firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
-            )
+            firm_info = FirmInfo(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+            logger.debug(f"KoreaInvestment Scraper: Processing [{cat['name']}]")
 
-            # 웹 페이지 열기
             driver.get(TARGET_URL_0)
             driver.implicitly_wait(5)
 
-            # 자바스크립트 실행 (미국 현지 리서치인 경우)
             if cat["script"]:
                 driver.execute_script(cat["script"])
-                time.sleep(2) # AJAX 로딩 대기
+                time.sleep(2)
 
-            # 10페이지까지 반복 (페이지당 10건 x 10페이지 = 100건)
             for page in range(1, 11):
                 if page > 1:
-                    # 다음 페이지로 이동
                     driver.execute_script(f"goPage({page});")
-                    time.sleep(2) # 페이지 로딩 대기
+                    time.sleep(2)
 
-                # 현재 페이지 데이터 파싱
                 title_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/div[2]/span[1]')
                 link_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[2]')
                 info_elements = driver.find_elements(By.XPATH, '//*[@id="searchResult"]/div/ul/li/a[1]/span')
                 
-                if not title_elements: # 데이터가 없으면 중단
+                if not title_elements:
+                    logger.info(f"KoreaInvestment Scraper: No more articles on page {page}")
                     break
                 
-                print(f"[{cat['name']}] Page {page} collected: {len(title_elements)} items")
+                logger.info(f"KoreaInvestment Scraper: Collected {len(title_elements)} items on page {page}")
 
-                # List
                 for title, link, article_info in zip(title_elements, link_elements, info_elements):
                     LIST_ARTICLE_TITLE = title.text
                     LIST_ARTICLE_URL_RAW = link.get_attribute("onclick")
@@ -126,10 +112,12 @@ async def Koreainvestment_selenium_checkNewArticle():
                         "SAVE_TIME": datetime.now().isoformat(),
                         "MKT_TP": cat["mkt_tp"]
                     })
+    except Exception as e:
+        logger.error(f"Error during KoreaInvestment scraping: {e}")
     finally:
         driver.quit()
         
-    print(f"Total articles collected: {len(json_data_list)}")
+    logger.info(f"Total articles collected: {len(json_data_list)}")
     return json_data_list
 
 def Koreainvestment_GET_LIST_ARTICLE_URL(string):
@@ -198,7 +186,7 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
             filepath = "research/research14"
         elif p1 == 'category1=13' and p2 == 'category2=01':
             filepath = "research/research11"
-        elif p1 == 'category1=17': # 미국 현지 리서치 (Stifel)
+        elif p1 == 'category1=17':
             filepath = "research/research17"
         elif p1 == 'category1=15' and p2 == 'category2=01':
             filepath = "research/research01"
@@ -215,13 +203,4 @@ def Koreainvestment_MAKE_LIST_ARTICLE_URL(filepath, filename, option, datasubmit
 
 if __name__ == "__main__":
     results = asyncio.run(Koreainvestment_selenium_checkNewArticle())
-    
-    # 스티펠(BOARD_ORDER: 10) 데이터만 필터링해서 마지막 2개 출력
-    stifel_data = [item for item in results if item["ARTICLE_BOARD_ORDER"] == 10]
-    print("\n" + "="*50)
-    print("STIFEL DATA PDF URL CHECK (LAST 2 ITEMS)")
-    print("="*50)
-    for item in stifel_data[-2:]:
-        import json
-        print(json.dumps(item, indent=4, ensure_ascii=False))
-        print("-" * 50)
+    logger.info(f"Total articles fetched: {len(results)}")
