@@ -3,7 +3,9 @@ from datetime import datetime
 import re  # 정규식 사용을 위한 import
 import os
 import sys
+import json
 from bs4 import BeautifulSoup
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -58,7 +60,7 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
                     "ATTACH_URL": '',  # 필요시 변경
                     "DOWNLOAD_URL": url,  # 필요시 변경
                     "TELEGRAM_URL": url,
-                        "PDF_URL": url,
+                    "PDF_URL": url,
                     "ARTICLE_TITLE": title,
                     "KEY": url,
                     "SAVE_TIME": datetime.now().isoformat()
@@ -68,28 +70,32 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
 
 async def eugene_checkNewArticle():
     all_articles = []
-    for base_url in BASE_URLS:
+    for ARTICLE_BOARD_ORDER, base_url in enumerate(BASE_URLS):
         referer_url = base_url.replace('Add.do', '.do')
+        firm_info = FirmInfo(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+        logger.debug(f"Eugene Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+        
         scraper = AsyncWebScraper(target_url=base_url, headers={**HEADERS_TEMPLATE, "Referer": referer_url})
-        for ARTICLE_BOARD_ORDER, page_no in enumerate(range(1, 6)):
-            # print(f"Fetching from URI: {base_url} (Page {page_no})")
+        for page_no in range(1, 6):
             payload = f"pageNo={page_no}&add=Y"
-            response_soup = await scraper.Post(data=payload)
-            
-            if response_soup:
-                # print(f"Status: Success for {base_url} (Page {page_no})")
-                html_text = str(response_soup)
-                articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
-                all_articles.extend(articles)
-            else:
-                print(f"Status: Failed for {base_url} (Page {page_no})")
+            try:
+                response_soup = await scraper.Post(data=payload)
+                if response_soup:
+                    html_text = str(response_soup)
+                    articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
+                    all_articles.extend(articles)
+                    logger.info(f"Eugene Scraper: Found {len(articles)} articles on page {page_no}")
+                else:
+                    logger.warning(f"Status: Failed for {base_url} (Page {page_no})")
+            except Exception as e:
+                logger.error(f"Error scraping {base_url} page {page_no}: {e}")
 
-    print(f"Total articles scraped: {len(all_articles)}")
+    logger.info(f"Total articles scraped: {len(all_articles)}")
     return all_articles
 
 async def main():
     articles = await eugene_checkNewArticle()
-    print(json.dumps(articles, indent=4, ensure_ascii=False))
+    logger.debug(json.dumps(articles, indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
     asyncio.run(main())
