@@ -73,8 +73,8 @@ def setup_logger():
     # 기존 기본 핸들러 제거 (중복 출력 방지)
     logger.remove()
     
-    # 콘솔 출력 설정
-    logger.add(sys.stdout, level="INFO", 
+    # 콘솔 출력 설정 (DEBUG로 변경하여 모든 로그 표시)
+    logger.add(sys.stdout, level="DEBUG", 
                format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>")
     
     # 파일 출력 설정

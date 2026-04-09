@@ -1,14 +1,13 @@
 import asyncio
-import logging
 import os
 import sys
+from loguru import logger
 
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.SQLiteManager import SQLiteManager
 from models.OracleManager import OracleManager
-from models.OracleManagerSQL import OracleManagerSQL
 
 class DataManager:
     MAIN_TABLE_NAME = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send")
@@ -16,7 +15,6 @@ class DataManager:
     def __init__(self):
         self.sqlite = SQLiteManager()
         self.oracle = OracleManager()         # 최신 Oracle 매니저 (TB_SEC_REPORTS / DATA_MAIN_DAILY_SEND 통합 관리)
-        self.logger = logging.getLogger("DataManager")
 
     async def insert_json_data_list(self, json_data_list, table_name=None):
         """SQLite에 저장하고 Oracle에 동기화 시도"""
@@ -29,7 +27,7 @@ class DataManager:
             # OracleManager 내부에서 MERGE 문을 통해 처리함
             await self.oracle.insert_json_data_list(json_data_list)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error: {str(e)}")
+            logger.error(f"Oracle Sync Error: {str(e)}")
 
         return inserted_count, updated_count
 
@@ -43,7 +41,7 @@ class DataManager:
         try:
             await self.oracle.daily_update_data(fetched_rows, type)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Status Update): {str(e)}")
+            logger.error(f"Oracle Sync Error (Status Update): {str(e)}")
         return res
 
     async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
@@ -52,7 +50,7 @@ class DataManager:
         try:
             await self.oracle.update_telegram_url(record_id, telegram_url, article_title, pdf_url=pdf_url)
         except Exception as e:
-            self.logger.error(f"Oracle Sync Error (Telegram URL): {str(e)}")
+            logger.error(f"Oracle Sync Error (Telegram URL): {str(e)}")
         return res
 
     async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
@@ -71,7 +69,7 @@ class DataManager:
                 await self.sqlite.update_report_summary(record_id, summary, model_name)
             results["sqlite"] = True
         except Exception as e:
-            self.logger.error(f"SQLite Update Error: {str(e)}")
+            logger.error(f"SQLite Update Error: {str(e)}")
         
         # 2. Oracle 업데이트
         try:
@@ -81,7 +79,7 @@ class DataManager:
                 await self.oracle.update_report_summary(record_id, summary, model_name)
             results["oracle"] = True
         except Exception as e:
-            self.logger.error(f"Oracle Update Error: {str(e)}")
+            logger.error(f"Oracle Update Error: {str(e)}")
             
         return results
 

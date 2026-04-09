@@ -5,6 +5,7 @@ import requests
 import re
 import asyncio
 import datetime
+from loguru import logger
 
 import sys
 
@@ -24,7 +25,6 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
         eddate = datetime.datetime.now(KST).strftime("%Y%m%d")
 
     SEC_FIRM_ORDER = 10
-    ARTICLE_BOARD_ORDER = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -42,6 +42,7 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
             sec_firm_order=SEC_FIRM_ORDER,
             article_board_order=ARTICLE_BOARD_ORDER
         )
+        logger.debug(f"Kiwoom Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
 
         payload = {
             "pageNo": 1,
@@ -57,60 +58,52 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
         scraper = AsyncWebScraper(TARGET_URL)
 
         # HTML parse
-        jres = await scraper.PostJson(params=payload)
+        try:
+            jres = await scraper.PostJson(params=payload)
+            if not jres or jres.get('totalCount', 0) == 0:
+                logger.info(f"Kiwoom Scraper: No articles for board {ARTICLE_BOARD_ORDER}")
+                return []
 
-        if jres['totalCount'] == 0:
+            soupList = jres.get('researchList', [])
+            logger.info(f"Kiwoom Scraper: Found {len(soupList)} articles for board {ARTICLE_BOARD_ORDER}")
+            
+            articles = []
+            for list_item in soupList:
+                LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}'
+                LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list_item['rMenuGb'], list_item['attaFile'], list_item['makeDt'])
+                LIST_ARTICLE_TITLE = list_item['titl']
+
+                WRITER = list_item['workId']
+                articles.append({
+                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "FIRM_NM": firm_info.get_firm_name(),
+                    "REG_DT": re.sub(r"[-./]", "", list_item['makeDt']),
+                    "ATTACH_URL": LIST_ARTICLE_URL,
+                    "DOWNLOAD_URL": LIST_ARTICLE_URL,
+                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+                    "WRITER": WRITER,
+                    "TELEGRAM_URL": LIST_ARTICLE_URL,
+                    "PDF_URL": LIST_ARTICLE_URL,
+                    "KEY": LIST_ARTICLE_URL,
+                    "SAVE_TIME": datetime.datetime.now().isoformat()
+                })
+            return articles
+        except Exception as e:
+            logger.error(f"Error scraping Kiwoom board {ARTICLE_BOARD_ORDER}: {e}")
             return []
+        finally:
+            gc.collect()
 
-        soupList = jres['researchList']
-        articles = []
-
-        # JSON To List
-        for list_item in soupList:
-            LIST_ARTICLE_URL = 'https://bbn.kiwoom.com/research/SPdfFileView?rMenuGb={}&attaFile={}&makeDt={}'
-            LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list_item['rMenuGb'], list_item['attaFile'], list_item['makeDt'])
-            LIST_ARTICLE_TITLE = list_item['titl']
-
-            WRITER = list_item['workId']
-            articles.append({
-                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                "FIRM_NM": firm_info.get_firm_name(),
-                "REG_DT": re.sub(r"[-./]", "", list_item['makeDt']),
-                "ATTACH_URL": LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                "WRITER": WRITER,
-                "TELEGRAM_URL": LIST_ARTICLE_URL,
-                "PDF_URL": LIST_ARTICLE_URL,
-                "KEY": LIST_ARTICLE_URL,
-                "SAVE_TIME": datetime.datetime.now().isoformat()
-            })
-
-        # Clean up memory
-        del soupList
-        gc.collect()
-
-        return articles
-
-    tasks = [fetch_data(TARGET_URL, ARTICLE_BOARD_ORDER) for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE)]
+    tasks = [fetch_data(TARGET_URL, idx) for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE)]
     results = await asyncio.gather(*tasks)
 
     for result in results:
         json_data_list.extend(result)
 
+    logger.info(f"Kiwoom Scraper: Found {len(json_data_list)} total articles")
     return json_data_list
 
 if __name__ == "__main__":
-    stdate = None
-    eddate = None
-    page_size = 100000
-
-    result = asyncio.run(Kiwoom_checkNewArticle(stdate, eddate, page_size))
-    
-    if not result:
-        print("No articles found.")
-    else:
-        db = SQLiteManager()
-        inserted_count = db.insert_json_data_list(result)
-        print(f"Inserted {inserted_count} articles.")
+    result = asyncio.run(Kiwoom_checkNewArticle(page_size=50))
+    logger.info(f"Total articles fetched: {len(result)}")

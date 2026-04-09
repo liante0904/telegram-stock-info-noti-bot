@@ -5,9 +5,12 @@ from datetime import datetime, timedelta
 import os
 import sys
 from dotenv import load_dotenv
+from loguru import logger
+
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가(package 폴더에 있으므로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
+
 # 환경 변수 로드
 load_dotenv()
 env = os.getenv('ENV')
@@ -47,12 +50,12 @@ class SQLiteManager:
             try:
                 self.cursor.close()
             except sqlite3.ProgrammingError:
-                print("Cursor is already closed.")
+                logger.debug("Cursor is already closed.")
         if self.connection:
             try:
                 self.connection.close()
             except sqlite3.ProgrammingError:
-                print("Connection is already closed.")
+                logger.debug("Connection is already closed.")
 
     def create_table(self, table_name, columns):
         """테이블 생성"""
@@ -141,8 +144,7 @@ class SQLiteManager:
 
         # 커밋하고 결과 출력
         self.connection.commit()
-        print(f"Data inserted successfully: {inserted_count} rows.")
-        print(f"Data updated successfully: {updated_count} rows.")
+        logger.info(f"SQLite Data inserted: {inserted_count} rows, updated: {updated_count} rows.")
         
         self.close_connection()  # 데이터베이스 연결 닫기
         return inserted_count, updated_count
@@ -161,7 +163,7 @@ class SQLiteManager:
         self.open_connection()
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
         firmInfo = firm_info.get_state()
-        print(firmInfo["SEC_FIRM_ORDER"])
+        logger.debug(f"Fetching daily articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
         query = f"""
         SELECT 
             report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
@@ -177,8 +179,6 @@ class SQLiteManager:
             AND TELEGRAM_URL  = ''
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
-
-
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
@@ -199,7 +199,7 @@ class SQLiteManager:
         """
         self.open_connection()
         firmInfo = firm_info.get_state()
-        print(f"Fetching articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
+        logger.debug(f"Fetching articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
         
         query = f"""
         SELECT 
@@ -215,9 +215,6 @@ class SQLiteManager:
         """
         
         if days_limit:
-            # SAVE_TIME 또는 REG_DT를 기준으로 필터링할 수 있음. 
-            # REG_DT는 YYYYMMDD 형식이므로 이를 사용하거나 SAVE_TIME(YYYY-MM-DD HH:MM:SS)을 사용.
-            # 여기서는 SAVE_TIME을 기준으로 처리
             query += f" AND SAVE_TIME >= datetime('now', '-{days_limit} days', 'localtime')"
 
         query += " ORDER BY REG_DT DESC, SAVE_TIME DESC"
@@ -302,6 +299,7 @@ class SQLiteManager:
                         await conn.commit()
                         result = {"status": "success", "affected_rows": cursor.rowcount}
                 except Exception as e:
+                    logger.error(f"SQLite Query Error: {e}")
                     result = {"status": "error", "error": str(e)}
                 finally:
                     if close:  # close가 True일 경우 커넥션을 종료
@@ -309,8 +307,8 @@ class SQLiteManager:
         return result
     
     async def daily_select_data(self, date_str=None, type=None):
-        print(f"date_str: {date_str}, type: {type}")
         """{self.main_table_name} 테이블에서 지정된 날짜 또는 당일 데이터를 조회합니다."""
+        logger.debug(f"daily_select_data called with date_str: {date_str}, type: {type}")
         
         # 'type' 파라미터가 필수임을 확인
         if type not in ['send', 'download']:
@@ -335,23 +333,11 @@ class SQLiteManager:
         # 3일 이내 조건 추가
         three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
 
-        # SQL 쿼리 문자열을 읽기 쉽도록 포맷팅
         query = f"""
         SELECT 
-            report_id,
-            SEC_FIRM_ORDER, 
-            ARTICLE_BOARD_ORDER, 
-            FIRM_NM, 
-            REG_DT,
-            ATTACH_URL, 
-            ARTICLE_TITLE, 
-            ARTICLE_URL, 
-            MAIN_CH_SEND_YN, 
-            DOWNLOAD_URL, 
-            WRITER, 
-            SAVE_TIME,
-            TELEGRAM_URL,
-            MAIN_CH_SEND_YN
+            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
+            DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, MAIN_CH_SEND_YN
         FROM 
             {self.main_table_name} 
         WHERE 
@@ -363,92 +349,36 @@ class SQLiteManager:
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
         
-        # SQL 쿼리 실행
-        print('='*30)
-        print(query)
-        print('='*30)
-        rows = await self.execute_query(query)
-        # rows = cursor.fetchall()
-        # # rows를 dict 형태로 변환
-        # rows = [dict(row) for row in rows]
-
-        return rows
+        return await self.execute_query(query)
 
     async def daily_update_data(self, date_str=None, fetched_rows=None, type=None):
-        """
-        데이터베이스의 데이터를 업데이트하는 함수입니다.
-        
-        Args:
-            fetched_rows (list[dict] or dict): 'send' 타입일 경우에는 업데이트할 여러 행의 리스트를 전달하고, 
-                                            'download' 타입일 경우에는 단일 행의 딕셔너리를 전달합니다.
-            type (str): 업데이트 유형을 지정합니다. 'send' 또는 'download' 중 하나를 선택해야 합니다.
-                        'send'는 여러 행을 업데이트하고, 'download'는 단일 행을 업데이트합니다.
-        
-        Raises:
-            ValueError: 'type'이 'send' 또는 'download'가 아닌 경우 예외를 발생시킵니다.
-        
-        """
-        
         """데이터를 업데이트합니다. type에 따라 업데이트 쿼리가 달라집니다."""
         
         if date_str is None:
-            # date_str가 없으면 현재 날짜 사용
             query_date = datetime.now().strftime('%Y-%m-%d')
         else:
-            # yyyymmdd 형식의 날짜를 yyyy-mm-dd로 변환
             query_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
 
-        # 'type' 파라미터가 필수임을 확인
         if type not in ['send', 'download']:
             raise ValueError("Invalid type. Must be 'send' or 'download'.")
 
-        # 'send' 타입에 대한 업데이트 처리
         if type == 'send':
-            # 여러 건의 데이터를 업데이트
             for row in fetched_rows:
                 telegram_url = row.get('TELEGRAM_URL')
-                
                 if telegram_url:
-                    update_query = f"""
-                        UPDATE {self.main_table_name}
-                        SET MAIN_CH_SEND_YN = 'Y'
-                        WHERE TELEGRAM_URL = ?
-                    """
+                    update_query = f"UPDATE {self.main_table_name} SET MAIN_CH_SEND_YN = 'Y' WHERE TELEGRAM_URL = ?"
                     param = (telegram_url,)
                 else:
-                    update_query = f"""
-                        UPDATE {self.main_table_name}
-                        SET MAIN_CH_SEND_YN = 'Y'
-                        WHERE report_id = ?
-                    """
+                    update_query = f"UPDATE {self.main_table_name} SET MAIN_CH_SEND_YN = 'Y' WHERE report_id = ?"
                     param = (row['report_id'],)
-
-                print(f"Row data: {row}")
-                print(f"Executing query: {update_query}")
-                print(f"With parameters: {param}")
                 
-                # 업데이트 쿼리 실행
-                rows = await self.execute_query(update_query, param)
+                await self.execute_query(update_query, param)
 
-        # 'download' 타입에 대한 업데이트 처리
         elif type == 'download':
-            update_query = f"""
-                UPDATE {self.main_table_name}
-                SET 
-                    DOWNLOAD_STATUS_YN = 'Y'
-                WHERE 
-                    report_id = ?  -- report_id를 기준으로 업데이트
-            """
-            # 단일 행 데이터 업데이트
-            print(f"Single row for download: {fetched_rows}")
-            
-            # 쿼리와 파라미터를 출력합니다.
-            print(f"Executing query: {update_query}")
-            print(f"With parameters: {(fetched_rows['report_id'],)}")
-            
-            # 업데이트 쿼리 실행
-            rows = await self.execute_query(update_query, (fetched_rows['report_id'],))
-        return rows
+            update_query = f"UPDATE {self.main_table_name} SET DOWNLOAD_STATUS_YN = 'Y' WHERE report_id = ?"
+            await self.execute_query(update_query, (fetched_rows['report_id'],))
+        
+        return {"status": "success"}
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
         """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
@@ -494,28 +424,20 @@ class SQLiteManager:
         FROM {self.main_table_name}
         WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '')
         AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '')
-        AND SEC_FIRM_ORDER NOT IN ({{}})
+        AND SEC_FIRM_ORDER NOT IN ({", ".join(map(str, exclude_firms))})
         ORDER BY SAVE_TIME DESC
         LIMIT ?
-        """.format(", ".join(map(str, exclude_firms)))
+        """
         
         return await self.execute_query(query, (limit,))
 
-async def main():
-    db_manager = SQLiteManager()
-    rows = await db_manager.daily_select_data(date_str='20241230', type='send')
-    # 쿼리 실행
-    query_result = db_manager.execute_query(f"SELECT * FROM {{db_manager.main_table_name}}", close=True)
-    print(query_result)
-
-# 예시 사용법
 if __name__ == "__main__":
     async def main():
         db = SQLiteManager()
         rows = await db.daily_select_data(type='send')
-        print(rows)
+        logger.info(f"Fetched {len(rows)} rows for sending.")
         if rows:
             r = await db.daily_update_data(fetched_rows=rows, type='send')
-            print(r)
+            logger.info(f"Update result: {r}")
 
     asyncio.run(main())
