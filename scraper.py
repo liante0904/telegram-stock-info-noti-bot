@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*- 
 import os
+import sys
 import asyncio
 import time
 import argparse
@@ -59,41 +60,57 @@ FIRST_ARTICLE_INDEX = 0
 
 # 로그 설정
 def setup_logger():
+    """
+    Loguru 설정을 초기화합니다. 기존 핸들러를 제거하고 파일 및 콘솔 출력을 설정합니다.
+    """
     HOME_PATH = os.path.expanduser("~")
     KST = datetime.timezone(datetime.timedelta(hours=9))
-    log_date = datetime.datetime.now(KST).strftime('%Y%m%d')
+    now = datetime.datetime.now(KST)
+    log_date = now.strftime('%Y%m%d')
     LOG_PATH = os.path.join(HOME_PATH, "log", log_date)
     os.makedirs(LOG_PATH, exist_ok=True)
     
-    # loguru 설정: 콘솔(기본)과 파일 모두 출력
+    # 기존 기본 핸들러 제거 (중복 출력 방지)
+    logger.remove()
+    
+    # 콘솔 출력 설정
+    logger.add(sys.stdout, level="INFO", 
+               format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>")
+    
+    # 파일 출력 설정
     log_file = os.path.join(LOG_PATH, f"{log_date}_scraper.log")
-    logger.add(log_file, rotation="00:00", retention="30 days", level="DEBUG", 
-               format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
+    logger.add(log_file, rotation="10 MB", retention="30 days", level="DEBUG", 
+               format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}")
+    
+    logger.info(f"Logger initialized. Log path: {LOG_PATH}")
     return LOG_PATH
 
 async def enrich_data():
     """
     상세 정보(PDF URL 등)가 누락된 게시글을 찾아 후처리를 수행합니다.
     """
-    logger.info("Starting data enrichment (fetching detailed URLs)...")
+    logger.info("Starting data enrichment process...")
     db = SQLiteManager()
     
     from models.FirmInfo import FirmInfo
     
-    for sec_firm_order in range(len(FirmInfo.firm_names)):
+    total_firms = len(FirmInfo.firm_names)
+    for sec_firm_order in range(total_firms):
         firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=0)
+        firm_name = firm_info.get_firm_name()
 
-        if firm_info.get_firm_name() and firm_info.telegram_update_required:
+        if firm_name and firm_info.telegram_update_required:
             # 최근 7일 이내의 빈 URL 레코드 조회
             records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info, days_limit=7)
             
             if not records:
                 continue
 
-            logger.info(f"Enriching {len(records)} records for {firm_info.get_firm_name()} (Order: {sec_firm_order})")
+            logger.info(f"[{firm_name}] Found {len(records)} records requiring enrichment.")
 
             try:
                 if sec_firm_order == 19:  # DB금융투자
+                    logger.debug(f"[{firm_name}] Fetching detailed URLs via DBfi module...")
                     update_records = await fetch_detailed_url(records)
                     update_tasks = [
                         db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'])
@@ -101,9 +118,10 @@ async def enrich_data():
                     ]
                     if update_tasks:
                         await asyncio.gather(*update_tasks)
+                        logger.success(f"[{firm_name}] Successfully updated {len(update_tasks)} records.")
 
                 elif sec_firm_order == 0:  # LS증권
-                    # LS_detail은 리스트를 인자로 받을 수 있도록 설계되어 있음
+                    logger.debug(f"[{firm_name}] Extracting details via LS_detail module...")
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     update_tasks = [
                         db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'])
@@ -111,9 +129,11 @@ async def enrich_data():
                     ]
                     if update_tasks:
                         await asyncio.gather(*update_tasks)
+                        logger.success(f"[{firm_name}] Successfully updated {len(update_tasks)} records.")
                 
             except Exception as e:
-                logger.error(f"Error during enrichment for firm {sec_firm_order}: {str(e)}")
+                logger.error(f"[{firm_name}] Enrichment failed: {str(e)}")
+                logger.exception(e)
 
 async def daily_send_report(date_str=None):
     db = SQLiteManager()
@@ -156,7 +176,7 @@ def sync_check_main(sync_check_functions, total_data):
                 logger.info(f"{check_function.__name__} => {len(json_data_list)}개의 유효한 게시글 발견")
                 total_data.extend(json_data_list)  # 전체 리스트에 추가
                 totalCnt += len(json_data_list)
-            time.sleep(1)  # 과도한 요청 방지를 위한 딜레이
+            time.sleep(5)  # 과도한 요청 방지를 위한 딜레이
         except Exception as e:
             logger.exception(f"Error in sync function {check_function.__name__}: {str(e)}")
             send_admin_alert_sync(f"Error in sync function {check_function.__name__}: {str(e)}")
