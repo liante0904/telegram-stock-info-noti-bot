@@ -5,6 +5,7 @@ import sys
 import hashlib
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from loguru import logger
 
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -27,7 +28,7 @@ class OracleManager:
         config_dir = os.path.expanduser(os.getenv('WALLET_LOCATION'))
         
         dsn_info = dsn[:50] if dsn else "N/A"
-        print(f"🔗 Attempting Oracle Connection (Thin Mode) -> USER: {user}, DSN: {dsn_info}, Config: {config_dir}...")
+        logger.debug(f"🔗 Attempting Oracle Connection (Thin Mode) -> USER: {user}, DSN: {dsn_info}, Config: {config_dir}...")
         
         return oracledb.connect(
             user=user,
@@ -132,10 +133,10 @@ class OracleManager:
             with conn.cursor() as cursor:
                 cursor.executemany(query, params_list)
                 conn.commit()
-            print(f"✅ Oracle Merge Success: {len(params_list)} rows processed.")
+            logger.info(f"✅ Oracle Merge Success: {len(params_list)} rows processed.")
             return len(params_list)
         except Exception as e:
-            print(f"❌ Oracle Merge Error: {e}")
+            logger.error(f"❌ Oracle Merge Error: {e}")
             return 0
         finally:
             conn.close()
@@ -228,7 +229,7 @@ class OracleManager:
                 conn.commit()
             return len(params_list)
         except Exception as e:
-            print(f"❌ Oracle Bulk Insert Error: {e}")
+            logger.error(f"❌ Oracle Bulk Insert Error: {e}")
             return 0
         finally:
             conn.close()
@@ -247,7 +248,7 @@ class OracleManager:
                     conn.commit()
                     return cursor.rowcount
         except Exception as e:
-            print(f"❌ Oracle Query Error: {e}")
+            logger.error(f"❌ Oracle Query Error: {e}")
             return []
         finally:
             conn.close()
@@ -316,7 +317,7 @@ class OracleManager:
             
         query = f"""
         SELECT * FROM {self.main_table_name} 
-        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {{cond}}
+        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt AND {cond}
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
         return await self.execute_query(query, {"dt": q_date})
@@ -333,7 +334,7 @@ class OracleManager:
             ids = [fetched_rows.get('REPORT_ID') or fetched_rows.get('report_id')]
             
         col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
-        query = f"UPDATE {self.main_table_name} SET {{col}} = 'Y' WHERE REPORT_ID = :id"
+        query = f"UPDATE {self.main_table_name} SET {col} = 'Y' WHERE REPORT_ID = :id"
         
         # executemany 스타일로 처리하기 위해 execute_query 확장 필요할 수 있으나 
         # 일단 루프로 처리 (데이터 건수가 작음)
@@ -365,17 +366,17 @@ class OracleManager:
             with conn.cursor() as cursor:
                 try:
                     cursor.execute(f"TRUNCATE TABLE {self.main_table_name}")
-                    print(f"✅ Table {self.main_table_name} truncated successfully.")
+                    logger.info(f"✅ Table {self.main_table_name} truncated successfully.")
                 except oracledb.DatabaseError as e:
                     if "ORA-00054" in str(e):
-                        print("⚠️ Resource busy, using DELETE instead...")
+                        logger.warning("⚠️ Resource busy, using DELETE instead...")
                         cursor.execute(f"DELETE FROM {self.main_table_name}")
-                        print(f"✅ Table {self.main_table_name} deleted successfully.")
+                        logger.info(f"✅ Table {self.main_table_name} deleted successfully.")
                     else: raise e
                 conn.commit()
             return True
         except Exception as e:
-            print(f"❌ Clean Table Error: {e}")
+            logger.error(f"❌ Clean Table Error: {e}")
             return False
         finally:
             conn.close()
@@ -383,7 +384,7 @@ class OracleManager:
     async def full_sync_from_sqlite(self):
         """오라클을 비우고(Truncate) 안정적인 청크 단위로 고속 일괄 삽입"""
         from models.SQLiteManager import SQLiteManager
-        print("🚀 Starting Optimized Chunked Sync (10k Batch) to Oracle ATP...")
+        logger.info("🚀 Starting Optimized Chunked Sync (10k Batch) to Oracle ATP...")
         
         # 1. 오라클 테이블 초기화 (데이터 변조 및 불안정성 제거)
         self.truncate_table()
@@ -392,15 +393,15 @@ class OracleManager:
         sqlite_db.open_connection()
         
         # 2. 전체 데이터 건수 확인
-        sqlite_db.cursor.execute(f"SELECT count(*) FROM {{sqlite_db.main_table_name}}")
+        sqlite_db.cursor.execute(f"SELECT count(*) FROM {sqlite_db.main_table_name}")
         total_rows = sqlite_db.cursor.fetchone()[0]
         
         if total_rows == 0:
-            print("⚠️ No data found in SQLite.")
+            logger.warning("⚠️ No data found in SQLite.")
             sqlite_db.close_connection()
             return 0
             
-        print(f"📊 Total {{total_rows:,}} rows to sync. Processing in 10,000 unit chunks...")
+        logger.info(f"📊 Total {total_rows:,} rows to sync. Processing in 10,000 unit chunks...")
         
         # 3. 10,000건씩 끊어서 처리 (메모리 및 오라클 부하 방지)
         chunk_size = 10000
@@ -408,7 +409,7 @@ class OracleManager:
         total_synced = 0
         
         while offset < total_rows:
-            sqlite_db.cursor.execute(f"SELECT * FROM {{sqlite_db.main_table_name}} LIMIT {{chunk_size}} OFFSET {{offset}}")
+            sqlite_db.cursor.execute(f"SELECT * FROM {sqlite_db.main_table_name} LIMIT {chunk_size} OFFSET {offset}")
             rows = sqlite_db.cursor.fetchall()
             if not rows: break
             
@@ -417,20 +418,23 @@ class OracleManager:
             count = await self.bulk_insert(sqlite_data)
             total_synced += count
             offset += chunk_size
-            print(f"✅ Progress: {{min(offset, total_rows):,}} / {{total_rows:,}} rows synced (Batch OK)")
+            logger.info(f"✅ Progress: {min(offset, total_rows):,}/{total_rows:,} rows synced (Batch OK)")
             
         sqlite_db.close_connection()
-        print(f"✨ Successfully synced total {{total_synced:,}} rows to Oracle ATP.")
+        logger.success(f"✨ Successfully synced total {total_synced:,} rows to Oracle ATP.")
         return total_synced
+
+# 하위 호환성을 위한 별칭 설정
+OracleManagerSQL = OracleManager
 
 if __name__ == "__main__":
     import sys
     async def main():
         om = OracleManager()
         if len(sys.argv) > 1 and sys.argv[1] == "full_insert":
-            print("!!! FULL INSERT MODE !!!")
+            logger.info("!!! FULL INSERT MODE !!!")
             await om.full_sync_from_sqlite()
         else:
-            res = await om.execute_query(f"SELECT count(*) FROM {{om.main_table_name}}")
-            print(f"Test Result: {{res}}")
+            res = await om.execute_query(f"SELECT count(*) FROM {om.main_table_name}")
+            logger.info(f"Test Result: {res}")
     asyncio.run(main())

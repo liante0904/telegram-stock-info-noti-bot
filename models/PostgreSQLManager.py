@@ -3,6 +3,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from dotenv import load_dotenv
+from loguru import logger
 
 class PostgreSQLManager:
     def __init__(self):
@@ -69,7 +70,7 @@ class PostgreSQLManager:
             return user_keywords
 
         except Exception as e:
-            print(f"Error loading keywords from PostgreSQL: {e}")
+            logger.error(f"Error loading keywords from PostgreSQL: {e}")
             return {}
         finally:
             if conn:

@@ -5,6 +5,7 @@ import re
 import asyncio
 import aiohttp
 from datetime import datetime
+from loguru import logger
 
 from bs4 import BeautifulSoup
 
@@ -20,7 +21,8 @@ async def Daeshin_checkNewArticle():
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
-    """대신증권의 새 게시글 정보를 비동기로 확인하는 함수"""
+    logger.debug(f"Daeshin Scraper Start: {firm_info.get_firm_name()}")
+
     BASE_URL = "https://money2.creontrade.com/E5/m_net/ResearchCenter/Work/"
     url = BASE_URL + "mre_DM_Mobile_Research.aspx?b_code=91&m=0&p=0&v=0&word=SVBPKOq4sOyXheqzteqwnCkg7KO86rSA6riw7JeF&searchtype=Research&category="
 
@@ -61,30 +63,28 @@ async def Daeshin_checkNewArticle():
             # 게시글 목록 추출
             items = soup.find_all("li")
             if not items:
-                return None  # 더 이상 데이터가 없으면 None 반환
+                logger.info(f"Daeshin Scraper: No more items on page {page}")
+                return None
+            
+            logger.info(f"Daeshin Scraper: Found {len(items)} items on page {page}")
             
             for item in items:
                 title = item.find("strong", class_="title1").text.strip()
-                # Check if the input string starts with '[대신증권'
                 if title.startswith("[대신증권 "):
-                    # Using replace method to modify the string
                     title = title.replace("[대신증권 ", "[")
                 reg_dt = item.find("span", class_="date").text.strip()
                 author = item.find("span", class_="time").text.strip()
                 
-                # 더 일반적인 'a' 태그 찾기
                 link_tag = item.find("a")
                 if link_tag and 'href' in link_tag.attrs:
                     href = link_tag['href']
                     article_url = BASE_URL + href
                 else:
-                    print("No href found for this item")
+                    logger.warning("No href found for a Daeshin item")
                     continue
                 
-                # 개별 게시글의 ATTACH_URL 추출
                 attach_url = await fetch_attach_url(session, article_url)
 
-                # json 데이터 생성 및 리스트에 추가
                 json_data_list.append({
                     "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
@@ -93,7 +93,7 @@ async def Daeshin_checkNewArticle():
                     "ARTICLE_URL": article_url,
                     "DOWNLOAD_URL": attach_url,
                     "TELEGRAM_URL": attach_url,
-                        "PDF_URL": attach_url,
+                    "PDF_URL": attach_url,
                     "KEY": attach_url,
                     "ARTICLE_TITLE": title,
                     "WRITER": author,
@@ -102,38 +102,37 @@ async def Daeshin_checkNewArticle():
 
     async def fetch_attach_url(session, article_url):
         """ARTICLE_URL 페이지에서 ATTACH_URL 추출"""
-        async with session.get(article_url, headers=headers) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, 'html.parser')
-            attach_element = soup.find(id="btnPdfLoad")
-            
-            if attach_element:
-                return attach_element['href']
-            return None
+        try:
+            async with session.get(article_url, headers=headers) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                attach_element = soup.find(id="btnPdfLoad")
+                
+                if attach_element:
+                    return attach_element['href']
+        except Exception as e:
+            logger.error(f"Error fetching attach URL from {article_url}: {e}")
+        return None
 
     async with aiohttp.ClientSession() as session:
-        # 초기 GET 요청으로 hidden 값 추출
-        viewstate, viewstate_gen, event_validation = await fetch_hidden_values(session, url)
-        
-        # 각 페이지 비동기적으로 요청
-        tasks = []
-        for page in range(1, 5):
-            tasks.append(fetch_page_data(session, page, viewstate, viewstate_gen, event_validation))
-        
-        # 모든 태스크 완료 대기
-        await asyncio.gather(*tasks)
-        # print(json_data_list)
+        try:
+            viewstate, viewstate_gen, event_validation = await fetch_hidden_values(session, url)
+            tasks = []
+            for page in range(1, 5):
+                tasks.append(fetch_page_data(session, page, viewstate, viewstate_gen, event_validation))
+            
+            await asyncio.gather(*tasks)
+        except Exception as e:
+            logger.error(f"Error during Daeshin scraping process: {e}")
+            
         return json_data_list
 
 
 async def main():
     articles = await Daeshin_checkNewArticle()
-    # detailed_articles = await fetch_detailed_url(articles)
-    # db = SQLiteManager()
-    # inserted_count = db.insert_json_data_list(detailed_articles)  # 모든 데이터를 한 번에 삽입
-    # print(inserted_count)
-    # print(json.dumps(detailed_articles, indent=4, ensure_ascii=False))
-    print(articles)
+    logger.info(f"Total Daeshin articles fetched: {len(articles)}")
+    for item in articles[:5]:
+        logger.debug(item)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -5,6 +5,7 @@ import ssl
 from datetime import datetime
 import os
 import sys
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -46,16 +47,16 @@ async def DBfi_checkNewArticle():
                 "Accept": "application/json, text/javascript, */*; q=0.01"
             }
 
-            print(f"Fetching articles from {url_path} with ARTICLE_BOARD_ORDER: {ARTICLE_BOARD_ORDER}")
+            logger.debug(f"DBfi Scraper Start: {firm_info.get_firm_name()} path {url_path}")
             try:
                 async with session.post(f"{BASE_URL}{url_path}", headers=headers) as response:
-                    print(f"Response status for URL {url_path}: {response.status}")
                     if response.status == 200:
                         try:
                             jres = await response.json()
                             data_items = jres.get("data", [])
+                            logger.info(f"DBfi Scraper: Found {len(data_items)} items for {url_path}")
                         except (json.JSONDecodeError, KeyError):
-                            print(f"No items found on the page for URL {url_path}.")
+                            logger.warning(f"No items found or JSON error for URL {url_path}.")
                             continue
 
                         for item in data_items:
@@ -67,7 +68,7 @@ async def DBfi_checkNewArticle():
                                 "REG_DT": item['rdt'][:8],
                                 "ARTICLE_URL": "",
                                 "TELEGRAM_URL": "",
-                        "PDF_URL": "",
+                                "PDF_URL": "",
                                 "ARTICLE_TITLE": item['tit'],
                                 "WRITER": item['wnm'],
                                 "CATEGORY": item['div'],
@@ -75,9 +76,9 @@ async def DBfi_checkNewArticle():
                                 "SAVE_TIME": datetime.now().isoformat()
                             })
                     else:
-                        print(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
+                        logger.warning(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
             except Exception as e:
-                print(f"Network or timeout error while fetching {url_path}: {e}")
+                logger.error(f"Network or timeout error while fetching {url_path}: {e}")
 
     return json_data_list
 
@@ -94,30 +95,25 @@ async def fetch_detailed_url(articles):
                     if response.status == 200:
                         try:
                             detail_data = await response.json()
-                            # 'url' 값을 가져와 TELEGRAM_URL 생성
                             encoded_url = detail_data['data'].get("url", "")
                             telegram_url = f"__DBFI_VIEWER_BASE_URL____DBFI_GATE_PATH__?q={encoded_url}"
                             article["TELEGRAM_URL"] = telegram_url
                             article["PDF_URL"] = telegram_url
+                            logger.debug(f"DBfi: Detailed URL fetched for {article['ARTICLE_TITLE']}")
                         except json.JSONDecodeError:
-                            print(f"Failed to parse JSON for {key_url}")
+                            logger.error(f"Failed to parse JSON for {key_url}")
                     else:
-                        print(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+                        logger.warning(f"Failed to fetch details from {key_url}. Status code: {response.status}")
             except Exception as e:
-                print(f"Network or timeout error while fetching {key_url}: {e}")
+                logger.error(f"Network or timeout error while fetching detailed URL: {e}")
 
-    print(articles)
     return articles
 
 
 async def main():
     articles = await DBfi_checkNewArticle()
-    # print(articles)
     detailed_articles = await fetch_detailed_url(articles)
-    print(detailed_articles)
-    # db = SQLiteManager()
-    # inserted_count = db.insert_json_data_list(detailed_articles)  # 모든 데이터를 한 번에 삽입
-    # print(inserted_count)
+    logger.info(f"Fetched total {len(detailed_articles)} detailed articles.")
 
 
 if __name__ == "__main__":

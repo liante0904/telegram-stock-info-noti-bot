@@ -6,6 +6,7 @@ import datetime
 from xml.etree import ElementTree as ET
 import sys
 import asyncio
+from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -29,6 +30,8 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         sec_firm_order=SEC_FIRM_ORDER,
         article_board_order=ARTICLE_BOARD_ORDER
     )
+    logger.debug(f"Hanwha Scraper Start: {firm_info.get_firm_name()}")
+    
     json_data_list = []
 
     BASE_URL = "REMOVED"
@@ -47,11 +50,12 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         try:
             async with session.get(full_url, headers=headers) as response:
                 if response.status != 200:
+                    logger.warning(f"Hanwha Request failed for page {page_val}: {response.status}")
                     return []
                 xml_text = await response.text()
                 return parse_xml(xml_text)
         except Exception as e:
-            print(f"HTTP request failed: {e}")
+            logger.error(f"HTTP request failed for page {page_val}: {e}")
             return []
 
     def parse_xml(xml_text):
@@ -94,10 +98,10 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                 except Exception as e:
                     continue
             return articles
-        except:
+        except Exception as e:
+            logger.error(f"XML Parsing error: {e}")
             return []
 
-    # 세션을 하나만 생성해서 공유하도록 최적화
     async with aiohttp.ClientSession() as session:
         tasks = [fetch_data(session, page_val) for page_val in range(1, 6)]
         results = await asyncio.gather(*tasks)
@@ -106,8 +110,9 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
         if result:
             json_data_list.extend(result)
 
+    logger.info(f"Hanwha Scraper: Found {len(json_data_list)} total articles")
     return json_data_list
 
 if __name__ == "__main__":
     result = asyncio.run(Hanwha_checkNewArticle())
-    print(len(result))
+    logger.info(f"Total articles fetched: {len(result)}")
