@@ -58,11 +58,18 @@ json_data_list = []
 FIRST_ARTICLE_INDEX = 0
 #################### global 변수 정리 끝###################################
 
+# 로그 설정 초기화 여부 확인용 전역 변수
+_LOGGER_INITIALIZED = False
+
 # 로그 설정
 def setup_logger():
     """
-    Loguru 설정을 초기화합니다. 기존 핸들러를 제거하고 파일 및 콘솔 출력을 설정합니다.
+    Loguru 설정을 초기화합니다. 중복 방지를 위해 한 번만 실행됩니다.
     """
+    global _LOGGER_INITIALIZED
+    if _LOGGER_INITIALIZED:
+        return os.path.join(os.path.expanduser("~"), "log", datetime.datetime.now().strftime('%Y%m%d'))
+
     HOME_PATH = os.path.expanduser("~")
     KST = datetime.timezone(datetime.timedelta(hours=9))
     now = datetime.datetime.now(KST)
@@ -70,19 +77,22 @@ def setup_logger():
     LOG_PATH = os.path.join(HOME_PATH, "log", log_date)
     os.makedirs(LOG_PATH, exist_ok=True)
     
-    # 기존 기본 핸들러 제거 (중복 출력 방지)
+    # 모든 기존 핸들러 제거 (ID 0번 포함 모든 핸들러 삭제하여 중복 방지)
     logger.remove()
     
-    # 콘솔 출력 설정 (DEBUG로 변경하여 모든 로그 표시)
-    logger.add(sys.stdout, level="DEBUG", 
-               format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>")
+    # 시간 형식: YYYY-MM-DD HH:mm:ss.SS (밀리초 2자리)
+    log_format = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
+    file_format = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
+    
+    # 콘솔 출력 설정
+    logger.add(sys.stdout, level="DEBUG", format=log_format)
     
     # 파일 출력 설정
     log_file = os.path.join(LOG_PATH, f"{log_date}_scraper.log")
-    logger.add(log_file, rotation="10 MB", retention="30 days", level="DEBUG", 
-               format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}")
+    logger.add(log_file, rotation="10 MB", retention="30 days", level="DEBUG", format=file_format)
     
     logger.info(f"Logger initialized. Log path: {LOG_PATH}")
+    _LOGGER_INITIALIZED = True
     return LOG_PATH
 
 async def enrich_data():
