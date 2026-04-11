@@ -78,7 +78,7 @@ async def Hanyang_checkNewArticle():
                 ATTACH_URL = ""
                 if attachment_cell:
                     ATTACH_URL = attachment_cell['href']
-                    if ATTA_URL.startswith("/"):
+                    if ATTACH_URL.startswith("/"):
                         ATTACH_URL = f"https://www.hygood.co.kr{ATTACH_URL}"
                 
                 json_data_list.append({
