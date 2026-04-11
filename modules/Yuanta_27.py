@@ -25,6 +25,34 @@ HEADERS = {
     'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
 }
 
+def get_yuanta_pdf_url_from_detail(detail_url):
+    """
+    상세 페이지를 방문하여 PDF 다운로드 URL을 추출합니다.
+    """
+    try:
+        detail_headers = HEADERS.copy()
+        detail_headers['Referer'] = 'https://www.myasset.com/'
+        
+        response = requests.get(detail_url, headers=detail_headers, timeout=15)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # 상세 페이지 내 다운로드 버튼 탐색
+        # <a href='#' cmd-type='download' data-seq='...'> 패턴
+        download_btn = soup.select_one("a[cmd-type='download']")
+        if download_btn and download_btn.has_attr('data-seq'):
+            data_seq = download_btn['data-seq']
+            return f"https://www.myasset.com/myasset/common/commonFile/downloadFromFileServer.cmd?ATTACH_FILE={data_seq}"
+            
+        # 대체 패턴: 링크 텍스트에 PDF나 다운로드 문구가 포함된 경우
+        for a in soup.find_all('a', href=True):
+            if 'downloadFromFileServer.cmd' in a['href']:
+                return a['href'] if a['href'].startswith('http') else f"https://www.myasset.com{a['href']}"
+                
+    except Exception as e:
+        logger.error(f"Error fetching Yuanta detail page ({detail_url}): {e}")
+    return ""
+
 def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_imported):
     """
     Scrapes a single page of Yuanta Securities research articles.
@@ -69,11 +97,20 @@ def scrape_yuanta_page(target_url, sec_firm_order, article_board_order, is_impor
             writers = [a.get_text(strip=True) for a in item.select('td:nth-of-type(7) a.js-link')]
             WRITER = ', '.join(writers)
 
+            # Step 1: 목록에서 PDF 링크 추출 시도 (새로운 API 형식 우선 적용)
             pdf_tag = item.select_one('a.ico.acrobat')
             DOWNLOAD_URL = ''
             if pdf_tag and pdf_tag.has_attr('data-seq'):
-                pdf_path = pdf_tag['data-seq']
-                DOWNLOAD_URL = f"http://file.myasset.com/sitemanager/upload/{pdf_path}"
+                data_seq = pdf_tag['data-seq']
+                # 구형 file.myasset.com 대신 안정적인 다운로드 API 주소 사용
+                DOWNLOAD_URL = f"https://www.myasset.com/myasset/common/commonFile/downloadFromFileServer.cmd?ATTACH_FILE={data_seq}"
+
+            # Step 2: 목록에 링크가 없거나 불완전하면 상세 페이지 파싱 (최근 7일 이내 게시물 위주로 상세 조회 권장)
+            if not DOWNLOAD_URL:
+                logger.debug(f"Yuanta: No PDF link in list, checking detail page for '{LIST_ARTICLE_TITLE[:20]}...'")
+                DOWNLOAD_URL = get_yuanta_pdf_url_from_detail(LIST_ARTICLE_URL)
+                if DOWNLOAD_URL:
+                    logger.debug(f"Yuanta: Found PDF link in detail: {DOWNLOAD_URL}")
 
             save_time_dt = datetime.now()
             final_save_time_str = save_time_dt.isoformat()

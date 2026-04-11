@@ -2,7 +2,6 @@ import asyncio
 import os
 import sys
 import time
-import logging
 import re
 import shutil
 import subprocess
@@ -204,6 +203,7 @@ if __name__ == "__main__":
     
     # 실행 인자로 batch_limit을 받을 수 있도록 수정 (기본값 10)
     import sys
+from loguru import logger
     limit = 10
     if len(sys.argv) > 1:
         try:
