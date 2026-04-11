@@ -1,6 +1,7 @@
 # models/FirmInfo.py
 
 
+from loguru import logger
 class FirmInfo:
         
     # 증권사 이름만 담긴 배열 (100 미만)
@@ -419,5 +420,5 @@ class FirmInfo:
 # 테스트 코드
 if __name__ == "__main__":
     firm_info = FirmInfo(sec_firm_order=27, article_board_order=0)
-    print(firm_info.get_state())
-    print(firm_info.get_board_code())
+    logger.info(firm_info.get_state())
+    logger.info(firm_info.get_board_code())

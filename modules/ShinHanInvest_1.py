@@ -67,11 +67,11 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
             # HTML parse
             jres = scraper.GetJson()
             # print(jres)
-            print(f"Calling URL: {TARGET_URL}")
+            logger.info(f"Calling URL: {TARGET_URL}")
             
             # title_map에서 동적으로 키 매핑
             title_map = {v: k for k, v in jres['title'].items()}  # 키-값을 역으로 매핑
-            print(title_map)
+            logger.info(title_map)
             reg_dt_key = title_map.get('등록일', '')  # 등록일 키
             title_key = title_map.get('제목', '')  # 제목 키
             url_key = title_map.get('파일명', '')  # 파일명 키
@@ -97,7 +97,7 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
                     LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
                     LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('/board/message/file.do?', '/board/message/file.pdf.do?')
                 except Exception as e:
-                    print("에러 발생:", e)
+                    logger.error("에러 발생:", e)
                     LIST_ARTICLE_URL = item.get(url_key, '')
                 
                 json_data_list.append({
@@ -275,23 +275,23 @@ def get_shinhan_board_info():
                     board_title = item.get('BOARD_TITLE', 'N/A')
                     board_info.add((board_name, board_title))
             
-            print("Found Board Information:")
+            logger.info("Found Board Information:")
             for name, title in sorted(list(board_info)):
-                print(f'BOARD_NAME: "{name}", BOARD_TITLE: "{title}"')
+                logger.info(f'BOARD_NAME: "{name}", BOARD_TITLE: "{title}"')
 
         else:
-            print("Request failed:", response.status_code)
+            logger.info("Request failed:", response.status_code)
 
 if __name__ == "__main__":
     firm_info = FirmInfo(sec_firm_order=1, article_board_order=0)
     # results = asyncio.run(ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True))
     results = asyncio.run(ShinHanInvest_checkNewArticle())
     # print(results)
-    print(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
+    logger.info(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
     # print(results)
 
     db = SQLiteManager()
     inserted_count_results = db.insert_json_data_list(results)
 
-    print(f"Articles Inserted: {inserted_count_results}")
+    logger.info(f"Articles Inserted: {inserted_count_results}")
 

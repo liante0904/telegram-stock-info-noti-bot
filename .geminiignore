@@ -6,6 +6,3 @@ logs/
 node_modules/
 *.xlsx
 *.log
-.dockerignore
-Dockerfile
-docker-compose.yml

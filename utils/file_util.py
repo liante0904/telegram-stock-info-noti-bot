@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import datetime
+from loguru import logger
 
 # 로그 파일 경로는 환경 변수로부터 가져옵니다
 LOG_FILE = os.getenv('LOG_FILE', '~/log/logfile.log')
@@ -21,7 +22,7 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     반환:
     bool: 파일이 성공적으로 다운로드되거나 이미 존재하는 경우 True, 그렇지 않으면 False.
     """
-    print("download_file_wget()")
+    logger.info("download_file_wget()")
 
     BOARD_NM = ''
     URL = (
@@ -69,16 +70,16 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     ATTACH_FILE_NAME = re.sub(r"[\/:*?\"<>|]", '', FILE_NAME)  # 첫 번째 조건
     ATTACH_FILE_NAME = re.sub(r"[^\w\s.]", "", ATTACH_FILE_NAME)  # 두 번째 조건 수정: .을 제외한 특수 문자 제거
 
-    print('convert URL:', URL)
-    print('convert ATTACH_FILE_NAME:', ATTACH_FILE_NAME)
+    logger.info('convert URL:', URL)
+    logger.info('convert ATTACH_FILE_NAME:', ATTACH_FILE_NAME)
 
     if URL is None:
-        print('URL값이 유효하지 않아 종료')
+        logger.info('URL값이 유효하지 않아 종료')
         return True
     # 파일이 이미 존재하는지 확인
     if os.path.exists(ATTACH_FILE_NAME):
         log_message = f"파일 '{ATTACH_FILE_NAME}'이(가) 이미 존재합니다. 다운로드를 건너뜁니다."
-        print(log_message)
+        logger.info(log_message)
         if not os.path.exists(os.path.dirname(LOG_FILE)):
             os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
         with open(LOG_FILE, 'a') as log_file:
@@ -102,7 +103,7 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
         log_message = wget_command_str
         log_message += f"\n파일 다운로드 완료: {ATTACH_FILE_NAME}"
         
-        print(log_message)
+        logger.info(log_message)
         
         # 로그 파일에 기록
         if not os.path.exists(os.path.dirname(LOG_FILE)):
@@ -116,7 +117,7 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     except subprocess.CalledProcessError as e:
         error_message = f"wget 다운로드 실패: {e}"
         
-        print(error_message)
+        logger.error(error_message)
         
         # 에러 메시지를 로그 파일에 기록
         if not os.path.exists(os.path.dirname(LOG_FILE)):

@@ -121,24 +121,31 @@ def refactor_file(file_path):
         f.write('\n'.join(new_lines) + '\n')
 
     print(f"Refactored: {file_path}")
-
 if __name__ == "__main__":
-    files = [
-        'scraper.py',
-        'scrap_af_main.py',
-        'models/DataManager.py',
-        'models/FirmInfo.py',
-        'models/GeminiManager.py',
-        'models/OracleManager.py',
-        'models/PostgreSQLManager.py',
-        'models/SQLiteManager.py',
-        'models/WebScraper.py',
+    target_dirs = ['models', 'modules', 'utils', 'local_worker', 'run']
+    target_files = [
+        'scraper.py', 
+        'scheduler.py', 
+        'scheduler_keyword_alert.py'
     ]
     
-    modules_dir = 'modules'
-    for f in os.listdir(modules_dir):
-        if f.endswith('.py') and f != '__init__.py':
-            files.append(os.path.join(modules_dir, f))
+    files = []
+    for f in target_files:
+        if os.path.exists(f):
+            files.append(f)
+            
+    for d in target_dirs:
+        if os.path.exists(d):
+            for root, _, filenames in os.walk(d):
+                for f in filenames:
+                    if f.endswith('.py'):
+                        # __init__.py는 제외하고 싶다면 조건 추가
+                        if f == '__init__.py' and d != 'utils': # utils/__init__.py 등 필요시 포함
+                            continue
+                        files.append(os.path.join(root, f))
+
+    # 중복 제거
+    files = list(set(files))
 
     for file_path in files:
         if os.path.exists(file_path):

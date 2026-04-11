@@ -24,8 +24,8 @@ else:
     HOME_DIR = os.getenv('HOME_DIR')
     JSON_DIR = os.getenv('JSON_DIR')
 
-# 데이터베이스 파일 경로
-db_path = os.path.expanduser('~/sqlite3/telegram.db')
+# 데이터베이스 파일 경로 (환경 변수 SQLITE_DB_PATH를 최우선으로 사용)
+db_path = os.getenv('SQLITE_DB_PATH', os.path.expanduser('~/sqlite3/telegram.db'))
 
 class SQLiteManager:
     def __init__(self, db_path=None):

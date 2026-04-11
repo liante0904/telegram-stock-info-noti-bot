@@ -188,9 +188,9 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
             if th_text == "제목":
                 article["ARTICLE_TITLE"] = td_text
             elif th_text == "첨부파일":
-                attach_a = tr.select_one("td.attach a")
-                if attach_a:
-                    article["ATTACH_FILE_NAME"] = attach_a.get_text(strip=True)
+                attach_tag = tr.select_one("td.attach a")
+                if attach_tag:
+                    article["ATTACH_FILE_NAME"] = attach_tag.get_text(strip=True)
 
                 img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
                       soup.select_one("#contents > div.tbViewCon > div > p > img")
@@ -212,33 +212,23 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                             article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
                             article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
                         else:
-                            url = await create_fallback_url(article)
-                            article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                            url = await create_fallback_url(article, soup)
+                            article["ARTICLE_URL"] = url
+                            article["TELEGRAM_URL"] = url
+                            article["PDF_URL"] = url
+                            article["DOWNLOAD_URL"] = url
                     else:
-                        URL_PARAM = article["REG_DT"]
-                        URL_PARAM_0 = 'B' + URL_PARAM[:6]
-                        ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                        ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
-                        URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-                        ATTACH_URL = f'https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}'
-                        article["ARTICLE_URL"] = urllib.parse.quote(ATTACH_URL, safe=":/")
-                        article["TELEGRAM_URL"] = urllib.parse.quote(ATTACH_URL, safe=":/")
-                        article["PDF_URL"] = urllib.parse.quote(ATTACH_URL, safe=":/")
-                        article["DOWNLOAD_URL"] = urllib.parse.quote(ATTACH_URL, safe=":/")
+                        url = await create_fallback_url(article, soup)
+                        article["ARTICLE_URL"] = url
+                        article["TELEGRAM_URL"] = url
+                        article["PDF_URL"] = url
+                        article["DOWNLOAD_URL"] = url
                 else:
-                    URL_PARAM = article["REG_DT"]
-                    URL_PARAM_0 = 'B' + URL_PARAM[:6]
-                    ATTACH_FILE_NAME = soup.select_one('.attach > a').get_text()
-                    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(' ', "%20").replace('[', '%5B').replace(']', '%5D').replace('%25', '%')
-                    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-                    ATTACH_URL = f'https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}'
-                    article['ARTICLE_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
-                    article['TELEGRAM_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
-                    article['PDF_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
-                    article['DOWNLOAD_URL'] = urllib.parse.quote(ATTACH_URL, safe=':/')
+                    url = await create_fallback_url(article, soup)
+                    article["ARTICLE_URL"] = url
+                    article["TELEGRAM_URL"] = url
+                    article["PDF_URL"] = url
+                    article["DOWNLOAD_URL"] = url
 
 async def LS_detail(articles, firm_info=None):
     if isinstance(articles, dict):
@@ -302,7 +292,7 @@ async def get_valid_url(new_filename, date_part, article, headers):
     try:
         date_obj = datetime.strptime(date_part, "%Y%m%d")
     except ValueError:
-        return await create_fallback_url(article)
+        return await create_fallback_url(article, None)
 
     date_range = [date_obj + timedelta(days=i) for i in range(-2, 3)]
     for test_date in date_range:
@@ -318,18 +308,27 @@ async def get_valid_url(new_filename, date_part, article, headers):
         except Exception:
             pass
 
-    return await create_fallback_url(article)
+    return await create_fallback_url(article, None)
 
 
-async def create_fallback_url(article):
+async def create_fallback_url(article, soup=None):
     URL_PARAM = article["REG_DT"]
     URL_PARAM_0 = "B" + URL_PARAM[:6]
-    ATTACH_FILE_NAME = article.get("ATTACH_FILE_NAME", "")
-    ATTACH_URL_FILE_NAME = ATTACH_FILE_NAME.replace(" ", "%20").replace("[", "%5B").replace("]", "%5D").replace("%25", "%")
-    URL_PARAM_1 = urllib.parse.unquote(ATTACH_URL_FILE_NAME)
-    ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{URL_PARAM_1}"
-    logger.debug(f"Fallback URL created: {ATTACH_URL}")
-    return ATTACH_URL
+    
+    attach_file_name = article.get("ATTACH_FILE_NAME", "")
+    if not attach_file_name and soup:
+        attach_tag = soup.select_one(".attach > a")
+        if attach_tag:
+            attach_file_name = attach_tag.get_text(strip=True)
+            
+    if attach_file_name:
+        safe_name = urllib.parse.quote(attach_file_name)
+        # EtwBoardData 앞에 EtwFrontBoard가 붙는 경우가 많음
+        ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{safe_name}"
+        logger.debug(f"Fallback URL created: {ATTACH_URL}")
+        return ATTACH_URL
+    
+    return ""
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == 'fix':

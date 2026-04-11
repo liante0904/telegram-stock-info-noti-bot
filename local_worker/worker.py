@@ -51,12 +51,12 @@ async def summarize_with_ollama_async(session, text, title):
         "stream": False
     }
     try:
-        print(f"🤖 요약 중... ({title[:30]}...)")
+        logger.info(f"🤖 요약 중... ({title[:30]}...)")
         async with session.post(OLLAMA_URL, json=payload, timeout=600) as response:
             result = await response.json()
             return result.get('response')
     except Exception as e:
-        print(f"❌ 요약 실패 ({title}): {e}")
+        logger.error(f"❌ 요약 실패 ({title}): {e}")
         return None
 
 async def run_command(cmd):
@@ -88,6 +88,7 @@ async def batch_update_remote_databases(results, update_oracle=True):
     # 원격 일괄 업데이트 스크립트 생성
     script_content = f"""
 import sys, os, asyncio, importlib.util, json
+from loguru import logger
 PROJECT_ROOT = '{REMOTE_PROJECT_DIR}'
 sys.path.insert(0, PROJECT_ROOT)
 os.chdir(PROJECT_ROOT)
@@ -131,17 +132,17 @@ try:
                 stats['fail'] += 1
         
         os.remove('{remote_json_file}')
-        print(f"BATCH_RESULT: {{json.dumps(stats)}}")
+        logger.info(f"BATCH_RESULT: {{json.dumps(stats)}}")
     asyncio.run(run())
 except Exception as e:
-    print(f"Batch Script Error: {{e}}", file=sys.stderr)
+    logger.error(f"Batch Script Error: {{e}}", file=sys.stderr)
     sys.exit(1)
 """
     with open(local_script_path, 'w', encoding='utf-8') as f:
         f.write(script_content)
 
     try:
-        print(f"\n📤 원격 서버로 {len(results)}건 일괄 전송 및 업데이트 중...")
+        logger.info(f"\n📤 원격 서버로 {len(results)}건 일괄 전송 및 업데이트 중...")
         # SCP 전송
         await run_command(f"scp {local_json_path} {REMOTE_SSH_ALIAS}:{remote_json_file}")
         await run_command(f"scp {local_script_path} {REMOTE_SSH_ALIAS}:{remote_script_file}")
@@ -154,9 +155,9 @@ except Exception as e:
         
         if "BATCH_RESULT:" in stdout:
             res = json.loads(stdout.split("BATCH_RESULT:")[1].strip())
-            print(f"✨ 업데이트 완료: 성공 {res['success']}건, 실패 {res['fail']}건, Oracle {res['oracle_ok'] if update_oracle else 'SKIP'}건")
+            logger.info(f"✨ 업데이트 완료: 성공 {res['success']}건, 실패 {res['fail']}건, Oracle {res['oracle_ok'] if update_oracle else 'SKIP'}건")
         else:
-            print(f"❌ 배치 업데이트 실패: {stderr}")
+            logger.info(f"❌ 배치 업데이트 실패: {stderr}")
     finally:
         for f in [local_json_path, local_script_path]:
             if os.path.exists(f): os.remove(f)
@@ -172,7 +173,11 @@ async def process_report(session, report, semaphore):
 
         try:
             if is_pdf:
-                wget_cmd = f"wget --user-agent='Mozilla/5.0' -O {temp_pdf} '{report['url']}' --max-redirect=10 --no-check-certificate --quiet --timeout=15 --tries=2"
+                # Referer를 추가하여 봇 차단 우회 시도
+                referer = "https://www.hmsec.com/" if "hmsec.com" in report['url'] else report['url']
+                wget_cmd = f"wget --user-agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' " \
+                           f"--header='Referer: {referer}' " \
+                           f"-O {temp_pdf} '{report['url']}' --max-redirect=10 --no-check-certificate --quiet --timeout=15 --tries=2"
                 ret, _, _ = await run_command(wget_cmd)
                 if ret == 0 and os.path.exists(temp_pdf) and os.path.getsize(temp_pdf) >= 1024:
                     text = extract_text_from_pdf(temp_pdf)
@@ -186,7 +191,7 @@ async def process_report(session, report, semaphore):
             if summary:
                 return {"report_id": report['report_id'], "summary": summary, "title": report['title']}
         except Exception as e:
-            print(f"🔥 에러 ({report['title'][:20]}): {e}")
+            logger.error(f"🔥 에러 ({report['title'][:20]}): {e}")
         return None
 
 def run_remote_sql(sql_query):
@@ -219,10 +224,10 @@ def fetch_pending_reports(limit=FETCH_LIMIT):
     return reports
 
 async def main():
-    print(f"🚀 M4 맥미니 비동기 배치 워커 (Model: {OLLAMA_MODEL}, Limit: {FETCH_LIMIT})")
+    logger.info(f"🚀 M4 맥미니 비동기 배치 워커 (Model: {OLLAMA_MODEL}, Limit: {FETCH_LIMIT})")
     reports = fetch_pending_reports()
     if not reports:
-        print("✅ 처리할 리포트가 없습니다.")
+        logger.info("✅ 처리할 리포트가 없습니다.")
         return
 
     semaphore = asyncio.Semaphore(CONCURRENT_LIMIT)
@@ -236,7 +241,7 @@ async def main():
         if valid_results:
             await batch_update_remote_databases(valid_results, update_oracle=UPDATE_ORACLE_BATCH)
         else:
-            print("ℹ️ 요약된 결과가 없습니다.")
+            logger.info("ℹ️ 요약된 결과가 없습니다.")
 
 if __name__ == "__main__":
     asyncio.run(main())
