@@ -19,10 +19,42 @@ BASE_URLS = [
     "REMOVED",  # 국내산업분석
     "REMOVED"   # 해외기업분석
 ]
-HEADERS_TEMPLATE = {
-    "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
-    "Content-Type": "application/x-www-form-urlencoded"
-}
+
+def get_eugene_headers():
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ko,en-US;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "Pragma": "no-cache",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "sec-ch-ua": '"Chromium";v="146", "Not-A.Brand";v="24", "Google Chrome";v="146"',
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-platform": '"Android"'
+    }
+    
+    # 쿠키 로드 시도
+    cookie_path = os.path.join(os.path.dirname(__file__), '..', 'json', 'eugene_cookies.json')
+    if os.path.exists(cookie_path):
+        try:
+            with open(cookie_path, 'r', encoding='utf-8') as f:
+                cookies = json.load(f)
+                if isinstance(cookies, dict):
+                    cookie_str = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+                    headers["Cookie"] = cookie_str
+                elif isinstance(cookies, str):
+                    headers["Cookie"] = cookies
+            logger.info("Eugene Scraper: Loaded cookies from eugene_cookies.json")
+        except Exception as e:
+            logger.error(f"Eugene Scraper: Failed to load cookies: {e}")
+            
+    return headers
 
 async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
     articles = []
@@ -33,6 +65,16 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
             a_tag = item.find('a')
             if a_tag:
                 url = a_tag['href']
+                # 상세 페이지 URL이 상대 경로인 경우 처리
+                if url.startswith('/'):
+                    url = 'https://m.eugenefn.com' + url
+                
+                # 더블 슬래시(//) 정규화 (보안 솔루션이나 라이브러리 오작동 방지)
+                if "//" in url:
+                    # 프로토콜 부분(https://)을 제외한 나머지 부분의 더블 슬래시 제거
+                    protocol, rest = url.split("://", 1)
+                    url = f"{protocol}://{rest.replace('//', '/')}"
+                
                 title_tag = item.find('strong', class_='title line2')
                 title = title_tag.text.strip() if title_tag else ''
                 
@@ -70,17 +112,28 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
 
 async def eugene_checkNewArticle():
     all_articles = []
+    headers = get_eugene_headers()
+    
     for ARTICLE_BOARD_ORDER, base_url in enumerate(BASE_URLS):
         referer_url = base_url.replace('Add.do', '.do')
         firm_info = FirmInfo(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
         logger.debug(f"Eugene Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
         
-        scraper = AsyncWebScraper(target_url=base_url, headers={**HEADERS_TEMPLATE, "Referer": referer_url})
+        # 각 요청마다 Referer 헤더 업데이트
+        current_headers = headers.copy()
+        current_headers["Referer"] = referer_url
+        
+        scraper = AsyncWebScraper(target_url=base_url, headers=current_headers)
         for page_no in range(1, 6):
             payload = f"pageNo={page_no}&add=Y"
             try:
                 response_soup = await scraper.Post(data=payload)
                 if response_soup:
+                    # 응답이 제한된 경우(예: 로그인 페이지)를 감지하는 로직 추가 가능
+                    if "로그인" in str(response_soup) or "login" in str(response_soup).lower():
+                        logger.warning(f"Eugene Scraper: Session might be expired or restricted for {base_url}")
+                        break
+                        
                     html_text = str(response_soup)
                     articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
                     all_articles.extend(articles)

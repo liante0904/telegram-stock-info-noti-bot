@@ -1,9 +1,9 @@
 import os
 import subprocess
-import logging
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
+from loguru import logger
 
 # 로그 설정 (디렉토리 자동 생성 포함)
 def get_log_path():
@@ -32,7 +32,7 @@ def run_job():
         env["RUN_ONCE"] = "true"
         
         result = subprocess.run(
-            ["uv", "run", "send_report_by_keyword_to_user.py"],
+            ["uv", "run", "run/keyword_alert.py"],
             env=env,
             check=False
         )

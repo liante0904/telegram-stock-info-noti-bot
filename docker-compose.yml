@@ -40,7 +40,7 @@ services:
       - ~/sqlite3:/app/db
       - ~/log:/log
     environment:
-      - DB_PATH=/app/db/telegram.db
+      - SQLITE_DB_PATH=/app/db/telegram.db
       - LOG_BASE_DIR=/log
       - TZ=Asia/Seoul
     command: ["uv", "run", "scheduler_keyword_alert.py"]

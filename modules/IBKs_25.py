@@ -94,10 +94,8 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
         gubun = report.get('GUBUN', '')
         
         if board_idx == 0:
-            if gubun == 'DAIL':
-                path_name = 'invrespect'
-            else:
-                path_name = 'invreport'
+            # 전략/시황 게시판은 대부분 invrespect 경로를 사용함 (DAIL, STRATEGY, MONT 등)
+            path_name = 'invrespect'
         else:
             path_name = info["path"]
 

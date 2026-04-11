@@ -2,6 +2,7 @@ import asyncio
 import telegram
 import os
 import requests
+from loguru import logger
 
 # 가공없이 텍스트를 발송합니다.
 async def sendMarkDownText(token, chat_id, sendMessageText): 
@@ -16,7 +17,7 @@ def send_admin_alert_sync(message):
     token = os.getenv('TELEGRAM_TEST_TOKEN')
     admin_id = os.getenv('TELEGRAM_ADMIN_ID_DEV')
     if not token or not admin_id:
-        print("Admin alert failed: Missing token or admin_id environment variables.")
+        logger.info("Admin alert failed: Missing token or admin_id environment variables.")
         return
     
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -28,4 +29,4 @@ def send_admin_alert_sync(message):
         response = requests.post(url, data=payload, timeout=10)
         response.raise_for_status()
     except Exception as e:
-        print(f"Failed to send admin alert: {e}")
+        logger.error(f"Failed to send admin alert: {e}")
