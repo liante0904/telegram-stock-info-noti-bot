@@ -1,5 +1,6 @@
 import os
 import subprocess
+import logging  # <--- 이 줄이 추가되었습니다.
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
