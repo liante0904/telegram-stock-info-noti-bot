@@ -41,11 +41,19 @@ async def Koreainvestment_selenium_checkNewArticle():
     chrome_options.add_argument("--remote-allow-origins=*")
     chrome_options.add_argument("--disable-software-rasterizer")
     
+    # 시스템에 설치된 chromedriver 우선 확인 (ARM64 호환성 해결)
     system_chromedriver = "/usr/bin/chromedriver"
+    system_chrome = "/usr/bin/chromium"
+
     if os.path.exists(system_chromedriver):
+        logger.debug(f"KoreaInvestment Scraper: Using system chromedriver at {system_chromedriver}")
         service = Service(executable_path=system_chromedriver)
+        if os.path.exists(system_chrome):
+            chrome_options.binary_location = system_chrome
     else:
+        # 도커 외부(로컬) 환경용
         try:
+            logger.debug("KoreaInvestment Scraper: System chromedriver not found, trying ChromeDriverManager...")
             service = Service(ChromeDriverManager().install())
         except Exception as e:
             logger.error(f"Failed to install ChromeDriver: {e}")
