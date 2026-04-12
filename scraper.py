@@ -124,30 +124,65 @@ def run_sync_scrapers(sync_funcs, total_data):
 
 async def run_async_scrapers(async_funcs, total_data):
     logger.info(f"Launching {len(async_funcs)} async scrapers...")
-    tasks = [f() for f in async_funcs]
+    tasks = []
+    task_names = []
+    
+    for f in async_funcs:
+        try:
+            if not callable(f):
+                continue
+            
+            # 함수를 일단 호출해봅니다.
+            res = f()
+            
+            # 호출 결과가 코루틴(awaitable)인 경우에만 tasks에 추가
+            if asyncio.iscoroutine(res):
+                tasks.append(res)
+                task_names.append(f.__name__)
+            # 호출 결과가 이미 리스트인 경우 (동기 함수처럼 동작한 경우) 즉시 처리
+            elif isinstance(res, list):
+                total_data.extend(res)
+                logger.info(f"{f.__name__} (Sync-like) => Found {len(res)} articles")
+            # 그 외의 경우 (None 등)
+            elif res is not None:
+                logger.warning(f"{f.__name__} returned unexpected type: {type(res)}")
+                
+        except Exception as e:
+            logger.error(f"Error calling scraper {f.__name__}: {e}")
+
+    if not tasks:
+        return
+
+    logger.debug(f"Gathering {len(tasks)} actual coroutines: {task_names}")
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for idx, res in enumerate(results):
-        name = async_funcs[idx].__name__
+        name = task_names[idx]
         if isinstance(res, Exception):
             logger.error(f"Async Scraper Error ({name}): {res}")
-        elif res:
+        elif isinstance(res, list):
             total_data.extend(res)
             logger.info(f"{name} => Found {len(res)} articles")
+        elif res is not None:
+            logger.warning(f"{name} returned non-list result: {type(res)}")
 
 async def main(date_str=None):
     logger.info("=================== SCRAPER START ===================")
     total_data = []
     
-    sync_funcs = [LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, Yuanta_checkNewArticle]
+    sync_funcs = [
+        LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, Yuanta_checkNewArticle,
+        Samsung_checkNewArticle, Shinyoung_checkNewArticle, Hmsec_checkNewArticle,
+        TOSSinvest_checkNewArticle, DS_checkNewArticle
+    ]
     async_functions = [
-        ShinHanInvest_checkNewArticle, Samsung_checkNewArticle, Shinyoung_checkNewArticle,
-        Hmsec_checkNewArticle, TOSSinvest_checkNewArticle, Leading_checkNewArticle,
+        ShinHanInvest_checkNewArticle, Leading_checkNewArticle,
         NHQV_checkNewArticle, HANA_checkNewArticle, KB_checkNewArticle,
         Sangsanginib_checkNewArticle, Kiwoom_checkNewArticle, 
         Koreainvestment_selenium_checkNewArticle, DAOL_checkNewArticle, 
         Daeshin_checkNewArticle, iMfnsec_checkNewArticle, DBfi_checkNewArticle,
         MERITZ_checkNewArticle, Hanwha_checkNewArticle, Hanyang_checkNewArticle,
-        BNK_checkNewArticle, Kyobo_checkNewArticle, IBK_checkNewArticle
+        BNK_checkNewArticle, Kyobo_checkNewArticle, IBK_checkNewArticle,
+        eugene_checkNewArticle
     ]
 
     run_sync_scrapers(sync_funcs, total_data)
