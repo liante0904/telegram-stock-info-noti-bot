@@ -87,7 +87,7 @@ if __name__ == "__main__":
         logger.info(f"- {job.id}: {job.trigger}")
     
     # 시작 시 즉시 한 번 실행하려면 아래 주석 해제
-    # run_scraper()
+    run_scraper()
     
     try:
         scheduler.start()

@@ -12,9 +12,10 @@ from dotenv import load_dotenv
 logger.remove() 
 
 HOME_PATH = os.path.expanduser("~")
+LOG_BASE_DIR = os.getenv("LOG_BASE_DIR", os.path.join(HOME_PATH, "log"))
 KST = datetime.timezone(datetime.timedelta(hours=9))
 LOG_DATE = datetime.datetime.now(KST).strftime('%Y%m%d')
-LOG_DIR = os.path.join(HOME_PATH, "log", LOG_DATE)
+LOG_DIR = os.path.join(LOG_BASE_DIR, LOG_DATE)
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # 시간 포맷: HH:mm:ss.SS (밀리초 2자리로 고정)
@@ -22,12 +23,10 @@ LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}<
 FILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
 
 # 2. 핸들러 새로 등록
-# stdout: 터미널인 경우에만 색상 적용 (colorize=None 또는 생략 시 자동 감지)
 logger.add(sys.stdout, format=LOG_FORMAT, level="DEBUG", colorize=None)
-# File: 파일에는 색상 코드 없이 기록 (FILE_FORMAT 사용)
 logger.add(os.path.join(LOG_DIR, f"{LOG_DATE}_scraper.log"), format=FILE_FORMAT, level="DEBUG", rotation="10 MB", retention="30 days", encoding="utf-8")
 
-# --- 모듈 임포트 (로그 설정 이후에 임포트하는 것이 안전) ---
+# --- 모듈 임포트 ---
 from utils.telegram_util import sendMarkDownText
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from models.SQLiteManager import SQLiteManager
@@ -60,7 +59,7 @@ from modules.BNKfn_23 import BNK_checkNewArticle
 from modules.Kyobo_24 import Kyobo_checkNewArticle
 from modules.IBKs_25 import IBK_checkNewArticle
 from modules.SKS_26 import Sks_checkNewArticle
-from modules.Yuanta_27 import Yuanta_checkNewArticle
+from modules.Yuanta_27 import Yuanta_checkNewArticle # 비동기 버전 (파일명 변경됨)
 
 load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
@@ -124,30 +123,69 @@ def run_sync_scrapers(sync_funcs, total_data):
 
 async def run_async_scrapers(async_funcs, total_data):
     logger.info(f"Launching {len(async_funcs)} async scrapers...")
-    tasks = [f() for f in async_funcs]
+    tasks = []
+    task_names = []
+    
+    for f in async_funcs:
+        try:
+            if not callable(f):
+                continue
+            
+            # 함수를 일단 호출해봅니다.
+            res = f()
+            
+            # 호출 결과가 코루틴(awaitable)인 경우에만 tasks에 추가
+            if asyncio.iscoroutine(res):
+                tasks.append(res)
+                task_names.append(f.__name__)
+            # 호출 결과가 이미 리스트인 경우 (동기 함수처럼 동작한 경우) 즉시 처리
+            elif isinstance(res, list):
+                total_data.extend(res)
+                logger.info(f"{f.__name__} (Sync-like) => Found {len(res)} articles")
+            # 그 외의 경우 (None 등)
+            elif res is not None:
+                logger.warning(f"{f.__name__} returned unexpected type: {type(res)}")
+                
+        except Exception as e:
+            logger.error(f"Error calling scraper {f.__name__}: {e}")
+
+    if not tasks:
+        return
+
+    logger.debug(f"Gathering {len(tasks)} actual coroutines: {task_names}")
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for idx, res in enumerate(results):
-        name = async_funcs[idx].__name__
+        name = task_names[idx]
         if isinstance(res, Exception):
             logger.error(f"Async Scraper Error ({name}): {res}")
-        elif res:
+        elif isinstance(res, list):
             total_data.extend(res)
             logger.info(f"{name} => Found {len(res)} articles")
+        elif res is not None:
+            logger.warning(f"{name} returned non-list result: {type(res)}")
 
 async def main(date_str=None):
     logger.info("=================== SCRAPER START ===================")
     total_data = []
     
-    sync_funcs = [LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, Yuanta_checkNewArticle]
+    sync_funcs = [
+        LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, 
+        Samsung_checkNewArticle, Shinyoung_checkNewArticle, Hmsec_checkNewArticle,
+        TOSSinvest_checkNewArticle, DS_checkNewArticle
+    ]
     async_functions = [
-        ShinHanInvest_checkNewArticle, Samsung_checkNewArticle, Shinyoung_checkNewArticle,
-        Hmsec_checkNewArticle, TOSSinvest_checkNewArticle, Leading_checkNewArticle,
+        ShinHanInvest_checkNewArticle, Leading_checkNewArticle,
         NHQV_checkNewArticle, HANA_checkNewArticle, KB_checkNewArticle,
         Sangsanginib_checkNewArticle, Kiwoom_checkNewArticle, 
-        Koreainvestment_selenium_checkNewArticle, DAOL_checkNewArticle, 
-        Daeshin_checkNewArticle, iMfnsec_checkNewArticle, DBfi_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle, # Selenium 에러 해결 중 (보류)
+        DAOL_checkNewArticle, 
+        Daeshin_checkNewArticle, 
+        # iMfnsec_checkNewArticle, # 보류
+        DBfi_checkNewArticle,
         MERITZ_checkNewArticle, Hanwha_checkNewArticle, Hanyang_checkNewArticle,
-        BNK_checkNewArticle, Kyobo_checkNewArticle, IBK_checkNewArticle
+        BNK_checkNewArticle, Kyobo_checkNewArticle, IBK_checkNewArticle,
+        # eugene_checkNewArticle # 세션 만료 및 제한 에러 (보류)
+        Yuanta_checkNewArticle # 비동기 버전 (명칭 표준화됨)
     ]
 
     run_sync_scrapers(sync_funcs, total_data)
