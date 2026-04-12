@@ -1,8 +1,8 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+import argparse
 import tempfile
-from loguru import logger
 
 def safe_json_dump(data, filename):
     """임시 파일을 사용하여 JSON을 안전하게 저장합니다 (Atomic Write)."""
@@ -73,7 +73,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if not os.path.exists(directory):
         os.makedirs(directory)
-        logger.info(f"\n디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
 
     # 현재 시간을 저장합니다.
     current_time = datetime.now().isoformat()
@@ -108,10 +108,10 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
             with open(filename, 'r', encoding='utf-8') as json_file:
                 existing_data = json.load(json_file)
             if not isinstance(existing_data, list):
-                logger.info(f"Warning: {filename} format is invalid. Resetting to list.")
+                print(f"Warning: {filename} format is invalid. Resetting to list.")
                 existing_data = []
         except json.JSONDecodeError:
-            logger.error(f"Warning: {filename} is corrupted. Starting with empty list.")
+            print(f"Warning: {filename} is corrupted. Starting with empty list.")
             existing_data = []
     else:
         existing_data = []
@@ -129,7 +129,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         # 안전한 쓰기 방식 적용
         safe_json_dump(existing_data, filename)
         
-        logger.info(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
+        print(f"\n새 데이터가 {filename}에 성공적으로 저장되었습니다.")
         
         # 중복되지 않은 항목을 템플릿 형식으로 반환
         if '네이버'in firm_nm or '조선비즈' in firm_nm:
@@ -137,7 +137,7 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         else:
             return format_message(new_data)
     else:
-        logger.info("중복된 데이터가 발견되어 저장하지 않았습니다.")
+        print("중복된 데이터가 발견되어 저장하지 않았습니다.")
         return ''
 
 def get_unsent_main_ch_data_to_local_json(filename):
@@ -147,7 +147,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
-        logger.info(f"\n디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     # 현재 날짜를 가져옵니다.
     today_str = datetime.now().strftime("%Y-%m-%d")
@@ -161,10 +161,10 @@ def get_unsent_main_ch_data_to_local_json(filename):
             if not isinstance(data, list):
                 data = []
         except json.JSONDecodeError:
-            logger.error(f"Error: {filename} is corrupted. Returning empty data.")
+            print(f"Error: {filename} is corrupted. Returning empty data.")
             return []
     else:
-        logger.info(f"\n파일 경로 '{filename}'가 존재하지 않거나 비어 있습니다.")
+        print(f"\n파일 경로 '{filename}'가 존재하지 않거나 비어 있습니다.")
         return []
 
     # 중복 확인을 위해 json/data_main_daily_send.json의 FIRM_NM 목록을 가져옵니다.
@@ -176,19 +176,19 @@ def get_unsent_main_ch_data_to_local_json(filename):
                 main_daily_data = json.load(json_file)
                 if isinstance(main_daily_data, list):
                     sent_firms = {item.get("FIRM_NM") for item in main_daily_data if item.get("FIRM_NM")}
-                    logger.info(f"\n중복 확인을 위해 로드된 FIRM_NM 목록: {sent_firms}")
+                    print(f"\n중복 확인을 위해 로드된 FIRM_NM 목록: {sent_firms}")
         except json.JSONDecodeError:
-            logger.error(f"Warning: {main_daily_send_path} is corrupted.")
+            print(f"Warning: {main_daily_send_path} is corrupted.")
 
     # EXCLUDED_FORWARD_REPORT_FIRMS를 sent_firms에 합치기
     sent_firms.update(EXCLUDED_FORWARD_REPORT_FIRMS)
-    logger.info(f"\n수기 EXCLUDED_FORWARD_REPORT_FIRMS 추가 목록(제외할 증권사 포함): {sent_firms}")
+    print(f"\n수기 EXCLUDED_FORWARD_REPORT_FIRMS 추가 목록(제외할 증권사 포함): {sent_firms}")
 
     additional_firms = set()
 
     # 추가된 목록을 sent_firms에 합치기
     sent_firms.update(additional_firms)
-    logger.info(f"\n최종 FIRM_NM 목록: {sent_firms}")
+    print(f"\n최종 FIRM_NM 목록: {sent_firms}")
 
     # 조건에 맞는 데이터를 필터링합니다.
     unsent_data = [
@@ -199,7 +199,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     ]
 
     # 디버깅 로그 추가
-    logger.debug(f"\n필터링된 unsent_data: {unsent_data}")
+    print(f"\n필터링된 unsent_data: {unsent_data}")
 
     messages = []
     current_message = ""
@@ -239,10 +239,10 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
     if directory and not os.path.exists(directory):
         os.makedirs(directory)
-        logger.info(f"\n디렉터리 '{directory}'를 생성했습니다.")
+        print(f"\n디렉터리 '{directory}'를 생성했습니다.")
     
     if not os.path.exists(file_path):
-        logger.info(f"\n파일 경로 '{file_path}'가 존재하지 않습니다.")
+        print(f"\n파일 경로 '{file_path}'가 존재하지 않습니다.")
         return
 
     # 대상 날짜를 설정합니다. 날짜를 받지 않은 경우 오늘 날짜로 설정합니다.
@@ -264,6 +264,48 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
         # 안전한 쓰기 방식 적용
         safe_json_dump(data, file_path)
         
-        logger.info(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
+        print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
     except json.JSONDecodeError:
-        logger.error(f"Error updating {file_path}: File is corrupted.")
+        print(f"Error updating {file_path}: File is corrupted.")
+
+
+def filter_news_by_save_time(filename):
+    if not os.path.exists(filename):
+        return
+        
+    # 파일에서 JSON 데이터 읽기
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, list):
+            return
+    except (json.JSONDecodeError, FileNotFoundError):
+        return
+
+    # 오늘 날짜
+    today = datetime.now()
+
+    # 1주일 이내 날짜 계산
+    one_week_ago = today - timedelta(days=1)
+
+    # 뉴스 리스트 필터링
+    filtered_news_list = [
+        news for news in data
+        if datetime.fromisoformat(news.get('SAVE_TIME', today.isoformat())) >= one_week_ago
+    ]
+
+    # 안전한 쓰기 방식 적용
+    safe_json_dump(filtered_news_list, filename)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process JSON files with specified action.')
+    parser.add_argument('action', choices=['update', 'send'], help='Action to perform: update or send')
+    parser.add_argument('file_path', type=str, help='Path to the JSON file to process')
+
+    args = parser.parse_args()
+
+    if args.action == 'send':
+        results = get_unsent_main_ch_data_to_local_json(args.file_path)
+        for result in results:
+            print(result)
+            print("\n" + "="*50 + "\n")  # 구분선 추가
