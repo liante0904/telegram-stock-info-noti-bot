@@ -165,3 +165,4 @@ token.*
 *.db
 *.*Zone.Identifier
 error_response.txt
+.env.bak
