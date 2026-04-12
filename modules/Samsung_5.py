@@ -1,108 +1,121 @@
 # -*- coding:utf-8 -*- 
 import gc
-import aiohttp
-import asyncio
+import requests
 from datetime import datetime
 import json
 import re
 import os
 import sys
-from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.WebScraper import AsyncWebScraper
+from models.WebScraper import SyncWebScraper
 
-async def Samsung_checkNewArticle():
+def Samsung_checkNewArticle():
     SEC_FIRM_ORDER      = 5
     ARTICLE_BOARD_ORDER = 0
     json_data_list = []
 
+    requests.packages.urllib3.disable_warnings()
+
     # 삼성증권 기업 분석
+    # TARGET_URL_0 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=3000&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company1&searchField=TITLE&periodType=1&query='
     TARGET_URL_0 =  'REMOVED'
+                    #https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=1&range=A&startDate=2023.01.01&endDate=2024.01.01&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=all&searchField=TITLE&periodType=3&query=
     # 삼성증권 산업 분석
     TARGET_URL_1 =  'REMOVED'
     # 삼성증권 해외 분석
     TARGET_URL_2 =  'REMOVED'
-    
+                   #'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=3000&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=all&searchField=TITLE&periodType=1&query='
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
 
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
-        for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-            firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
-            )
-            logger.debug(f"Samsung Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+    
+    # URL GET
+    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        firm_info = FirmInfo(
+            sec_firm_order=SEC_FIRM_ORDER,
+            article_board_order=ARTICLE_BOARD_ORDER
+        )
 
-            scraper = AsyncWebScraper(TARGET_URL)
-            
-            # HTML parse
-            soup = await scraper.Get(session=session)
-            if not soup:
-                logger.warning(f"Failed to get soup for {TARGET_URL}")
-                continue
+        scraper = SyncWebScraper(TARGET_URL, firm_info)
+        
+        # HTML parse
+        soup = scraper.Get()
 
-            soupList = soup.select('#content > section.bbsLstWrap > ul > li')
-            logger.info(f"Samsung Scraper: Found {len(soupList)} articles")
+        soupList = soup.select('#content > section.bbsLstWrap > ul > li')
+        print(f"Number of articles: {len(soupList)}")
+        # print(f"URL: {soupList}")
+        # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
 
-            for item in soupList:
-                try:
-                    # 제목 추출 및 정제
-                    title_element = item.select_one('dt > strong')
-                    if not title_element:
-                        continue
+        for item in soupList:
+            try:
+                # 제목 추출 및 정제
+                title_element = item.select_one('dt > strong')
+                if not title_element:
+                    continue
 
-                    LIST_ARTICLE_TITLE = title_element.text.strip()
-                    
-                    # PDF 링크 데이터 파싱
-                    a_href = item.a.get("href", "").replace("javascript:downloadPdf(", "").replace(")", "").replace("'", "")
-                    a_href_parts = a_href.split(",")
+                LIST_ARTICLE_TITLE = title_element.text.strip()
+                # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace("수정", "")
+                # LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE[LIST_ARTICLE_TITLE.find(")") + 1:].strip()
+                
+                # PDF 링크 데이터 파싱
+                a_href = item.a.get("href", "").replace("javascript:downloadPdf(", "").replace(")", "").replace("'", "")
+                a_href_parts = a_href.split(",")
 
-                    if len(a_href_parts) < 3:
-                        continue
+                if len(a_href_parts) < 3:
+                    continue
 
-                    a_href_path = a_href_parts[0].strip()  # PDF 파일 경로
-                    REG_DT = a_href_parts[2].strip().replace(";", "")       # REG_DT 값 추출 및 세미콜론 제거
+                a_href_path = a_href_parts[0].strip()  # PDF 파일 경로
+                REG_DT = a_href_parts[2].strip().replace(";", "")       # REG_DT 값 추출 및 세미콜론 제거
 
-                    LIST_ARTICLE_URL = f'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName={a_href_path}&contentType=application/pdf&inlineYn=Y'
+                LIST_ARTICLE_URL = f'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName={a_href_path}&contentType=application/pdf&inlineYn=Y'
 
-                    # bbsLstCont 내부 정보 추출 (발행일, 분류, 작성자)
-                    dd_elements = item.select('dd > span')
-                    pub_date = dd_elements[0].text.strip() if len(dd_elements) > 0 else "N/A"
-                    category = dd_elements[1].text.strip() if len(dd_elements) > 1 else "N/A"
-                    author = dd_elements[2].text.strip() if len(dd_elements) > 2 else "N/A"
-                    
-                    LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace(f"({author})", "")
-                    
-                    # 결과 저장
-                    json_data_list.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "REG_DT": REG_DT,
-                        "DOWNLOAD_URL": '',
-                        "TELEGRAM_URL": LIST_ARTICLE_URL,
-                            "PDF_URL": LIST_ARTICLE_URL,
-                        "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                        "WRITER": author,
-                        "BOARD_NM": category,
-                        "SAVE_TIME": datetime.now().isoformat(),
-                        "KEY": LIST_ARTICLE_URL,
-                    })
-                except Exception as e:
-                    logger.error(f"Error parsing item: {e}")
+                # bbsLstCont 내부 정보 추출 (발행일, 분류, 작성자)
+                dd_elements = item.select('dd > span')
+                pub_date = dd_elements[0].text.strip() if len(dd_elements) > 0 else "N/A"
+                category = dd_elements[1].text.strip() if len(dd_elements) > 1 else "N/A"
+                author = dd_elements[2].text.strip() if len(dd_elements) > 2 else "N/A"
+                
+                LIST_ARTICLE_TITLE = LIST_ARTICLE_TITLE.replace(f"({author})", "")
+                
+                # 결과 저장
+                json_data_list.append({
+                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "FIRM_NM": firm_info.get_firm_name(),
+                    "REG_DT": REG_DT,
+                    "DOWNLOAD_URL": '',
+                    "TELEGRAM_URL": LIST_ARTICLE_URL,
+                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+                    "WRITER": author,
+                    "BOARD_NM": category,
+                    "SAVE_TIME": datetime.now().isoformat(),
+                    "KEY": LIST_ARTICLE_URL,
+                })
 
-            break
-            
+                # # 유효 데이터 출력
+                # print(f"[Title]: {LIST_ARTICLE_TITLE}")
+                # print(f"[File Path]: {a_href_path}")
+                # print(f"[Registration Date]: {REG_DT}")
+                # print(f"[PDF URL]: {LIST_ARTICLE_URL}")
+                # print(f"[Publish Date]: {pub_date}")
+                # print(f"[Category]: {category}")
+                # print(f"[Author]: {author}")
+                
+            except Exception as e:
+                print(f"Error parsing item: {e}")
+
+        break
+        
     # 메모리 정리
+    del soup
     gc.collect()
 
-    return json_data_list
-            
-    # 메모리 정리
-    gc.collect()
-
+    sorted_data = extract_and_deduplicate(json_data_list)
+    # 3. 정렬된 결과 출력
+    # print("Sorted JSON Data:")
+    # print(json.dumps(sorted_data, indent=4, ensure_ascii=False))
+    # print(json_data_list)
     return json_data_list
 
 def extract_and_deduplicate(json_list):
@@ -137,4 +150,4 @@ def extract_and_deduplicate(json_list):
     return sorted(extracted_data, key=get_sort_key)
 
 if __name__ == "__main__":
-    asyncio.run(Samsung_checkNewArticle())
+    Samsung_checkNewArticle()
