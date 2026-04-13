@@ -1,21 +1,25 @@
 services:
-  gemini-pdf-batch:
+  main-scraper:
     platform: linux/arm64
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
-    container_name: gemini-pdf-batch
+    container_name: telegram-stock-info-noti-bot-main-scraper-${APP_ENV:-dev}
     build: 
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
+    network_mode: "host"
     env_file:
       - .env
     volumes:
       - ~/log:/log
       - ~/sqlite3:/root/sqlite3
     environment:
+      - APP_ENV=${APP_ENV:-dev}
       - TZ=Asia/Seoul
       - LOG_BASE_DIR=/log
       - LOG_FILE=/log/logfile.log
+      - SQLITE_DB_PATH=/root/sqlite3/telegram.db
+      - SOCKS_PROXY_URL=socks5h://localhost:9091
     stdin_open: true
     tty: true
     logging:
@@ -23,23 +27,22 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - default
-      - vscode-network
 
   report-keyword-alert:
     platform: linux/arm64
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
-    container_name: report-keyword-alert-bot
+    container_name: telegram-stock-info-noti-bot-keyword-alert-${APP_ENV:-dev}
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
+    network_mode: "host"
     env_file: .env
     volumes:
       - ~/sqlite3:/app/db
       - ~/log:/log
     environment:
+      - APP_ENV=${APP_ENV:-dev}
       - SQLITE_DB_PATH=/app/db/telegram.db
       - LOG_BASE_DIR=/log
       - TZ=Asia/Seoul
@@ -49,12 +52,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - default
-      - vscode-network
-
-networks:
-  vscode-network:
-    external: true
-  default:
-    driver: bridge

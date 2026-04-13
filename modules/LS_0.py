@@ -26,9 +26,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 skip_boards = set()
 
+# 프록시 설정 (환경 변수가 없으면 로컬 기본값 사용)
+SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
 PROXIES = {
-    'http': 'socks5h://localhost:9091',
-    'https': 'socks5h://localhost:9091'
+    'http': SOCKS_PROXY,
+    'https': SOCKS_PROXY
 }
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
@@ -36,18 +38,25 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     json_data_list = []
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL_TUPLE = (
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}',
-        f'REMOVED&currPage={page}'
-    )
+    # 기본 베이스 URL (파라미터 없음)
+    base_urls = [
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED'
+    ]
+    
+    # page가 1이거나 None이면 파라미터 제외, 그 외에만 currPage 추가
+    if not page or str(page) == '1':
+        TARGET_URL_TUPLE = tuple(base_urls)
+    else:
+        TARGET_URL_TUPLE = tuple(f"{url}&currPage={page}" for url in base_urls)
 
     if skip_boards is None:
         skip_boards = set()
@@ -77,7 +86,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 soupList = soup.select('#contents > table > tbody > tr')
                 break
             except Exception as e:
-                logger.error(f"Error fetching LS board {ARTICLE_BOARD_ORDER}: {e}. Retrying... ({retries-1} left)")
+                logger.error(f"GET 요청 에러: {e} (URL: {TARGET_URL})")
                 retries -= 1
                 time.sleep(5)
                 if retries == 0:
@@ -97,8 +106,10 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 a_tag = list_item.select_one('a')
                 if not a_tag: continue
 
-                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + a_tag['href'].replace("amp;", "")
-                LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL)
+                # KEY값에서 &currPage=1 부분만 정확히 제거 (공백 처리)
+                raw_href = a_tag['href'].replace("amp;", "")
+                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + raw_href
+                LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL).replace("&currPage=1", "")
                 
                 title_text = a_tag.get_text().strip()
                 LIST_ARTICLE_TITLE = title_text[title_text.find("]")+1:].strip()
@@ -132,6 +143,8 @@ def clean_url(url):
         'board_no': query_params.get('board_no', [''])[0],
         'board_seq': query_params.get('board_seq', [''])[0],
     }
+    # 만약 currPage가 1이 아닌 다른 값이면 유지해야 할 수도 있으나, 
+    # 요구사항에 따라 일단 중복 방지를 위해 필수 파라미터만 재조합
     new_query = urlencode(required_params)
     cleaned_url = urlunparse((
         parsed_url.scheme,

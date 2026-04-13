@@ -12,9 +12,10 @@ from dotenv import load_dotenv
 logger.remove() 
 
 HOME_PATH = os.path.expanduser("~")
+LOG_BASE_DIR = os.getenv("LOG_BASE_DIR", os.path.join(HOME_PATH, "log"))
 KST = datetime.timezone(datetime.timedelta(hours=9))
 LOG_DATE = datetime.datetime.now(KST).strftime('%Y%m%d')
-LOG_DIR = os.path.join(HOME_PATH, "log", LOG_DATE)
+LOG_DIR = os.path.join(LOG_BASE_DIR, LOG_DATE)
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # 시간 포맷: HH:mm:ss.SS (밀리초 2자리로 고정)
@@ -22,12 +23,10 @@ LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}<
 FILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
 
 # 2. 핸들러 새로 등록
-# stdout: 터미널인 경우에만 색상 적용 (colorize=None 또는 생략 시 자동 감지)
 logger.add(sys.stdout, format=LOG_FORMAT, level="DEBUG", colorize=None)
-# File: 파일에는 색상 코드 없이 기록 (FILE_FORMAT 사용)
 logger.add(os.path.join(LOG_DIR, f"{LOG_DATE}_scraper.log"), format=FILE_FORMAT, level="DEBUG", rotation="10 MB", retention="30 days", encoding="utf-8")
 
-# --- 모듈 임포트 (로그 설정 이후에 임포트하는 것이 안전) ---
+# --- 모듈 임포트 ---
 from utils.telegram_util import sendMarkDownText
 from utils.sqlite_util import convert_sql_to_telegram_messages
 from models.SQLiteManager import SQLiteManager
@@ -60,7 +59,7 @@ from modules.BNKfn_23 import BNK_checkNewArticle
 from modules.Kyobo_24 import Kyobo_checkNewArticle
 from modules.IBKs_25 import IBK_checkNewArticle
 from modules.SKS_26 import Sks_checkNewArticle
-from modules.Yuanta_27 import Yuanta_checkNewArticle
+from modules.Yuanta_27 import Yuanta_checkNewArticle # 비동기 버전 (파일명 변경됨)
 
 load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
@@ -170,7 +169,7 @@ async def main(date_str=None):
     total_data = []
     
     sync_funcs = [
-        LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, Yuanta_checkNewArticle,
+        LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, 
         Samsung_checkNewArticle, Shinyoung_checkNewArticle, Hmsec_checkNewArticle,
         TOSSinvest_checkNewArticle, DS_checkNewArticle
     ]
@@ -178,11 +177,15 @@ async def main(date_str=None):
         ShinHanInvest_checkNewArticle, Leading_checkNewArticle,
         NHQV_checkNewArticle, HANA_checkNewArticle, KB_checkNewArticle,
         Sangsanginib_checkNewArticle, Kiwoom_checkNewArticle, 
-        Koreainvestment_selenium_checkNewArticle, DAOL_checkNewArticle, 
-        Daeshin_checkNewArticle, iMfnsec_checkNewArticle, DBfi_checkNewArticle,
+        # Koreainvestment_selenium_checkNewArticle, # Selenium 에러 해결 중 (보류)
+        DAOL_checkNewArticle, 
+        Daeshin_checkNewArticle, 
+        # iMfnsec_checkNewArticle, # 보류
+        DBfi_checkNewArticle,
         MERITZ_checkNewArticle, Hanwha_checkNewArticle, Hanyang_checkNewArticle,
         BNK_checkNewArticle, Kyobo_checkNewArticle, IBK_checkNewArticle,
-        eugene_checkNewArticle
+        # eugene_checkNewArticle # 세션 만료 및 제한 에러 (보류)
+        Yuanta_checkNewArticle # 비동기 버전 (명칭 표준화됨)
     ]
 
     run_sync_scrapers(sync_funcs, total_data)

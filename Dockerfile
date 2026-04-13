@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libaio1t64 \
     ca-certificates \
     rclone \
+    chromium \
+    chromium-driver \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. uv 설치
