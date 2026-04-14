@@ -1,33 +1,31 @@
-# -*- coding:utf-8 -*- 
 import asyncio
 import oracledb
 import os
 import sys
-import re
+import logging
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from loguru import logger
 
 # 현재 스크립트의 상위 디렉터리를 모듈 경로에 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 class OracleManager:
     def __init__(self):
-        """Oracle 데이터베이스 연결 초기화 (에러 방어형 통합 매니저)"""
+        """Oracle 데이터베이스 연결 초기화 및 설정 로드"""
         load_dotenv(override=True)
-        self.main_table_name = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send").upper()
+        self.logger = logging.getLogger("OracleManager")
         
         # 환경 변수 로드
         self.wallet_location = os.path.expanduser(os.getenv('WALLET_LOCATION', ''))
         self.wallet_password = os.getenv('WALLET_PASSWORD')
         self.db_user = os.getenv('DB_USER')
         self.db_password = os.getenv('DB_PASSWORD')
-        self.db_dsn = os.getenv('DB_DSN') or os.getenv('DB_DSN_LOW')
+        self.db_dsn = os.getenv('DB_DSN')
         
         self._init_thick_mode()
 
     def _init_thick_mode(self):
-        """Thick 모드 초기화 시도 (Wallet 연동 안정성을 위해)"""
+        """Thick 모드 초기화 (필요한 경우)"""
         try:
             lib_dir = "/opt/oracle/instantclient_19_10"
             if os.path.exists(lib_dir):
@@ -38,7 +36,7 @@ class OracleManager:
             pass
 
     def _get_connection_sync(self):
-        """동기 방식 연결 객체 생성 (Bulk/Sync 처리용)"""
+        """동기 방식 연결 객체 생성"""
         return oracledb.connect(
             user=self.db_user,
             password=self.db_password,
@@ -60,7 +58,7 @@ class OracleManager:
         )
 
     async def execute_query(self, query, params=None):
-        """비동기 일반 쿼리 실행 및 결과 변환"""
+        """비동기 일반 쿼리 실행"""
         try:
             async with await self._get_connection_async() as conn:
                 async with conn.cursor() as cursor:
@@ -77,30 +75,33 @@ class OracleManager:
                         await conn.commit()
                         return cursor.rowcount
         except Exception as e:
-            logger.error(f"Oracle Query Error: {e}")
+            self.logger.error(f"Oracle Query Error: {e}")
             return [] if query.strip().upper().startswith("SELECT") else 0
 
-    async def insert_json_data_list(self, json_data_list):
-        """데이터 삽입/업데이트 (MERGE 방식) - 비동기 호출 인터페이스"""
+    async def insert_json_data_list(self, json_data_list, table_name='DATA_MAIN_DAILY_SEND'):
+        """데이터 삽입/업데이트 (MERGE 방식)"""
         if not json_data_list:
             return 0
+            
+        # 동기 메서드를 executor에서 실행하여 성능 확보
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._insert_sync_process, json_data_list)
+        return await loop.run_in_executor(None, self._insert_sync_process, json_data_list, table_name)
 
-    def _insert_sync_process(self, json_data_list):
-        """데이터 보호 및 Fallback 로직이 강화된 MERGE 프로세스"""
+    def _insert_sync_process(self, json_data_list, table_name='DATA_MAIN_DAILY_SEND'):
+        """MERGE 쿼리를 사용한 동기 삽입 프로세스"""
         conn = self._get_connection_sync()
         query = f"""
-        MERGE INTO {self.main_table_name} t
+        MERGE INTO {table_name} t
         USING (SELECT :REPORT_ID as REPORT_ID, :SEC_FIRM_ORDER as SEC_FIRM_ORDER, 
                       :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, :FIRM_NM as FIRM_NM, 
                       :SEND_USER as SEND_USER, :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, 
-                      :DOWNLOAD_STATUS_YN as DOWNLOAD_STATUS_YN, :SAVE_TIME_STR as SAVE_TIME_STR, 
+                      :DOWNLOAD_STATUS_YN as DOWNLOAD_STATUS_YN, :SAVE_TIME_STR as SAVE_TIME_STR,
                       :REG_DT as REG_DT, :WRITER as WRITER, :KEY as KEY, :MKT_TP as MKT_TP, 
                       :ATTACH_URL as ATTACH_URL, :ARTICLE_TITLE as ARTICLE_TITLE, 
                       :TELEGRAM_URL as TELEGRAM_URL, :ARTICLE_URL as ARTICLE_URL, 
-                      :DOWNLOAD_URL as DOWNLOAD_URL FROM dual) s
-        ON (t.KEY = s.KEY)
+                      :DOWNLOAD_URL as DOWNLOAD_URL
+               FROM DUAL) s
+        ON (t.REPORT_ID = s.REPORT_ID)
         WHEN MATCHED THEN
             UPDATE SET 
                 t.SEC_FIRM_ORDER = NVL(s.SEC_FIRM_ORDER, t.SEC_FIRM_ORDER),
@@ -112,10 +113,11 @@ class OracleManager:
                 t.SAVE_TIME = NVL(TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), t.SAVE_TIME),
                 t.REG_DT = NVL(s.REG_DT, t.REG_DT),
                 t.WRITER = NVL(s.WRITER, t.WRITER),
+                t.KEY = NVL(s.KEY, t.KEY),
                 t.MKT_TP = NVL(s.MKT_TP, t.MKT_TP),
+                t.TELEGRAM_URL = NVL(s.TELEGRAM_URL, t.TELEGRAM_URL),
                 t.ATTACH_URL = NVL(s.ATTACH_URL, t.ATTACH_URL),
                 t.ARTICLE_TITLE = NVL(s.ARTICLE_TITLE, t.ARTICLE_TITLE),
-                t.TELEGRAM_URL = NVL(s.TELEGRAM_URL, t.TELEGRAM_URL),
                 t.ARTICLE_URL = NVL(s.ARTICLE_URL, t.ARTICLE_URL),
                 t.DOWNLOAD_URL = NVL(s.DOWNLOAD_URL, t.DOWNLOAD_URL)
         WHEN NOT MATCHED THEN
@@ -128,6 +130,7 @@ class OracleManager:
                     s.KEY, s.MKT_TP, s.ATTACH_URL, s.ARTICLE_TITLE, s.TELEGRAM_URL, 
                     s.ARTICLE_URL, s.DOWNLOAD_URL)
         """
+        
         params_list = []
         for entry in json_data_list:
             ci = {k.lower(): v for k, v in entry.items()}
@@ -137,16 +140,15 @@ class OracleManager:
                 if val is None or str(val).strip() == "": return None
                 return str(val)[:max_len] if max_len else str(val)
 
-            def get_url_fallback(key, max_len=4000):
-                """ORA-01400 방지를 위한 URL Fallback 로직"""
+            def get_url_val(key, max_len=4000):
                 val = get_str(key, max_len)
                 if val: return val
-                # 본래 값이 없으면 TELEGRAM_URL이나 KEY 값을 빌려와서 강제 삽입
                 tg_url = get_str("telegram_url", max_len)
                 if tg_url: return tg_url
                 key_val = get_str("key", max_len)
                 return key_val if key_val else "N/A"
 
+            # SAVE_TIME 포맷 정규화
             st_raw = ci.get("save_time")
             st_str = str(st_raw).replace('T', ' ') if st_raw else None
 
@@ -163,34 +165,34 @@ class OracleManager:
                 "WRITER": get_str("writer", 100),
                 "KEY": get_str("key", 4000),
                 "MKT_TP": get_str("mkt_tp", 100),
-                "ATTACH_URL": get_url_fallback("attach_url", 4000),
-                "ARTICLE_TITLE": get_str("article_title", 1000) or "No Title",
+                "ATTACH_URL": get_url_val("attach_url", 4000),
+                "ARTICLE_TITLE": get_str("article_title", 4000) or "No Title",
                 "TELEGRAM_URL": get_str("telegram_url", 4000),
-                "ARTICLE_URL": get_url_fallback("article_url", 4000),
-                "DOWNLOAD_URL": get_url_fallback("download_url", 4000)
+                "ARTICLE_URL": get_url_val("article_url", 4000),
+                "DOWNLOAD_URL": get_url_val("download_url", 4000)
             })
+            
         try:
             with conn.cursor() as cursor:
                 cursor.executemany(query, params_list)
                 conn.commit()
-            logger.info(f"✅ Oracle Merge Success: {len(params_list)} rows processed.")
             return len(params_list)
         except Exception as e:
-            logger.error(f"❌ Oracle Merge Error: {e}")
+            self.logger.error(f"Oracle Merge Error: {e}")
             return 0
         finally:
             conn.close()
 
-    async def bulk_insert(self, json_data_list):
+    async def bulk_insert(self, json_data_list, table_name='DATA_MAIN_DAILY_SEND'):
         """대량 데이터 고속 삽입 (APPEND 힌트 사용)"""
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self._bulk_insert_sync, json_data_list)
+        return await loop.run_in_executor(None, self._bulk_insert_sync, json_data_list, table_name)
 
-    def _bulk_insert_sync(self, json_data_list):
+    def _bulk_insert_sync(self, json_data_list, table_name='DATA_MAIN_DAILY_SEND'):
         if not json_data_list: return 0
         conn = self._get_connection_sync()
         query = f"""
-        INSERT /*+ APPEND_VALUES */ INTO {self.main_table_name} (
+        INSERT /*+ APPEND_VALUES */ INTO {table_name} (
             REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
             TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
@@ -204,7 +206,6 @@ class OracleManager:
         """
         
         def parse_dt(dt_str):
-            """ORA-01840 방지를 위한 정밀 날짜 파싱"""
             if not dt_str or str(dt_str).strip() in ['', 'None']: return None
             dt_str = str(dt_str).replace('T', ' ').strip()
             formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y%m%d%H%M%S', '%Y-%m-%d', '%Y%m%d']
@@ -226,126 +227,158 @@ class OracleManager:
                 "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 300),
                 "REG_DT": get_str("reg_dt", 20),
-                "ATTACH_URL": get_str("attach_url", 1000) or get_str("key", 1000),
+                "ATTACH_URL": get_str("attach_url", 1000),
                 "ARTICLE_TITLE": get_str("article_title", 1000) or "No Title",
-                "ARTICLE_URL": get_str("article_url", 1000) or get_str("key", 1000),
+                "ARTICLE_URL": get_str("article_url", 1000),
                 "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1) or "N",
-                "DOWNLOAD_URL": get_str("download_url", 1000) or get_str("key", 1000), 
+                "DOWNLOAD_URL": get_str("download_url", 1000), 
                 "TELEGRAM_URL": get_str("telegram_url", 1000),
                 "WRITER": get_str("writer", 200),
                 "MKT_TP": get_str("mkt_tp", 10) or "KR",
                 "KEY": get_str("key", 1000),
                 "SAVE_TIME": parse_dt(ci.get("save_time")),
-                "GEMINI_SUMMARY": ci.get("gemini_summary"),
+                "GEMINI_SUMMARY": get_str("gemini_summary", 4000),
                 "SUMMARY_TIME": parse_dt(ci.get("summary_time")),
                 "SUMMARY_MODEL": get_str("summary_model", 100)
             })
+            
         try:
             with conn.cursor() as cursor:
+                cursor.setinputsizes(GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB)
                 cursor.executemany(query, params_list)
                 conn.commit()
             return len(params_list)
         except Exception as e:
-            logger.error(f"❌ Oracle Bulk Insert Error: {e}")
+            self.logger.error(f"Oracle Bulk Insert Error: {e}")
             return 0
         finally:
             conn.close()
 
     async def update_report_summary(self, record_id, summary, model_name):
-        query = f"UPDATE {self.main_table_name} SET GEMINI_SUMMARY = :summary, SUMMARY_TIME = :st, SUMMARY_MODEL = :model WHERE REPORT_ID = :id"
+        """REPORT_ID 기준 요약 정보 업데이트"""
+        query = """
+        UPDATE DATA_MAIN_DAILY_SEND
+        SET GEMINI_SUMMARY = :summary, 
+            SUMMARY_TIME = :st, 
+            SUMMARY_MODEL = :model
+        WHERE REPORT_ID = :id
+        """
         params = {"summary": summary, "st": datetime.now(), "model": model_name, "id": record_id}
         return await self.execute_query(query, params)
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
-        query = f"""
-        UPDATE {self.main_table_name} SET GEMINI_SUMMARY = :summary, SUMMARY_TIME = :st, SUMMARY_MODEL = :model
-        WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
-          AND REPORT_ID = (SELECT MAX(REPORT_ID) FROM {self.main_table_name} WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y')
+        """TELEGRAM_URL 기준 최신 레코드 요약 정보 업데이트"""
+        query = """
+        UPDATE DATA_MAIN_DAILY_SEND
+        SET GEMINI_SUMMARY = :summary, 
+            SUMMARY_TIME = :st, 
+            SUMMARY_MODEL = :model
+        WHERE TELEGRAM_URL = :url
+          AND MAIN_CH_SEND_YN = 'Y'
+          AND REPORT_ID = (
+              SELECT MAX(REPORT_ID) FROM DATA_MAIN_DAILY_SEND 
+              WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
+          )
         """
         params = {"summary": summary, "st": datetime.now(), "model": model_name, "url": telegram_url}
         return await self.execute_query(query, params)
 
-    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
+        """텔레그램 URL 및 선택적 제목 업데이트"""
         if article_title:
-            query = f"UPDATE {self.main_table_name} SET TELEGRAM_URL = :t_url, ARTICLE_TITLE = :title, ATTACH_URL = NVL(:pdf, ATTACH_URL) WHERE REPORT_ID = :id"
-            params = {"t_url": telegram_url, "title": article_title, "pdf": pdf_url, "id": record_id}
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, ARTICLE_TITLE = :title WHERE REPORT_ID = :id"
+            params = {"url": telegram_url, "title": article_title, "id": record_id}
         else:
-            query = f"UPDATE {self.main_table_name} SET TELEGRAM_URL = :t_url, ATTACH_URL = NVL(:pdf, ATTACH_URL) WHERE REPORT_ID = :id"
-            params = {"t_url": telegram_url, "pdf": pdf_url, "id": record_id}
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url WHERE REPORT_ID = :id"
+            params = {"url": telegram_url, "id": record_id}
         return await self.execute_query(query, params)
 
-    async def daily_select_data(self, date_str=None, type='send'):
-        if date_str is None:
-            q_date = datetime.now().strftime('%Y-%m-%d')
-            base_dt = datetime.now()
-        else:
+    async def daily_select_data(self, date_str=None, type=None):
+        """날짜별 전송/다운로드 대상 데이터 조회"""
+        if type not in ['send', 'download']:
+            raise ValueError("Type must be 'send' or 'download'")
+
+        today = datetime.now()
+        if date_str:
             q_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
             base_dt = datetime.strptime(date_str, '%Y%m%d')
+        else:
+            q_date = today.strftime('%Y-%m-%d')
+            base_dt = today
 
         reg_dt_start = (base_dt - timedelta(days=3)).strftime('%Y%m%d')
         reg_dt_end = (base_dt + timedelta(days=2)).strftime('%Y%m%d')
 
-        if type == 'send':
-            cond = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL IS NOT NULL))"
-        else:
-            cond = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
-            
+        condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'" if type == 'download' else \
+                    "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL IS NOT NULL))"
+
         query = f"""
-        SELECT * FROM {self.main_table_name} 
-        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = :dt 
-          AND REG_DT BETWEEN :r_start AND :r_end
-          AND {cond}
+        SELECT * FROM DATA_MAIN_DAILY_SEND 
+        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = '{q_date}'
+          AND REG_DT BETWEEN '{reg_dt_start}' AND '{reg_dt_end}'
+          AND {condition}
         ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
         """
-        return await self.execute_query(query, {"dt": q_date, "r_start": reg_dt_start, "r_end": reg_dt_end})
+        return await self.execute_query(query)
 
-    async def daily_update_data(self, fetched_rows=None, type='send', date_str=None):
+    async def daily_update_data(self, fetched_rows=None, type=None, date_str=None):
+        """상태 업데이트 (fetched_rows가 리스트 또는 단일 딕셔너리일 수 있음)"""
         if not fetched_rows: return 0
         if isinstance(fetched_rows, dict): fetched_rows = [fetched_rows]
         
-        ids = [r.get('REPORT_ID') or r.get('report_id') for r in fetched_rows]
-        col = "MAIN_CH_SEND_YN" if type == 'send' else "DOWNLOAD_STATUS_YN"
-        query = f"UPDATE {self.main_table_name} SET {col} = 'Y' WHERE REPORT_ID = :id"
+        col = "DOWNLOAD_STATUS_YN" if type == "download" else "MAIN_CH_SEND_YN"
+        query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"
         
         async with await self._get_connection_async() as conn:
             async with conn.cursor() as cursor:
-                params = [{"id": rid} for rid in ids]
+                params = [{"id": row.get("report_id")} for row in fetched_rows]
                 await cursor.executemany(query, params)
                 await conn.commit()
                 return cursor.rowcount
 
-    def truncate_table(self, table_name=None):
-        """ORA-00054 대응: TRUNCATE 실패 시 DELETE로 자동 전환"""
-        t_name = table_name or self.main_table_name
+    async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
+        """텔레그램 URL 갱신이 필요한 데이터 조회"""
+        query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
+        sec_firm_order = firm_info.get_state()["SEC_FIRM_ORDER"]
+        
+        query = f"""
+        SELECT * FROM DATA_MAIN_DAILY_SEND
+        WHERE REG_DT BETWEEN TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') - 3, 'YYYYMMDD')
+                        AND TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') + 2, 'YYYYMMDD')
+          AND SEC_FIRM_ORDER = :sec_order
+          AND KEY IS NOT NULL
+          AND TELEGRAM_URL IS NULL
+        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        """
+        return await self.execute_query(query, {"sec_order": sec_firm_order})
+
+    def truncate_table(self, table_name='DATA_MAIN_DAILY_SEND'):
+        """테이블 초기화"""
         conn = self._get_connection_sync()
         try:
             with conn.cursor() as cursor:
                 try:
-                    cursor.execute(f"TRUNCATE TABLE {t_name}")
-                    logger.info(f"✅ Table {t_name} truncated.")
+                    cursor.execute(f"TRUNCATE TABLE {table_name}")
                 except oracledb.DatabaseError as e:
                     if "ORA-00054" in str(e):
-                        logger.warning(f"⚠️ {t_name} busy, switching to DELETE...")
-                        cursor.execute(f"DELETE FROM {t_name}")
-                        logger.info(f"✅ Table {t_name} cleaned via DELETE.")
+                        cursor.execute(f"DELETE FROM {table_name}")
                     else: raise e
                 conn.commit()
             return True
         except Exception as e:
-            logger.error(f"❌ Clean Table Error: {e}")
+            self.logger.error(f"Truncate Error: {e}")
             return False
         finally:
             conn.close()
 
     async def full_sync_from_sqlite(self):
-        """SQLite에서 Oracle로 최적화된 청크 단위 고속 동기화"""
+        """SQLite 데이터를 Oracle로 고속 전체 동기화"""
         from models.SQLiteManager import SQLiteManager
-        logger.info("🚀 Starting Optimized Chunked Sync to Oracle...")
         self.truncate_table()
         
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        sqlite_db.cursor.execute(f"SELECT count(*) FROM {sqlite_db.main_table_name}")
+        sqlite_db.cursor.execute("SELECT count(*) FROM DATA_MAIN_DAILY_SEND")
         total_rows = sqlite_db.cursor.fetchone()[0]
         
         if total_rows == 0:
@@ -357,7 +390,7 @@ class OracleManager:
         total_synced = 0
         
         while offset < total_rows:
-            sqlite_db.cursor.execute(f"SELECT * FROM {sqlite_db.main_table_name} LIMIT {chunk_size} OFFSET {offset}")
+            sqlite_db.cursor.execute(f"SELECT * FROM DATA_MAIN_DAILY_SEND LIMIT {chunk_size} OFFSET {offset}")
             rows = sqlite_db.cursor.fetchall()
             if not rows: break
             
@@ -365,17 +398,59 @@ class OracleManager:
             count = await self.bulk_insert(sqlite_data)
             total_synced += count
             offset += chunk_size
-            logger.info(f"✅ Syncing... {min(offset, total_rows)}/{total_rows}")
+            print(f"✅ Syncing... {min(offset, total_rows)}/{total_rows}")
             
         sqlite_db.close_connection()
         return total_synced
 
-# 하위 호환성 유지
-OracleManagerSQL = OracleManager
+    async def sync_recent_from_sqlite(self, hours=3):
+        """최근 N시간 데이터를 SQLite에서 Oracle로 MERGE 동기화"""
+        from models.SQLiteManager import SQLiteManager
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        query = f"SELECT * FROM DATA_MAIN_DAILY_SEND WHERE SAVE_TIME >= datetime('now', '-{hours} hour', 'localtime')"
+        sqlite_db.cursor.execute(query)
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data: return 0
+        return await self.insert_json_data_list(sqlite_data)
+
+    async def sync_all_from_sqlite(self):
+        """전체 데이터를 SQLite에서 Oracle로 MERGE 동기화 (기존 데이터 보존)"""
+        from models.SQLiteManager import SQLiteManager
+        sqlite_db = SQLiteManager()
+        sqlite_db.open_connection()
+        sqlite_db.cursor.execute("SELECT * FROM DATA_MAIN_DAILY_SEND")
+        rows = sqlite_db.cursor.fetchall()
+        sqlite_data = [dict(row) for row in rows]
+        sqlite_db.close_connection()
+        
+        if not sqlite_data: return 0
+        
+        chunk_size = 10000
+        total = 0
+        for i in range(0, len(sqlite_data), chunk_size):
+            chunk = sqlite_data[i:i + chunk_size]
+            count = await self.insert_json_data_list(chunk)
+            total += count
+            print(f"✅ Merging... {total}/{len(sqlite_data)}")
+        return total
 
 if __name__ == "__main__":
+    import sys
     async def main():
         om = OracleManager()
-        res = await om.execute_query(f"SELECT count(*) as cnt FROM {om.main_table_name}")
-        print(f"Oracle Row Count: {res[0]['cnt'] if res else 0}")
+        if len(sys.argv) > 1:
+            cmd = sys.argv[1]
+            if cmd == "full_insert": await om.full_sync_from_sqlite()
+            elif cmd == "sync_all": await om.sync_all_from_sqlite()
+            elif cmd == "sync_recent":
+                hours = int(sys.argv[2]) if len(sys.argv) > 2 else 3
+                await om.sync_recent_from_sqlite(hours)
+        else:
+            res = await om.execute_query("SELECT count(*) as cnt FROM DATA_MAIN_DAILY_SEND")
+            print(f"Current Oracle Row Count: {res[0]['cnt'] if res else 0}")
+
     asyncio.run(main())
