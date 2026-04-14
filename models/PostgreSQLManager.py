@@ -7,7 +7,7 @@ from loguru import logger
 
 class PostgreSQLManager:
     def __init__(self):
-        load_dotenv()
+        load_dotenv(override=True)
         self.host = os.getenv('POSTGRES_HOST')
         self.port = os.getenv('POSTGRES_PORT', '5432')
         self.database = os.getenv('POSTGRES_DB')
