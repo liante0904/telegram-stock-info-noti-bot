@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/stock-noti-bot
+  IMAGE_NAME: ${{ github.repository_owner }}/ssh-reports-scraper
 
 jobs:
   build-and-push:

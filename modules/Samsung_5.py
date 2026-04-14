@@ -1,3 +1,4 @@
+from loguru import logger
 # -*- coding:utf-8 -*- 
 import gc
 import requests
@@ -43,9 +44,9 @@ def Samsung_checkNewArticle():
         soup = scraper.Get()
 
         soupList = soup.select('#content > section.bbsLstWrap > ul > li')
-        print(f"Number of articles: {len(soupList)}")
-        # print(f"URL: {soupList}")
-        # print('게시판 이름:', ARTICLE_BOARD_NAME) # 게시판 종류
+        logger.info(f"Number of articles: {len(soupList)}")
+        # logger.debug(f"URL: {soupList}")
+        # logger.debug('게시판 이름:', ARTICLE_BOARD_NAME)
 
         for item in soupList:
             try:
@@ -94,16 +95,16 @@ def Samsung_checkNewArticle():
                 })
 
                 # # 유효 데이터 출력
-                # print(f"[Title]: {LIST_ARTICLE_TITLE}")
-                # print(f"[File Path]: {a_href_path}")
-                # print(f"[Registration Date]: {REG_DT}")
-                # print(f"[PDF URL]: {LIST_ARTICLE_URL}")
-                # print(f"[Publish Date]: {pub_date}")
-                # print(f"[Category]: {category}")
-                # print(f"[Author]: {author}")
+                # logger.debug(f"[Title]: {LIST_ARTICLE_TITLE}")
+                # logger.debug(f"[File Path]: {a_href_path}")
+                # logger.debug(f"[Registration Date]: {REG_DT}")
+                # logger.debug(f"[PDF URL]: {LIST_ARTICLE_URL}")
+                # logger.debug(f"[Publish Date]: {pub_date}")
+                # logger.debug(f"[Category]: {category}")
+                # logger.debug(f"[Author]: {author}")
                 
             except Exception as e:
-                print(f"Error parsing item: {e}")
+                logger.warning(f"Error parsing item: {e}")
 
         break
         
@@ -113,9 +114,9 @@ def Samsung_checkNewArticle():
 
     sorted_data = extract_and_deduplicate(json_data_list)
     # 3. 정렬된 결과 출력
-    # print("Sorted JSON Data:")
-    # print(json.dumps(sorted_data, indent=4, ensure_ascii=False))
-    # print(json_data_list)
+    # logger.debug("Sorted JSON Data:")
+    # logger.debug(json.dumps(sorted_data, indent=4, ensure_ascii=False))
+    # logger.debug(json_data_list)
     return json_data_list
 
 def extract_and_deduplicate(json_list):

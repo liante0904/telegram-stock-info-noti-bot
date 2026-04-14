@@ -1,3 +1,4 @@
+from loguru import logger
 # -*- coding:utf-8 -*-
 import os
 import gc
@@ -47,7 +48,7 @@ def Sks_checkNewArticle():
     soupList = jres.get('list', [])
 
     for item in soupList:
-        # print(item)
+        # logger.debug(item)
         # return 
         # PDF 파일명 예: "20251020073057027_0_ko.pdf"
         pdfpath = item.get("PDFPATH", "").strip()
@@ -88,11 +89,11 @@ def Sks_checkNewArticle():
 def main():
     result = Sks_checkNewArticle()
     if not result:
-        print("No articles found.")
+        logger.info("No articles found.")
     else:
         db = SQLiteManager()
         inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
-        print(f"Inserted {inserted_count} articles.")
+        logger.info(f"Inserted {inserted_count} articles.")
 
 if __name__ == '__main__':
     main()

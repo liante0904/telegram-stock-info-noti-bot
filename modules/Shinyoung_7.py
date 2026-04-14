@@ -1,3 +1,4 @@
+from loguru import logger
 # -*- coding:utf-8 -*- 
 import gc
 import requests
@@ -43,16 +44,16 @@ def Shinyoung_checkNewArticle():
     # HTML parse
     jres = scraper.PostJson(params=payload)
 
-    # print(jres['rows'])
+    # logger.debug(jres['rows'])
     soupList = jres['rows']
     
     # JSON To List
     for list in soupList:
-        # print('list***************** \n',list)
+        # logger.debug('list***************** \n',list)
         MKT_TP              = "KR"    
         REG_DT              = re.sub(r"[-./]", "", list['APPDATE'])
         WRITER              = list['EMPNM']
-        # print('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
+        # logger.debug('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[ARTICLE_BOARD_ORDER])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
         if "해외주식" in LIST_ARTICLE_TITLE :
@@ -79,7 +80,7 @@ def Shinyoung_checkNewArticle():
     return json_data_list
 
 def Shinyoung_detail(SEQ, BBSNO):
-    # print('******************Shinyoung_detail***************')
+    # logger.debug('******************Shinyoung_detail***************')
     # ntNo = NT_NO
     # cmsCd = CMS_CD
     # POST 요청에 사용할 URL
@@ -105,7 +106,7 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     # 응답의 내용 확인
     if response.status_code != 200:
-        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+        logger.warning("요청에 실패하였습니다. 상태 코드:", response.status_code)
     
     # 서버에서 반환한 응답 확인 및 새로운 쿠키가 있다면 세션에 추가
     if 'Set-Cookie' in response.headers:
@@ -142,7 +143,7 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     # 응답의 내용 확인
     if response.status_code != 200:
-        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+        logger.warning("요청에 실패하였습니다. 상태 코드:", response.status_code)
     # POST 요청에 사용할 URL
     url = "https://www.shinyoung.com/Common/authTr/downloadFilePath"
 
@@ -177,7 +178,7 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     # 응답의 내용 확인
     if response.status_code != 200:
-        print("요청에 실패하였습니다. 상태 코드:", response.status_code)
+        logger.warning("요청에 실패하였습니다. 상태 코드:", response.status_code)
 
     jres = json.loads(response.text)
     
@@ -185,7 +186,7 @@ def Shinyoung_detail(SEQ, BBSNO):
 
     url = base_url + jres['FILEINFO']['FILEPATH']
 
-    # print('*******************완성된 URL',url)
+    # logger.debug('*******************완성된 URL',url)
     return url
 
 if __name__ == "__main__":

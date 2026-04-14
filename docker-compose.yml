@@ -1,10 +1,9 @@
 services:
   main-scraper:
     platform: linux/arm64
-    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
-    container_name: telegram-stock-info-noti-bot-main-scraper-${APP_ENV:-dev}
-    
-
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper:latest}
+    container_name: ssh-reports-scraper-main-scraper-${APP_ENV:-dev}
+    build: .
     restart: unless-stopped
     network_mode: "host"
     env_file:
@@ -29,9 +28,9 @@ services:
 
   report-keyword-alert:
     platform: linux/arm64
-    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
-    container_name: telegram-stock-info-noti-bot-keyword-alert-${APP_ENV:-dev}
-    
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper:latest}
+    container_name: ssh-reports-scraper-keyword-alert-${APP_ENV:-dev}    
+    build: .
 
     restart: always
     network_mode: "host"

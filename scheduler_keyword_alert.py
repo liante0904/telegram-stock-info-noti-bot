@@ -1,47 +1,34 @@
 import os
 import subprocess
-import logging  # <--- 이 줄이 추가되었습니다.
+import sys
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
 
-# 로그 설정 (디렉토리 자동 생성 포함)
-def get_log_path():
-    today = datetime.now().strftime('%Y%m%d')
-    log_base = os.getenv("LOG_BASE_DIR", "/log")
-    log_dir = os.path.join(log_base, today)
-    
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir, exist_ok=True)
-    return os.path.join(log_dir, f"{today}_send_report_by_keyword_to_user.log")
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(get_log_path())
-    ]
-)
+# 공통 로그 설정 적용
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from utils.logger_util import setup_logger
+setup_logger("keyword_alert")
 
 def run_job():
-    logging.info("--- Keyword Alert Job Start ---")
+    logger.info("--- Keyword Alert Job Start ---")
     try:
         # RUN_ONCE=true로 설정하여 1회 실행 후 종료되게 함
         env = os.environ.copy()
         env["RUN_ONCE"] = "true"
-        
+
         result = subprocess.run(
             ["uv", "run", "run/keyword_alert.py"],
             env=env,
             check=False
         )
         if result.returncode != 0:
-            logging.error(f"Job process exited with error code {result.returncode}")
+            logger.error(f"Job failed with return code {result.returncode}")
+        else:
+            logger.info("--- Keyword Alert Job Finished ---")
     except Exception as e:
-        logging.error(f"Execution Error: {e}")
-    logging.info("--- Keyword Alert Job End ---")
+        logger.error(f"Error during job execution: {e}")
 
 scheduler = BlockingScheduler()
 

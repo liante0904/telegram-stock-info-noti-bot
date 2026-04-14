@@ -1,3 +1,4 @@
+from loguru import logger
 # -*- coding:utf-8 -*- 
 import gc
 import requests
@@ -37,10 +38,10 @@ def TOSSinvest_checkNewArticle():
         # HTML parse
         soupList = jres['result']['list']
         
-        # print('*' *40)
-        # print(soupList)
+        # logger.debug('*' *40)
+        # logger.debug(soupList)
         
-        # print('*' *40)
+        # logger.debug('*' *40)
         
         nNewArticleCnt = 0
         for list in soupList:

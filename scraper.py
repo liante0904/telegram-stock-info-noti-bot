@@ -8,23 +8,9 @@ import datetime
 from loguru import logger
 from dotenv import load_dotenv
 
-# 1. 로그 초기화 (모든 핸들러를 완전히 제거)
-logger.remove() 
-
-HOME_PATH = os.path.expanduser("~")
-LOG_BASE_DIR = os.getenv("LOG_BASE_DIR", os.path.join(HOME_PATH, "log"))
-KST = datetime.timezone(datetime.timedelta(hours=9))
-LOG_DATE = datetime.datetime.now(KST).strftime('%Y%m%d')
-LOG_DIR = os.path.join(LOG_BASE_DIR, LOG_DATE)
-os.makedirs(LOG_DIR, exist_ok=True)
-
-# 시간 포맷: HH:mm:ss.SS (밀리초 2자리로 고정)
-LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
-FILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
-
-# 2. 핸들러 새로 등록
-logger.add(sys.stdout, format=LOG_FORMAT, level="DEBUG", colorize=None)
-logger.add(os.path.join(LOG_DIR, f"{LOG_DATE}_scraper.log"), format=FILE_FORMAT, level="DEBUG", rotation="10 MB", retention="30 days", encoding="utf-8")
+# 공통 로그 설정 적용
+from utils.logger_util import setup_logger
+setup_logger("scraper")
 
 # --- 모듈 임포트 ---
 from utils.telegram_util import sendMarkDownText
