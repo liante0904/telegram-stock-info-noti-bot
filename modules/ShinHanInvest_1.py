@@ -66,7 +66,7 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
             
             # HTML parse
             jres = scraper.GetJson()
-            # print(jres)
+            # logger.debug(jres)
             logger.info(f"Calling URL: {TARGET_URL}")
             
             # title_map에서 동적으로 키 매핑
@@ -188,7 +188,7 @@ async def ShinHanInvest_checkNewArticle():
 
                 collectionList = result.get('body', {}).get('collectionList', [])
                 for collection in collectionList:
-                    # print(collection)
+                    # logger.debug(collection)
                     itemList = collection.get('itemList', [])
                     logger.info(f"ShinHanInvest: Found {len(itemList)} items in collection")
                     for item in itemList:
@@ -286,9 +286,9 @@ if __name__ == "__main__":
     firm_info = FirmInfo(sec_firm_order=1, article_board_order=0)
     # results = asyncio.run(ShinHanInvest_checkNewArticle(cur_page=1, single_page_only=True))
     results = asyncio.run(ShinHanInvest_checkNewArticle())
-    # print(results)
+    # logger.debug(results)
     logger.info(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
-    # print(results)
+    # logger.debug(results)
 
     db = SQLiteManager()
     inserted_count_results = db.insert_json_data_list(results)

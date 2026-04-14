@@ -1,3 +1,4 @@
+from loguru import logger
 import os
 import gc
 import aiohttp
@@ -124,7 +125,7 @@ async def DAOL_checkNewArticle():
 
                 LIST_ARTICLE_TITLE = article_link['title']
                 if "Coverage 제외" in LIST_ARTICLE_TITLE:
-                    print("Coverage 제외는 발송 제외")
+                    logger.warning("Coverage 제외는 발송 제외")
                     continue
 
                 LIST_ARTICLE_URL = article_link['href']
@@ -132,7 +133,7 @@ async def DAOL_checkNewArticle():
                 # URL 분할
                 parts = LIST_ARTICLE_URL.split(',')
                 if len(parts) != 3:
-                    print("잘못된 입력 형식입니다.")
+                    logger.debug("잘못된 입력 형식입니다.")
                     continue
 
                 path = parts[0].split("'")[1]

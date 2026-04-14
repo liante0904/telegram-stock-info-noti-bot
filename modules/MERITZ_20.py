@@ -116,13 +116,14 @@ async def MERITZ_checkNewArticle(full_fetch=False):
     SEC_FIRM_ORDER = 20
 
     TARGET_URL_TUPLE = [
-        'https://home.imeritz.com/bbs/BbsList.go?bbsGrpId=bascGrp&bbsId=sih02nw&listCnt=50&pageNum=1&searchDiv=&searchText=',
-        'https://home.imeritz.com/bbs/BbsList.go?bbsGrpId=bascGrp&bbsId=invest03nw&listCnt=50&pageNum=1&searchDiv=&searchText=',
-        'https://home.imeritz.com/bbs/BbsList.go?bbsGrpId=bascGrp&bbsId=invest02nw&listCnt=50&pageNum=1&searchDiv=&searchText=',
-        'https://home.imeritz.com/bbs/BbsList.go?bbsGrpId=bascGrp&bbsId=pricenewsrs&listCnt=50&pageNum=1&searchDiv=&searchText='
+        'REMOVED',
+        'REMOVED',
+        'REMOVED',
+        'REMOVED'
     ]
 
-    max_pages = None if full_fetch else 3
+    # 200건씩 한 번만 호출하도록 max_pages를 1로 제한 (full_fetch 시에도 대량 수집 가능)
+    max_pages = 1
     all_results = []
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):

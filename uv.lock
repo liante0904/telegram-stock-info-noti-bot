@@ -1510,7 +1510,7 @@ wheels = [
 ]
 
 [[package]]
-name = "telegram-report-bot"
+name = "ssh-reports-scraper"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

@@ -1,3 +1,4 @@
+from loguru import logger
 # -*- coding:utf-8 -*- 
 import os
 import gc
@@ -47,15 +48,15 @@ def Hmsec_checkNewArticle():
         
         # REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
         # FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
-        # print('REG_DATE:',REG_DATE)
-        # print('FILE_NAME:',FILE_NAME)
+        # logger.debug('REG_DATE:',REG_DATE)
+        # logger.debug('FILE_NAME:',FILE_NAME)
 
-        # print(jres)
+        # logger.debug(jres)
         soupList = jres['data_list']
         
         # JSON To List
         for list in soupList:
-            # print(list)
+            # logger.debug(list)
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
             DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}' 
             DOWNLOAD_URL = DOWNLOAD_URL.format(list['UPLOAD_FILE1'])
@@ -69,7 +70,7 @@ def Hmsec_checkNewArticle():
             REG_DT = list['REG_DATE'].strip()
             list['NAME'] = (list.get('NAME') or '').strip()
             WRITER = list['NAME'].strip()
-            # print(jres['data_list'])
+            # logger.debug(jres['data_list'])
             # SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
             # LIST_ARTICLE_URL = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
@@ -94,18 +95,18 @@ def Hmsec_checkNewArticle():
     # 메모리 정리
     del soupList
     gc.collect()
-    # print(json_data_list)
+    # logger.debug(json_data_list)
     return json_data_list
 
 
 # # 비동기 함수 실행
 # async def main():
 #     result = await Sangsanginib_checkNewArticle()
-#     print(result)
+# logger.debug(result)
 
 def main():
     result = Hmsec_checkNewArticle()
-    print(result)
+    logger.debug(result)
     
 if __name__ == '__main__':
     main()

@@ -3,7 +3,7 @@ from loguru import logger
 REMOTE_SSH_ALIAS = "oci"
 REMOTE_DB_PATH = os.getenv('SQLITE_DB_PATH', "/home/ubuntu/sqlite3/telegram.db")
 # 리눅스 서버 프로젝트 경로 (SQLite 업데이트 시 DataManager 사용용)
-REMOTE_PROJECT_DIR = "/home/ubuntu/dev/telegram-stock-info-noti-bot"
+REMOTE_PROJECT_DIR = "/home/ubuntu/dev/ssh-reports-scraper"
 # 리눅스 서버 파이썬 경로
 REMOTE_PYTHON_PATH = "/home/ubuntu/.pyenv/versions/pyenv/bin/python3"
 

@@ -1,27 +1,16 @@
 # -*- coding:utf-8 -*- 
 import os
 import subprocess
+import sys
 from datetime import datetime
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
 from loguru import logger
-import sys
 
-# 1. 로그 설정 (scraper.py 스타일 참조)
-logger.remove()
-
-HOME_PATH = os.path.expanduser("~")
-# 환경 변수 LOG_BASE_DIR이 있으면 사용, 없으면 ~/log 사용
-log_base = os.getenv("LOG_BASE_DIR", os.path.join(HOME_PATH, "log"))
-today = datetime.now().strftime('%Y%m%d')
-log_dir = os.path.join(log_base, today)
-os.makedirs(log_dir, exist_ok=True)
-
-LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
-FILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
-
-logger.add(sys.stdout, format=LOG_FORMAT, level="INFO", colorize=True)
-logger.add(os.path.join(log_dir, f"{today}_scheduler.log"), format=FILE_FORMAT, level="INFO", rotation="10 MB", retention="30 days", encoding="utf-8")
+# 공통 로그 설정 적용
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from utils.logger_util import setup_logger
+setup_logger("scheduler")
 
 def run_scraper():
     """메인 스크래퍼 실행 (scraper.py)"""

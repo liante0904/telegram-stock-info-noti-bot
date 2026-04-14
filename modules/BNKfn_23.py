@@ -1,3 +1,4 @@
+from loguru import logger
 import os
 import gc
 import aiohttp
@@ -49,7 +50,7 @@ async def BNK_checkNewArticle():
             table = soup.find("table", class_="table01")
 
             if not table:
-                print(f"Table not found in {url}")
+                logger.warning(f"Table not found in {url}")
                 continue
 
             rows = table.select("tbody tr")
@@ -103,4 +104,4 @@ async def BNK_checkNewArticle():
 if __name__ == "__main__":
     articles = asyncio.run(BNK_checkNewArticle())
     for article in articles:
-        print(article)
+        logger.debug(article)
