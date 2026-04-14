@@ -3,6 +3,7 @@ services:
     platform: linux/arm64
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
     container_name: telegram-stock-info-noti-bot-main-scraper-${APP_ENV:-dev}
+    
     build: 
       context: .
       dockerfile: Dockerfile
@@ -12,13 +13,13 @@ services:
       - .env
     volumes:
       - ~/log:/log
-      - ~/sqlite3:/root/sqlite3
+      - ~/sqlite3:/app/db
     environment:
       - APP_ENV=${APP_ENV:-dev}
       - TZ=Asia/Seoul
       - LOG_BASE_DIR=/log
       - LOG_FILE=/log/logfile.log
-      - SQLITE_DB_PATH=/root/sqlite3/telegram.db
+      - SQLITE_DB_PATH=/app/db/telegram.db
       - SOCKS_PROXY_URL=socks5h://localhost:9091
     stdin_open: true
     tty: true
@@ -32,6 +33,7 @@ services:
     platform: linux/arm64
     image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/stock-noti-bot:latest}
     container_name: telegram-stock-info-noti-bot-keyword-alert-${APP_ENV:-dev}
+    
     build:
       context: .
       dockerfile: Dockerfile
@@ -46,6 +48,7 @@ services:
       - SQLITE_DB_PATH=/app/db/telegram.db
       - LOG_BASE_DIR=/log
       - TZ=Asia/Seoul
+      - POSTGRES_HOST=localhost
     command: ["uv", "run", "scheduler_keyword_alert.py"]
     logging:
       driver: "json-file"
