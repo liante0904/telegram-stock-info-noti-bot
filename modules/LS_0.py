@@ -85,14 +85,13 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     raise ValueError("Empty response from server.")
                 soupList = soup.select('#contents > table > tbody > tr')
                 break
-            except Exception as e:
-                logger.error(f"GET 요청 에러: {e} (URL: {TARGET_URL})")
+            except Exception:
                 retries -= 1
-                time.sleep(5)
                 if retries == 0:
                     skip_boards.add(ARTICLE_BOARD_ORDER)
-                    logger.warning(f"Skipping LS board {ARTICLE_BOARD_ORDER} after 3 attempts.")
+                    logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} 3회 시도 실패로 스킵: {TARGET_URL}")
                     break
+                time.sleep(5)
 
         logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
 
