@@ -13,23 +13,13 @@ from models.FirmInfo import FirmInfo  # 이미 정의된 FirmInfo 클래스
 
 # 환경 변수 로드
 load_dotenv()
-env = os.getenv('ENV')
-
-if env == 'production':
-    PROJECT_DIR = os.getenv('PROJECT_DIR')
-    HOME_DIR = os.getenv('HOME_DIR')
-    JSON_DIR = os.getenv('JSON_DIR')
-else:
-    PROJECT_DIR = os.getenv('PROJECT_DIR')
-    HOME_DIR = os.getenv('HOME_DIR')
-    JSON_DIR = os.getenv('JSON_DIR')
 
 # 데이터베이스 파일 경로 (환경 변수 SQLITE_DB_PATH를 최우선으로 사용)
-db_path = os.getenv('SQLITE_DB_PATH', os.path.expanduser('~/sqlite3/telegram.db'))
+_default_db_path = os.getenv('SQLITE_DB_PATH', os.path.expanduser('~/sqlite3/telegram.db'))
 
 class SQLiteManager:
     def __init__(self, db_path=None):
-        self.db_path = db_path if db_path else globals()['db_path']
+        self.db_path = db_path or _default_db_path
         self.connection = None
         self.cursor = None
         self.main_table_name = os.getenv("MAIN_TABLE_NAME", "data_main_daily_send")
@@ -91,62 +81,64 @@ class SQLiteManager:
         inserted_count = 0
         updated_count = 0
 
-        # 데이터 삽입 및 업데이트 시도
-        for entry in json_data_list:
-            self.cursor.execute(f'''
-                INSERT INTO {table_name} (
-                    SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-                    ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-                    DOWNLOAD_URL, TELEGRAM_URL, PDF_URL, WRITER, MKT_TP, KEY, SAVE_TIME 
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(KEY) DO UPDATE SET
-                    REG_DT = excluded.REG_DT,  -- 항상 갱신
-                    WRITER = excluded.WRITER,  -- 항상 갱신
-                    MKT_TP = excluded.MKT_TP,  -- 항상 갱신
-                    DOWNLOAD_URL = CASE 
-                        WHEN excluded.DOWNLOAD_URL IS NOT NULL AND excluded.DOWNLOAD_URL != '' 
-                        THEN excluded.DOWNLOAD_URL 
-                        ELSE DOWNLOAD_URL -- 기존 값을 유지
-                    END,
-                    TELEGRAM_URL = CASE 
-                        WHEN excluded.TELEGRAM_URL IS NOT NULL AND excluded.TELEGRAM_URL != '' 
-                        THEN excluded.TELEGRAM_URL 
-                        ELSE TELEGRAM_URL -- 기존 값을 유지
-                    END,
-                    PDF_URL = CASE 
-                        WHEN excluded.PDF_URL IS NOT NULL AND excluded.PDF_URL != '' 
-                        THEN excluded.PDF_URL 
-                        ELSE PDF_URL -- 기존 값을 유지
-                    END
-            ''', (
-                entry["SEC_FIRM_ORDER"],
-                entry["ARTICLE_BOARD_ORDER"],
-                entry["FIRM_NM"],
-                entry.get("REG_DT", ''),
-                entry.get("ATTACH_URL", ''),
-                entry["ARTICLE_TITLE"],
-                entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-                entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
-                entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
-                entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
-                entry.get("PDF_URL") or entry.get("TELEGRAM_URL", None),  # PDF_URL이 없으면 TELEGRAM_URL을 넣음
-                entry.get("WRITER", ''),
-                entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
-                entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
-                entry["SAVE_TIME"]
-            ))
+        try:
+            # 데이터 삽입 및 업데이트 시도
+            for entry in json_data_list:
+                self.cursor.execute(f'''
+                    INSERT INTO {table_name} (
+                        SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
+                        DOWNLOAD_URL, TELEGRAM_URL, PDF_URL, WRITER, MKT_TP, KEY, SAVE_TIME
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(KEY) DO UPDATE SET
+                        REG_DT = excluded.REG_DT,  -- 항상 갱신
+                        WRITER = excluded.WRITER,  -- 항상 갱신
+                        MKT_TP = excluded.MKT_TP,  -- 항상 갱신
+                        DOWNLOAD_URL = CASE
+                            WHEN excluded.DOWNLOAD_URL IS NOT NULL AND excluded.DOWNLOAD_URL != ''
+                            THEN excluded.DOWNLOAD_URL
+                            ELSE DOWNLOAD_URL -- 기존 값을 유지
+                        END,
+                        TELEGRAM_URL = CASE
+                            WHEN excluded.TELEGRAM_URL IS NOT NULL AND excluded.TELEGRAM_URL != ''
+                            THEN excluded.TELEGRAM_URL
+                            ELSE TELEGRAM_URL -- 기존 값을 유지
+                        END,
+                        PDF_URL = CASE
+                            WHEN excluded.PDF_URL IS NOT NULL AND excluded.PDF_URL != ''
+                            THEN excluded.PDF_URL
+                            ELSE PDF_URL -- 기존 값을 유지
+                        END
+                ''', (
+                    entry["SEC_FIRM_ORDER"],
+                    entry["ARTICLE_BOARD_ORDER"],
+                    entry["FIRM_NM"],
+                    entry.get("REG_DT", ''),
+                    entry.get("ATTACH_URL", ''),
+                    entry["ARTICLE_TITLE"],
+                    entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
+                    entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
+                    entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+                    entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
+                    entry.get("PDF_URL") or entry.get("TELEGRAM_URL", None),  # PDF_URL이 없으면 TELEGRAM_URL을 넣음
+                    entry.get("WRITER", ''),
+                    entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
+                    entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
+                    entry["SAVE_TIME"]
+                ))
 
-            # 삽입 또는 업데이트 확인
-            if self.cursor.rowcount == 1:
-                inserted_count += 1  # 새로 삽입된 경우
-            else:
-                updated_count += 1  # 업데이트된 경우
+                # 삽입 또는 업데이트 확인
+                if self.cursor.rowcount == 1:
+                    inserted_count += 1  # 새로 삽입된 경우
+                else:
+                    updated_count += 1  # 업데이트된 경우
 
-        # 커밋하고 결과 출력
-        self.connection.commit()
-        logger.info(f"SQLite Data inserted: {inserted_count} rows, updated: {updated_count} rows.")
-        
-        self.close_connection()  # 데이터베이스 연결 닫기
+            # 커밋하고 결과 출력
+            self.connection.commit()
+            logger.info(f"SQLite Data inserted: {inserted_count} rows, updated: {updated_count} rows.")
+        finally:
+            self.close_connection()  # 예외 발생 여부와 무관하게 연결 종료
+
         return inserted_count, updated_count
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
@@ -376,7 +368,8 @@ class SQLiteManager:
 
         elif type == 'download':
             update_query = f"UPDATE {self.main_table_name} SET DOWNLOAD_STATUS_YN = 'Y' WHERE report_id = ?"
-            await self.execute_query(update_query, (fetched_rows['report_id'],))
+            for row in fetched_rows:
+                await self.execute_query(update_query, (row['report_id'],))
         
         return {"status": "success"}
 

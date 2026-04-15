@@ -11,6 +11,9 @@ from loguru import logger
 # 프로젝트 루트 경로 추가 (run 폴더의 상위 경로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from utils.logger_util import setup_logger
+setup_logger("send_report_by_keyword_to_user")
+
 from utils.sqlite_util import format_message_sql
 from utils.telegram_util import sendMarkDownText
 from models.PostgreSQLManager import PostgreSQLManager

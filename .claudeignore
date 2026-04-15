@@ -1,0 +1,40 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs (large files, not source)
+logs/
+*.log
+
+# Archive (old/unused code)
+archive/
+
+# Credentials & secrets
+*.pickle
+credentials.json
+client_drive.json
+storage.json
+token.pickle
+
+# Lock files
+uv.lock
+
+# DB files
+*.db
+*.sqlite
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Test outputs
+tests/__pycache__/

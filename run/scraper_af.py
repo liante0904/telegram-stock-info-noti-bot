@@ -10,20 +10,8 @@ from dotenv import load_dotenv
 # 프로젝트 루트 경로 추가 (run 폴더의 상위 경로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 1. 로그 설정 (scraper.py 스타일 참조)
-logger.remove() 
-
-HOME_PATH = os.path.expanduser("~")
-KST = datetime.timezone(datetime.timedelta(hours=9))
-LOG_DATE = datetime.datetime.now(KST).strftime('%Y%m%d')
-LOG_DIR = os.path.join(HOME_PATH, "log", LOG_DATE)
-os.makedirs(LOG_DIR, exist_ok=True)
-
-LOG_FORMAT = "<green>{time:YYYY-MM-DD HH:mm:ss.SS}</green> | <level>{level: <8}</level> | <cyan>{message}</cyan>"
-FILE_FORMAT = "{time:YYYY-MM-DD HH:mm:ss.SS} | {level: <8} | {message}"
-
-logger.add(sys.stdout, format=LOG_FORMAT, level="DEBUG", colorize=True)
-logger.add(os.path.join(LOG_DIR, f"{LOG_DATE}_scraper_af.log"), format=FILE_FORMAT, level="DEBUG", rotation="10 MB", retention="30 days", encoding="utf-8")
+from utils.logger_util import setup_logger
+setup_logger("scraper_af")
 
 from models.SQLiteManager import SQLiteManager
 from models.FirmInfo import FirmInfo

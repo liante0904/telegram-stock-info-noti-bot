@@ -82,7 +82,7 @@ async def daily_send_report(date_str=None):
     db = SQLiteManager()
     rows = await db.daily_select_data(date_str=date_str, type='send')
     if rows:
-        messages = await convert_sql_to_telegram_messages(rows)
+        messages = convert_sql_to_telegram_messages(rows)
         logger.info(f"Sending {len(messages)} messages...")
         success = True
         for msg in messages:

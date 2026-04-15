@@ -6,13 +6,14 @@ from datetime import datetime
 def setup_logger(log_name="scraper"):
     """
     서비스 전체의 로깅 설정을 초기화합니다.
-    - ~/log/YYYYMMDD/YYYYMMDD_파일명.log 형식을 따름
+    - LOG_BASE_DIR 환경변수 우선, 없으면 ~/log 사용
+    - {LOG_BASE_DIR}/YYYYMMDD/YYYYMMDD_파일명.log 형식을 따름
     - 매일 자정 로테이션 및 ZIP 압축
     - 30일 경과 로그 자동 삭제
     """
-    # Loguru의 동적 경로 기능을 활용 (날짜별 폴더 자동 생성)
-    # {time:YYYYMMDD} 패턴을 사용하여 ~/log/20240414/20240414_scraper.log 형태 구현
-    log_format_path = os.path.expanduser("~/log/{time:YYYYMMDD}/{time:YYYYMMDD}_" + log_name + ".log")
+    # LOG_BASE_DIR 환경변수 우선 (Docker 컨테이너 내 /log 마운트 경로 대응)
+    base_log_dir = os.getenv("LOG_BASE_DIR", os.path.expanduser("~/log"))
+    log_format_path = os.path.join(base_log_dir, "{time:YYYYMMDD}", "{time:YYYYMMDD}_" + log_name + ".log")
 
     # 기존 핸들러 제거 (중복 방지)
     logger.remove()
@@ -35,7 +36,7 @@ def setup_logger(log_name="scraper"):
         encoding="utf-8"
     )
 
-    logger.info(f"Logger initialized with user rule. Logs: ~/log/YYYYMMDD/YYYYMMDD_{log_name}.log")
+    logger.info(f"Logger initialized. Logs: {base_log_dir}/YYYYMMDD/YYYYMMDD_{log_name}.log")
     return logger
 
 # 싱글톤 패턴처럼 사용할 수 있도록 기본 초기화
