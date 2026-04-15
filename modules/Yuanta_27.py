@@ -32,10 +32,11 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
     async with semaphore:
         firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=article_board_order)
         
-        retries = 3
-        for attempt in range(retries):
+        retries = 5
+        for attempt in range(1, retries + 1):
             try:
-                await asyncio.sleep(0.2 * (attempt + 1)) # 재시도 시 대기 시간 증가
+                if attempt > 1:
+                    await asyncio.sleep(0.5 * attempt) # 재시도 시 대기 시간 증가
                 async with session.get(target_url, headers=HEADERS, timeout=30) as response:
                     if response.status == 200:
                         html = await response.text()
@@ -88,13 +89,17 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                                 continue
                         return json_data_list
                     elif response.status >= 500:
-                        logger.warning(f"Yuanta Server Error ({response.status}) at {target_url}. Retrying ({attempt+1}/{retries})...")
+                        if attempt > 3:
+                            logger.warning(f"Yuanta Server Error ({response.status}) at {target_url}. Retrying ({attempt}/{retries})...")
                     else:
-                        logger.error(f"Unexpected status {response.status} at {target_url}")
-                        return None
+                        if attempt > 3:
+                            logger.error(f"Unexpected status {response.status} at {target_url}")
+                        if attempt == retries:
+                            return None
             except Exception as e:
-                logger.error(f"Attempt {attempt+1} failed for {target_url}: {e}")
-                if attempt == retries - 1:
+                if attempt > 3:
+                    logger.error(f"Attempt {attempt} failed for {target_url}: {e}")
+                if attempt == retries:
                     return None
         return None
 

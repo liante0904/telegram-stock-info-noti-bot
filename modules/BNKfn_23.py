@@ -11,14 +11,26 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.WebScraper import AsyncWebScraper
 
-async def fetch_article(session, url, headers):
-    async with session.get(url, headers=headers) as response:
-        return await response.text()
+async def fetch_bnk_with_retry(url, headers, session, retries=5, silent_retries=4):
+    """BNK 서버 타임아웃 대응을 위한 재시도 로직"""
+    scraper = AsyncWebScraper(url, headers=headers)
+    for attempt in range(1, retries + 1):
+        try:
+            soup = await scraper.Get(session=session)
+            if soup:
+                return soup
+        except Exception as e:
+            if attempt > silent_retries:
+                logger.warning(f"BNK Attempt {attempt} failed for {url}: {e}")
+        
+        if attempt < retries:
+            await asyncio.sleep(1 * attempt)
+    return None
 
 async def BNK_checkNewArticle():
     SEC_FIRM_ORDER = 23
-    ARTICLE_BOARD_ORDER = 0
     
     TARGET_URL_TUPLE = [
         "REMOVED",
@@ -38,15 +50,17 @@ async def BNK_checkNewArticle():
     }
 
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_article(session, url, headers) for url in TARGET_URL_TUPLE]
-        responses = await asyncio.gather(*tasks)
+        tasks = [fetch_bnk_with_retry(url, headers, session) for url in TARGET_URL_TUPLE]
+        soups = await asyncio.gather(*tasks)
 
-        for ARTICLE_BOARD_ORDER, (response, url) in enumerate(zip(responses, TARGET_URL_TUPLE)):
+        for ARTICLE_BOARD_ORDER, (soup, url) in enumerate(zip(soups, TARGET_URL_TUPLE)):
+            if soup is None:
+                continue
+
             firm_info = FirmInfo(
                 sec_firm_order=SEC_FIRM_ORDER,
                 article_board_order=ARTICLE_BOARD_ORDER
             )
-            soup = BeautifulSoup(response, "html.parser")
             table = soup.find("table", class_="table01")
 
             if not table:
@@ -77,8 +91,6 @@ async def BNK_checkNewArticle():
                     file_name = match.group(2)
                     ARTICLE_URL = f"https://www.bnkfn.co.kr{base_path}/{file_name}"
 
-                
-                
                 REG_DT = cells[4].get_text(strip=True)
 
                 json_data_list.append({

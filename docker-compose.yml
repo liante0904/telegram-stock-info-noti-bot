@@ -1,7 +1,7 @@
 services:
   main-scraper:
     platform: linux/arm64
-    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper:latest}
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper}:${APP_ENV:-dev}
     container_name: ssh-reports-scraper-main-scraper-${APP_ENV:-dev}
     build: .
     restart: unless-stopped
@@ -28,7 +28,7 @@ services:
 
   report-keyword-alert:
     platform: linux/arm64
-    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper:latest}
+    image: ${DOCKER_IMAGE_NAME:-ghcr.io/liante0904/ssh-reports-scraper}:${APP_ENV:-dev}
     container_name: ssh-reports-scraper-keyword-alert-${APP_ENV:-dev}    
     build: .
 
