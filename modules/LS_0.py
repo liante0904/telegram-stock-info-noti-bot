@@ -88,22 +88,17 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             soup = None
 
         if soup is None:
-            retries = 3
-            while retries > 0:
-                try:
-                    scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
-                    soup = scraper.Get()
-                    if soup is None:
-                        raise ValueError("Empty response from server.")
+            try:
+                scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
+                soup = scraper.Get(retries=5, silent_retries=3)
+                if soup:
                     soupList = soup.select('#contents > table > tbody > tr')
-                    break
-                except Exception:
-                    retries -= 1
-                    if retries == 0:
-                        skip_boards.add(ARTICLE_BOARD_ORDER)
-                        logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} WARP 3회 시도 실패로 스킵: {TARGET_URL}")
-                        break
-                    time.sleep(5)
+                else:
+                    skip_boards.add(ARTICLE_BOARD_ORDER)
+                    logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} WARP 5회 시도 실패로 스킵: {TARGET_URL}")
+            except Exception as e:
+                logger.error(f"LS Scraper unexpected error for {TARGET_URL}: {e}")
+                skip_boards.add(ARTICLE_BOARD_ORDER)
 
         logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
 
@@ -181,19 +176,26 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
     except Exception:
         logger.info(f"직접 접속 실패, WARP 프록시로 재시도: {url}")
 
-    # 2차 시도: WARP 프록시
-    try:
-        def sync_get_warp():
-            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
-            response.raise_for_status()
-            return response.text
-        return await loop.run_in_executor(None, sync_get_warp)
-    except Exception as e:
-        if "Timeout" in str(e):
-            logger.warning(f"WARP 프록시 Timeout: {url}")
-        else:
-            logger.error(f"WARP 프록시도 실패 {url}: {e}")
-        return None
+    # 2차 시도: WARP 프록시 (최대 5회, 1~3회 실패 시 로그 생략)
+    retries = 5
+    for attempt in range(1, retries + 1):
+        try:
+            def sync_get_warp():
+                response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
+                response.raise_for_status()
+                return response.text
+            return await loop.run_in_executor(None, sync_get_warp)
+        except Exception as e:
+            if attempt > 3:
+                if "Timeout" in str(e):
+                    logger.warning(f"WARP 프록시 Timeout (시도 {attempt}/{retries}): {url}")
+                else:
+                    logger.error(f"WARP 프록시 실패 (시도 {attempt}/{retries}) {url}: {e}")
+            
+            if attempt < retries:
+                await asyncio.sleep(1 * attempt)
+            else:
+                return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):
     TARGET_URL = article["KEY"]
