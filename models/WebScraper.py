@@ -173,7 +173,7 @@ class SyncWebScraper:
             response = requests.get(self.target_url, params=params, headers=self.headers, verify=False, proxies=self.proxies, timeout=20)
             response.raise_for_status()  # 요청 실패 시 예외 발생
         except requests.exceptions.RequestException as e:
-            logger.error(f"GET 요청 에러: {e}")
+            logger.debug(f"GET 요청 실패 (재시도 가능): {e}")
             return None
 
         # HTML 파싱
@@ -198,7 +198,7 @@ class SyncWebScraper:
                 encoding = result['encoding'] or 'utf-8'
                 logger.debug(f"[감지된 인코딩] {encoding}")
             except Exception as e:
-                logger.error(f"[인코딩 감지 오류] {e}")
+                logger.debug(f"[인코딩 감지 오류] {e}")
                 encoding = 'utf-8'
             response.encoding = encoding
             raw_text = response.text
@@ -210,11 +210,11 @@ class SyncWebScraper:
                 # 연속된 공백을 단일 공백으로 변환
                 cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
             except Exception as e:
-                logger.error(f"[텍스트 정규화 오류] {e}")
+                logger.debug(f"[텍스트 정규화 오류] {e}")
                 cleaned_text = raw_text
 
             if raw_text != cleaned_text:
-                logger.warning("[경고] 응답 텍스트가 정규화되었습니다. 제어 문자 또는 비표준 문자가 제거됨.")
+                logger.debug("[정보] 응답 텍스트가 정규화되었습니다. 제어 문자 또는 비표준 문자가 제거됨.")
 
             # JSON 파싱 시도
             try:
@@ -222,7 +222,7 @@ class SyncWebScraper:
                 logger.debug(f"[JSON 파싱 성공] 데이터 크기: {len(str(json_data))}")
                 return json_data
             except json.JSONDecodeError as e:
-                logger.error(f"[JSON 파싱 오류] {e}")
+                logger.debug(f"[JSON 파싱 오류] {e}")
                 # 디버깅용 응답 저장
                 with open("error_response.txt", "w", encoding="utf-8") as f:
                     f.write(raw_text)
@@ -230,16 +230,16 @@ class SyncWebScraper:
                 return None
 
         except requests.exceptions.Timeout:
-            logger.error("[HTTP 요청 오류] 요청 시간이 초과되었습니다.")
+            logger.debug("[HTTP 요청 오류] 요청 시간이 초과되었습니다.")
             return None
         except requests.exceptions.HTTPError as e:
-            logger.error(f"[HTTP 요청 오류] 상태 코드: {e.response.status_code}, 메시지: {e}")
+            logger.debug(f"[HTTP 요청 오류] 상태 코드: {e.response.status_code}, 메시지: {e}")
             return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"[HTTP 요청 오류] {e}")
+            logger.debug(f"[HTTP 요청 오류] {e}")
             return None
         except Exception as e:
-            logger.error(f"[알 수 없는 오류] {e}")
+            logger.debug(f"[알 수 없는 오류] {e}")
             return None
 
     def Post(self, data=None):
@@ -250,7 +250,7 @@ class SyncWebScraper:
             response = requests.post(self.target_url, data=data, headers=self.headers, verify=False)
             response.raise_for_status()  # 요청 실패 시 예외 발생
         except requests.exceptions.RequestException as e:
-            logger.error(f"POST 요청 에러: {e}")
+            logger.debug(f"POST 요청 실패 (재시도 가능): {e}")
             return None
 
         soup = BeautifulSoup(response.content, "html.parser")

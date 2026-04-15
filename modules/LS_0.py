@@ -86,10 +86,12 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 soupList = soup.select('#contents > table > tbody > tr')
                 break
             except Exception as e:
-                logger.error(f"GET 요청 에러: {e} (URL: {TARGET_URL})")
                 retries -= 1
-                time.sleep(5)
-                if retries == 0:
+                if retries > 0:
+                    logger.debug(f"GET 요청 재시도 중... (남은 횟수: {retries}): {e} (URL: {TARGET_URL})")
+                    time.sleep(5)
+                else:
+                    logger.error(f"GET 요청 최종 실패: {e} (URL: {TARGET_URL})")
                     skip_boards.add(ARTICLE_BOARD_ORDER)
                     logger.warning(f"Skipping LS board {ARTICLE_BOARD_ORDER} after 3 attempts.")
                     break
