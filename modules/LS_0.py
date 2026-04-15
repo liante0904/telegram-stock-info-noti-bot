@@ -76,22 +76,34 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        retries = 3
-        while retries > 0:
-            try:
-                scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
-                soup = scraper.Get()
-                if soup is None:
-                    raise ValueError("Empty response from server.")
-                soupList = soup.select('#contents > table > tbody > tr')
-                break
-            except Exception:
-                retries -= 1
-                if retries == 0:
-                    skip_boards.add(ARTICLE_BOARD_ORDER)
-                    logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} 3회 시도 실패로 스킵: {TARGET_URL}")
+        # 1차 시도: 직접 접속 (IP 차단으로 실패 예상, 에러 로그 없음)
+        try:
+            direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
+            resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.content, "html.parser")
+            soupList = soup.select('#contents > table > tbody > tr')
+        except Exception:
+            logger.info(f"LS 직접 접속 실패, WARP 프록시로 재시도: {TARGET_URL}")
+            soup = None
+
+        if soup is None:
+            retries = 3
+            while retries > 0:
+                try:
+                    scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
+                    soup = scraper.Get()
+                    if soup is None:
+                        raise ValueError("Empty response from server.")
+                    soupList = soup.select('#contents > table > tbody > tr')
                     break
-                time.sleep(5)
+                except Exception:
+                    retries -= 1
+                    if retries == 0:
+                        skip_boards.add(ARTICLE_BOARD_ORDER)
+                        logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} WARP 3회 시도 실패로 스킵: {TARGET_URL}")
+                        break
+                    time.sleep(5)
 
         logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
 
@@ -157,19 +169,30 @@ def clean_url(url):
 
 
 async def fetch(session: ClientSession, url: str, headers: dict) -> str:
+    loop = asyncio.get_event_loop()
+
+    # 1차 시도: 직접 접속 (IP 차단으로 실패 예상, 에러 로그 없음)
     try:
-        loop = asyncio.get_event_loop()
-        def sync_get():
+        def sync_get_direct():
+            response = requests.get(url, headers=headers, verify=False, timeout=10)
+            response.raise_for_status()
+            return response.text
+        return await loop.run_in_executor(None, sync_get_direct)
+    except Exception:
+        logger.info(f"직접 접속 실패, WARP 프록시로 재시도: {url}")
+
+    # 2차 시도: WARP 프록시
+    try:
+        def sync_get_warp():
             response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
             response.raise_for_status()
             return response.text
-        
-        return await loop.run_in_executor(None, sync_get)
+        return await loop.run_in_executor(None, sync_get_warp)
     except Exception as e:
         if "Timeout" in str(e):
-            logger.warning(f"Timeout occurred for URL: {url}")
+            logger.warning(f"WARP 프록시 Timeout: {url}")
         else:
-            logger.error(f"Error requesting URL {url}: {e}")
+            logger.error(f"WARP 프록시도 실패 {url}: {e}")
         return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):

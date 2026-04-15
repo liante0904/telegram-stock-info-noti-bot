@@ -40,13 +40,13 @@ scheduler.add_job(
 )
 
 if __name__ == "__main__":
-    logging.info("🚀 Keyword Alert Scheduler starting up...")
-    logging.info(f"Registered Jobs: {scheduler.get_jobs()}")
-    
+    logger.info("🚀 Keyword Alert Scheduler starting up...")
+    logger.info(f"Registered Jobs: {scheduler.get_jobs()}")
+
     # 시작할 때 한 번 즉시 실행하고 싶으면 아래 주석을 해제하세요.
     # run_job()
-    
+
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
-        logging.info("Scheduler stopped.")
+        logger.info("Scheduler stopped.")

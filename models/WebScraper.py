@@ -24,7 +24,7 @@ class SyncWebScraper:
         SEC_FIRM_ORDER 값에 따라 헤더를 설정하는 내부 메서드
         :return: 적절한 헤더 딕셔너리
         """
-        if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
+        if self.firm_info is None or self.firm_info.SEC_FIRM_ORDER == 0:
             # SEC_FIRM_ORDER가 0번에 맞는 헤더 설정 (LS증권)
             return {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -101,7 +101,7 @@ class SyncWebScraper:
         SEC_FIRM_ORDER 값에 따라 CSS 선택자를 반환하는 메서드
         :return: 적절한 CSS 선택자 문자열
         """
-        if self.firm_info.SEC_FIRM_ORDER == 0 or self.firm_info is None:
+        if self.firm_info is None or self.firm_info.SEC_FIRM_ORDER == 0:
             # 기본 CSS 선택자 (SEC_FIRM_ORDER가 0일 때)
             return '#contents > table > tbody > tr'
         elif self.firm_info.SEC_FIRM_ORDER == 1:
