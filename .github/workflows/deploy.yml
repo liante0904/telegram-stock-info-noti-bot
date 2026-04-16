@@ -11,6 +11,22 @@ env:
   IMAGE_NAME: ${{ github.repository_owner }}/ssh-reports-scraper
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      keyword-alert: ${{ steps.filter.outputs.keyword-alert }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            keyword-alert:
+              - 'scheduler_keyword_alert.py'
+              - 'run/keyword_alert.py'
+              - 'utils/**'
+              - 'models/PostgreSQLManager.py'
+
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
@@ -35,6 +51,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
+            type=raw,value=prod
             type=sha,format=short
 
       - name: Set up Docker Buildx
@@ -55,26 +72,35 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-and-push
+    needs: [build-and-push, changes]
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to Server via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_KEYWORD_ALERT: ${{ needs.changes.outputs.keyword-alert }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: DEPLOY_KEYWORD_ALERT
           script: |
             cd ${{ secrets.PROJECT_DIR }}
-            # 최신 docker-compose.yml과 .env 등을 업데이트하기 위해 git pull
             git pull origin main
-            
-            # GHCR 로그인 (서버에서도 필요함)
+
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # 새 이미지 pull 및 컨테이너 재시작
-            docker-compose pull
-            docker-compose up -d
-            
-            # 사용하지 않는 오래된 이미지 삭제
+
+            # main-scraper는 항상 재배포
+            docker-compose pull main-scraper
+            docker-compose up -d main-scraper
+
+            # keyword-alert는 관련 파일 변경 시에만 재배포
+            if [ "$DEPLOY_KEYWORD_ALERT" = "true" ]; then
+              echo "keyword-alert 관련 변경 감지 → 재배포"
+              docker-compose pull report-keyword-alert
+              docker-compose up -d report-keyword-alert
+            else
+              echo "keyword-alert 변경 없음 → 스킵"
+            fi
+
             docker image prune -f
