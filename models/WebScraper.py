@@ -1,3 +1,4 @@
+import time
 import aiohttp
 import requests
 import json
@@ -163,12 +164,12 @@ class SyncWebScraper:
         else: return
         return result
     
-    def Get(self, params=None, retries=5, silent_retries=3):
+    def Get(self, params=None, retries=5, silent_retries=5):
         """
         GET 요청을 통해 데이터를 가져오는 메서드
         :param params: 요청 시 함께 보낼 파라미터 (기본값은 None)
         :param retries: 최대 시도 횟수 (기본값 5)
-        :param silent_retries: 에러 로그를 남기지 않을 시도 횟수 (기본값 3)
+        :param silent_retries: 에러 로그를 남기지 않을 시도 횟수 (기본값 5)
         :return: 파싱된 soupList 또는 None
         """
         for attempt in range(1, retries + 1):
@@ -182,17 +183,16 @@ class SyncWebScraper:
                 return soup
                 
             except requests.exceptions.RequestException as e:
-                if attempt > silent_retries:
-                    logger.error(f"GET 요청 에러 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
-                else:
-                    logger.debug(f"GET 요청 실패 (시도 {attempt}/{retries}, 무시됨): {e}")
-                
                 if attempt < retries:
                     time.sleep(1 * attempt) # 지수 백오프 비스무리하게 대기
                 else:
+                    if attempt <= silent_retries:
+                        logger.debug(f"GET 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
+                    else:
+                        logger.warning(f"GET 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
                     return None
 
-    def GetJson(self, params=None, retries=5, silent_retries=3):
+    def GetJson(self, params=None, retries=5, silent_retries=5):
         """HTTP GET 요청을 보내고 JSON 응답을 반환"""
         for attempt in range(1, retries + 1):
             try:
@@ -226,21 +226,19 @@ class SyncWebScraper:
                     json_data = json.loads(cleaned_text)
                     return json_data
                 except json.JSONDecodeError as e:
-                    if attempt > silent_retries:
-                        logger.error(f"[JSON 파싱 오류] {e}")
+                    if attempt == retries:
+                        logger.warning(f"[JSON 파싱 최종 실패] {e}")
                     return None
 
             except requests.exceptions.RequestException as e:
-                if attempt > silent_retries:
-                    logger.error(f"[HTTP 요청 오류] 시도 {attempt}/{retries}: {e} (URL: {self.target_url})")
-                
                 if attempt < retries:
                     time.sleep(1 * attempt)
                 else:
+                    logger.warning(f"[HTTP 요청 최종 실패] 시도 {attempt}/{retries}: {e} (URL: {self.target_url})")
                     return None
             except Exception as e:
-                if attempt > silent_retries:
-                    logger.error(f"[알 수 없는 오류] {e}")
+                if attempt == retries:
+                    logger.warning(f"[알 수 없는 최종 오류] {e}")
                 return None
 
     def Post(self, data=None):
@@ -269,7 +267,7 @@ class AsyncWebScraper:
         self.target_url = target_url
         self.headers = headers or {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"}
 
-    async def Get(self, session=None, params=None, retries=5, silent_retries=3):
+    async def Get(self, session=None, params=None, retries=5, silent_retries=5):
         """비동기 GET 요청을 통해 데이터를 가져오는 메서드"""
         close_session = False
         if session is None:
@@ -284,19 +282,18 @@ class AsyncWebScraper:
                         html = await response.text()
                         return BeautifulSoup(html, "html.parser")
                 except Exception as e:
-                    if attempt > silent_retries:
-                        logger.error(f"Async GET 요청 에러 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
-                    else:
-                        logger.debug(f"Async GET 요청 실패 (시도 {attempt}/{retries}, 무시됨): {e}")
-                    
                     if attempt < retries:
                         await asyncio.sleep(1 * attempt)
                     else:
+                        if attempt <= silent_retries:
+                            logger.debug(f"Async GET 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
+                        else:
+                            logger.warning(f"Async GET 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
                         return None
         finally:
             if close_session:
                 await session.close()
-                
+
     async def Post(self, session=None, data=None):
         """비동기 POST 요청을 통해 데이터를 가져오는 메서드"""
         close_session = False
@@ -313,7 +310,7 @@ class AsyncWebScraper:
             if close_session:
                 await session.close()
 
-    async def GetJson(self, session=None, params=None, retries=5, silent_retries=3):
+    async def GetJson(self, session=None, params=None, retries=5, silent_retries=5):
         """비동기 GET 요청을 통해 JSON 데이터를 가져오는 메서드"""
         close_session = False
         if session is None:
@@ -328,12 +325,13 @@ class AsyncWebScraper:
                         logger.debug(f"AsyncWebScraper GetJson successful: {self.target_url} (Attempt {attempt})")
                         return await response.json()
                 except Exception as e:
-                    if attempt > silent_retries:
-                        logger.error(f"Async GetJson 요청 에러 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
-                    
                     if attempt < retries:
                         await asyncio.sleep(1 * attempt)
                     else:
+                        if attempt <= silent_retries:
+                            logger.debug(f"Async GetJson 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
+                        else:
+                            logger.warning(f"Async GetJson 요청 최종 실패 (시도 {attempt}/{retries}): {e} (URL: {self.target_url})")
                         return None
         finally:
             if close_session:

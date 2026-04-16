@@ -13,25 +13,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper
 
-async def fetch_bnk_with_retry(url, headers, session, retries=5, silent_retries=4):
-    """BNK 서버 타임아웃 대응을 위한 재시도 로직"""
-    scraper = AsyncWebScraper(url, headers=headers)
-    for attempt in range(1, retries + 1):
-        try:
-            soup = await scraper.Get(session=session)
-            if soup:
-                return soup
-        except Exception as e:
-            if attempt > silent_retries:
-                logger.warning(f"BNK Attempt {attempt} failed for {url}: {e}")
-        
-        if attempt < retries:
-            await asyncio.sleep(1 * attempt)
-    return None
-
 async def BNK_checkNewArticle():
+    try:
+        return await _BNK_checkNewArticle_impl()
+    except Exception as e:
+        logger.debug(f"BNK connection error (suppressed): {e}")
+        return []
+
+async def _BNK_checkNewArticle_impl():
     SEC_FIRM_ORDER = 23
-    
+
     TARGET_URL_TUPLE = [
         "REMOVED",
         "REMOVED",
@@ -50,10 +41,16 @@ async def BNK_checkNewArticle():
     }
 
     async with aiohttp.ClientSession() as session:
-        tasks = [fetch_bnk_with_retry(url, headers, session) for url in TARGET_URL_TUPLE]
-        soups = await asyncio.gather(*tasks)
+        tasks = [
+            AsyncWebScraper(url, headers=headers).Get(session=session, retries=5, silent_retries=5)
+            for url in TARGET_URL_TUPLE
+        ]
+        soups = await asyncio.gather(*tasks, return_exceptions=True)
 
         for ARTICLE_BOARD_ORDER, (soup, url) in enumerate(zip(soups, TARGET_URL_TUPLE)):
+            if isinstance(soup, Exception):
+                logger.debug(f"BNK request final failure for {url}: {soup}")
+                continue
             if soup is None:
                 continue
 

@@ -1,0 +1,52 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs and local runtime artifacts
+logs/
+*.log
+*.tmp
+
+# Secrets and local credentials
+.env
+.env.bak
+*.key
+*.pickle
+token.*
+credentials.json
+client_drive.json
+secrets.json
+storage.json
+naver_*.json
+
+# Databases
+*.db
+*.sqlite
+
+# Build and package artifacts
+*.egg-info/
+build/
+dist/
+
+# Local/editor artifacts
+.vscode/
+.idea/
+.DS_Store
+
+# Generated or archived content
+archive/
+htmlcov/
+coverage.xml
+.coverage
+.coverage.*

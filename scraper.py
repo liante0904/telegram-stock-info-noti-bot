@@ -74,6 +74,9 @@ async def enrich_data():
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
                     if tasks: await asyncio.gather(*tasks)
+                elif sec_firm_order == 11:  # DS
+                    # 트리거가 자동으로 처리하므로 별도 로직 불필요
+                    pass
                 logger.success(f"[{firm_name}] Enrichment completed.")
             except Exception as e:
                 logger.error(f"[{firm_name}] Enrichment failed: {e}")
@@ -84,6 +87,8 @@ async def daily_send_report(date_str=None):
     if rows:
         messages = convert_sql_to_telegram_messages(rows)
         logger.info(f"Sending {len(messages)} messages...")
+        for i, msg in enumerate(messages):
+            logger.debug(f"Message {i+1} preview:\n{msg[:500]}...")
         success = True
         for msg in messages:
             try:
@@ -184,10 +189,15 @@ async def main(date_str=None):
         try:
             ins, upd = db.insert_json_data_list(total_list)
             logger.success(f"DB Sync: {ins} new, {upd} updated.")
+            
+            # DB 삽입 후 잠시 대기하여 트리거/커밋이 확실히 반영되도록 함
+            await asyncio.sleep(1)
         except Exception as e:
             logger.error(f"DB error: {e}")
 
     await enrich_data()
+    
+    # 발송 전에 DB 연결을 새로 하거나 세션을 확실히 분리하여 최신 데이터를 가져옴
     await daily_send_report(date_str=date_str)
     logger.info("=================== SCRAPER END =====================")
 

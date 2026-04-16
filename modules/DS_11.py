@@ -74,10 +74,10 @@ def DS_checkNewArticle(full_scan=False):
                         wr_id = wr_id_match.group(1)
                         bo_table = bo_table_match.group(1)
                         pdf_url = f"https://www.ds-sec.co.kr/bbs/download.php?bo_table={bo_table}&wr_id={wr_id}&no=0"
-                        telegram_url = f"https://ssh-oci.netlify.app/share?id={wr_id}"
+                        telegram_url = ""
                     else:
                         pdf_url = "없음"
-                        telegram_url = "없음"
+                        telegram_url = ""
 
                     # 날짜 추출
                     date_element = row.select_one(".td_datetime")

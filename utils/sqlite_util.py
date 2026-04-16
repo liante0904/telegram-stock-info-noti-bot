@@ -79,7 +79,11 @@ def convert_sql_to_telegram_messages(fetched_rows):
         sendMessageText += "*" + row['ARTICLE_TITLE'].replace("_", " ").replace("*", "") + "*" + "\n"
 
         # URL 우선순위 설정
-        if row.get('TELEGRAM_URL'):
+        if row.get('SEC_FIRM_ORDER') == 11:
+            # DS투자의 경우, 트리거에 의해 생성된 TELEGRAM_URL이 최우선이며, 
+            # 만약 비어있다면 아직 생성 전이므로 링크없음으로 처리하여 잘못된 링크 발송 방지
+            link_url = row.get('TELEGRAM_URL') if row.get('TELEGRAM_URL') else "링크없음"
+        elif row.get('TELEGRAM_URL'):
             link_url = row['TELEGRAM_URL']
         elif row.get('ATTACH_URL'):
             link_url = row['ATTACH_URL']
