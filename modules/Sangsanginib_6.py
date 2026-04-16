@@ -19,7 +19,7 @@ async def fetch_data(session: ClientSession, url: str, headers: dict, data: dict
             response_text = await response.text()
             return json.loads(response_text)
     except Exception as e:
-        logger.error(f"Error during request to {url}: {e}")
+        logger.debug(f"Error during request to {url}: {e}")
         return {}
 
 

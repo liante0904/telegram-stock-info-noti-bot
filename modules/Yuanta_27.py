@@ -89,17 +89,15 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                                 continue
                         return json_data_list
                     elif response.status >= 500:
-                        if attempt > 3:
-                            logger.warning(f"Yuanta Server Error ({response.status}) at {target_url}. Retrying ({attempt}/{retries})...")
-                    else:
-                        if attempt > 3:
-                            logger.error(f"Unexpected status {response.status} at {target_url}")
                         if attempt == retries:
+                            logger.warning(f"Yuanta Server Error ({response.status}) at {target_url}. Final failure after {retries} attempts.")
+                    else:
+                        if attempt == retries:
+                            logger.warning(f"Unexpected status {response.status} at {target_url}. Final failure after {retries} attempts.")
                             return None
             except Exception as e:
-                if attempt > 3:
-                    logger.error(f"Attempt {attempt} failed for {target_url}: {e}")
                 if attempt == retries:
+                    logger.warning(f"Yuanta request final failure for {target_url}: {e}")
                     return None
         return None
 
