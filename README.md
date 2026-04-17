@@ -69,6 +69,12 @@ python3 modules/Koreainvestment_13.py
 python3 news.py
 ```
 
+## 📐 아키텍처 및 로드맵
+
+설계 결정 배경과 진행 중인 리팩토링 방향은 별도 문서를 참고하세요.
+
+→ [docs/architecture.md](docs/architecture.md)
+
 ## ⚠️ 유의 사항
 - 본 프로그램은 개인적인 투자 정보 확인을 목적으로 제작되었습니다.
 - 리서치 자료의 저작권은 각 증권사에 있으며, **상업적 이용을 엄격히 금지**합니다.
