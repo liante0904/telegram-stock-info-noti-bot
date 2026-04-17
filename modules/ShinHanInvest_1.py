@@ -13,7 +13,7 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
     SEC_FIRM_ORDER = 1
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     logger.info(f"Fetched {len(results)} articles from .", firm_info.get_firm_name())
     # logger.debug(results)
 
-    db = SQLiteManager()
+    db = get_db()
     inserted_count_results = db.insert_json_data_list(results)
 
     logger.info(f"Articles Inserted: {inserted_count_results}")

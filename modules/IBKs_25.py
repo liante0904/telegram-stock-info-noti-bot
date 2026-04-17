@@ -11,7 +11,7 @@ from loguru import logger
 # FirmInfo 등을 위해 path 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 SEC_FIRM_ORDER = 25
 
@@ -168,7 +168,7 @@ async def main():
     logger.info(f"Total IBK articles fetched: {len(result)}")
     
     if result:
-        db = SQLiteManager()
+        db = get_db()
         inserted, updated = db.insert_json_data_list(result)
         logger.success(f"IBK: Done. Inserted {inserted}, Updated {updated}.")
 

@@ -19,7 +19,7 @@ from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -296,7 +296,7 @@ async def LS_detail(articles, firm_info=None):
     return articles
 
 async def LS_detailAll(articles=None, firm_info=None):
-    db = SQLiteManager()
+    db = get_db()
     if articles is None:
         articles = await db.fetch_ls_detail_targets()
     
@@ -384,6 +384,6 @@ if __name__ == "__main__":
         if not all_articles:
             logger.info("No LS articles found.")
         else:
-            db = SQLiteManager()
+            db = get_db()
             inserted_count, updated_count = db.insert_json_data_list(all_articles)
             logger.success(f"LS: Inserted {inserted_count}, Updated {updated_count} articles.")

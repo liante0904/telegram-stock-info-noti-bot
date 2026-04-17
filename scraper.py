@@ -15,7 +15,7 @@ setup_logger("scraper")
 # --- 모듈 임포트 ---
 from utils.telegram_util import sendMarkDownText
 from utils.sqlite_util import convert_sql_to_telegram_messages
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 # business modules
 from modules.LS_0 import LS_checkNewArticle, LS_detail
@@ -53,7 +53,7 @@ chat_id = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
 
 async def enrich_data():
     logger.info("Starting data enrichment process...")
-    db = SQLiteManager()
+    db = get_db()
     from models.FirmInfo import FirmInfo
     
     for sec_firm_order in range(len(FirmInfo.firm_names)):
@@ -82,7 +82,7 @@ async def enrich_data():
                 logger.error(f"[{firm_name}] Enrichment failed: {e}")
 
 async def daily_send_report(date_str=None):
-    db = SQLiteManager()
+    db = get_db()
     rows = await db.daily_select_data(date_str=date_str, type='send')
     if rows:
         messages = convert_sql_to_telegram_messages(rows)
@@ -185,7 +185,7 @@ async def main(date_str=None):
     if total_data:
         unique = { (d.get("KEY") or d.get("ATTACH_URL", "")): d for d in total_data }
         total_list = list(unique.values())
-        db = SQLiteManager()
+        db = get_db()
         try:
             ins, upd = db.insert_json_data_list(total_list)
             logger.success(f"DB Sync: {ins} new, {upd} updated.")

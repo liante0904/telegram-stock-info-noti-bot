@@ -125,7 +125,7 @@ def DS_checkNewArticle(full_scan=False):
 
 if __name__ == "__main__":
     import argparse
-    from models.SQLiteManager import SQLiteManager
+    from models.db_factory import get_db
     
     parser = argparse.ArgumentParser(description="DS투자증권 스크래퍼 직접 실행")
     parser.add_argument('--full', action='store_true', help='전체 페이지를 스캔할지 여부 (기본값: False)')
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     
     if results:
         logger.info(f"총 {len(results)}개의 데이터를 추출했습니다. DB 저장을 시도합니다.")
-        db = SQLiteManager()
+        db = get_db()
         try:
             ins, upd = db.insert_json_data_list(results)
             logger.success(f"DB 저장 완료: 신규 {ins}건, 업데이트 {upd}건.")
