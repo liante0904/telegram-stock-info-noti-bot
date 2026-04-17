@@ -10,7 +10,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 async def fetch(session, url):
     """비동기로 HTTP 요청을 보내는 함수"""
@@ -139,7 +139,7 @@ async def main():
     meritz_result = await MERITZ_checkNewArticle(full_fetch=True)
     logger.info(f"Fetched {len(meritz_result)} articles from Meritz.")
     if meritz_result:
-        db = SQLiteManager()
+        db = get_db()
         db.insert_json_data_list(meritz_result)
 
 if __name__ == "__main__":

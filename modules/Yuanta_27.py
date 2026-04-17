@@ -10,7 +10,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 # Base URL templates
 YUANTA_URL_TEMPLATE_DEFAULT = 'REMOVED?cd007={board_code}&pgCnt=100&page={page}'
@@ -161,5 +161,5 @@ if __name__ == "__main__":
     is_imported_flag = "--all" in sys.argv
     articles = asyncio.run(Yuanta_checkNewArticle(is_imported_flag))
     if articles:
-        db = SQLiteManager()
+        db = get_db()
         db.insert_json_data_list(articles)

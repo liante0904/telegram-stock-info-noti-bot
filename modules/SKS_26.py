@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 
 def Sks_checkNewArticle():
@@ -91,7 +91,7 @@ def main():
     if not result:
         logger.info("No articles found.")
     else:
-        db = SQLiteManager()
+        db = get_db()
         inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
         logger.info(f"Inserted {inserted_count} articles.")
 

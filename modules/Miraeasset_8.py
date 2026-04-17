@@ -10,7 +10,7 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 
 def Miraeasset_checkNewArticle():
     SEC_FIRM_ORDER      = 8
@@ -88,6 +88,6 @@ if __name__ == "__main__":
         logger.warning("No articles found.")
     else:
         logger.info(f"Scraped {len(result)} articles.")
-        db = SQLiteManager()
+        db = get_db()
         inserted_count, updated_count = db.insert_json_data_list(result)
         logger.success(f"DB Sync: {inserted_count} new, {updated_count} updated.")
