@@ -18,12 +18,12 @@ class PostgreSQLManager:
     New methods mirror SQLiteManager's interface for the scraper pipeline.
     """
 
-    MAIN_TABLE = "TB_SEC_REPORTS"
+    MAIN_TABLE = '"TB_SEC_REPORTS"'
 
     # Callers that still pass the old SQLite table name are transparently remapped.
     _TABLE_MAP = {
-        "data_main_daily_send": "TB_SEC_REPORTS",
-        "DATA_MAIN_DAILY_SEND": "TB_SEC_REPORTS",
+        "data_main_daily_send": '"TB_SEC_REPORTS"',
+        "DATA_MAIN_DAILY_SEND": '"TB_SEC_REPORTS"',
     }
 
     def __init__(self):
