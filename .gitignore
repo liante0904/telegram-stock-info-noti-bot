@@ -167,3 +167,5 @@ token.*
 *.*Zone.Identifier
 error_response.txt
 .env.bak
+.codex
+.codex/

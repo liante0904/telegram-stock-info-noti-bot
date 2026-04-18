@@ -24,10 +24,8 @@ async def Daeshin_checkNewArticle():
     )
     logger.debug(f"Daeshin Scraper Start: {firm_info.get_firm_name()}")
 
-    from urllib.parse import urlparse
+    from urllib.parse import urljoin
     url = config.get_urls("Daeshin_17")[0]
-    _p = urlparse(url)
-    BASE_URL = f"{_p.scheme}://{_p.netloc}"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
@@ -81,7 +79,7 @@ async def Daeshin_checkNewArticle():
                 link_tag = item.find("a")
                 if link_tag and 'href' in link_tag.attrs:
                     href = link_tag['href']
-                    article_url = BASE_URL + href
+                    article_url = urljoin(url, href)
                 else:
                     logger.warning("No href found for a Daeshin item")
                     continue
