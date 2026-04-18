@@ -78,7 +78,7 @@ def migrate_firm_info():
 
 
 def migrate_main(batch_size=5000):
-    logger.info("Migrating TB_SEC_REPORTS...")
+    logger.info('Migrating TB_SEC_REPORTS...')
     sq = sqlite3.connect(SQLITE_DB)
     sq.row_factory = sqlite3.Row
 
@@ -89,7 +89,7 @@ def migrate_main(batch_size=5000):
     cur = pg.cursor()
 
     # Check already-migrated max report_id
-    cur.execute("SELECT COALESCE(MAX(report_id), 0) FROM TB_SEC_REPORTS")
+    cur.execute('SELECT COALESCE(MAX(report_id), 0) FROM "TB_SEC_REPORTS"')
     max_pg_id = cur.fetchone()[0]
     logger.info(f"  PostgreSQL max report_id: {max_pg_id} — starting from there")
 
@@ -131,7 +131,7 @@ def migrate_main(batch_size=5000):
 
         psycopg2.extras.execute_values(
             cur,
-            '''INSERT INTO TB_SEC_REPORTS (
+            '''INSERT INTO "TB_SEC_REPORTS" (
                 report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","ATTACH_URL",
                 "ARTICLE_TITLE","ARTICLE_URL","SEND_USER","MAIN_CH_SEND_YN","DOWNLOAD_STATUS_YN",
                 "DOWNLOAD_URL","SAVE_TIME","REG_DT","WRITER","KEY","TELEGRAM_URL","MKT_TP",
@@ -142,10 +142,10 @@ def migrate_main(batch_size=5000):
                 "REG_DT"             = EXCLUDED."REG_DT",
                 "WRITER"             = EXCLUDED."WRITER",
                 "MKT_TP"             = EXCLUDED."MKT_TP",
-                "GEMINI_SUMMARY"     = COALESCE(NULLIF(EXCLUDED."GEMINI_SUMMARY",''), TB_SEC_REPORTS."GEMINI_SUMMARY"),
-                "DOWNLOAD_URL"       = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",''),  TB_SEC_REPORTS."DOWNLOAD_URL"),
-                "TELEGRAM_URL"       = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",''),  TB_SEC_REPORTS."TELEGRAM_URL"),
-                "PDF_URL"            = COALESCE(NULLIF(EXCLUDED."PDF_URL",''),        TB_SEC_REPORTS."PDF_URL")''',
+                "GEMINI_SUMMARY"     = COALESCE(NULLIF(EXCLUDED."GEMINI_SUMMARY",''), "TB_SEC_REPORTS"."GEMINI_SUMMARY"),
+                "DOWNLOAD_URL"       = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",''),  "TB_SEC_REPORTS"."DOWNLOAD_URL"),
+                "TELEGRAM_URL"       = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",''),  "TB_SEC_REPORTS"."TELEGRAM_URL"),
+                "PDF_URL"            = COALESCE(NULLIF(EXCLUDED."PDF_URL",''),        "TB_SEC_REPORTS"."PDF_URL")''',
             records,
             page_size=batch_size,
         )
