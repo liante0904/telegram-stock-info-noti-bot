@@ -1,81 +1,133 @@
-# 🤖 Telegram Report Alarm Bot
+# SSH Reports Scraper
 
-실시간 증권사 리서치 보고서 및 투자 정보를 수집하여 텔레그램으로 알림을 보내는 자동화 봇입니다.
+국내 28개 증권사 리서치 보고서를 자동 수집해 텔레그램 채널로 발송하는 실서비스 봇입니다.
 
-## 🚀 주요 기능
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![Docker](https://img.shields.io/badge/Docker-GHCR-2496ED)
+![PostgreSQL](https://img.shields.io/badge/DB-PostgreSQL-336791)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-### 1. 증권사 리서치 자동 수집 (`scraper.py` 등)
-- 국내외 27개 주요 증권사의 리서치 센터 데이터를 직접 스크래핑합니다.
-- **한국투자증권 고도화:** 일반 리포트뿐만 아니라 **'미국 현지 리서치(Stifel)'** 데이터를 대량(카테고리당 100건)으로 수집합니다.
-- **국가별 자동 분류:** `MKT_TP` 필드를 통해 국내(KR)와 해외(GLOBAL) 리포트를 스마트하게 구분하여 저장합니다.
+---
 
-### 2. 다양한 투자 정보 알림
-- **뉴스 및 트렌드:** 네이버 실시간 뉴스 및 가장 많이 본 뉴스 알림 (`news.py`).
-- **컨센서스 통합:** 한경컨센서스 및 네이버 리서치 데이터 통합 수집 (`hankyungconsen.py`, `naver-research.py`).
-- **시장 지표:** 52주 신고가/신저가 목록 및 아이투자 마켓 밸류에이션 정보 제공.
+## 주요 기능
 
-### 3. 데이터 관리 및 전송
-- **DB 저장:** 수집된 모든 데이터는 SQLite3(또는 Oracle)에 저장되어 중복 전송을 방지합니다.
-- **텔레그램 연동:** 텔레그램 채널을 통해 실시간 마크다운 형식의 깔끔한 리포트 링크를 발송합니다.
+- **28개 증권사 리서치 자동 수집** — 30분 간격 스케줄링, 증권사별 독립 모듈
+- **텔레그램 채널 실시간 발송** — 중복 방지, 마크다운 포맷
+- **키워드 알림** — 사용자 등록 키워드 매칭 시 개인 DM 발송
 
-## 🏦 수집 대상 증권사 (27개+)
+---
 
-| | | | |
-| :--- | :--- | :--- | :--- |
-| **LS증권** | **신한투자증권** | **NH투자증권** | **하나증권** |
-| **KB증권** | **삼성증권** | **상상인증권** | **신영증권** |
-| **미래에셋증권** | **현대차증권** | **키움증권** | **DS투자증권** |
-| **유진투자증권** | **한국투자증권** | **다올투자증권** | **토스증권** |
-| **리딩투자증권** | **대신증권** | **iM증권** | **DB금융투자** |
-| **메리츠증권** | **한화투자증권** | **흥국증권** | **BNK투자증권** |
-| **교보증권** | **IBK투자증권** | **SK증권** | **유안타증권** |
+## 아키텍처
 
-## 🛠 기술 스택
+```
+스케줄러 (scraper.py)
+    │
+    ├── modules/ (28개 증권사별 async 스크래퍼)
+    │       │
+    │       └── WebScraper (HTTP / Selenium)
+    │
+    ▼
+PostgreSQL (TB_SEC_REPORTS)
+    │
+    ├── pgAdmin4 (웹 GUI)
+    └── 텔레그램 채널 발송
+```
 
-- **Language:** Python 3.12+ (uv 관리)
-- **Scraping:** Selenium (Headless Chrome), BeautifulSoup4, Requests
-- **Database:** SQLite3, Oracle, PostgreSQL (키워드 알림용)
-- **Async:** Asyncio, Aiohttp
-- **Environment:** .env 기반 비밀키 관리
+**DB 전환 전략:** `DB_BACKEND` 환경변수 하나로 SQLite ↔ PostgreSQL 무중단 전환 가능 (롤백 30초)
 
-## ⚙️ 환경 설정 및 실행
+---
 
-### 패키지 설치
+## 기술 스택
+
+| 영역 | 기술 |
+|---|---|
+| Language | Python 3.12, uv |
+| Scraping | aiohttp, BeautifulSoup4, Selenium (headless) |
+| Scheduler | APScheduler |
+| Database | PostgreSQL (운영), SQLite (로컬) |
+| Logging | Loguru (날짜별 자동 로테이션) |
+| Infra | Docker, GitHub Actions, GHCR |
+| Secrets | secrets.json + generate_env.py → .env 자동 생성 |
+
+---
+
+## 수집 대상 (28개 증권사)
+
+LS증권 · 신한투자증권 · NH투자증권 · 하나증권 · KB증권 · 삼성증권 · 상상인증권 · 신영증권 · 미래에셋증권 · 현대차증권 · 키움증권 · DS투자증권 · 유진투자증권 · 한국투자증권 · 다올투자증권 · 토스증권 · 리딩투자증권 · 대신증권 · iM증권 · DB금융투자 · 메리츠증권 · 한화투자증권 · 흥국증권 · BNK투자증권 · 교보증권 · IBK투자증권 · SK증권 · 유안타증권
+
+---
+
+## 프로젝트 구조
+
+```
+ssh-reports-scraper/
+├── scraper.py                  # 메인 스케줄러
+├── scheduler_keyword_alert.py  # 키워드 알림 스케줄러
+├── modules/                    # 증권사별 스크래퍼 (28개)
+├── models/
+│   ├── ConfigManager.py        # 환경별 설정 싱글톤
+│   ├── FirmInfo.py             # 증권사/게시판 메타 (DB 기반)
+│   ├── PostgreSQLManager.py    # PostgreSQL CRUD
+│   ├── SQLiteManager.py        # SQLite CRUD (호환 인터페이스)
+│   ├── db_factory.py           # DB_BACKEND 기반 팩토리
+│   └── WebScraper.py           # HTTP/Selenium 공통
+├── docs/
+│   ├── architecture.md         # ADR 및 설계 결정 기록
+│   └── changelog.md            # 2021~현재 변천사
+└── scripts/
+    └── migrate_sqlite_to_postgres.py
+```
+
+---
+
+## 실행 방법
+
+### Docker (운영)
+
+```bash
+# 환경변수 생성
+python3 ~/secrets/generate_env.py scraper
+
+# 배포
+docker compose pull && docker compose up -d
+```
+
+### 로컬
+
 ```bash
 uv sync
+cp .env.example .env  # 환경변수 설정
+uv run scraper.py
 ```
 
-### 환경 변수 설정
-`.env` 파일에 텔레그램 봇 토큰, 채널 ID 및 PostgreSQL 정보를 설정해야 합니다.
+### 환경변수 주요 항목
+
 ```env
-TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET=your_token
-TELEGRAM_CHANNEL_ID_REPORT_ALARM=your_channel_id
-
-# PostgreSQL (키워드 알림 설정용)
+APP_ENV=prod
+DB_BACKEND=postgres          # sqlite | postgres
 POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=your_db
-POSTGRES_USER=your_user
-POSTGRES_PASSWORD=your_password
+POSTGRES_PASSWORD=...
+TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET=...
+TELEGRAM_CHANNEL_ID_REPORT_ALARM=...
 ```
 
-### 실행 방법
-```bash
-# 전체 증권사 리서치 수집 및 발송
-python3 scraper.py
+---
 
-# 특정 모듈 개별 실행
-python3 modules/Koreainvestment_13.py
-python3 news.py
-```
+## CI/CD
 
-## 📐 아키텍처 및 로드맵
+`main` 브랜치 푸시 → GitHub Actions → GHCR `:prod` / `:latest` 빌드 → SSH 자동 배포
 
-설계 결정 배경과 진행 중인 리팩토링 방향은 별도 문서를 참고하세요.
+관련 파일 변경 시에만 선택적 재배포 (`scheduler_keyword_alert.py` 등)
 
-→ [docs/architecture.md](docs/architecture.md)
+---
 
-## ⚠️ 유의 사항
-- 본 프로그램은 개인적인 투자 정보 확인을 목적으로 제작되었습니다.
-- 리서치 자료의 저작권은 각 증권사에 있으며, **상업적 이용을 엄격히 금지**합니다.
-- 각 사이트의 크롤링 정책을 준수해야 하며, 과도한 요청으로 인한 제재 책임은 사용자에게 있습니다.
+## 설계 문서
+
+- [Architecture & ADR](docs/architecture.md) — 설계 결정 배경 및 로드맵
+- [Changelog](docs/changelog.md) — 2021년 단일 파일 → 현재까지 변천사
+
+---
+
+## 유의사항
+
+본 프로젝트는 개인 투자 정보 확인 목적으로 제작되었습니다. 리서치 자료의 저작권은 각 증권사에 있으며 상업적 이용을 금지합니다.
