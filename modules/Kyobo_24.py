@@ -10,7 +10,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.ConfigManager import config
 
 async def fetch(session, url, headers):
     """비동기로 HTTP 요청을 보내는 함수"""
@@ -136,9 +136,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 async def Kyobo_checkNewArticle(full_fetch=False):
     """교보증권 데이터 수집"""
     SEC_FIRM_ORDER = 24
-    TARGET_URL_TUPLE = [
-        'REMOVED'
-    ]
+    TARGET_URL_TUPLE = config.get_urls("Kyobo_24")
 
     max_pages = None if full_fetch else 3
 

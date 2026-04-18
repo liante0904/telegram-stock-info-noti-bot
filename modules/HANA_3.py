@@ -10,7 +10,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.ConfigManager import config
 
 async def fetch(session, url):
     """비동기로 HTTP 요청을 보내는 함수"""
@@ -117,20 +117,7 @@ async def HANA_checkNewArticle(full_fetch=False):
     """하나금융 데이터 수집"""
     SEC_FIRM_ORDER = 3
 
-    TARGET_URL_TUPLE = [
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED'
-    ]
+    TARGET_URL_TUPLE = config.get_urls("HANA_3")
 
     max_pages = None if full_fetch else 3
     all_results = []

@@ -11,6 +11,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.ConfigManager import config
 
 
 async def fetch_data(session: ClientSession, url: str, headers: dict, data: dict, cookies: dict) -> dict:
@@ -72,7 +73,7 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
 
 async def Sangsanginib_checkNewArticle():
     SEC_FIRM_ORDER = 6
-    TARGET_URL = "REMOVED"
+    TARGET_URL = config.get_urls("Sangsanginib_6")[0]
     cmsCd_list = ["CM0078", "CM0338", "CM0079"]
 
     headers = {

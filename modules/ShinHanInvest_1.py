@@ -14,6 +14,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
 from models.db_factory import get_db
+from models.ConfigManager import config
 
 def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
     SEC_FIRM_ORDER = 1
@@ -147,7 +148,7 @@ async def ShinHanInvest_checkNewArticle():
     SEC_FIRM_ORDER = 1
     json_data_list = []
     
-    url = "REMOVED"
+    url = config.get_urls("ShinHanInvest_1")[0]
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:142.0) Gecko/20100101 Firefox/142.0",
@@ -228,7 +229,7 @@ def get_shinhan_board_info():
     Fetches data from Shinhan Invest API and prints a unique list of
     BOARD_NAME and BOARD_TITLE pairs.
     """
-    url = "REMOVED"
+    url = config.get_urls("ShinHanInvest_1")[0]
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:142.0) Gecko/20100101 Firefox/142.0",

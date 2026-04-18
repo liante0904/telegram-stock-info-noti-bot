@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.ConfigManager import config
 
 async def Daeshin_checkNewArticle():
     SEC_FIRM_ORDER      = 17
@@ -23,8 +24,7 @@ async def Daeshin_checkNewArticle():
     )
     logger.debug(f"Daeshin Scraper Start: {firm_info.get_firm_name()}")
 
-    BASE_URL = "https://money2.creontrade.com/E5/m_net/ResearchCenter/Work/"
-    url = BASE_URL + "mre_DM_Mobile_Research.aspx?b_code=91&m=0&p=0&v=0&word=SVBPKOq4sOyXheqzteqwnCkg7KO86rSA6riw7JeF&searchtype=Research&category="
+    url = config.get_urls("Daeshin_17")[0]
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",

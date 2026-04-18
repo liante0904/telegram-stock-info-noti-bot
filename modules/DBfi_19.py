@@ -9,9 +9,9 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.ConfigManager import config
 
-BASE_URL = "REMOVED"
+BASE_URL = config.get_urls("DBfi_19")[0]
 HEADERS_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"

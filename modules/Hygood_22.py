@@ -11,6 +11,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.ConfigManager import config
 
 async def fetch_article(session, url, headers):
     async with session.get(url, headers=headers) as response:
@@ -20,11 +21,7 @@ async def Hanyang_checkNewArticle():
     SEC_FIRM_ORDER = 22
     ARTICLE_BOARD_ORDER = 0
 
-    TARGET_URL_TUPLE = [
-        "REMOVED",
-        "REMOVED",
-        "REMOVED"
-    ]
+    TARGET_URL_TUPLE = config.get_urls("Hygood_22")
 
     json_data_list = []
 

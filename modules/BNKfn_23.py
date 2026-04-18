@@ -12,6 +12,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper
+from models.ConfigManager import config
 
 async def BNK_checkNewArticle():
     try:
@@ -23,12 +24,7 @@ async def BNK_checkNewArticle():
 async def _BNK_checkNewArticle_impl():
     SEC_FIRM_ORDER = 23
 
-    TARGET_URL_TUPLE = [
-        "REMOVED",
-        "REMOVED",
-        "REMOVED",
-        "REMOVED"
-    ]
+    TARGET_URL_TUPLE = config.get_urls("BNKfn_23")
 
     json_data_list = []
 

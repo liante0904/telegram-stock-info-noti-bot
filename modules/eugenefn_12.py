@@ -10,15 +10,11 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper
+from models.ConfigManager import config
 
 SEC_FIRM_ORDER = 12
 
-BASE_URLS = [
-    "REMOVED",  # 글로벌전략
-    "REMOVED",  # 국내기업분석
-    "REMOVED",  # 국내산업분석
-    "REMOVED"   # 해외기업분석
-]
+BASE_URLS = config.get_urls("eugenefn_12")
 
 def get_eugene_headers():
     headers = {

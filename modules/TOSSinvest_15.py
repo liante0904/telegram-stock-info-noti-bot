@@ -11,6 +11,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.ConfigManager import config
 
 def TOSSinvest_checkNewArticle():
     SEC_FIRM_ORDER      = 15
@@ -19,10 +20,7 @@ def TOSSinvest_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
  
-    # 다올투자증권 산업분석
-    TARGET_URL_0  = 'REMOVED'
-
-    TARGET_URL_TUPLE = (TARGET_URL_0,)
+    TARGET_URL_TUPLE = config.get_urls("TOSSinvest_15")
     
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(

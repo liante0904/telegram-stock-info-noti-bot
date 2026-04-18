@@ -20,6 +20,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.WebScraper import SyncWebScraper
 from models.FirmInfo import FirmInfo
 from models.db_factory import get_db
+from models.ConfigManager import config
 
 import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -38,19 +39,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     json_data_list = []
     requests.packages.urllib3.disable_warnings()
 
-    # 기본 베이스 URL (파라미터 없음)
-    base_urls = [
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED'
-    ]
+    base_urls = config.get_urls("LS_0")
     
     # page가 1이거나 None이면 파라미터 제외, 그 외에만 currPage 추가
     if not page or str(page) == '1':

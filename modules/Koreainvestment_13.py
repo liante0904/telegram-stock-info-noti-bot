@@ -18,6 +18,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.ConfigManager import config
 
 
 async def Koreainvestment_selenium_checkNewArticle():
@@ -26,7 +27,7 @@ async def Koreainvestment_selenium_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL_0 = "REMOVED"
+    TARGET_URL_0 = config.get_urls("Koreainvestment_13")[0]
     
     CATEGORIES = [
         {"name": "전체", "board_order": 0, "script": None, "mkt_tp": "KR"},

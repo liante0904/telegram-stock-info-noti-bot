@@ -11,6 +11,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.ConfigManager import config
 
 def Samsung_checkNewArticle():
     SEC_FIRM_ORDER      = 5
@@ -19,16 +20,7 @@ def Samsung_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 삼성증권 기업 분석
-    # TARGET_URL_0 =  'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=3000&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=company1&searchField=TITLE&periodType=1&query='
-    TARGET_URL_0 =  'REMOVED'
-                    #https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=1&range=A&startDate=2023.01.01&endDate=2024.01.01&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=all&searchField=TITLE&periodType=3&query=
-    # 삼성증권 산업 분석
-    TARGET_URL_1 =  'REMOVED'
-    # 삼성증권 해외 분석
-    TARGET_URL_2 =  'REMOVED'
-                   #'https://www.samsungpop.com/mbw/search/search.do?cmd=report_search&startCount=0&TOTALVIEWCOUNT=3000&range=A&writer=&NUM=&GBNM=&GBNS=&JDATE=&JTIME=&COMPONENTCD=&moreCheck=N&GUBUN=all&searchField=TITLE&periodType=1&query='
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+    TARGET_URL_TUPLE = config.get_urls("Samsung_5")
 
     
     # URL GET
