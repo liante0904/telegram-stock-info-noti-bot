@@ -154,9 +154,9 @@ def migrate_main(batch_size=5000):
         logger.info(f"  progress: {offset}/{total}")
 
     # Advance sequence past max id
-    cur.execute("SELECT MAX(report_id) FROM TB_SEC_REPORTS")
+    cur.execute('SELECT MAX(report_id) FROM "TB_SEC_REPORTS"')
     max_id = cur.fetchone()[0] or 0
-    cur.execute(f"SELECT setval('TB_SEC_REPORTS_report_id_seq', {max_id})")
+    cur.execute(f"SELECT setval('tb_sec_reports_report_id_seq', {max_id})")
     pg.commit()
 
     cur.close()
