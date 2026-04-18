@@ -1,4 +1,3 @@
-import sqlite3
 import os
 from loguru import logger
 from models.ConfigManager import config
@@ -30,6 +29,49 @@ class FirmInfo(metaclass=MetaFirmInfo):
         if cls._is_loaded:
             return
 
+        backend = os.getenv("DB_BACKEND", "sqlite").lower()
+        if backend == "postgres":
+            cls._load_from_postgres()
+        else:
+            cls._load_from_sqlite()
+
+    @classmethod
+    def _load_from_postgres(cls):
+        try:
+            import psycopg2
+            import psycopg2.extras
+            from dotenv import load_dotenv
+            load_dotenv(override=True)
+            conn = psycopg2.connect(
+                host=os.getenv("POSTGRES_HOST", "localhost"),
+                port=os.getenv("POSTGRES_PORT", "5432"),
+                dbname=os.getenv("POSTGRES_DB", "ssh_reports_hub"),
+                user=os.getenv("POSTGRES_USER", "ssh_reports_hub"),
+                password=os.getenv("POSTGRES_PASSWORD", ""),
+            )
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute('SELECT "SEC_FIRM_ORDER","FIRM_NM","TELEGRAM_UPDATE_YN" FROM "TBM_SEC_FIRM_INFO" ORDER BY "SEC_FIRM_ORDER"')
+                for row in cur.fetchall():
+                    cls._firm_data[row['SEC_FIRM_ORDER']] = {
+                        "name": row['FIRM_NM'],
+                        "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y'
+                    }
+                cur.execute('SELECT "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","BOARD_NM","BOARD_CD","LABEL_NM" FROM "TBM_SEC_FIRM_BOARD_INFO"')
+                for row in cur.fetchall():
+                    cls._board_data[(row['SEC_FIRM_ORDER'], row['ARTICLE_BOARD_ORDER'])] = {
+                        "name": row['BOARD_NM'],
+                        "code": row['BOARD_CD'] or "",
+                        "label": row['LABEL_NM'] or ""
+                    }
+            conn.close()
+            cls._is_loaded = True
+            logger.debug("FirmInfo: Data successfully loaded from PostgreSQL.")
+        except Exception as e:
+            logger.error(f"FirmInfo Error: Failed to load data from PostgreSQL: {e}")
+
+    @classmethod
+    def _load_from_sqlite(cls):
+        import sqlite3
         db_path = config.DB_PATH
         try:
             conn = sqlite3.connect(db_path, check_same_thread=False)
@@ -49,12 +91,12 @@ class FirmInfo(metaclass=MetaFirmInfo):
                     "name": row['BOARD_NM'],
                     "code": row['BOARD_CD'] or "",
                     "label": row['LABEL_NM'] or ""
-                } 
+                }
             cls._is_loaded = True
             logger.debug(f"FirmInfo: Data successfully loaded from SQLite ({db_path}).")
             conn.close()
         except Exception as e:
-            logger.error(f"FirmInfo Error: Failed to load data from DB ({db_path}): {e}")
+            logger.error(f"FirmInfo Error: Failed to load data from SQLite ({db_path}): {e}")
 
     def __init__(self, sec_firm_order=0, article_board_order=0, firm_info=None):
         if not self._is_loaded:

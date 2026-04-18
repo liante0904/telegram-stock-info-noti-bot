@@ -68,6 +68,16 @@ class ConfigManager:
         if val: return val
         return self._secrets.get("common", {}).get(key, default)
 
+    def get_urls(self, key, default=None):
+        """secrets.json의 urls 섹션 또는 환경변수 URLS_{key}에서 URL 목록을 반환합니다."""
+        env_val = os.getenv(f"URLS_{key}")
+        if env_val:
+            try:
+                return json.loads(env_val)
+            except Exception:
+                pass
+        return self._secrets.get("urls", {}).get(key, default if default is not None else [])
+
 # 싱글톤 인스턴스
 config = ConfigManager()
 

@@ -12,6 +12,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.ConfigManager import config
 
 
 def Shinyoung_checkNewArticle():
@@ -21,11 +22,7 @@ def Shinyoung_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 신영증권 리서치
-    TARGET_URL = "REMOVED"
-
-    
-    # url = "REMOVED"
+    TARGET_URL = config.get_urls("Shinyoung_7")[0]
     
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,

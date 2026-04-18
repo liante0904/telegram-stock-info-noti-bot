@@ -8,7 +8,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.ConfigManager import config
 
 # 주말이 아닌 평일을 확인하는 함수
 def is_weekday(date_obj: datetime.datetime):
@@ -29,7 +29,7 @@ async def NHQV_checkNewArticle(target_date=None):
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
 
-    TARGET_URL = 'REMOVED'
+    TARGET_URL = config.get_urls("NHQV_2")[0]
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Accept': 'application/json, text/javascript, */*; q=0.01'

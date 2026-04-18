@@ -12,6 +12,7 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper
+from models.ConfigManager import config
 
 # JSON API 타입
 async def KB_checkNewArticle():
@@ -19,8 +20,7 @@ async def KB_checkNewArticle():
     SEC_FIRM_ORDER = 4
     ARTICLE_BOARD_ORDER = 0
 
-    # KB증권 오늘의 레포트
-    TARGET_URL = 'REMOVED'
+    TARGET_URL = config.get_urls("KBsec_4")[0]
 
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,

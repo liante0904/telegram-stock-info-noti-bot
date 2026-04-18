@@ -11,6 +11,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
+from models.ConfigManager import config
 
 
 def Hmsec_checkNewArticle():
@@ -20,17 +21,7 @@ def Hmsec_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    # 현대차증권 투자전략
-    TARGET_URL_0 =  'REMOVED'
-    
-    # 현대차증권 Report & Note 
-    TARGET_URL_1 =  'REMOVED'
-    
-    # 현대차증권 해외주식
-    TARGET_URL_2 =  'REMOVED'
-    
-    
-    TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2)
+    TARGET_URL_TUPLE = config.get_urls("Hmsec_9")
     
     # URL GET
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):

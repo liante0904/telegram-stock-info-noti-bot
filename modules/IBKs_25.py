@@ -12,17 +12,18 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.db_factory import get_db
+from models.ConfigManager import config
 
 SEC_FIRM_ORDER = 25
 
-# IBK 투자증권 리서치 게시판 정보
+_ibk_urls = config.get_urls("IBKs_25")
 URL_INFO = [
-    {"name": "전략/시황", "url": "REMOVED", "screen": "IKO010101", "path": "invreport"},
-    {"name": "기업분석", "url": "REMOVED", "screen": "IKO010201", "path": "busreport"},
-    {"name": "산업분석", "url": "REMOVED", "screen": "IKO010301", "path": "indreport"},
-    {"name": "경제/채권", "url": "REMOVED", "screen": "IKO010401", "path": "comment"},
-    {"name": "해외기업분석", "url": "REMOVED", "screen": "IKO010501", "path": "overseasreport", "menu_tp": "0"},
-    {"name": "글로벌ETF", "url": "REMOVED", "screen": "IKO010501", "path": "overseasreport", "menu_tp": "1"}
+    {"name": "전략/시황", "url": _ibk_urls[0], "screen": "IKO010101", "path": "invreport"},
+    {"name": "기업분석", "url": _ibk_urls[1], "screen": "IKO010201", "path": "busreport"},
+    {"name": "산업분석", "url": _ibk_urls[2], "screen": "IKO010301", "path": "indreport"},
+    {"name": "경제/채권", "url": _ibk_urls[3], "screen": "IKO010401", "path": "comment"},
+    {"name": "해외기업분석", "url": _ibk_urls[4], "screen": "IKO010501", "path": "overseasreport", "menu_tp": "0"},
+    {"name": "글로벌ETF", "url": _ibk_urls[5], "screen": "IKO010501", "path": "overseasreport", "menu_tp": "1"}
 ]
 
 # 공통 헤더

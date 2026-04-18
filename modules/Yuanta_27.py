@@ -11,10 +11,11 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.db_factory import get_db
+from models.ConfigManager import config
 
-# Base URL templates
-YUANTA_URL_TEMPLATE_DEFAULT = 'REMOVED?cd007={board_code}&pgCnt=100&page={page}'
-YUANTA_URL_TEMPLATE_DATED = 'REMOVED?cd007={board_code}&pgCnt=100&startCalendar={start_date}&endCalendar={end_date}&page={page}'
+_yuanta_base = config.get_urls("Yuanta_27")[0]
+YUANTA_URL_TEMPLATE_DEFAULT = f'{_yuanta_base}?cd007={{board_code}}&pgCnt=100&page={{page}}'
+YUANTA_URL_TEMPLATE_DATED = f'{_yuanta_base}?cd007={{board_code}}&pgCnt=100&startCalendar={{start_date}}&endCalendar={{end_date}}&page={{page}}'
 
 # Board specific codes
 YUANTA_BOARD_CODES = ["RE01", "RE02", "RB30A", "RB30B", "RB30C", "RF09"]

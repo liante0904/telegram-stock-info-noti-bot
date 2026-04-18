@@ -10,7 +10,7 @@ from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.SQLiteManager import SQLiteManager
+from models.ConfigManager import config
 
 def get_start_of_year():
     return datetime.datetime(datetime.datetime.now().year, 1, 1).strftime("%Y%m%d")
@@ -34,7 +34,7 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
     
     json_data_list = []
 
-    BASE_URL = "REMOVED"
+    BASE_URL = config.get_urls("Hanwhawm_21")[0]
     headers = {"User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"}
 
     async def fetch_data(session, page_val):

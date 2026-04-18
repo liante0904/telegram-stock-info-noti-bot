@@ -5,13 +5,12 @@ import gc
 import requests
 from datetime import datetime
 import sys
-from dotenv import load_dotenv
-
 # 내부 공용 모듈 경로 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.WebScraper import SyncWebScraper
 from models.db_factory import get_db
+from models.ConfigManager import config
 
 
 def Sks_checkNewArticle():
@@ -20,12 +19,8 @@ def Sks_checkNewArticle():
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
-    
-    dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 
-    load_dotenv(dotenv_path=dotenv_path)
-    
-    TARGET_URL = os.getenv('SKS_URL')
+    TARGET_URL = config.get_urls("SKS_26")[0]
 
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,

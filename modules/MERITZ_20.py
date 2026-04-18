@@ -11,6 +11,7 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.db_factory import get_db
+from models.ConfigManager import config
 
 async def fetch(session, url):
     """비동기로 HTTP 요청을 보내는 함수"""
@@ -115,12 +116,7 @@ async def MERITZ_checkNewArticle(full_fetch=False):
     """메리츠증권 데이터 수집"""
     SEC_FIRM_ORDER = 20
 
-    TARGET_URL_TUPLE = [
-        'REMOVED',
-        'REMOVED',
-        'REMOVED',
-        'REMOVED'
-    ]
+    TARGET_URL_TUPLE = config.get_urls("MERITZ_20")
 
     # 200건씩 한 번만 호출하도록 max_pages를 1로 제한 (full_fetch 시에도 대량 수집 가능)
     max_pages = 1

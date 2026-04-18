@@ -11,16 +11,14 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
+from models.ConfigManager import config
 
 
 def DS_checkNewArticle(full_scan=False):
     SEC_FIRM_ORDER = 11  # DS투자증권 고유 식별자
-    TARGET_URL_1 = "REMOVED"
-    TARGET_URL_2 = "REMOVED"
-    
     requests.packages.urllib3.disable_warnings()
-    
-    TARGET_URL_TUPLE = (TARGET_URL_1, TARGET_URL_2)
+
+    TARGET_URL_TUPLE = config.get_urls("DS_11")
 
     json_data_list = []
     current_time_suffix = datetime.now().strftime("T%H:%M:%S")
