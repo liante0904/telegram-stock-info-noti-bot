@@ -86,7 +86,8 @@ jobs:
           envs: DEPLOY_KEYWORD_ALERT
           script: |
             cd ${{ secrets.PROJECT_DIR }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
 
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
