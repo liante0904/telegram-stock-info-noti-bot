@@ -89,6 +89,7 @@ jobs:
           script_stop: true
           script: |
             set -eu
+            DEPLOY_KEYWORD_ALERT="${DEPLOY_KEYWORD_ALERT:-false}"
 
             DEPLOY_DIR="${PROJECT_DIR:-/home/ubuntu/prod/ssh-reports-scraper}"
             FALLBACK_DIR="/home/ubuntu/prod/ssh-reports-scraper"
@@ -128,6 +129,7 @@ jobs:
               echo "main-scraper revision mismatch: expected=$EXPECTED_SHA running=$RUNNING_SHA"
               exit 1
             fi
+            echo "main-scraper running revision: $RUNNING_SHA"
 
             # keyword-alert는 관련 파일 변경 시에만 재배포
             if [ "$DEPLOY_KEYWORD_ALERT" = "true" ]; then
