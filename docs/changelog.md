@@ -108,6 +108,10 @@ docker-compose.yml      ← dev/prod 분리
 ### 5-2. 데이터 추출 도구 고도화
 - `tests/test_db_export.py` — 운영 데이터를 JSON으로 추출하여 테스트 Fixture로 활용할 수 있는 기반 마련
 
+### 5-3. 텔레그램 통합 시스템 알림 도입 (ADR-007)
+- `traceback` 모듈 연동을 통한 상세 에러 위치 텔레그램 발송 기능 추가
+- 별도 외부 서비스 가입 없이 텔레그램만으로 디버깅 가능한 환경 구축
+
 ### 4-1. ConfigManager 도입 (ADR-002, `3e89282`)
 ```python
 # 기존: 각 파일에 분산
