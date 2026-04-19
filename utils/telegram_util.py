@@ -3,6 +3,7 @@ import telegram
 import os
 import requests
 from loguru import logger
+from models.ConfigManager import config
 
 # 가공없이 텍스트를 발송합니다.
 async def sendMarkDownText(token, chat_id, sendMessageText): 
@@ -14,16 +15,19 @@ async def send_system_alert(message):
     """
     관리자에게 비동기 방식으로 시스템 경고를 전송합니다.
     """
-    token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
-    admin_id = os.getenv('TELEGRAM_ADMIN_CHAT_ID')  # 관리자 전용 Chat ID 추가 필요
+    token = config.BOT_TOKEN
+    # secrets.json 또는 환경변수에 이미 존재하는 관리자 ID 활용
+    admin_id = config.get_secret("TELEGRAM_ADMIN_ID_DEV") or \
+               config.get_secret("TELEGRAM_USER_ID_DEV") or \
+               config.get_secret("TELEGRAM_ADMIN_CHAT_ID")
     
     if not token or not admin_id:
-        logger.warning("System alert skipped: Missing TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET or TELEGRAM_ADMIN_CHAT_ID")
+        logger.warning("System alert skipped: Missing BOT_TOKEN or ADMIN_CHAT_ID in secrets/env")
         return
     
     try:
         bot = telegram.Bot(token=token)
-        # MarkdownV2 대신 일반 Markdown을 사용하여 메시지 포맷팅을 단순화함
+        # Markdown 형식을 사용하여 메시지 발송
         await bot.sendMessage(chat_id=admin_id, text=f"🚨 **[시스템 알림]**\n\n{message}", parse_mode="Markdown")
         logger.info(f"System alert sent to admin: {admin_id}")
     except Exception as e:
