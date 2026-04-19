@@ -86,7 +86,6 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: DEPLOY_KEYWORD_ALERT,EXPECTED_SHA,PROJECT_DIR
-          script_stop: true
           script: |
             set -eu
             DEPLOY_KEYWORD_ALERT="${DEPLOY_KEYWORD_ALERT:-false}"
