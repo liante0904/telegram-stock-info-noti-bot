@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 SQLite → PostgreSQL 데이터 마이그레이션 스크립트
-Usage: python3 scripts/migrate_sqlite_to_postgres.py [--tables all|firm|main|naver|hankyung]
+Usage: python3 scripts/migrate_sqlite_to_postgres.py [--tables all|firm|main|naver|hankyung] [--truncate]
 """
 import sqlite3
 import sys
@@ -77,7 +77,7 @@ def migrate_firm_info():
     logger.info(f"  firms: {len(firms)}, boards: {len(boards)}")
 
 
-def migrate_main(batch_size=5000):
+def migrate_main(batch_size=5000, truncate=False):
     logger.info('Migrating TB_SEC_REPORTS...')
     sq = sqlite3.connect(SQLITE_DB)
     sq.row_factory = sqlite3.Row
@@ -88,14 +88,18 @@ def migrate_main(batch_size=5000):
     pg = get_pg_conn()
     cur = pg.cursor()
 
+    if truncate:
+        logger.warning('Truncating TB_SEC_REPORTS before migration...')
+        cur.execute('TRUNCATE TABLE "TB_SEC_REPORTS" CASCADE')
+        pg.commit()
+        logger.info('  Table truncated.')
+
     # Check already-migrated max report_id
     cur.execute('SELECT COALESCE(MAX(report_id), 0) FROM "TB_SEC_REPORTS"')
     max_pg_id = cur.fetchone()[0]
     logger.info(f"  PostgreSQL max report_id: {max_pg_id} — starting from there")
 
     offset = 0
-    inserted = updated = 0
-
     sq_cur = sq.cursor()
     sq_cur.execute(
         "SELECT report_id,SEC_FIRM_ORDER,ARTICLE_BOARD_ORDER,FIRM_NM,ATTACH_URL,"
@@ -207,6 +211,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--tables", default="all",
                         choices=["all", "firm", "main", "naver", "hankyung"])
+    parser.add_argument("--truncate", action="store_true", help="Truncate tables before migration")
     args = parser.parse_args()
 
     from dotenv import load_dotenv
@@ -215,7 +220,7 @@ if __name__ == "__main__":
     if args.tables in ("all", "firm"):
         migrate_firm_info()
     if args.tables in ("all", "main"):
-        migrate_main()
+        migrate_main(truncate=args.truncate)
     if args.tables in ("all", "naver"):
         migrate_aux_table("naver_research")
     if args.tables in ("all", "hankyung"):
