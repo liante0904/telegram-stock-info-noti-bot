@@ -16,13 +16,13 @@ async def send_system_alert(message):
     관리자에게 비동기 방식으로 시스템 경고를 전송합니다.
     """
     token = config.BOT_TOKEN
-    # secrets.json 또는 환경변수에 이미 존재하는 관리자 ID 활용
+    # TELEGRAM_ADMIN_ID_DEV를 최우선으로 사용
     admin_id = config.get_secret("TELEGRAM_ADMIN_ID_DEV") or \
                config.get_secret("TELEGRAM_USER_ID_DEV") or \
                config.get_secret("TELEGRAM_ADMIN_CHAT_ID")
     
     if not token or not admin_id:
-        logger.warning("System alert skipped: Missing BOT_TOKEN or ADMIN_CHAT_ID in secrets/env")
+        logger.warning("System alert skipped: Missing BOT_TOKEN or TELEGRAM_ADMIN_ID_DEV")
         return
     
     try:
