@@ -96,7 +96,17 @@ docker-compose.yml      ← dev/prod 분리
 
 ---
 
-## 4기 — 시크릿 관리 + PostgreSQL 전환 (2026-04-17 ~ 현재)
+---
+
+## 5기 — 품질 관리 및 자동 검증 (2026-04-19 ~ 현재)
+
+### 5-1. pytest 자동화 테스트 도입 (ADR-006)
+- **기본 검증:** `tests/test_db_logic.py` — DB 연결 및 최근 7일 데이터 적재 여부 자동 체크
+- **CI/CD 연동:** GitHub Actions에서 빌드 전 테스트 수행 단계 추가
+- **도구:** `pytest`, `pytest-asyncio` 기반 비동기 테스트 환경 구축
+
+### 5-2. 데이터 추출 도구 고도화
+- `tests/test_db_export.py` — 운영 데이터를 JSON으로 추출하여 테스트 Fixture로 활용할 수 있는 기반 마련
 
 ### 4-1. ConfigManager 도입 (ADR-002, `3e89282`)
 ```python

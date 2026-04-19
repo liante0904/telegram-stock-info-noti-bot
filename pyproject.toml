@@ -24,3 +24,14 @@ dependencies = [
     "wget>=3.2",
     "webdriver-manager>=4.0.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
