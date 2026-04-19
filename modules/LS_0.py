@@ -29,10 +29,25 @@ skip_boards = set()
 
 # 프록시 설정 (환경 변수가 없으면 로컬 기본값 사용)
 SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
+LS_DIRECT_RETRIES = int(os.getenv("LS_DIRECT_RETRIES", "2"))
+LS_WARP_RETRIES = int(os.getenv("LS_WARP_RETRIES", "5"))
 PROXIES = {
     'http': SOCKS_PROXY,
     'https': SOCKS_PROXY
 }
+
+def get_soup_with_warp(url, headers):
+    for attempt in range(1, LS_WARP_RETRIES + 1):
+        try:
+            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
+            response.raise_for_status()
+            return BeautifulSoup(response.content, "html.parser")
+        except Exception as e:
+            if attempt < LS_WARP_RETRIES:
+                time.sleep(attempt)
+            else:
+                logger.error(f"LS WARP 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
+                return None
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     SEC_FIRM_ORDER = 0
@@ -65,29 +80,25 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        # 1차 시도: 직접 접속 (IP 차단으로 실패 예상, 에러 로그 없음)
-        try:
-            direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
-            resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.content, "html.parser")
-            soupList = soup.select('#contents > table > tbody > tr')
-        except Exception:
-            logger.info(f"LS 직접 접속 실패, WARP 프록시로 재시도: {TARGET_URL}")
-            soup = None
+        # 1차 시도: 직접 접속. OCI 대역 차단 가능성이 있어 짧게 2회만 확인 후 WARP로 넘긴다.
+        direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
+        for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+            try:
+                resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.content, "html.parser")
+                soupList = soup.select('#contents > table > tbody > tr')
+                break
+            except Exception:
+                soup = None
+                if direct_attempt < LS_DIRECT_RETRIES:
+                    time.sleep(direct_attempt)
 
         if soup is None:
-            try:
-                scraper = SyncWebScraper(TARGET_URL, firm_info, proxies=PROXIES)
-                soup = scraper.Get(retries=5, silent_retries=5)
-                if soup:
-                    soupList = soup.select('#contents > table > tbody > tr')
-                else:
-                    # scraper.Get 내부에서 최종 실패(5회)했을 때만 리턴 None이 오므로 여기서 조용히 스킵
-                    skip_boards.add(ARTICLE_BOARD_ORDER)
-                    logger.warning(f"LS 게시판 {ARTICLE_BOARD_ORDER} WARP 5회 시도 실패로 스킵: {TARGET_URL}")
-            except Exception as e:
-                logger.warning(f"LS Scraper 최종 실패 for {TARGET_URL}: {e}")
+            soup = get_soup_with_warp(TARGET_URL, direct_headers)
+            if soup:
+                soupList = soup.select('#contents > table > tbody > tr')
+            else:
                 skip_boards.add(ARTICLE_BOARD_ORDER)
 
         logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
@@ -156,19 +167,20 @@ def clean_url(url):
 async def fetch(session: ClientSession, url: str, headers: dict) -> str:
     loop = asyncio.get_event_loop()
 
-    # 1차 시도: 직접 접속 (IP 차단으로 실패 예상, 에러 로그 없음)
-    try:
-        def sync_get_direct():
-            response = requests.get(url, headers=headers, verify=False, timeout=10)
-            response.raise_for_status()
-            return response.text
-        return await loop.run_in_executor(None, sync_get_direct)
-    except Exception:
-        logger.info(f"직접 접속 실패, WARP 프록시로 재시도: {url}")
+    # 1차 시도: 직접 접속. 짧게 2회 확인한 뒤 WARP 경로로 전환한다.
+    for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+        try:
+            def sync_get_direct():
+                response = requests.get(url, headers=headers, verify=False, timeout=10)
+                response.raise_for_status()
+                return response.text
+            return await loop.run_in_executor(None, sync_get_direct)
+        except Exception:
+            if direct_attempt < LS_DIRECT_RETRIES:
+                await asyncio.sleep(direct_attempt)
 
     # 2차 시도: WARP 프록시 (최대 5회, 재시도 중간 실패 로그 생략)
-    retries = 5
-    for attempt in range(1, retries + 1):
+    for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
             def sync_get_warp():
                 response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
@@ -176,13 +188,10 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
                 return response.text
             return await loop.run_in_executor(None, sync_get_warp)
         except Exception as e:
-            if attempt < retries:
+            if attempt < LS_WARP_RETRIES:
                 await asyncio.sleep(1 * attempt)
             else:
-                if "Timeout" in str(e):
-                    logger.warning(f"WARP 프록시 최종 Timeout (시도 {attempt}/{retries}): {url}")
-                else:
-                    logger.warning(f"WARP 프록시 최종 실패 (시도 {attempt}/{retries}) {url}: {e}")
+                logger.error(f"LS WARP 상세 요청 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
                 return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):
