@@ -105,8 +105,10 @@ docker-compose.yml      ← dev/prod 분리
 - **CI/CD 연동:** GitHub Actions에서 빌드 전 테스트 수행 단계 추가
 - **도구:** `pytest`, `pytest-asyncio` 기반 비동기 테스트 환경 구축
 
-### 5-2. 데이터 추출 도구 고도화
+### 5-2. 데이터 추출 및 감사 도구 고도화
 - `tests/test_db_export.py` — 운영 데이터를 JSON으로 추출하여 테스트 Fixture로 활용할 수 있는 기반 마련
+- `tests/test_db_compare_all.py` — SQLite ↔ PostgreSQL 27만 건 전수 조사 도구 도입
+- **성과:** PostgreSQL 데이터 마이그레이션 정합성 100% 달성 (271,038 rows 일치 확인)
 
 ### 5-3. 텔레그램 통합 시스템 알림 도입 (ADR-007)
 - `traceback` 모듈 연동을 통한 상세 에러 위치 텔레그램 발송 기능 추가
