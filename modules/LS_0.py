@@ -89,9 +89,10 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 soup = BeautifulSoup(resp.content, "html.parser")
                 soupList = soup.select('#contents > table > tbody > tr')
                 break
-            except Exception:
+            except Exception as e:
                 soup = None
                 if direct_attempt < LS_DIRECT_RETRIES:
+                    logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
                     time.sleep(direct_attempt)
 
         if soup is None:
@@ -175,8 +176,9 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
                 response.raise_for_status()
                 return response.text
             return await loop.run_in_executor(None, sync_get_direct)
-        except Exception:
+        except Exception as e:
             if direct_attempt < LS_DIRECT_RETRIES:
+                logger.info(f"직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {url} ({e})")
                 await asyncio.sleep(direct_attempt)
 
     # 2차 시도: WARP 프록시 (최대 5회, 재시도 중간 실패 로그 생략)
