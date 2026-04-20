@@ -48,7 +48,7 @@ scheduler = BlockingScheduler()
 # [스케줄 1] 메인 스크래퍼: */30 0,5-12,14-23 * * * (기존 crontab 복제)
 scheduler.add_job(
     run_scraper,
-    CronTrigger(minute='*/30', hour='0,5-12,14-23'),
+    CronTrigger(minute='*/30', hour='0,5-12,14-23', jitter=300), # 300초(5분) 랜덤 지터 추가
     id="main_scraper_job"
 )
 
