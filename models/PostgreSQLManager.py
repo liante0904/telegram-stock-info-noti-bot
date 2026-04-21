@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from datetime import datetime, timedelta
 from loguru import logger
 
@@ -19,6 +20,31 @@ class PostgreSQLManager:
     """
 
     MAIN_TABLE = '"TB_SEC_REPORTS"'
+    _LEGACY_COLUMNS = (
+        "SEC_FIRM_ORDER",
+        "ARTICLE_BOARD_ORDER",
+        "FIRM_NM",
+        "ATTACH_URL",
+        "ARTICLE_TITLE",
+        "ARTICLE_URL",
+        "SEND_USER",
+        "MAIN_CH_SEND_YN",
+        "DOWNLOAD_STATUS_YN",
+        "DOWNLOAD_URL",
+        "SAVE_TIME",
+        "REG_DT",
+        "WRITER",
+        "KEY",
+        "TELEGRAM_URL",
+        "MKT_TP",
+        "GEMINI_SUMMARY",
+        "SUMMARY_TIME",
+        "SUMMARY_MODEL",
+        "ARCHIVE_STATUS",
+        "ARCHIVE_FILE_NAME",
+        "ARCHIVE_PATH",
+        "PDF_URL",
+    )
 
     # Callers that still pass the old SQLite table name are transparently remapped.
     _TABLE_MAP = {
@@ -308,6 +334,18 @@ class PostgreSQLManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    async def execute_query(self, query, params=None, close=False):
+        """SQLiteManager-compatible async query helper."""
+        del close
+        if params:
+            query = query.replace("?", "%s")
+        for column in self._LEGACY_COLUMNS:
+            query = re.sub(rf'(?<!")\b{column}\b(?!")', f'"{column}"', query)
+
+        if query.strip().lower().startswith("select"):
+            return self._fetchall(query, params)
+        return self._execute(query, params)
 
     def _fetchall(self, sql, params=None):
         conn = self.get_connection()

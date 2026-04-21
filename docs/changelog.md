@@ -4,6 +4,29 @@
 
 ---
 
+## 운영 변경 기록
+
+### 2026-04-21 — PostgreSQL 재전환
+
+- `scripts/sync_recent_sqlite_to_postgres.py`를 추가해 최근 SQLite 데이터를 JSON으로 export한 뒤 PostgreSQL `TB_SEC_REPORTS`에 `KEY` 기준 upsert하고 정합성을 비교할 수 있게 했습니다.
+- 운영 DB backend를 `DB_BACKEND=postgres`로 재전환했습니다.
+- `PostgreSQLManager.execute_query()`를 추가해 기존 `SQLiteManager` 기반 DB 테스트와 동일한 인터페이스를 지원합니다.
+- architecture 문서를 2026-04-21 PostgreSQL 재전환 상태와 검증 커맨드 기준으로 갱신했습니다.
+
+검증:
+
+```bash
+uv run python scripts/sync_recent_sqlite_to_postgres.py --days 2 --output /tmp/sqlite_recent_2d_reports.json
+DB_BACKEND=postgres uv run pytest tests/test_db_logic.py -q
+```
+
+- SQLite export: 282 rows
+- PostgreSQL upsert: inserted 70, updated 212
+- Compare: sqlite 282 keys, postgres 282 keys
+- DB tests: 3 passed
+
+---
+
 ## 1기 — 단일 파일 시대 (2021)
 **커밋:** `7e6a4eb` · `main.py` 3,680줄
 
