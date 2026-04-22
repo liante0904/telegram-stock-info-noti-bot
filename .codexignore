@@ -1,3 +1,6 @@
+# Git metadata
+.git/
+
 # Python virtual environments
 .venv/
 venv/
@@ -17,6 +20,15 @@ __pycache__/
 logs/
 *.log
 *.tmp
+*.pdf
+*.csv
+*.jsonl
+
+# Node / frontend artifacts
+node_modules/
+.next/
+dist/
+build/
 
 # Secrets and local credentials
 .env
@@ -36,8 +48,6 @@ naver_*.json
 
 # Build and package artifacts
 *.egg-info/
-build/
-dist/
 
 # Local/editor artifacts
 .vscode/
