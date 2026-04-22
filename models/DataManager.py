@@ -41,11 +41,11 @@ class DataManager:
             self.logger.error(f"Oracle Update Status Error: {str(e)}")
         return res
 
-    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
-        """텔레그램 URL 및 제목 업데이트 (Dual-Write)"""
-        res = await self.sqlite.update_telegram_url(record_id, telegram_url, article_title)
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
+        """텔레그램 URL, PDF URL 및 제목 업데이트 (Dual-Write)"""
+        res = await self.sqlite.update_telegram_url(record_id, telegram_url, article_title, pdf_url=pdf_url)
         try:
-            await self.oracle.update_telegram_url(record_id, telegram_url, article_title)
+            await self.oracle.update_telegram_url(record_id, telegram_url, article_title, pdf_url=pdf_url)
         except Exception as e:
             self.logger.error(f"Oracle Telegram URL Update Error: {str(e)}")
         return res
