@@ -1,22 +1,32 @@
 import asyncio
 from datetime import datetime
+from datetime import date as date_cls
 import re  # 정규식 사용을 위한 import
 import os
 import sys
 import json
+import aiohttp
 from bs4 import BeautifulSoup
 from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
-from models.WebScraper import AsyncWebScraper
 from models.ConfigManager import config
+from modules.eugene_auth import (
+    COOKIE_PATH,
+    cookie_dict_to_header,
+    authenticated_session,
+    get_eugene_credentials,
+    is_login_page,
+    load_cookie_dict,
+    login_and_save_cookies,
+)
 
 SEC_FIRM_ORDER = 12
 
 BASE_URLS = config.get_urls("eugenefn_12")
 
-def get_eugene_headers():
+def get_eugene_headers(include_cookie=True):
     headers = {
         "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; SM-G955U Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -35,28 +45,34 @@ def get_eugene_headers():
         "sec-ch-ua-platform": '"Android"'
     }
     
-    # 쿠키 로드 시도
-    cookie_path = os.path.join(os.path.dirname(__file__), '..', 'json', 'eugene_cookies.json')
-    if os.path.exists(cookie_path):
-        try:
-            with open(cookie_path, 'r', encoding='utf-8') as f:
-                cookies = json.load(f)
-                if isinstance(cookies, dict):
-                    cookie_str = "; ".join([f"{k}={v}" for k, v in cookies.items()])
-                    headers["Cookie"] = cookie_str
-                elif isinstance(cookies, str):
-                    headers["Cookie"] = cookies
-            logger.info("Eugene Scraper: Loaded cookies from eugene_cookies.json")
-        except Exception as e:
-            logger.error(f"Eugene Scraper: Failed to load cookies: {e}")
+    if include_cookie:
+        # 쿠키 로드 시도
+        cookies = load_cookie_dict(COOKIE_PATH)
+        if cookies:
+            try:
+                headers["Cookie"] = cookie_dict_to_header(cookies)
+                logger.info("Eugene Scraper: Loaded cookies from eugene_cookies.json")
+            except Exception as e:
+                logger.error(f"Eugene Scraper: Failed to load cookies: {e}")
             
     return headers
+
+
+def _parse_report_date(reg_dt):
+    if not reg_dt:
+        return None
+    try:
+        return datetime.strptime(reg_dt, "%Y%m%d").date()
+    except Exception:
+        return None
 
 async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
     articles = []
     if html_text:
         soup = BeautifulSoup(html_text, 'html.parser')
-        list_items = soup.find_all('li')
+        list_items = soup.select('ul#list > li')
+        if not list_items:
+            list_items = soup.find_all('li')
         for item in list_items:
             a_tag = item.find('a')
             if a_tag:
@@ -103,41 +119,122 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
                     "KEY": url,
                     "SAVE_TIME": datetime.now().isoformat()
                 })
-                
+
     return articles
 
-async def eugene_checkNewArticle():
+
+async def refresh_eugene_cookies():
+    userid, password, cert_password = get_eugene_credentials()
+    if not userid or not password:
+        raise RuntimeError("Set EUGENE_USERID and EUGENE_PASSWORD in your environment or secrets.json.")
+    await login_and_save_cookies(userid, password, cert_password, cookie_path=COOKIE_PATH)
+    logger.info("Eugene Scraper: Refreshed eugene_cookies.json")
+
+async def eugene_checkNewArticle(full_fetch=False, since_date=None):
     all_articles = []
-    headers = get_eugene_headers()
+    if since_date is None and full_fetch:
+        since_date = date_cls(datetime.now().year, 1, 1)
     
     for ARTICLE_BOARD_ORDER, base_url in enumerate(BASE_URLS):
         referer_url = base_url.replace('Add.do', '.do')
+        main_url = referer_url
         firm_info = FirmInfo(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
         logger.debug(f"Eugene Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
-        
-        # 각 요청마다 Referer 헤더 업데이트
-        current_headers = headers.copy()
-        current_headers["Referer"] = referer_url
-        
-        scraper = AsyncWebScraper(target_url=base_url, headers=current_headers)
-        for page_no in range(1, 6):
-            payload = f"pageNo={page_no}&add=Y"
-            try:
-                response_soup = await scraper.Post(data=payload)
-                if response_soup:
-                    # 응답이 제한된 경우(예: 로그인 페이지)를 감지하는 로직 추가 가능
-                    if "로그인" in str(response_soup) or "login" in str(response_soup).lower():
-                        logger.warning(f"Eugene Scraper: Session might be expired or restricted for {base_url}")
-                        break
-                        
-                    html_text = str(response_soup)
-                    articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
-                    all_articles.extend(articles)
-                    logger.info(f"Eugene Scraper: Found {len(articles)} articles on page {page_no}")
-                else:
-                    logger.warning(f"Status: Failed for {base_url} (Page {page_no})")
-            except Exception as e:
-                logger.error(f"Error scraping {base_url} page {page_no}: {e}")
+
+        board_articles = []
+        needs_retry = True
+
+        for attempt in range(2):
+            if attempt == 1:
+                try:
+                    await refresh_eugene_cookies()
+                except Exception as e:
+                    logger.error(f"Eugene Scraper: failed to refresh cookies for {base_url}: {e}")
+                    break
+
+            headers = get_eugene_headers(include_cookie=False)
+            current_headers = headers.copy()
+            current_headers["Referer"] = referer_url
+            session_failed = False
+
+            userid, password, cert_password = get_eugene_credentials()
+            async with authenticated_session(userid, password, cert_password, headers=current_headers) as session:
+                first_page_html = ""
+                first_page_url = ""
+                try:
+                    async with session.get(main_url, allow_redirects=True) as response:
+                        response.raise_for_status()
+                        first_page_html = await response.text()
+                        first_page_url = str(response.url)
+                except Exception as e:
+                    logger.debug(f"Eugene Scraper: initial GET failed for {main_url}: {e}")
+
+                if is_login_page(first_page_html, first_page_url):
+                    session_failed = True
+                elif first_page_html:
+                    try:
+                        first_articles = await parse_article_list(first_page_html, ARTICLE_BOARD_ORDER)
+                        board_articles.extend(first_articles)
+                        logger.info(f"Eugene Scraper: Found {len(first_articles)} articles on page 1")
+                    except Exception as e:
+                        logger.error(f"Error parsing first page for {main_url}: {e}")
+
+                if not session_failed:
+                    page_no = 2
+                    while True:
+                        payload = {
+                            "pageNo": str(page_no),
+                            "add": "Y",
+                        }
+                        try:
+                            async with session.post(base_url, data=payload, allow_redirects=True) as response:
+                                response.raise_for_status()
+                                html_text = await response.text()
+                                final_url = str(response.url)
+
+                            if is_login_page(html_text, final_url):
+                                session_failed = True
+                                logger.warning(f"Eugene Scraper: session expired while fetching {base_url} page {page_no}")
+                                break
+
+                            articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
+                            if not articles:
+                                logger.info(f"Eugene Scraper: No more articles on page {page_no} for {base_url}")
+                                break
+
+                            board_articles.extend(articles)
+                            logger.info(f"Eugene Scraper: Found {len(articles)} articles on page {page_no}")
+
+                            if since_date is not None:
+                                oldest_date = None
+                                for article in articles:
+                                    parsed = _parse_report_date(article.get("REG_DT"))
+                                    if parsed is not None:
+                                        oldest_date = parsed if oldest_date is None else min(oldest_date, parsed)
+
+                                if oldest_date is not None and oldest_date < since_date:
+                                    logger.info(
+                                        f"Eugene Scraper: Reached cutoff on page {page_no} "
+                                        f"for {base_url} (oldest={oldest_date}, cutoff={since_date})"
+                                    )
+                                    break
+                            page_no += 1
+                        except Exception as e:
+                            logger.error(f"Error scraping {base_url} page {page_no}: {e}")
+                            session_failed = True
+                            break
+
+            if session_failed and attempt == 0:
+                board_articles = []
+                continue
+
+            needs_retry = False
+            break
+
+        if needs_retry:
+            logger.warning(f"Eugene Scraper: board scrape ended with retry exhaustion for {base_url}")
+
+        all_articles.extend(board_articles)
 
     logger.info(f"Total articles scraped: {len(all_articles)}")
     return all_articles
