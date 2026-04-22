@@ -2,9 +2,11 @@ import asyncio
 import aiohttp
 import json
 import ssl
+import re
 from datetime import datetime
 import os
 import sys
+import urllib.parse as urlparse
 from loguru import logger
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -22,6 +24,78 @@ ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.set_ciphers("DEFAULT")
+
+
+async def extract_dbfi_pdf_url(session, encoded_url):
+    """
+    DB증권 gate 토큰에서 실제 PDF 다운로드 URL을 추출합니다.
+
+    흐름:
+    1) /pv/auth 로 세션 쿠키 발급
+    2) /pv/viewer 로 진입
+    3) hidden .item 의 id를 docId로 추출
+    4) /streamdocs/v4/documents/{docId} 형태의 PDF URL 반환
+    """
+    if not encoded_url:
+        return None
+
+    token = urlparse.unquote(encoded_url)
+    gate_q = urlparse.quote(token, safe="")
+    gate_url = f"https://whub.dbsec.co.kr/pv/gate?q={gate_q}"
+
+    pv_headers = {
+        "User-Agent": HEADERS_TEMPLATE["User-Agent"],
+        "Content-Type": HEADERS_TEMPLATE["Content-Type"],
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Referer": gate_url,
+    }
+
+    try:
+        async with session.post("https://whub.dbsec.co.kr/pv/auth", headers=pv_headers) as auth_response:
+            await auth_response.text()
+
+        viewer_payload = {
+            "q": token,
+            "c": "",
+            "target": "",
+            "docId": "",
+        }
+        async with session.post(
+            "https://whub.dbsec.co.kr/pv/viewer",
+            headers=pv_headers,
+            data=viewer_payload,
+        ) as viewer_response:
+            if viewer_response.status != 200:
+                logger.warning(f"DBfi: viewer request failed ({viewer_response.status})")
+                return None
+
+            viewer_html = await viewer_response.text()
+            match = re.search(r'<div[^>]*id="([^"]+)"[^>]*class="item"', viewer_html)
+            if not match:
+                match = re.search(r'<div[^>]*class="item"[^>]*id="([^"]+)"', viewer_html)
+
+            if not match:
+                logger.warning("DBfi: Could not find StreamDocs document id in viewer HTML")
+                return None
+
+            doc_id = match.group(1)
+            title_match = re.search(
+                rf'<div[^>]*id="{re.escape(doc_id)}"[^>]*class="item"[^>]*>\s*<span>(.*?)</span>',
+                viewer_html,
+                flags=re.S,
+            )
+            file_name = title_match.group(1).strip() if title_match else "리서치"
+            pdf_url = f"https://whub.dbsec.co.kr/streamdocs/v4/documents/{doc_id}"
+            return {
+                "gate_url": gate_url,
+                "viewer_url": "https://whub.dbsec.co.kr/pv/viewer",
+                "doc_id": doc_id,
+                "file_name": file_name,
+                "pdf_url": pdf_url,
+            }
+    except Exception as e:
+        logger.error(f"DBfi: Failed to extract PDF URL: {e}")
+        return None
 
 
 # DB금융투자 기사 체크 함수
@@ -88,6 +162,8 @@ async def fetch_detailed_url(articles):
     timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
         for article in articles:
+            if article.get("TELEGRAM_URL") and article.get("PDF_URL"):
+                continue
             key_url = article["KEY"]
 
             try:
@@ -96,10 +172,27 @@ async def fetch_detailed_url(articles):
                         try:
                             detail_data = await response.json()
                             encoded_url = detail_data['data'].get("url", "")
-                            telegram_url = f"https://whub.dbsec.co.kr/pv/gate?q={encoded_url}"
-                            article["TELEGRAM_URL"] = telegram_url
-                            article["PDF_URL"] = telegram_url
-                            logger.debug(f"DBfi: Detailed URL fetched for {article['ARTICLE_TITLE']}")
+                            if encoded_url:
+                                extracted = await extract_dbfi_pdf_url(session, encoded_url)
+                                if not extracted:
+                                    logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
+                                    continue
+                                pdf_url = extracted["pdf_url"]
+                                article["TELEGRAM_URL"] = pdf_url
+                                article["PDF_URL"] = pdf_url
+                                article["FILE_NAME"] = extracted["file_name"]
+                                article["DOC_ID"] = extracted["doc_id"]
+                                article["GATE_URL"] = extracted["gate_url"]
+                                article["VIEWER_URL"] = extracted["viewer_url"]
+                                logger.info(
+                                    "DBfi: title={} | file={} | docId={} | pdf={}",
+                                    article["ARTICLE_TITLE"],
+                                    extracted["file_name"],
+                                    extracted["doc_id"],
+                                    pdf_url,
+                                )
+                            else:
+                                logger.warning(f"DBfi: Empty document id for {key_url}")
                         except json.JSONDecodeError:
                             logger.error(f"Failed to parse JSON for {key_url}")
                     else:
@@ -114,6 +207,13 @@ async def main():
     articles = await DBfi_checkNewArticle()
     detailed_articles = await fetch_detailed_url(articles)
     logger.info(f"Fetched total {len(detailed_articles)} detailed articles.")
+    for article in detailed_articles[:5]:
+        logger.info(
+            "DBfi sample | title={} | file={} | pdf={}",
+            article.get("ARTICLE_TITLE"),
+            article.get("FILE_NAME"),
+            article.get("PDF_URL"),
+        )
 
 
 if __name__ == "__main__":

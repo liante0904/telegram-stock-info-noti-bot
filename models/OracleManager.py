@@ -283,14 +283,16 @@ class OracleManager:
         params = {"summary": summary, "st": datetime.now(), "model": model_name, "url": telegram_url}
         return await self.execute_query(query, params)
 
-    async def update_telegram_url(self, record_id, telegram_url, article_title=None):
-        """텔레그램 URL 및 선택적 제목 업데이트"""
+    async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
+        """텔레그램 URL, PDF URL 및 선택적 제목 업데이트"""
+        if pdf_url is None:
+            pdf_url = telegram_url
         if article_title:
-            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, ARTICLE_TITLE = :title WHERE REPORT_ID = :id"
-            params = {"url": telegram_url, "title": article_title, "id": record_id}
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, PDF_URL = :pdf_url, ARTICLE_TITLE = :title WHERE REPORT_ID = :id"
+            params = {"url": telegram_url, "pdf_url": pdf_url, "title": article_title, "id": record_id}
         else:
-            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url WHERE REPORT_ID = :id"
-            params = {"url": telegram_url, "id": record_id}
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, PDF_URL = :pdf_url WHERE REPORT_ID = :id"
+            params = {"url": telegram_url, "pdf_url": pdf_url, "id": record_id}
         return await self.execute_query(query, params)
 
     async def daily_select_data(self, date_str=None, type=None):
