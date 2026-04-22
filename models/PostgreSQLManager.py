@@ -332,6 +332,40 @@ class PostgreSQLManager:
         return self._fetchall(sql, (limit,))
 
     # ------------------------------------------------------------------
+    # Keyword-alert — report lookup & send-user tracking
+    # ------------------------------------------------------------------
+
+    def fetch_keyword_reports(self, date: str, keyword: str, user_id: str):
+        """키워드 매칭된 미발송 리포트 조회 (SEND_USER에 user_id 없는 것)"""
+        sql = f"""
+            SELECT "FIRM_NM", "ARTICLE_TITLE",
+                   COALESCE(NULLIF("TELEGRAM_URL",''), NULLIF("DOWNLOAD_URL",''), NULLIF("ATTACH_URL",'')) AS "TELEGRAM_URL",
+                   "SAVE_TIME", "SEND_USER"
+            FROM {self.main_table_name}
+            WHERE ("ARTICLE_TITLE" ILIKE %s OR "WRITER" ILIKE %s)
+              AND DATE("SAVE_TIME") = %s
+              AND NOT (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb @> to_jsonb(%s::text))
+            ORDER BY "SAVE_TIME" ASC, "FIRM_NM" ASC
+        """
+        keyword_param = f"%{keyword}%"
+        return self._fetchall(sql, (keyword_param, keyword_param, date, user_id))
+
+    def update_keyword_send_user(self, date: str, keyword: str, user_id: str):
+        """발송 완료한 user_id를 SEND_USER JSON 배열에 추가 (중복 방지)"""
+        sql = f"""
+            UPDATE {self.main_table_name}
+            SET "SEND_USER" = (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb || to_jsonb(%s::text))::text
+            WHERE ("ARTICLE_TITLE" ILIKE %s OR "WRITER" ILIKE %s)
+              AND DATE("SAVE_TIME") = %s
+              AND NOT (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb @> to_jsonb(%s::text))
+        """
+        keyword_param = f"%{keyword}%"
+        result = self._execute(sql, (user_id, keyword_param, keyword_param, date, user_id))
+        if result["affected_rows"] > 0:
+            logger.info(f"[TB_SEC_REPORTS] {result['affected_rows']} rows updated for user {user_id}.")
+        return result
+
+    # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
