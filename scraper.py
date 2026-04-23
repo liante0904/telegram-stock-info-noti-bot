@@ -46,6 +46,7 @@ from modules.Kyobo_24 import Kyobo_checkNewArticle
 from modules.IBKs_25 import IBK_checkNewArticle
 from modules.SKS_26 import Sks_checkNewArticle
 from modules.Yuanta_27 import Yuanta_checkNewArticle # 비동기 버전 (파일명 변경됨)
+from modules.Heungkuk_28 import Heungkuk_checkNewArticle
 
 load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
@@ -162,6 +163,7 @@ async def main(date_str=None):
     sync_funcs = [
         LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, 
         Samsung_checkNewArticle, Shinyoung_checkNewArticle, Hmsec_checkNewArticle,
+        Heungkuk_checkNewArticle,
         TOSSinvest_checkNewArticle, DS_checkNewArticle
     ]
     async_functions = [
