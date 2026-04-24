@@ -14,6 +14,7 @@
 - 스크래퍼 후처리 루틴은 실제 추가 보정이 필요한 LS / DB금융투자만 핸들러를 타도록 정리했습니다.
 - 신한투자증권 모바일 스크래퍼를 `modules/ShinHanInvest_1.py`로 승격하고 기존 구현은 `modules/ShinHanInvest_1_legacy.py`로 분리했습니다.
 - `secrets.json` / `.env`도 최근 모듈 변경 기준으로 정리해 `ShinHanInvest_1`, `ShinHanInvest_1_legacy`, `Heungkuk_28` URL 키를 실제 운영 경로와 일치시켰습니다.
+- `TBM_SEC_FIRM_INFO` / `TBM_SEC_FIRM_INFO`(SQLite)에 `COMMENT_PDF_URL` 컬럼을 추가하고 LS / DS / DB증권의 PDF/발송 URL 코멘트를 저장했습니다.
 
 검증:
 

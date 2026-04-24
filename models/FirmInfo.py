@@ -58,11 +58,15 @@ class FirmInfo(metaclass=MetaFirmInfo):
                 password=os.getenv("POSTGRES_PASSWORD", ""),
             )
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute('SELECT "SEC_FIRM_ORDER","FIRM_NM","TELEGRAM_UPDATE_YN" FROM "TBM_SEC_FIRM_INFO" ORDER BY "SEC_FIRM_ORDER"')
+                cur.execute(
+                    'SELECT "SEC_FIRM_ORDER","FIRM_NM","TELEGRAM_UPDATE_YN","COMMENT_PDF_URL" '
+                    'FROM "TBM_SEC_FIRM_INFO" ORDER BY "SEC_FIRM_ORDER"'
+                )
                 for row in cur.fetchall():
                     cls._firm_data[row['SEC_FIRM_ORDER']] = {
                         "name": row['FIRM_NM'],
-                        "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y'
+                        "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y',
+                        "comment_pdf_url": row.get('COMMENT_PDF_URL') or "",
                     }
                 cur.execute('SELECT "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","BOARD_NM","BOARD_CD","LABEL_NM" FROM "TBM_SEC_FIRM_BOARD_INFO"')
                 for row in cur.fetchall():
@@ -86,11 +90,15 @@ class FirmInfo(metaclass=MetaFirmInfo):
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            cursor.execute("SELECT SEC_FIRM_ORDER, FIRM_NM, TELEGRAM_UPDATE_YN FROM TBM_SEC_FIRM_INFO ORDER BY SEC_FIRM_ORDER")
+            cursor.execute(
+                "SELECT SEC_FIRM_ORDER, FIRM_NM, TELEGRAM_UPDATE_YN, COMMENT_PDF_URL "
+                "FROM TBM_SEC_FIRM_INFO ORDER BY SEC_FIRM_ORDER"
+            )
             for row in cursor.fetchall():
                 cls._firm_data[row['SEC_FIRM_ORDER']] = {
                     "name": row['FIRM_NM'],
-                    "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y'
+                    "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y',
+                    "comment_pdf_url": row['COMMENT_PDF_URL'] or "",
                 }
 
             cursor.execute("SELECT SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_NM, BOARD_CD, LABEL_NM FROM TBM_SEC_FIRM_BOARD_INFO")
@@ -178,6 +186,9 @@ class FirmInfo(metaclass=MetaFirmInfo):
         self.SEC_FIRM_ORDER = sec_firm_order
         self.telegram_update_required = self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("update_required", False)
 
+    def get_comment_pdf_url(self):
+        return self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("comment_pdf_url", "")
+
     def set_article_board_order(self, article_board_order):
         self.ARTICLE_BOARD_ORDER = article_board_order
 
@@ -188,7 +199,8 @@ class FirmInfo(metaclass=MetaFirmInfo):
             "FIRM_NAME": self.get_firm_name(),
             "BOARD_NAME": self.get_board_name(),
             "LABEL_NAME": self.get_label_name(),
-            "TELEGRAM_UPDATE_REQUIRED": self.telegram_update_required
+            "TELEGRAM_UPDATE_REQUIRED": self.telegram_update_required,
+            "COMMENT_PDF_URL": self.get_comment_pdf_url(),
         }
 
 if __name__ == "__main__":
