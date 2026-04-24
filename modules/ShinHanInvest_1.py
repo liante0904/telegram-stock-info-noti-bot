@@ -431,7 +431,7 @@ async def ShinHanInvest_checkNewArticle():
     """
 
     json_data_list: List[Dict[str, str]] = []
-    target_urls = config.get_urls("ShinHanInvest_1") or config.get_urls("ShinHanInvest_1_new") or [MOBILE_API_URL]
+    target_urls = config.get_urls("ShinHanInvest_1") or [MOBILE_API_URL]
 
     async with aiohttp.ClientSession() as session:
         for raw_url in target_urls:
@@ -528,7 +528,7 @@ def get_shinhan_board_info():
 
 
 if __name__ == "__main__":
-    results = asyncio.run(ShinHanInvest_checkNewArticle_new())
+    results = asyncio.run(ShinHanInvest_checkNewArticle())
     logger.info(f"Fetched {len(results)} articles from ShinHan mobile")
-    preview_limit = int(os.getenv("SHINHAN_NEW_PREVIEW_LIMIT", "20"))
+    preview_limit = int(os.getenv("SHINHAN_PREVIEW_LIMIT", "20"))
     print(json.dumps(results[:preview_limit], ensure_ascii=False, indent=2))
