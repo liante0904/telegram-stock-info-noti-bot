@@ -213,6 +213,32 @@ class PostgreSQLManager:
         sql += ' ORDER BY "REG_DT" DESC, "SAVE_TIME" DESC'
         return self._fetchall(sql, params)
 
+    async def fetch_recent_keys(self, sec_firm_order: int, days_limit: int = 7):
+        """최근 N일 기준 증권사 KEY 집합을 조회합니다."""
+        cutoff_reg_dt = (datetime.now() - timedelta(days=max(1, int(days_limit)))).strftime("%Y%m%d")
+        sql = f"""
+        SELECT "KEY"
+        FROM {self.main_table_name}
+        WHERE "SEC_FIRM_ORDER" = %s
+          AND "KEY" IS NOT NULL
+          AND "KEY" != ''
+          AND "REG_DT" >= %s
+        """
+        rows = self._fetchall(sql, (str(sec_firm_order), cutoff_reg_dt))
+        return {row["KEY"] for row in rows if row.get("KEY")}
+
+    async def fetch_all_keys(self, sec_firm_order: int):
+        """해당 증권사의 전체 KEY 집합을 조회합니다."""
+        sql = f"""
+        SELECT "KEY"
+        FROM {self.main_table_name}
+        WHERE "SEC_FIRM_ORDER" = %s
+          AND "KEY" IS NOT NULL
+          AND "KEY" != ''
+        """
+        rows = self._fetchall(sql, (str(sec_firm_order),))
+        return {row["KEY"] for row in rows if row.get("KEY")}
+
     async def fetch_ls_detail_targets(self):
         sql = f"""
         SELECT report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT",

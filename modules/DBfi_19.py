@@ -12,8 +12,11 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.ConfigManager import config
+from models.db_factory import get_db
 
 BASE_URL = config.get_urls("DBfi_19")[0]
+DBFI_KEY_LOOKBACK_DAYS = int(os.getenv("DBFI_KEY_LOOKBACK_DAYS", "3650"))
+DBFI_DETAIL_MAX_KEYS = int(os.getenv("DBFI_DETAIL_MAX_KEYS", "0"))
 HEADERS_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
@@ -51,8 +54,11 @@ async def extract_dbfi_pdf_url(session, encoded_url):
     }
 
     try:
-        async with session.post("https://whub.dbsec.co.kr/pv/auth", headers=pv_headers) as auth_response:
-            await auth_response.text()
+        # Session-level auth cookie is reusable across multiple viewer requests.
+        if not getattr(session, "_dbfi_auth_done", False):
+            async with session.post("https://whub.dbsec.co.kr/pv/auth", headers=pv_headers) as auth_response:
+                await auth_response.text()
+            setattr(session, "_dbfi_auth_done", True)
 
         viewer_payload = {
             "q": token,
@@ -159,46 +165,123 @@ async def DBfi_checkNewArticle():
 
 # 상세 URL로 후처리 데이터 획득 함수
 async def fetch_detailed_url(articles):
+    def _extract_rid_from_key(key_url: str) -> int:
+        m = re.search(r"/descRsh/(\d+)\.json", key_url or "")
+        return int(m.group(1)) if m else -1
+
+    existing_keys = set()
+    try:
+        db = get_db()
+        if hasattr(db, "fetch_all_keys"):
+            existing_keys = await db.fetch_all_keys(sec_firm_order=19)
+            logger.info("DBfi: loaded {} existing keys from DB (all)", len(existing_keys))
+        elif hasattr(db, "fetch_recent_keys"):
+            existing_keys = await db.fetch_recent_keys(sec_firm_order=19, days_limit=DBFI_KEY_LOOKBACK_DAYS)
+            logger.info(
+                "DBfi: loaded {} existing keys from DB ({} days, fallback)",
+                len(existing_keys),
+                DBFI_KEY_LOOKBACK_DAYS,
+            )
+    except Exception as e:
+        logger.warning(f"DBfi: failed to load recent keys, fallback to full scan: {e}")
+
+    max_existing_rid = max((_extract_rid_from_key(k) for k in existing_keys), default=-1)
+
     timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
+        # Group by KEY to avoid repeated detail/API requests for duplicates.
+        pending_by_key = {}
+        skipped_existing = 0
         for article in articles:
             if article.get("TELEGRAM_URL") and article.get("PDF_URL"):
                 continue
-            key_url = article["KEY"]
+            key_url = article.get("KEY")
+            if not key_url:
+                continue
+            rid = _extract_rid_from_key(key_url)
+            if max_existing_rid > 0 and rid > 0 and rid <= max_existing_rid:
+                skipped_existing += 1
+                continue
+            if key_url in existing_keys:
+                skipped_existing += 1
+                continue
+            pending_by_key.setdefault(key_url, []).append(article)
 
+        encoded_url_cache = {}
+        extracted_cache = {}
+        logger.info(
+            "DBfi: detail enrichment targets={} unique_keys={} skipped_existing={}",
+            sum(len(v) for v in pending_by_key.values()),
+            len(pending_by_key),
+            skipped_existing,
+        )
+
+        if DBFI_DETAIL_MAX_KEYS > 0 and len(pending_by_key) > DBFI_DETAIL_MAX_KEYS:
+            def _key_sort_score(url: str):
+                m = re.search(r"/descRsh/(\d+)\.json", url or "")
+                return int(m.group(1)) if m else -1
+
+            sorted_keys = sorted(pending_by_key.keys(), key=_key_sort_score, reverse=True)
+            keep_keys = set(sorted_keys[:DBFI_DETAIL_MAX_KEYS])
+            dropped = len(pending_by_key) - len(keep_keys)
+            pending_by_key = {k: v for k, v in pending_by_key.items() if k in keep_keys}
+            logger.warning(
+                "DBfi: detail key cap applied. keeping={} dropped={} (DBFI_DETAIL_MAX_KEYS={})",
+                len(pending_by_key),
+                dropped,
+                DBFI_DETAIL_MAX_KEYS,
+            )
+
+        for key_url, key_articles in pending_by_key.items():
             try:
-                async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
-                    if response.status == 200:
+                encoded_url = encoded_url_cache.get(key_url)
+                if not encoded_url:
+                    async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
+                        if response.status != 200:
+                            logger.warning(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+                            continue
                         try:
                             detail_data = await response.json()
-                            encoded_url = detail_data['data'].get("url", "")
-                            if encoded_url:
-                                extracted = await extract_dbfi_pdf_url(session, encoded_url)
-                                if not extracted:
-                                    logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
-                                    continue
-                                pdf_url = extracted["pdf_url"]
-                                article["TELEGRAM_URL"] = pdf_url
-                                article["PDF_URL"] = pdf_url
-                                article["FILE_NAME"] = extracted["file_name"]
-                                article["DOC_ID"] = extracted["doc_id"]
-                                article["GATE_URL"] = extracted["gate_url"]
-                                article["VIEWER_URL"] = extracted["viewer_url"]
-                                logger.info(
-                                    "DBfi: title={} | file={} | docId={} | pdf={}",
-                                    article["ARTICLE_TITLE"],
-                                    extracted["file_name"],
-                                    extracted["doc_id"],
-                                    pdf_url,
-                                )
-                            else:
-                                logger.warning(f"DBfi: Empty document id for {key_url}")
                         except json.JSONDecodeError:
                             logger.error(f"Failed to parse JSON for {key_url}")
-                    else:
-                        logger.warning(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+                            continue
+                        encoded_url = detail_data.get("data", {}).get("url", "")
+                        encoded_url_cache[key_url] = encoded_url
+
+                if not encoded_url:
+                    logger.warning(f"DBfi: Empty document id for {key_url}")
+                    continue
+
+                extracted = extracted_cache.get(encoded_url)
+                if extracted is None:
+                    extracted = await extract_dbfi_pdf_url(session, encoded_url)
+                    extracted_cache[encoded_url] = extracted
+
+                if not extracted:
+                    logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
+                    continue
+
+                pdf_url = extracted["pdf_url"]
+                gate_url = extracted["gate_url"]
+                for article in key_articles:
+                    article["TELEGRAM_URL"] = gate_url
+                    article["ARTICLE_URL"] = gate_url
+                    article["PDF_URL"] = pdf_url
+                    article["FILE_NAME"] = extracted["file_name"]
+                    article["DOC_ID"] = extracted["doc_id"]
+                    article["GATE_URL"] = gate_url
+                    article["VIEWER_URL"] = extracted["viewer_url"]
+
+                logger.info(
+                    "DBfi: key={} affected={} file={} docId={} pdf={}",
+                    key_url,
+                    len(key_articles),
+                    extracted["file_name"],
+                    extracted["doc_id"],
+                    pdf_url,
+                )
             except Exception as e:
-                logger.error(f"Network or timeout error while fetching detailed URL: {e}")
+                logger.error(f"Network or timeout error while fetching detailed URL ({key_url}): {e}")
 
     return articles
 

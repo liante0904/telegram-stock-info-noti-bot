@@ -217,6 +217,38 @@ class SQLiteManager:
         
         return [dict(row) for row in rows]
 
+    async def fetch_recent_keys(self, sec_firm_order: int, days_limit: int = 7):
+        """최근 N일 기준 증권사 KEY 집합을 조회합니다."""
+        self.open_connection()
+        cutoff_reg_dt = (datetime.now() - timedelta(days=max(1, int(days_limit)))).strftime('%Y%m%d')
+        query = f"""
+        SELECT KEY
+        FROM {self.main_table_name}
+        WHERE SEC_FIRM_ORDER = ?
+          AND KEY IS NOT NULL
+          AND KEY != ''
+          AND REG_DT >= ?
+        """
+        self.cursor.execute(query, (sec_firm_order, cutoff_reg_dt))
+        rows = self.cursor.fetchall()
+        self.close_connection()
+        return {row['KEY'] for row in rows if row['KEY']}
+
+    async def fetch_all_keys(self, sec_firm_order: int):
+        """해당 증권사의 전체 KEY 집합을 조회합니다."""
+        self.open_connection()
+        query = f"""
+        SELECT KEY
+        FROM {self.main_table_name}
+        WHERE SEC_FIRM_ORDER = ?
+          AND KEY IS NOT NULL
+          AND KEY != ''
+        """
+        self.cursor.execute(query, (sec_firm_order,))
+        rows = self.cursor.fetchall()
+        self.close_connection()
+        return {row['KEY'] for row in rows if row['KEY']}
+
     async def fetch_ls_detail_targets(self):
         """
         LS증권(SEC_FIRM_ORDER=0) 레포트 중 TELEGRAM_URL이 .pdf로 끝나지 않는 대상을 조회합니다.
