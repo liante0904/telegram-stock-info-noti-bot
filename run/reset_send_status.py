@@ -10,10 +10,10 @@ from dotenv import load_dotenv
 # 상위 디렉터리를 모듈 경로에 추가
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 from models.FirmInfo import FirmInfo
 from utils.telegram_util import sendMarkDownText
-from utils.sqlite_util import convert_sql_to_telegram_messages
+from utils.report_util import get_report_messages
 
 # 환경 변수 로드
 load_dotenv()
@@ -21,11 +21,12 @@ token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
 chat_id = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
 
 async def reset_and_send(firm_order, date_str, board_order=None, do_send=False):
-    db = SQLiteManager()
+    db = get_db()
     
     # 1. 상태 초기화 (Y -> N)
     params = [firm_order, date_str]
-    update_query = f"UPDATE data_main_daily_send SET MAIN_CH_SEND_YN = 'N' WHERE SEC_FIRM_ORDER = ? AND DATE(SAVE_TIME) = ?"
+    # SQLite/PostgreSQL 호환을 위해 execute_query의 치환 기능 활용
+    update_query = "UPDATE data_main_daily_send SET MAIN_CH_SEND_YN = 'N' WHERE SEC_FIRM_ORDER = ? AND DATE(SAVE_TIME) = ?"
     if board_order is not None:
         update_query += " AND ARTICLE_BOARD_ORDER = ?"
         params.append(board_order)
@@ -40,17 +41,17 @@ async def reset_and_send(firm_order, date_str, board_order=None, do_send=False):
         logger.info(f"[{firm_name}] 즉시 발송을 시작합니다...")
         
         # 해당 업체/날짜의 데이터를 다시 읽어옴
-        select_query = f"""
+        select_query = """
         SELECT report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
                ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-               DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL
+               DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, PDF_URL
         FROM data_main_daily_send 
         WHERE SEC_FIRM_ORDER = ? AND DATE(SAVE_TIME) = ? AND MAIN_CH_SEND_YN = 'N'
         """
         rows = await db.execute_query(select_query, [firm_order, date_str])
         
         if rows:
-            messages = convert_sql_to_telegram_messages(rows)
+            messages = get_report_messages(rows)
             logger.info(f"Sending {len(messages)} message chunks to Telegram...")
             
             success = True
