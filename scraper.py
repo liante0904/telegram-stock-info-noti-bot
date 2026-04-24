@@ -19,7 +19,7 @@ from models.db_factory import get_db
 
 # business modules
 from modules.LS_0 import LS_checkNewArticle, LS_detail
-from modules.ShinHanInvest_1_new import ShinHanInvest_checkNewArticle_new as ShinHanInvest_checkNewArticle
+from modules.ShinHanInvest_1 import ShinHanInvest_checkNewArticle
 from modules.NHQV_2 import NHQV_checkNewArticle
 from modules.HANA_3 import HANA_checkNewArticle
 from modules.KBsec_4 import KB_checkNewArticle

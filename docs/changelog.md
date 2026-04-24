@@ -12,6 +12,7 @@
 - PostgreSQL용 텔레그램 메시지 변환 유틸을 추가해 DS투자증권의 `[공유]` / `[원본]` 링크 표기를 백엔드별로 일관되게 맞췄습니다.
 - DS투자증권(`SEC_FIRM_ORDER=11`)의 `TELEGRAM_URL`은 PostgreSQL trigger로 `https://ssh-oci.netlify.app/share?id={report_id}`가 자동 채워지도록 전환했습니다.
 - 스크래퍼 후처리 루틴은 실제 추가 보정이 필요한 LS / DB금융투자만 핸들러를 타도록 정리했습니다.
+- 신한투자증권 모바일 스크래퍼를 `modules/ShinHanInvest_1.py`로 승격하고 기존 구현은 `modules/ShinHanInvest_1_legacy.py`로 분리했습니다.
 
 검증:
 
