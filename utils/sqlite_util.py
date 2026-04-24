@@ -80,9 +80,15 @@ def convert_sql_to_telegram_messages(fetched_rows):
 
         # URL 우선순위 설정
         if row.get('SEC_FIRM_ORDER') == 11:
-            # DS투자의 경우, 트리거에 의해 생성된 TELEGRAM_URL이 최우선이며, 
-            # 만약 비어있다면 아직 생성 전이므로 링크없음으로 처리하여 잘못된 링크 발송 방지
-            link_url = row.get('TELEGRAM_URL') if row.get('TELEGRAM_URL') else "링크없음"
+            # DS투자의 경우, 공유 링크(TELEGRAM_URL)와 원본(PDF_URL)을 모두 시도
+            tg_url = row.get('TELEGRAM_URL')
+            pdf_url = row.get('PDF_URL')
+            
+            if tg_url and pdf_url and tg_url != pdf_url:
+                sendMessageText += EMOJI_PICK + f"[공유]({tg_url}), [원본]({pdf_url})\n"
+                link_url = None # 아래 공통 처리 스킵을 위해 None 설정
+            else:
+                link_url = tg_url or pdf_url or "링크없음"
         elif row.get('TELEGRAM_URL'):
             link_url = row['TELEGRAM_URL']
         elif row.get('ATTACH_URL'):
@@ -95,10 +101,11 @@ def convert_sql_to_telegram_messages(fetched_rows):
             link_url = "링크없음"
         
         # 원문 링크 추가
-        if link_url == "링크없음":
-            sendMessageText += "링크없음\n"
-        else:
-            sendMessageText += EMOJI_PICK + "[링크]" + "(" + link_url + ")" + "\n"
+        if link_url:
+            if link_url == "링크없음":
+                sendMessageText += "링크없음\n"
+            else:
+                sendMessageText += EMOJI_PICK + "[링크]" + "(" + link_url + ")" + "\n"
 
         # 메시지가 3500자를 넘지 않도록 쌓음
         if len(message_chunk) + len(sendMessageText) > message_limit:

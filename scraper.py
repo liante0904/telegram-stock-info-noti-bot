@@ -19,7 +19,7 @@ from models.db_factory import get_db
 
 # business modules
 from modules.LS_0 import LS_checkNewArticle, LS_detail
-from modules.ShinHanInvest_1 import ShinHanInvest_checkNewArticle
+from modules.ShinHanInvest_1_new import ShinHanInvest_checkNewArticle_new as ShinHanInvest_checkNewArticle
 from modules.NHQV_2 import NHQV_checkNewArticle
 from modules.HANA_3 import HANA_checkNewArticle
 from modules.KBsec_4 import KB_checkNewArticle
@@ -76,8 +76,15 @@ async def enrich_data():
                     tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
                     if tasks: await asyncio.gather(*tasks)
                 elif sec_firm_order == 11:  # DS
-                    # 트리거가 자동으로 처리하므로 별도 로직 불필요
-                    pass
+                    tasks = [
+                        db.update_telegram_url(
+                            r['report_id'], 
+                            f"https://ssh-oci.netlify.app/share?id={r['report_id']}",
+                            pdf_url=r.get('PDF_URL')
+                        ) 
+                        for r in records
+                    ]
+                    if tasks: await asyncio.gather(*tasks)
                 logger.success(f"[{firm_name}] Enrichment completed.")
             except Exception as e:
                 logger.error(f"[{firm_name}] Enrichment failed: {e}")
