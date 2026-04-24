@@ -102,6 +102,7 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
   - [x] 2026-04-20 SQLite 롤백 이력 있음
   - [x] 2026-04-21 최근 2일 SQLite 데이터를 JSON export 후 PostgreSQL upsert
   - [x] 2026-04-21 `DB_BACKEND=postgres` 운영 재전환 완료
+  - [x] 2026-04-24 DS투자증권 `TELEGRAM_URL`은 PostgreSQL trigger로 `https://ssh-oci.netlify.app/share?id={report_id}` 자동 보정
 - **2026-04-21 재전환 검증:**
   ```bash
   uv run python scripts/sync_recent_sqlite_to_postgres.py --days 2 --output /tmp/sqlite_recent_2d_reports.json

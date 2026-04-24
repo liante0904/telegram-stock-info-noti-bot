@@ -14,7 +14,7 @@ setup_logger("scraper")
 
 # --- 모듈 임포트 ---
 from utils.telegram_util import sendMarkDownText
-from utils.sqlite_util import convert_sql_to_telegram_messages
+from utils.report_util import get_report_messages
 from models.db_factory import get_db
 
 # business modules
@@ -52,6 +52,43 @@ load_dotenv()
 token = os.getenv('TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET')
 chat_id = os.getenv('TELEGRAM_CHANNEL_ID_REPORT_ALARM')
 
+async def enrich_dbfi_records(db, records):
+    update_records = await fetch_detailed_url(records)
+    tasks = [
+        db.update_telegram_url(
+            r['report_id'],
+            r['TELEGRAM_URL'],
+            pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'],
+        )
+        for r in update_records
+        if r.get('TELEGRAM_URL')
+    ]
+    if tasks:
+        await asyncio.gather(*tasks)
+
+
+async def enrich_ls_records(db, records, firm_info):
+    update_records = await LS_detail(articles=records, firm_info=firm_info)
+    tasks = [
+        db.update_telegram_url(
+            r['report_id'],
+            r['TELEGRAM_URL'],
+            r.get('ARTICLE_TITLE'),
+            pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL'],
+        )
+        for r in update_records
+        if r.get('TELEGRAM_URL')
+    ]
+    if tasks:
+        await asyncio.gather(*tasks)
+
+
+ENRICH_HANDLERS = {
+    0: enrich_ls_records,
+    19: enrich_dbfi_records,
+}
+
+
 async def enrich_data():
     logger.info("Starting data enrichment process...")
     db = get_db()
@@ -63,28 +100,17 @@ async def enrich_data():
 
         if firm_name and firm_info.telegram_update_required:
             records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info, days_limit=7)
-            if not records: continue
+            if not records:
+                continue
+
+            handler = ENRICH_HANDLERS.get(sec_firm_order)
+            if handler is None:
+                logger.warning(f"[{firm_name}] TELEGRAM_UPDATE_YN='Y' but no enrichment handler is registered.")
+                continue
 
             logger.info(f"[{firm_name}] Found {len(records)} records for enrichment.")
             try:
-                if sec_firm_order == 19:  # DB
-                    update_records = await fetch_detailed_url(records)
-                    tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
-                    if tasks: await asyncio.gather(*tasks)
-                elif sec_firm_order == 0:  # LS
-                    update_records = await LS_detail(articles=records, firm_info=firm_info)
-                    tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
-                    if tasks: await asyncio.gather(*tasks)
-                elif sec_firm_order == 11:  # DS
-                    tasks = [
-                        db.update_telegram_url(
-                            r['report_id'], 
-                            f"https://ssh-oci.netlify.app/share?id={r['report_id']}",
-                            pdf_url=r.get('PDF_URL')
-                        ) 
-                        for r in records
-                    ]
-                    if tasks: await asyncio.gather(*tasks)
+                await handler(db, records, firm_info)
                 logger.success(f"[{firm_name}] Enrichment completed.")
             except Exception as e:
                 logger.error(f"[{firm_name}] Enrichment failed: {e}")
@@ -93,7 +119,7 @@ async def daily_send_report(date_str=None):
     db = get_db()
     rows = await db.daily_select_data(date_str=date_str, type='send')
     if rows:
-        messages = convert_sql_to_telegram_messages(rows)
+        messages = get_report_messages(rows)
         logger.info(f"Sending {len(messages)} messages...")
         for i, msg in enumerate(messages):
             logger.debug(f"Message {i+1} preview:\n{msg[:500]}...")

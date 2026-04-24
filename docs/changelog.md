@@ -6,6 +6,24 @@
 
 ## 운영 변경 기록
 
+### 2026-04-24 — DS share URL 자동 보정 및 메시지 변환 정리
+
+- `utils/report_util.py`가 `DB_BACKEND` 기준으로 SQLite/PostgreSQL 메시지 변환 유틸을 고르도록 정리했습니다.
+- PostgreSQL용 텔레그램 메시지 변환 유틸을 추가해 DS투자증권의 `[공유]` / `[원본]` 링크 표기를 백엔드별로 일관되게 맞췄습니다.
+- DS투자증권(`SEC_FIRM_ORDER=11`)의 `TELEGRAM_URL`은 PostgreSQL trigger로 `https://ssh-oci.netlify.app/share?id={report_id}`가 자동 채워지도록 전환했습니다.
+- 스크래퍼 후처리 루틴은 실제 추가 보정이 필요한 LS / DB금융투자만 핸들러를 타도록 정리했습니다.
+
+검증:
+
+```bash
+uv run pytest tests/test_report_util.py -q
+uv run pytest tests/test_db_logic.py -q
+python3 -m py_compile scraper.py
+```
+
+- `tests/test_report_util.py`: 2 passed
+- `tests/test_db_logic.py`: 3 passed
+
 ### 2026-04-21 — PostgreSQL 재전환
 
 - `scripts/sync_recent_sqlite_to_postgres.py`를 추가해 최근 SQLite 데이터를 JSON으로 export한 뒤 PostgreSQL `TB_SEC_REPORTS`에 `KEY` 기준 upsert하고 정합성을 비교할 수 있게 했습니다.
