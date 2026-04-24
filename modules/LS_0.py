@@ -31,6 +31,7 @@ skip_boards = set()
 SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
 LS_DIRECT_RETRIES = int(os.getenv("LS_DIRECT_RETRIES", "2"))
 LS_WARP_RETRIES = int(os.getenv("LS_WARP_RETRIES", "5"))
+LS_DIRECT_PROBE_BOARDS = int(os.getenv("LS_DIRECT_PROBE_BOARDS", "2"))
 PROXIES = {
     'http': SOCKS_PROXY,
     'https': SOCKS_PROXY
@@ -65,6 +66,9 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     if skip_boards is None:
         skip_boards = set()
 
+    warp_all = False
+    direct_probe_count = 0
+
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         if ARTICLE_BOARD_ORDER in skip_boards:
             continue
@@ -80,22 +84,28 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             article_board_order=ARTICLE_BOARD_ORDER
         )
 
-        # 1차 시도: 직접 접속. OCI 대역 차단 가능성이 있어 짧게 2회만 확인 후 WARP로 넘긴다.
+        # 초반 몇 개 게시판만 direct probe를 수행하고,
+        # 실패가 발생하면 나머지는 WARP로 일괄 전환한다.
         direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
-        for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
-            try:
-                resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
-                resp.raise_for_status()
-                soup = BeautifulSoup(resp.content, "html.parser")
-                soupList = soup.select('#contents > table > tbody > tr')
-                break
-            except Exception as e:
-                soup = None
-                if direct_attempt < LS_DIRECT_RETRIES:
-                    logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
-                    time.sleep(direct_attempt)
+        if not warp_all and direct_probe_count < LS_DIRECT_PROBE_BOARDS:
+            direct_probe_count += 1
+            for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+                try:
+                    resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+                    resp.raise_for_status()
+                    soup = BeautifulSoup(resp.content, "html.parser")
+                    soupList = soup.select('#contents > table > tbody > tr')
+                    break
+                except Exception as e:
+                    soup = None
+                    if direct_attempt < LS_DIRECT_RETRIES:
+                        logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
+                        time.sleep(direct_attempt)
+            if soup is None:
+                warp_all = True
+                logger.warning("LS direct probe failed. Switching all remaining boards to WARP.")
 
-        if soup is None:
+        if soup is None:  # direct probe 비활성/실패 시 WARP 사용
             soup = get_soup_with_warp(TARGET_URL, direct_headers)
             if soup:
                 soupList = soup.select('#contents > table > tbody > tr')
