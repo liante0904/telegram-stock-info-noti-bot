@@ -25,6 +25,14 @@ class FirmInfo(metaclass=MetaFirmInfo):
     _is_loaded = False
 
     @classmethod
+    def reload(cls):
+        """캐시를 버리고 DB에서 다시 로드."""
+        cls._is_loaded = False
+        cls._firm_data = {}
+        cls._board_data = {}
+        cls.load_data_from_db()
+
+    @classmethod
     def load_data_from_db(cls):
         if cls._is_loaded:
             return
@@ -113,7 +121,46 @@ class FirmInfo(metaclass=MetaFirmInfo):
         self.telegram_update_required = firm_info_cached.get("update_required", False)
 
     def get_firm_name(self):
-        return self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("name", f"Unknown({self.SEC_FIRM_ORDER})")
+        cached = self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("name")
+        if cached:
+            return cached
+        # 캐시 miss → DB에서 단건 조회 후 캐시 갱신
+        name = self._fetch_firm_name_from_db(self.SEC_FIRM_ORDER)
+        if name:
+            self._firm_data.setdefault(self.SEC_FIRM_ORDER, {})["name"] = name
+            return name
+        return f"Unknown({self.SEC_FIRM_ORDER})"
+
+    @classmethod
+    def _fetch_firm_name_from_db(cls, sec_firm_order: int):
+        backend = os.getenv("DB_BACKEND", "sqlite").lower()
+        try:
+            if backend == "postgres":
+                import psycopg2
+                conn = psycopg2.connect(
+                    host=os.getenv("POSTGRES_HOST", "localhost"),
+                    port=os.getenv("POSTGRES_PORT", "5432"),
+                    dbname=os.getenv("POSTGRES_DB", "ssh_reports_hub"),
+                    user=os.getenv("POSTGRES_USER", "ssh_reports_hub"),
+                    password=os.getenv("POSTGRES_PASSWORD", ""),
+                )
+                with conn.cursor() as cur:
+                    cur.execute('SELECT "FIRM_NM" FROM "TBM_SEC_FIRM_INFO" WHERE "SEC_FIRM_ORDER" = %s', (sec_firm_order,))
+                    row = cur.fetchone()
+                conn.close()
+            else:
+                import sqlite3
+                conn = sqlite3.connect(config.DB_PATH, check_same_thread=False)
+                cur = conn.cursor()
+                cur.execute("SELECT FIRM_NM FROM TBM_SEC_FIRM_INFO WHERE SEC_FIRM_ORDER = ?", (sec_firm_order,))
+                row = cur.fetchone()
+                conn.close()
+            if row:
+                logger.debug(f"FirmInfo: fallback DB lookup SEC_FIRM_ORDER={sec_firm_order} → {row[0]}")
+                return row[0]
+        except Exception as e:
+            logger.error(f"FirmInfo: fallback lookup failed for SEC_FIRM_ORDER={sec_firm_order}: {e}")
+        return None
 
     def get_board_name(self):
         key = (self.SEC_FIRM_ORDER, self.ARTICLE_BOARD_ORDER)

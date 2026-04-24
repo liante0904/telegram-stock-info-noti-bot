@@ -25,12 +25,40 @@ SEC_FIRM_ORDER = 28
 def _normalize_reg_dt(text: str) -> str:
     if not text:
         return ""
+    text = text.strip()
     m = re.search(r"(20\d{2})\D+(\d{1,2})\D+(\d{1,2})", text)
-    if not m:
-        digits = re.sub(r"[^0-9]", "", text)
-        return digits[:8] if len(digits) >= 8 else ""
-    y, mm, dd = m.groups()
-    return f"{int(y):04d}{int(mm):02d}{int(dd):02d}"
+    if m:
+        y, mm, dd = m.groups()
+        return f"{int(y):04d}{int(mm):02d}{int(dd):02d}"
+
+    # Heungkuk list pages render dates like "Thu Apr 23 00:00:00 KST 2026".
+    m = re.search(
+        r"\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+"
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+"
+        r"(\d{1,2})\s+\d{2}:\d{2}:\d{2}\s+\w+\s+(20\d{2})\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        months = {
+            "jan": 1,
+            "feb": 2,
+            "mar": 3,
+            "apr": 4,
+            "may": 5,
+            "jun": 6,
+            "jul": 7,
+            "aug": 8,
+            "sep": 9,
+            "oct": 10,
+            "nov": 11,
+            "dec": 12,
+        }
+        mon, dd, y = m.groups()
+        return f"{int(y):04d}{months[mon.lower()]:02d}{int(dd):02d}"
+
+    digits = re.sub(r"[^0-9]", "", text)
+    return digits[:8] if len(digits) >= 8 else ""
 
 
 def _decode_response_text(resp: requests.Response) -> str:
