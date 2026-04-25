@@ -159,46 +159,102 @@ async def DBfi_checkNewArticle():
 
 # 상세 URL로 후처리 데이터 획득 함수
 async def fetch_detailed_url(articles):
+    def _normalize_text(value: str) -> str:
+        return re.sub(r"\s+", " ", (value or "").strip())
+
+    def _article_signature(article: dict) -> tuple[str, str, str, str]:
+        # DB증권은 동일 리포트가 여러 게시판에 중복 노출되는 경우가 있어
+        # 제목/작성자/등록일/카테고리 기준으로 대표 건만 상세 조회합니다.
+        return (
+            _normalize_text(article.get("REG_DT", "")),
+            _normalize_text(article.get("ARTICLE_TITLE", "")),
+            _normalize_text(article.get("WRITER", "")),
+            _normalize_text(article.get("CATEGORY", "")),
+        )
+
     timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
+        # Group by article signature first, then choose a single representative KEY
+        # to avoid hitting detail endpoints for the same report multiple times.
+        pending_by_signature = {}
+        skipped_existing = 0
+        collapsed_duplicates = 0
         for article in articles:
             if article.get("TELEGRAM_URL") and article.get("PDF_URL"):
                 continue
-            key_url = article["KEY"]
+            key_url = article.get("KEY")
+            if not key_url:
+                continue
+            signature = _article_signature(article)
+            bucket = pending_by_signature.setdefault(
+                signature,
+                {"representative_key": key_url, "articles": [], "keys": set()},
+            )
+            if bucket["articles"]:
+                collapsed_duplicates += 1
+            bucket["keys"].add(key_url)
+            bucket["articles"].append(article)
 
+        encoded_url_cache = {}
+        extracted_cache = {}
+        representative_items = list(pending_by_signature.values())
+        logger.info(
+            "DBfi: detail enrichment targets={} representative_keys={} skipped_existing={} collapsed_duplicates={}",
+            sum(len(item["articles"]) for item in representative_items),
+            len(representative_items),
+            skipped_existing,
+            collapsed_duplicates,
+        )
+
+        for item in representative_items:
+            key_url = item["representative_key"]
+            key_articles = item["articles"]
             try:
-                async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
-                    if response.status == 200:
+                encoded_url = encoded_url_cache.get(key_url)
+                if not encoded_url:
+                    async with session.post(key_url, headers=HEADERS_TEMPLATE) as response:
+                        if response.status != 200:
+                            logger.warning(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+                            continue
                         try:
                             detail_data = await response.json()
-                            encoded_url = detail_data['data'].get("url", "")
-                            if encoded_url:
-                                extracted = await extract_dbfi_pdf_url(session, encoded_url)
-                                if not extracted:
-                                    logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
-                                    continue
-                                pdf_url = extracted["pdf_url"]
-                                article["TELEGRAM_URL"] = pdf_url
-                                article["PDF_URL"] = pdf_url
-                                article["FILE_NAME"] = extracted["file_name"]
-                                article["DOC_ID"] = extracted["doc_id"]
-                                article["GATE_URL"] = extracted["gate_url"]
-                                article["VIEWER_URL"] = extracted["viewer_url"]
-                                logger.info(
-                                    "DBfi: title={} | file={} | docId={} | pdf={}",
-                                    article["ARTICLE_TITLE"],
-                                    extracted["file_name"],
-                                    extracted["doc_id"],
-                                    pdf_url,
-                                )
-                            else:
-                                logger.warning(f"DBfi: Empty document id for {key_url}")
                         except json.JSONDecodeError:
                             logger.error(f"Failed to parse JSON for {key_url}")
-                    else:
-                        logger.warning(f"Failed to fetch details from {key_url}. Status code: {response.status}")
+                            continue
+                        encoded_url = detail_data.get("data", {}).get("url", "")
+                        encoded_url_cache[key_url] = encoded_url
+
+                if not encoded_url:
+                    logger.warning(f"DBfi: Empty document id for {key_url}")
+                    continue
+
+                extracted = extracted_cache.get(encoded_url)
+                if extracted is None:
+                    extracted = await extract_dbfi_pdf_url(session, encoded_url)
+                    extracted_cache[encoded_url] = extracted
+
+                if not extracted:
+                    logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
+                    continue
+
+                pdf_url = extracted["pdf_url"]
+                for article in key_articles:
+                    article["TELEGRAM_URL"] = pdf_url
+                    article["PDF_URL"] = pdf_url
+                    article["FILE_NAME"] = extracted["file_name"]
+                    article["DOC_ID"] = extracted["doc_id"]
+                    article["GATE_URL"] = extracted["gate_url"]
+                    article["VIEWER_URL"] = extracted["viewer_url"]
+                logger.info(
+                    "DBfi: key={} affected={} file={} docId={} pdf={}",
+                    key_url,
+                    len(key_articles),
+                    extracted["file_name"],
+                    extracted["doc_id"],
+                    pdf_url,
+                )
             except Exception as e:
-                logger.error(f"Network or timeout error while fetching detailed URL: {e}")
+                logger.error(f"Network or timeout error while fetching detailed URL ({key_url}): {e}")
 
     return articles
 
