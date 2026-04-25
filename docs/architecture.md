@@ -41,6 +41,7 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
 | `modules/` | 증권사별 스크래퍼 (LS, 삼성, KB 등) |
 | `models/db_factory.py` | DB_BACKEND 기반 팩토리 (SQLite ↔ PostgreSQL) |
 | `models/PostgreSQLManager.py` | PostgreSQL CRUD |
+| `models/PostgreSQLManagerV2.py` | PostgreSQL 소문자 스키마 검증용 CRUD |
 | `models/SQLiteManager.py` | SQLite CRUD (호환 인터페이스) |
 | `models/FirmInfo.py` | 증권사/게시판 메타 정보 (DB 기반 동적 로드) |
 | `models/ConfigManager.py` | 환경별 설정 중앙화 (싱글톤) |
@@ -102,6 +103,8 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
   - [x] 2026-04-20 SQLite 롤백 이력 있음
   - [x] 2026-04-21 최근 2일 SQLite 데이터를 JSON export 후 PostgreSQL upsert
   - [x] 2026-04-21 `DB_BACKEND=postgres` 운영 재전환 완료
+  - [x] 2026-04-24 DS투자증권 `TELEGRAM_URL`은 PostgreSQL trigger로 `https://ssh-oci.netlify.app/share?id={report_id}` 자동 보정
+  - [ ] PostgreSQL V2 소문자 스키마 검증 진행 중 (`docs/postgresql-v2.md`)
 - **2026-04-21 재전환 검증:**
   ```bash
   uv run python scripts/sync_recent_sqlite_to_postgres.py --days 2 --output /tmp/sqlite_recent_2d_reports.json
@@ -110,6 +113,15 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
   - SQLite export: 282 rows (`SAVE_TIME >= 2026-04-20`)
   - PostgreSQL upsert: inserted 70, updated 212
   - Final consistency check: sqlite 282 keys, postgres 282 keys
+
+### ADR-004-B: PostgreSQL V2 소문자 스키마 검증
+
+- **상태:** 검증 중 (2026-04-25)
+- **배경:** 운영 PostgreSQL 테이블이 `"TB_SEC_REPORTS"`, `"SEC_FIRM_ORDER"`처럼 대문자 quoted identifier를 사용해 SQL 작성과 유지보수 비용이 큼
+- **결정:** 운영 V1은 유지하되, `tb_sec_reports_v2` 소문자 schema를 별도 테이블로 검증
+- **원칙:** `DB_BACKEND=postgres_v2`는 아직 도입하지 않고, 운영 전환 전까지 명시 스크립트로만 검증
+- **문서:** [PostgreSQL V2 Lowercase Schema](postgresql-v2.md)
+- **최근 검증:** `scripts/sync_recent_postgres_to_v2.py`로 최근 2일 V1 280건을 JSON export → V2 upsert → KEY/컬럼 비교 통과
 
 ### ADR-005: Oracle ATP 제거
 

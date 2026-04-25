@@ -120,7 +120,8 @@ ssh-reports-scraper/
 │   └── WebScraper.py               # HTTP/Selenium 공통 추상화
 ├── docs/
 │   ├── architecture.md             # ADR 및 설계 결정 기록
-│   └── changelog.md                # 2021~현재 변천사
+│   ├── changelog.md                # 2021~현재 변천사
+│   └── postgresql-v2.md            # PostgreSQL 소문자 스키마 검증 메모
 └── scripts/
     └── migrate_sqlite_to_postgres.py
 ```
@@ -142,7 +143,8 @@ LS증권 · 신한투자증권 · NH투자증권 · 하나증권 · KB증권 · 
 | 2026.04 | PostgreSQL, GitHub Actions CI/CD, AI 요약 |
 
 전체 변천사 → [docs/changelog.md](docs/changelog.md)  
-설계 결정 배경 → [docs/architecture.md](docs/architecture.md)
+설계 결정 배경 → [docs/architecture.md](docs/architecture.md)  
+PostgreSQL V2 소문자 스키마 → [docs/postgresql-v2.md](docs/postgresql-v2.md)
 
 ---
 
