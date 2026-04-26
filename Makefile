@@ -1,9 +1,9 @@
-SECRETS := python3 $(HOME)/secrets/generate_env.py scraper
-COMPOSE  := docker compose
+SECRETS_SCRIPT := python3 $(HOME)/secrets/generate_env.py
+COMPOSE        := docker compose
 
-.PHONY: up down restart restart-scraper restart-alert logs logs-scraper logs-alert ps env
+.PHONY: up down restart restart-scraper restart-alert logs logs-scraper logs-alert ps env env-scraper env-alert
 
-## 시크릿 재생성 + 전체 서비스 기동
+## 전체 서비스 기동 (환경 변수 전체 갱신)
 up: env
 	$(COMPOSE) up -d
 
@@ -11,16 +11,16 @@ up: env
 down:
 	$(COMPOSE) down
 
-## 시크릿 재생성 + 전체 재시작
+## 전체 재시작
 restart: env
 	$(COMPOSE) restart
 
-## 시크릿 재생성 + main-scraper만 재시작
-restart-scraper: env
+## scraper만 시크릿 갱신 후 재시작
+restart-scraper: env-scraper
 	$(COMPOSE) restart main-scraper
 
-## 시크릿 재생성 + keyword-alert만 재시작
-restart-alert: env
+## keyword-alert만 시크릿 갱신 후 재시작
+restart-alert: env-alert
 	$(COMPOSE) restart report-keyword-alert
 
 ## 전체 로그 (follow)
@@ -37,6 +37,13 @@ logs-alert:
 ps:
 	$(COMPOSE) ps
 
-## .env 재생성만 (확인용)
-env:
-	$(SECRETS)
+## 전체 환경 변수 생성
+env: env-scraper env-alert
+
+## 서비스별 환경 변수 생성 분리
+env-scraper:
+	$(SECRETS_SCRIPT) scraper
+
+env-alert:
+	$(SECRETS_SCRIPT) scraper # 현재는 scraper와 동일한 시크릿을 공유할 수 있으나 추후 분리 가능성 고려
+
