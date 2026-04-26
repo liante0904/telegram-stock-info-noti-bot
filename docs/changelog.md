@@ -6,6 +6,14 @@
 
 ## 운영 변경 기록
 
+### 2026-04-26 — ATTACH_URL 전수 제거 및 URL 컬럼 정규화 완료
+
+- **URL 컬럼 정규화 완료**: 전체 28개 증권사 스크래퍼 모듈에서 `ATTACH_URL`을 제거하고 `TELEGRAM_URL`, `PDF_URL`, `ARTICLE_URL`로 분산 배치했습니다.
+- **데이터 검증**: LS, 신한, 메리츠, 유안타, 현대차 등 주의 대상에 대해 DB 전수 조사를 실시하여 데이터 손실이 없음을 확인했습니다.
+- `docs/url-semantics.md` 문서를 생성하여 마이그레이션 종료를 선언하고 규약을 고정했습니다.
+- `modules/ShinHanInvest_1.py` 리팩토링 시 누락되었던 모바일 뷰 전용 `ARTICLE_URL` 생성 로직을 추가했습니다.
+- `modules/LS_0.py`의 Fallback 로직에서 모호한 `ATTACH_URL` 변수명을 `fallback_url`로 정규화했습니다.
+
 ### 2026-04-21 — PostgreSQL 재전환
 
 - `scripts/sync_recent_sqlite_to_postgres.py`를 추가해 최근 SQLite 데이터를 JSON으로 export한 뒤 PostgreSQL `TB_SEC_REPORTS`에 `KEY` 기준 upsert하고 정합성을 비교할 수 있게 했습니다.

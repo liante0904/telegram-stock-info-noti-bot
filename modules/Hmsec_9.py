@@ -77,7 +77,6 @@ def Hmsec_checkNewArticle():
                 "FIRM_NM":firm_info.get_firm_name(),
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "REG_DT":REG_DT,
-                "ATTACH_URL":LIST_ARTICLE_URL,
                 "ARTICLE_URL":LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": DOWNLOAD_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,

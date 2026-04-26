@@ -106,7 +106,6 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
-                    "ATTACH_URL": ' ',
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
                     "TELEGRAM_URL": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -206,15 +205,18 @@ async def ShinHanInvest_checkNewArticle():
                             reg_dt = re.sub(r"[-./]", "", reg_dt)
 
                         attachment_id = item.get('ATTACHMENT_ID', '')
+                        message_id = item.get('MESSAGE_ID', '')
+                        message_number = item.get('MESSAGE_NUMBER', '')
                         
                         download_url = f"https://bbs2.shinhansec.com/board/message/file.pdf.do?attachmentId={attachment_id}"
+                        article_url = f"https://bbs2.shinhaninvest.com/mobile/view.do?boardName={board_name}&messageId={message_id}&messageNumber={message_number}"
                                         
                         json_data_list.append({
                             "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
                             "ARTICLE_BOARD_ORDER": article_board_order,
                             "FIRM_NM": firm_info.get_firm_name(),
                             "REG_DT": reg_dt,
-                            "ATTACH_URL": ' ',
+                            "ARTICLE_URL": article_url,
                             "DOWNLOAD_URL": download_url,
                             "TELEGRAM_URL": download_url,
                             "PDF_URL": download_url,

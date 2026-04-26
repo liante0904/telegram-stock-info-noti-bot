@@ -73,7 +73,6 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", list_item['makeDt']),
-                    "ATTACH_URL": LIST_ARTICLE_URL,
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
                     "WRITER": WRITER,

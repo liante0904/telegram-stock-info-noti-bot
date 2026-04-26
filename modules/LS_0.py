@@ -140,7 +140,6 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", str_date),
                     "ARTICLE_URL": '',
-                    "ATTACH_URL": '',
                     "DOWNLOAD_URL": '',
                     "TELEGRAM_URL": '',
                     "PDF_URL": '',
@@ -378,9 +377,9 @@ async def create_fallback_url(article, soup=None):
     if attach_file_name:
         safe_name = urllib.parse.quote(attach_file_name)
         # EtwBoardData 앞에 EtwFrontBoard가 붙는 경우가 많음
-        ATTACH_URL = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{safe_name}"
-        logger.debug(f"Fallback URL created: {ATTACH_URL}")
-        return ATTACH_URL
+        fallback_url = f"https://www.ls-sec.co.kr/upload/EtwBoardData/{URL_PARAM_0}/{safe_name}"
+        logger.debug(f"Fallback URL created: {fallback_url}")
+        return fallback_url
     
     return ""
 

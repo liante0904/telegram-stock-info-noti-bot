@@ -115,7 +115,6 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     "ARTICLE_BOARD_ORDER": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": REG_DT,
-                    "ATTACH_URL": ATTACH_URL,
                     "DOWNLOAD_URL": ATTACH_URL,
                     "TELEGRAM_URL": ATTACH_URL,
                     "PDF_URL": ATTACH_URL,

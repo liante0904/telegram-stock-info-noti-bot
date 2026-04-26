@@ -59,7 +59,6 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
             "ARTICLE_BOARD_ORDER": article_board_order,
             "FIRM_NM": firm_info.get_firm_name(),
             "REG_DT": REG_DT,
-            "ATTACH_URL": LIST_ARTICLE_URL,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
             "TELEGRAM_URL": LIST_ARTICLE_URL,
             "PDF_URL": LIST_ARTICLE_URL,

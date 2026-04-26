@@ -67,7 +67,6 @@ def Shinyoung_checkNewArticle():
             "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
             "REG_DT":REG_DT,
             "WRITER":WRITER,
-            "ATTACH_URL":LIST_ARTICLE_URL,
             "TELEGRAM_URL": DOWNLOAD_URL,
             "MKT_TP": MKT_TP,
             "KEY":LIST_ARTICLE_URL,

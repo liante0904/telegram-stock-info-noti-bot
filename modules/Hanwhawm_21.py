@@ -85,7 +85,6 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                         "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                         "FIRM_NM": firm_info.get_firm_name(),
                         "REG_DT": reg_date,
-                        "ATTACH_URL": download_url,
                         "DOWNLOAD_URL": download_url,
                         "ARTICLE_TITLE": title,
                         "WRITER": writer,

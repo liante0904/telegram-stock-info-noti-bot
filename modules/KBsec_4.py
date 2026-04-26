@@ -78,7 +78,6 @@ async def KB_checkNewArticle():
                 "FIRM_NM": firm_info.get_firm_name(),
                 "REG_DT": REG_DT,
                 "WRITER": WRITER,
-                "ATTACH_URL": LIST_ARTICLE_URL,
                 "DOWNLOAD_URL": LIST_ARTICLE_URL,
                 "TELEGRAM_URL": LIST_ARTICLE_URL,
                 "PDF_URL": LIST_ARTICLE_URL,
