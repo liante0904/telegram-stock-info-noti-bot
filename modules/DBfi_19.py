@@ -14,11 +14,17 @@ from models.FirmInfo import FirmInfo
 from models.ConfigManager import config
 from models.db_factory import get_db
 
-# 시크릿 설정 로드
-dbfi_cfg = config.get_urls("DBfi_19")
-BASE_URL = dbfi_cfg["base_urls"][0]
-VIEWER_BASE = dbfi_cfg["base_urls"][1]
-URL_PATHS = dbfi_cfg["url_paths"]
+# DBfi endpoint settings are isolated in external secrets.json.
+dbfi_cfg = config.get_urls("DBfi_19", {})
+BASE_URL = dbfi_cfg.get("base_url", "")
+VIEWER_BASE = dbfi_cfg.get("viewer_base_url", "")
+LIST_REFERER_PATH = dbfi_cfg.get("list_referer_path", "")
+DETAIL_PATH_TEMPLATE = dbfi_cfg.get("detail_path_template", "")
+GATE_PATH = dbfi_cfg.get("gate_path", "")
+AUTH_PATH = dbfi_cfg.get("auth_path", "")
+VIEWER_PATH = dbfi_cfg.get("viewer_path", "")
+DOCUMENT_PATH_TEMPLATE = dbfi_cfg.get("document_path_template", "")
+URL_PATHS = dbfi_cfg.get("url_paths", [])
 
 HEADERS_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
@@ -37,10 +43,13 @@ async def extract_dbfi_pdf_url(session, encoded_url):
     """
     if not encoded_url:
         return None
+    if not VIEWER_BASE or not GATE_PATH or not AUTH_PATH or not VIEWER_PATH or not DOCUMENT_PATH_TEMPLATE:
+        logger.error("DBfi: Viewer endpoint config is incomplete. Check secrets.json.")
+        return None
 
     token = urlparse.unquote(encoded_url)
     gate_q = urlparse.quote(token, safe="")
-    gate_url = f"{VIEWER_BASE}__DBFI_GATE_PATH__?q={gate_q}"
+    gate_url = f"{VIEWER_BASE}{GATE_PATH}?q={gate_q}"
 
     pv_headers = {
         "User-Agent": HEADERS_TEMPLATE["User-Agent"],
@@ -50,7 +59,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
     }
 
     try:
-        async with session.post(f"{VIEWER_BASE}__DBFI_AUTH_PATH__", headers=pv_headers) as auth_response:
+        async with session.post(f"{VIEWER_BASE}{AUTH_PATH}", headers=pv_headers) as auth_response:
             await auth_response.text()
 
         viewer_payload = {
@@ -60,7 +69,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
             "docId": "",
         }
         async with session.post(
-            f"{VIEWER_BASE}__DBFI_VIEWER_PATH__",
+            f"{VIEWER_BASE}{VIEWER_PATH}",
             headers=pv_headers,
             data=viewer_payload,
         ) as viewer_response:
@@ -84,10 +93,10 @@ async def extract_dbfi_pdf_url(session, encoded_url):
                 flags=re.S,
             )
             file_name = title_match.group(1).strip() if title_match else "리서치"
-            pdf_url = f"{VIEWER_BASE}__DBFI_DOCUMENT_PATH_TEMPLATE__"
+            pdf_url = f"{VIEWER_BASE}{DOCUMENT_PATH_TEMPLATE.format(doc_id=doc_id)}"
             return {
                 "gate_url": gate_url,
-                "viewer_url": f"{VIEWER_BASE}__DBFI_VIEWER_PATH__",
+                "viewer_url": f"{VIEWER_BASE}{VIEWER_PATH}",
                 "doc_id": doc_id,
                 "file_name": file_name,
                 "pdf_url": pdf_url,
@@ -100,7 +109,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
 async def DBfi_checkNewArticle():
     SEC_FIRM_ORDER = 19
     
-    if not URL_PATHS:
+    if not BASE_URL or not LIST_REFERER_PATH or not DETAIL_PATH_TEMPLATE or not URL_PATHS:
         logger.error("DBfi: No URL_PATHS found in config. Check secrets.json.")
         return []
 
@@ -112,7 +121,7 @@ async def DBfi_checkNewArticle():
         for url_path, board_order in URL_PATHS:
             headers = {
                 **HEADERS_TEMPLATE,
-                "Referer": f"{BASE_URL}__DBFI_LIST_REFERER_PATH__",
+                "Referer": f"{BASE_URL}{LIST_REFERER_PATH}",
                 "Accept": "application/json, text/javascript, */*; q=0.01",
             }
             try:
@@ -139,7 +148,7 @@ async def DBfi_checkNewArticle():
 
     candidates = []
     for item, board_order in raw_items:
-        key = f"{BASE_URL}__DBFI_DETAIL_PATH_TEMPLATE__"
+        key = f"{BASE_URL}{DETAIL_PATH_TEMPLATE.format(rid=item['rid'])}"
         if key in existing_keys:
             continue
         
