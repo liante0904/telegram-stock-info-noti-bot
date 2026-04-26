@@ -148,7 +148,11 @@ async def ShinHanInvest_checkNewArticle():
     SEC_FIRM_ORDER = 1
     json_data_list = []
     
-    url = config.get_urls("ShinHanInvest_1")[0]
+    urls = config.get_urls("ShinHanInvest_1")
+    if not urls:
+        logger.warning("No URLs found for ShinHanInvest_1")
+        return []
+    url = urls[0]
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:142.0) Gecko/20100101 Firefox/142.0",
@@ -229,7 +233,11 @@ def get_shinhan_board_info():
     Fetches data from Shinhan Invest API and prints a unique list of
     BOARD_NAME and BOARD_TITLE pairs.
     """
-    url = config.get_urls("ShinHanInvest_1")[0]
+    urls = config.get_urls("ShinHanInvest_1")
+    if not urls:
+        logger.warning("No URLs found for ShinHanInvest_1")
+        return []
+    url = urls[0]
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:142.0) Gecko/20100101 Firefox/142.0",

@@ -101,7 +101,8 @@ def Samsung_checkNewArticle():
         break
         
     # 메모리 정리
-    del soup
+    if 'soup' in locals():
+        del soup
     gc.collect()
 
     sorted_data = extract_and_deduplicate(json_data_list)

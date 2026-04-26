@@ -29,7 +29,12 @@ async def NHQV_checkNewArticle(target_date=None):
     SEC_FIRM_ORDER = 2
     ARTICLE_BOARD_ORDER = 0
 
-    TARGET_URL = config.get_urls("NHQV_2")[0]
+    urls = config.get_urls("NHQV_2")
+    if not urls:
+        logger.warning("No URLs found for NHQV_2")
+        return []
+    TARGET_URL = urls[0]
+    
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'Accept': 'application/json, text/javascript, */*; q=0.01'

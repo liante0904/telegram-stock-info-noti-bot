@@ -22,8 +22,12 @@ def Hmsec_checkNewArticle():
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL_TUPLE = config.get_urls("Hmsec_9")
-    
+    if not TARGET_URL_TUPLE:
+        logger.warning("No URLs found for Hmsec_9")
+        return []
+
     # URL GET
+    soupList = None
     for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
             sec_firm_order=SEC_FIRM_ORDER,
@@ -32,28 +36,28 @@ def Hmsec_checkNewArticle():
         payload = {"curPage":1}
 
         scraper = SyncWebScraper(TARGET_URL, firm_info)
-        
+
         # HTML parse
         jres = scraper.PostJson(params=payload)
-        
-        
+
+
         # REG_DATE = jres['data_list'][0]['REG_DATE'].strip()
         # FILE_NAME = jres['data_list'][0]['UPLOAD_FILE1'].strip()
         # logger.debug('REG_DATE:',REG_DATE)
         # logger.debug('FILE_NAME:',FILE_NAME)
 
         # logger.debug(jres)
-        soupList = jres['data_list']
-        
+        soupList = jres.get('data_list', [])
+
         # JSON To List
         for list in soupList:
             # logger.debug(list)
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
-            DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}' 
+            DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}'
             DOWNLOAD_URL = DOWNLOAD_URL.format(list['UPLOAD_FILE1'])
 
             # https://docs.hmsec.com/SynapDocViewServer/job?fid=#&sync=true&fileType=URL&filePath=#
-            LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}' 
+            LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}'
             LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(DOWNLOAD_URL, DOWNLOAD_URL)
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
@@ -81,12 +85,12 @@ def Hmsec_checkNewArticle():
                 "WRITER": WRITER,
                 "SAVE_TIME": datetime.now().isoformat()
             })
-            
+
 
     # 메모리 정리
-    del soupList
-    gc.collect()
-    # logger.debug(json_data_list)
+    if soupList is not None:
+        del soupList
+    gc.collect()    # logger.debug(json_data_list)
     return json_data_list
 
 

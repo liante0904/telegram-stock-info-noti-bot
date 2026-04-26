@@ -73,7 +73,12 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
 
 async def Sangsanginib_checkNewArticle():
     SEC_FIRM_ORDER = 6
-    TARGET_URL = config.get_urls("Sangsanginib_6")[0]
+    urls = config.get_urls("Sangsanginib_6")
+    if not urls:
+        logger.warning("No URLs found for Sangsanginib_6")
+        return []
+    TARGET_URL = urls[0]
+    
     cmsCd_list = ["CM0078", "CM0338", "CM0079"]
 
     headers = {

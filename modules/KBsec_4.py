@@ -20,7 +20,11 @@ async def KB_checkNewArticle():
     SEC_FIRM_ORDER = 4
     ARTICLE_BOARD_ORDER = 0
 
-    TARGET_URL = config.get_urls("KBsec_4")[0]
+    urls = config.get_urls("KBsec_4")
+    if not urls:
+        logger.warning("No URLs found for KBsec_4")
+        return []
+    TARGET_URL = urls[0]
 
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,
