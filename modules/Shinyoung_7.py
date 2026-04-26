@@ -22,7 +22,11 @@ def Shinyoung_checkNewArticle():
 
     requests.packages.urllib3.disable_warnings()
 
-    TARGET_URL = config.get_urls("Shinyoung_7")[0]
+    urls = config.get_urls("Shinyoung_7")
+    if not urls:
+        logger.warning("No URLs found for Shinyoung_7")
+        return []
+    TARGET_URL = urls[0]
     
     firm_info = FirmInfo(
         sec_firm_order=SEC_FIRM_ORDER,
