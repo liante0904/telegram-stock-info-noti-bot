@@ -26,6 +26,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 skip_boards = set()
+USE_WARP_ONLY = False  # 직접 접속 실패 시 전역적으로 WARP만 사용하도록 설정
 
 # 프록시 설정 (환경 변수가 없으면 로컬 기본값 사용)
 SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
@@ -37,6 +38,7 @@ PROXIES = {
 }
 
 def get_soup_with_warp(url, headers):
+    global USE_WARP_ONLY
     for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
             response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
@@ -50,6 +52,7 @@ def get_soup_with_warp(url, headers):
                 return None
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
+    global USE_WARP_ONLY
     SEC_FIRM_ORDER = 0
     json_data_list = []
     requests.packages.urllib3.disable_warnings()
@@ -81,19 +84,28 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
         )
 
         # 1차 시도: 직접 접속. OCI 대역 차단 가능성이 있어 짧게 2회만 확인 후 WARP로 넘긴다.
+        # 이미 이전에 직접 접속이 실패한 적이 있다면 즉시 soup = None으로 처리하여 WARP로 넘어가게 함.
         direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
-        for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
-            try:
-                resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
-                resp.raise_for_status()
-                soup = BeautifulSoup(resp.content, "html.parser")
-                soupList = soup.select('#contents > table > tbody > tr')
-                break
-            except Exception as e:
-                soup = None
-                if direct_attempt < LS_DIRECT_RETRIES:
-                    logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
-                    time.sleep(direct_attempt)
+        if USE_WARP_ONLY:
+            soup = None
+        else:
+            for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+                try:
+                    resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+                    resp.raise_for_status()
+                    soup = BeautifulSoup(resp.content, "html.parser")
+                    soupList = soup.select('#contents > table > tbody > tr')
+                    break
+                except Exception as e:
+                    soup = None
+                    if direct_attempt < LS_DIRECT_RETRIES:
+                        logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
+                        time.sleep(direct_attempt)
+            
+            # 직접 접속 시도가 모두 실패하면 이후부터는 WARP만 사용하도록 설정
+            if soup is None:
+                logger.warning(f"LS 직접 접속 실패로 이후 모든 요청은 WARP를 사용합니다: {TARGET_URL}")
+                USE_WARP_ONLY = True
 
         if soup is None:
             soup = get_soup_with_warp(TARGET_URL, direct_headers)
@@ -166,20 +178,26 @@ def clean_url(url):
 
 
 async def fetch(session: ClientSession, url: str, headers: dict) -> str:
+    global USE_WARP_ONLY
     loop = asyncio.get_event_loop()
 
     # 1차 시도: 직접 접속. 짧게 2회 확인한 뒤 WARP 경로로 전환한다.
-    for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
-        try:
-            def sync_get_direct():
-                response = requests.get(url, headers=headers, verify=False, timeout=10)
-                response.raise_for_status()
-                return response.text
-            return await loop.run_in_executor(None, sync_get_direct)
-        except Exception as e:
-            if direct_attempt < LS_DIRECT_RETRIES:
-                logger.info(f"직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {url} ({e})")
-                await asyncio.sleep(direct_attempt)
+    if not USE_WARP_ONLY:
+        for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+            try:
+                def sync_get_direct():
+                    response = requests.get(url, headers=headers, verify=False, timeout=10)
+                    response.raise_for_status()
+                    return response.text
+                return await loop.run_in_executor(None, sync_get_direct)
+            except Exception as e:
+                if direct_attempt < LS_DIRECT_RETRIES:
+                    logger.info(f"직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {url} ({e})")
+                    await asyncio.sleep(direct_attempt)
+        
+        # 직접 접속 실패 시 플래그 전환
+        logger.warning(f"상세 페이지 직접 접속 실패로 이후 WARP를 사용합니다: {url}")
+        USE_WARP_ONLY = True
 
     # 2차 시도: WARP 프록시 (최대 5회, 재시도 중간 실패 로그 생략)
     for attempt in range(1, LS_WARP_RETRIES + 1):
