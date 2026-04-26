@@ -159,7 +159,7 @@ class SQLiteManager:
         query = f"""
         SELECT 
             report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
+            ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
         FROM 
             {self.main_table_name}
@@ -196,7 +196,7 @@ class SQLiteManager:
         query = f"""
         SELECT 
             report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
-            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
+            ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
         FROM 
             {self.main_table_name}
@@ -415,8 +415,8 @@ class SQLiteManager:
         query = f"""
         SELECT *
         FROM {self.main_table_name}
-        WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '')
-        AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '')
+        WHERE (GEMINI_SUMMARY "IS NULL" OR GEMINI_SUMMARY = '')
+        AND (TELEGRAM_URL IS NOT NULL AND TELEGRAM_URL != '')
         AND SEC_FIRM_ORDER NOT IN ({", ".join(map(str, exclude_firms))})
         ORDER BY SAVE_TIME DESC
         LIMIT ?

@@ -36,7 +36,7 @@ async def run_batch_summary(batch_limit=10):
         # print(f"\n[작업 시작] {report['ARTICLE_TITLE']} ({report['FIRM_NM']})")
         
         # 유효한 PDF URL 확인
-        download_url = report.get('ATTACH_URL') or report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
+        download_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL') or report.get('PDF_URL')
         
         file_name = f"temp_batch_{report['report_id']}.pdf"
         
@@ -73,7 +73,7 @@ async def run_batch_summary(batch_limit=10):
             
             if summary_result:
                 # 3. DB 업데이트 (TELEGRAM_URL 기준, 발송 완료된 최신 레코드만)
-                target_url = report.get('TELEGRAM_URL') or report.get('ATTACH_URL')
+                target_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
                 
                 # SQLite 업데이트
                 await db_manager.update_report_summary_by_telegram_url(

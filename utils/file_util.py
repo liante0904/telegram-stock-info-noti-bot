@@ -27,7 +27,6 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
     BOARD_NM = ''
     URL = (
         report_info_row.get('DOWNLOAD_URL') if report_info_row.get('DOWNLOAD_URL')
-        else report_info_row.get('ATTACH_URL') if report_info_row.get('ATTACH_URL')
         else report_info_row.get('ARTICLE_URL') if report_info_row.get('ARTICLE_URL')
         else report_info_row.get('TELEGRAM_URL')
     )

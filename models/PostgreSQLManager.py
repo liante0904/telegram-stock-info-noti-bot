@@ -24,7 +24,6 @@ class PostgreSQLManager:
         "SEC_FIRM_ORDER",
         "ARTICLE_BOARD_ORDER",
         "FIRM_NM",
-        "ATTACH_URL",
         "ARTICLE_TITLE",
         "ARTICLE_URL",
         "SEND_USER",
@@ -422,4 +421,6 @@ class PostgreSQLManager:
                     cur.execute(sql, params)
                     return {"status": "success", "affected_rows": cur.rowcount}
         finally:
+            conn.close()
+y:
             conn.close()

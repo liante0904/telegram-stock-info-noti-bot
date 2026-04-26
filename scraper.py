@@ -181,7 +181,7 @@ async def main(date_str=None):
     await run_async_scrapers(async_functions, total_data)
 
     if total_data:
-        unique = { (d.get("KEY") or d.get("ATTACH_URL", "")): d for d in total_data }
+        unique = { d.get("KEY"): d for d in total_data if d.get("KEY") }
         total_list = list(unique.values())
         db = get_db()
         try:

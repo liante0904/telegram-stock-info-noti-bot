@@ -83,16 +83,7 @@ def convert_sql_to_telegram_messages(fetched_rows):
             # DS투자의 경우, 트리거에 의해 생성된 TELEGRAM_URL이 최우선이며, 
             # 만약 비어있다면 아직 생성 전이므로 링크없음으로 처리하여 잘못된 링크 발송 방지
             link_url = row.get('TELEGRAM_URL') if row.get('TELEGRAM_URL') else "링크없음"
-        elif row.get('TELEGRAM_URL'):
-            link_url = row['TELEGRAM_URL']
-        elif row.get('ATTACH_URL'):
-            link_url = row['ATTACH_URL']
-        elif row.get('DOWNLOAD_URL'):
-            link_url = row['DOWNLOAD_URL']
-        elif row.get('ARTICLE_URL'):
-            link_url = row['ARTICLE_URL']
-        else:
-            link_url = "링크없음"
+        link_url = row.get('TELEGRAM_URL') or row.get('DOWNLOAD_URL') or row.get('ARTICLE_URL') or ""
         
         # 원문 링크 추가
         if link_url == "링크없음":

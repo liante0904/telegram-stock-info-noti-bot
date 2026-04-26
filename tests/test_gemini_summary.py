@@ -28,8 +28,8 @@ async def test_summary():
         print(f"\n📋 대상 레포트 시도: {report['ARTICLE_TITLE']} ({report['FIRM_NM']})")
         
         # 2. PDF 다운로드 대상 URL 선정
-        # ATTACH_URL, TELEGRAM_URL, DOWNLOAD_URL 중 유효한 것 찾기
-        download_url = report.get('ATTACH_URL') or report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
+        # TELEGRAM_URL, DOWNLOAD_URL 중 유효한 것 찾기
+        download_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL') or report.get('PDF_URL')
         
         # URL이 .pdf로 끝나지 않으면 건너뜀 (디렉토리 링크 방지)
         if not download_url or not ('.pdf' in download_url.lower() or '.PDF' in download_url.lower()):
