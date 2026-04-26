@@ -14,8 +14,12 @@ from models.FirmInfo import FirmInfo
 from models.ConfigManager import config
 from models.db_factory import get_db
 
-BASE_URL = config.get_urls("DBfi_19")[0]
-VIEWER_BASE = config.get_urls("DBfi_19")[1]
+# 시크릿 설정 로드
+dbfi_cfg = config.get_urls("DBfi_19")
+BASE_URL = dbfi_cfg["base_urls"][0]
+VIEWER_BASE = dbfi_cfg["base_urls"][1]
+URL_PATHS = dbfi_cfg["url_paths"]
+
 HEADERS_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
@@ -30,12 +34,6 @@ ssl_context.set_ciphers("DEFAULT")
 async def extract_dbfi_pdf_url(session, encoded_url):
     """
     DB증권 gate 토큰에서 실제 PDF 다운로드 URL을 추출합니다.
-
-    흐름:
-    1) /pv/auth 로 세션 쿠키 발급
-    2) /pv/viewer 로 진입
-    3) hidden .item 의 id를 docId로 추출
-    4) /streamdocs/v4/documents/{docId} 형태의 PDF URL 반환
     """
     if not encoded_url:
         return None
@@ -90,35 +88,28 @@ async def extract_dbfi_pdf_url(session, encoded_url):
             return {
                 "gate_url": gate_url,
                 "viewer_url": f"{VIEWER_BASE}/pv/viewer",
-                async def extract_dbfi_pdf_url(session, encoded_url):
-                    """
-                    DB증권 gate 토큰에서 실제 PDF 다운로드 URL을 추출합니다.
-                ...
-                    except Exception as e:
-                        logger.error(f"DBfi: Failed to extract PDF URL: {e}")
-                        return None
+                "doc_id": doc_id,
+                "file_name": file_name,
+                "pdf_url": pdf_url,
+            }
+    except Exception as e:
+        logger.error(f"DBfi: Failed to extract PDF URL: {e}")
+        return None
 
 
-                async def DBfi_checkNewArticle():
-                    SEC_FIRM_ORDER = 19
-                    url_paths = [
-                        ("/appData/rsh_entr_lst.json", 0),
-                        ("/appData/rsh_bond_lst.json", 1),
-                        ("/appData/rsh_stock_lst.json", 2),
-                    ]
+async def DBfi_checkNewArticle():
+    SEC_FIRM_ORDER = 19
+    
+    if not URL_PATHS:
+        logger.error("DBfi: No URL_PATHS found in config. Check secrets.json.")
+        return []
 
-                    # 1. 우리 DB 최근 7일 KEY 조회 (PostgreSQLManager 공통 메서드 사용)
-                    db = get_db()
-                    existing_keys = db.fetch_existing_keys(SEC_FIRM_ORDER, days_limit=7)
-                    logger.info(f"DBfi: DB에 기존 KEY {len(existing_keys)}개 (최근 7일)")
-
-                    # 2. 서버 목록 스크랩
-
+    # 1. 150건 가져오기 (카테고리별 50건)
     timeout = aiohttp.ClientTimeout(total=15)
-    candidates = []
+    raw_items = []
+
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
-        for url_path, board_order in url_paths:
-            firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_order)
+        for url_path, board_order in URL_PATHS:
             headers = {
                 **HEADERS_TEMPLATE,
                 "Referer": f"{BASE_URL}/mre/mre_CompanyAll_lst.do",
@@ -131,35 +122,48 @@ async def extract_dbfi_pdf_url(session, encoded_url):
                         continue
                     jres = await response.json()
                     items = jres.get("data", [])[:50]
-                    logger.info(f"DBfi: {url_path} → {len(items)}건 (최근 50건)")
-
-                    # 3. 신규 항목만 추출 (서버 - DB)
+                    
                     for item in items:
-                        key = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
-                        if key in existing_keys:
-                            continue
-                        candidates.append({
-                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                            "ARTICLE_BOARD_ORDER": board_order,
-                            "FIRM_NM": firm_info.get_firm_name(),
-                            "REG_DT": item["rdt"][:8],
-                            "ARTICLE_URL": "",
-                            "TELEGRAM_URL": "",
-                            "PDF_URL": "",
-                            "ARTICLE_TITLE": item["tit"],
-                            "WRITER": item["wnm"],
-                            "CATEGORY": item["div"],
-                            "KEY": key,
-                            "SAVE_TIME": datetime.now().isoformat(),
-                        })
+                        raw_items.append((item, board_order))
+                        
+                    logger.info(f"DBfi: {url_path} → {len(items)}건 수집 완료")
             except Exception as e:
                 logger.error(f"DBfi: {url_path} 네트워크 오류: {e}")
 
-    logger.info(f"DBfi: 신규 {len(candidates)}건 (중복 제거 후)")
+    logger.info(f"DBfi: 서버에서 총 {len(raw_items)}건 수집 완료")
+
+    # 2. 우리 DB 전체에서 중복 제거
+    db = get_db()
+    existing_keys = db.fetch_existing_keys(SEC_FIRM_ORDER, days_limit=None)
+    logger.info(f"DBfi: DB 전체 기존 KEY {len(existing_keys)}개 확인")
+
+    candidates = []
+    for item, board_order in raw_items:
+        key = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
+        if key in existing_keys:
+            continue
+        
+        firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_order)
+        candidates.append({
+            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+            "ARTICLE_BOARD_ORDER": board_order,
+            "FIRM_NM": firm_info.get_firm_name(),
+            "REG_DT": item["rdt"][:8],
+            "ARTICLE_URL": "",
+            "TELEGRAM_URL": "",
+            "PDF_URL": "",
+            "ARTICLE_TITLE": item["tit"],
+            "WRITER": item["wnm"],
+            "CATEGORY": item["div"],
+            "KEY": key,
+            "SAVE_TIME": datetime.now().isoformat(),
+        })
+
+    logger.info(f"DBfi: DB 전체 대조 후 신규 건수 {len(candidates)}건")
     if not candidates:
         return []
 
-    # 4. 신규에 대해서만 상세 POST 처리 (PDF URL 추출)
+    # 3. 중복이 아닌 건에 대해서 세부 pdf url 가져오기
     return await fetch_detailed_url(candidates)
 
 
