@@ -331,6 +331,24 @@ class PostgreSQLManager:
         """
         return self._fetchall(sql, (limit,))
 
+    def fetch_existing_keys(self, sec_firm_order: int, days_limit: int = 7) -> set:
+        """특정 증권사의 최근 N일치 KEY 목록을 조회하여 반환 (중복 방지용)"""
+        cutoff = (datetime.now() - timedelta(days=days_limit)).strftime("%Y-%m-%d %H:%M:%S")
+        sql = f'SELECT "KEY" FROM {self.main_table_name} WHERE "SEC_FIRM_ORDER" = %s AND "SAVE_TIME" >= %s'
+        rows = self._fetchall(sql, (sec_firm_order, cutoff))
+        return {r["KEY"] for r in rows if r.get("KEY")}
+
+    async def reset_send_status(self, sec_firm_order: int, date_str: str, board_order: int = None):
+        """특정 증권사/날짜의 발송 상태를 초기화 ('N'으로 변경)"""
+        params = [sec_firm_order, date_str]
+        sql = f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN" = \'N\' WHERE "SEC_FIRM_ORDER" = %s AND DATE("SAVE_TIME") = %s'
+        
+        if board_order is not None:
+            sql += ' AND "ARTICLE_BOARD_ORDER" = %s'
+            params.append(board_order)
+            
+        return self._execute(sql, tuple(params))
+
     # ------------------------------------------------------------------
     # Keyword-alert — report lookup & send-user tracking
     # ------------------------------------------------------------------
