@@ -12,14 +12,15 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
 from models.ConfigManager import config
+from models.db_factory import get_db
 
 BASE_URL = config.get_urls("DBfi_19")[0]
+VIEWER_BASE = config.get_urls("DBfi_19")[1]
 HEADERS_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (iPad; CPU OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148",
     "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"
 }
 
-# SSL 검증 완전히 비활성화
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
@@ -41,7 +42,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
 
     token = urlparse.unquote(encoded_url)
     gate_q = urlparse.quote(token, safe="")
-    gate_url = f"https://whub.dbsec.co.kr/pv/gate?q={gate_q}"
+    gate_url = f"{VIEWER_BASE}/pv/gate?q={gate_q}"
 
     pv_headers = {
         "User-Agent": HEADERS_TEMPLATE["User-Agent"],
@@ -51,7 +52,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
     }
 
     try:
-        async with session.post("https://whub.dbsec.co.kr/pv/auth", headers=pv_headers) as auth_response:
+        async with session.post(f"{VIEWER_BASE}/pv/auth", headers=pv_headers) as auth_response:
             await auth_response.text()
 
         viewer_payload = {
@@ -61,7 +62,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
             "docId": "",
         }
         async with session.post(
-            "https://whub.dbsec.co.kr/pv/viewer",
+            f"{VIEWER_BASE}/pv/viewer",
             headers=pv_headers,
             data=viewer_payload,
         ) as viewer_response:
@@ -85,10 +86,10 @@ async def extract_dbfi_pdf_url(session, encoded_url):
                 flags=re.S,
             )
             file_name = title_match.group(1).strip() if title_match else "리서치"
-            pdf_url = f"https://whub.dbsec.co.kr/streamdocs/v4/documents/{doc_id}"
+            pdf_url = f"{VIEWER_BASE}/streamdocs/v4/documents/{doc_id}"
             return {
                 "gate_url": gate_url,
-                "viewer_url": "https://whub.dbsec.co.kr/pv/viewer",
+                "viewer_url": f"{VIEWER_BASE}/pv/viewer",
                 "doc_id": doc_id,
                 "file_name": file_name,
                 "pdf_url": pdf_url,
@@ -98,63 +99,80 @@ async def extract_dbfi_pdf_url(session, encoded_url):
         return None
 
 
-# DB금융투자 기사 체크 함수
+def _fetch_existing_keys(sec_firm_order: int) -> set:
+    """우리 DB에서 최근 7일치 DB증권 KEY를 조회해 반환한다."""
+    try:
+        db = get_db()
+        rows = db._fetchall(
+            'SELECT "KEY" FROM "TB_SEC_REPORTS" WHERE "SEC_FIRM_ORDER" = %s',
+            (sec_firm_order,),
+        )
+        return {r["KEY"] for r in rows if r.get("KEY")}
+    except Exception as e:
+        logger.warning(f"DBfi: DB key lookup 실패 ({e}), 중복 제거 없이 진행")
+        return set()
+
+
 async def DBfi_checkNewArticle():
     SEC_FIRM_ORDER = 19
-    urls = [
-        "/appData/rsh_entr_lst.json",
-        "/appData/rsh_bond_lst.json",
-        "/appData/rsh_stock_lst.json"
+    url_paths = [
+        ("/appData/rsh_entr_lst.json", 0),
+        ("/appData/rsh_bond_lst.json", 1),
+        ("/appData/rsh_stock_lst.json", 2),
     ]
-    json_data_list = []
 
+    # 1. 우리 DB 최근 7일 KEY 조회
+    existing_keys = _fetch_existing_keys(SEC_FIRM_ORDER)
+    logger.info(f"DBfi: DB에 기존 KEY {len(existing_keys)}개 (최근 7일)")
+
+    # 2. 서버 목록 스크랩
     timeout = aiohttp.ClientTimeout(total=15)
+    candidates = []
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
-        for ARTICLE_BOARD_ORDER, url_path in enumerate(urls):
-            firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
-            )
+        for url_path, board_order in url_paths:
+            firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_order)
             headers = {
                 **HEADERS_TEMPLATE,
                 "Referer": f"{BASE_URL}/mre/mre_CompanyAll_lst.do",
-                "Accept": "application/json, text/javascript, */*; q=0.01"
+                "Accept": "application/json, text/javascript, */*; q=0.01",
             }
-
-            logger.debug(f"DBfi Scraper Start: {firm_info.get_firm_name()} path {url_path}")
             try:
                 async with session.post(f"{BASE_URL}{url_path}", headers=headers) as response:
-                    if response.status == 200:
-                        try:
-                            jres = await response.json()
-                            data_items = jres.get("data", [])
-                            logger.info(f"DBfi Scraper: Found {len(data_items)} items for {url_path}")
-                        except (json.JSONDecodeError, KeyError):
-                            logger.warning(f"No items found or JSON error for URL {url_path}.")
+                    if response.status != 200:
+                        logger.warning(f"DBfi: 목록 조회 실패 {url_path} ({response.status})")
+                        continue
+                    jres = await response.json()
+                    items = jres.get("data", [])[:50]
+                    logger.info(f"DBfi: {url_path} → {len(items)}건 (최근 50건)")
+
+                    # 3. 신규 항목만 추출 (서버 - DB)
+                    for item in items:
+                        key = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
+                        if key in existing_keys:
                             continue
-
-                        for item in data_items:
-                            detail_url = f"{BASE_URL}/appData/descRsh/{item['rid']}.json"
-                            json_data_list.append({
-                                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
-                                "FIRM_NM": firm_info.get_firm_name(),
-                                "REG_DT": item['rdt'][:8],
-                                "ARTICLE_URL": "",
-                                "TELEGRAM_URL": "",
-                                "PDF_URL": "",
-                                "ARTICLE_TITLE": item['tit'],
-                                "WRITER": item['wnm'],
-                                "CATEGORY": item['div'],
-                                "KEY": detail_url,
-                                "SAVE_TIME": datetime.now().isoformat()
-                            })
-                    else:
-                        logger.warning(f"Failed to fetch page data for URL {url_path}. Status code: {response.status}")
+                        candidates.append({
+                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
+                            "ARTICLE_BOARD_ORDER": board_order,
+                            "FIRM_NM": firm_info.get_firm_name(),
+                            "REG_DT": item["rdt"][:8],
+                            "ARTICLE_URL": "",
+                            "TELEGRAM_URL": "",
+                            "PDF_URL": "",
+                            "ARTICLE_TITLE": item["tit"],
+                            "WRITER": item["wnm"],
+                            "CATEGORY": item["div"],
+                            "KEY": key,
+                            "SAVE_TIME": datetime.now().isoformat(),
+                        })
             except Exception as e:
-                logger.error(f"Network or timeout error while fetching {url_path}: {e}")
+                logger.error(f"DBfi: {url_path} 네트워크 오류: {e}")
 
-    return json_data_list
+    logger.info(f"DBfi: 신규 {len(candidates)}건 (중복 제거 후)")
+    if not candidates:
+        return []
+
+    # 4. 신규에 대해서만 상세 POST 처리 (PDF URL 추출)
+    return await fetch_detailed_url(candidates)
 
 
 # 상세 URL로 후처리 데이터 획득 함수

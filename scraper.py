@@ -37,7 +37,7 @@ from modules.TOSSinvest_15 import TOSSinvest_checkNewArticle
 from modules.Leading_16 import Leading_checkNewArticle
 from modules.Daeshin_17 import Daeshin_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
-from modules.DBfi_19 import DBfi_checkNewArticle, fetch_detailed_url
+from modules.DBfi_19 import DBfi_checkNewArticle
 from modules.MERITZ_20 import MERITZ_checkNewArticle
 from modules.Hanwhawm_21 import Hanwha_checkNewArticle
 from modules.Hygood_22 import Hanyang_checkNewArticle
@@ -66,10 +66,8 @@ async def enrich_data():
 
             logger.info(f"[{firm_name}] Found {len(records)} records for enrichment.")
             try:
-                if sec_firm_order == 19:  # DB
-                    update_records = await fetch_detailed_url(records)
-                    tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
-                    if tasks: await asyncio.gather(*tasks)
+                if sec_firm_order == 19:  # DB증권: DBfi_checkNewArticle() 안에서 이미 처리 완료
+                    pass
                 elif sec_firm_order == 0:  # LS
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
@@ -187,10 +185,6 @@ async def main(date_str=None):
         total_list = list(unique.values())
         db = get_db()
         try:
-            dbfi_records = [row for row in total_list if row.get("SEC_FIRM_ORDER") == 19]
-            if dbfi_records:
-                await fetch_detailed_url(dbfi_records)
-                logger.info(f"DBfi pre-enriched before insert: {len(dbfi_records)} rows")
             ins, upd = db.insert_json_data_list(total_list)
             logger.success(f"DB Sync: {ins} new, {upd} updated.")
             
