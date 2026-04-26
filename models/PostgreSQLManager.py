@@ -82,7 +82,7 @@ class PostgreSQLManager:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
                     SELECT user_id, keyword, created_at
-                    FROM "REPORT_ALERT_KEYWORDS"
+                    FROM tbm_sec_reports_alert_keywords
                     WHERE is_active = true
                     ORDER BY user_id, created_at ASC
                 """)
