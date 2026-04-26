@@ -5,7 +5,7 @@
 
 ---
 
-## 현재 스택 (2026-04-21 기준)
+## 현재 스택 (2026-04-26 기준)
 
 ### 인프라 (`~/infra/`)
 
@@ -123,6 +123,42 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
 - **문서:** [PostgreSQL V2 Lowercase Schema](postgresql-v2.md)
 - **최근 검증:** `scripts/sync_recent_postgres_to_v2.py`로 최근 2일 V1 280건을 JSON export → V2 upsert → KEY/컬럼 비교 통과
 
+### ADR-004-C: PostgreSQLManager 책임 통합
+
+- **상태:** 진행 중 (2026-04-26)
+- **배경:** PostgreSQL 전환 이후에도 일부 DB 접근 로직이 모듈/유틸 단에 남아 있어 dedup 기준과 조회 로직이 분산돼 있었음
+- **결정:** `PostgreSQLManager`에 공통 조회 책임을 점진적으로 모으고, 스크래퍼는 manager 인터페이스만 사용하도록 정리
+- **최근 반영:**
+  - DBfi 중복 제거용 기존 KEY 조회를 `PostgreSQLManager` 경유로 통합
+  - 여러 경로에 흩어진 raw query를 manager 메서드로 옮기는 리팩토링 진행
+- **의도:** URL 컬럼 정리와 lowercase schema 전환 전에 DB 접근면을 줄여 변경 파급을 통제
+
+### ADR-004-D: URL 컬럼 의미 정규화
+
+- **상태:** 설계 확정, 단계적 적용 예정 (2026-04-26)
+- **배경:** `ATTACH_URL`, `ARTICLE_URL`, `TELEGRAM_URL`, `PDF_URL`가 모듈별로 서로 다른 의미로 채워져 메시지 발송, 다운로드, 보강 로직에서 fallback 충돌이 발생함
+- **결정:**
+  - `KEY`: 중복 식별자. 당장 스키마 의미 변경 없이 유지
+  - `TELEGRAM_URL`: 텔레그램 발송 메시지의 단일 대표 링크
+  - `PDF_URL`: PDF 다운로드 및 외부 archiver 연동용 링크
+  - `ARTICLE_URL`: 원문 게시글 또는 상세 페이지 링크
+  - `ATTACH_URL`: deprecated. 읽기/쓰기 경로를 제거한 뒤 최종 드랍
+- **원칙:**
+  - 메시지 생성 로직은 장기적으로 `TELEGRAM_URL` 단일 컬럼만 신뢰
+  - 다운로드 로직은 장기적으로 `PDF_URL` 단일 컬럼을 우선 사용
+  - 신규 모듈/수정 모듈은 `ATTACH_URL`에 새 의미를 부여하지 않음
+- **문서:** [URL Column Semantics](url-semantics.md)
+
+### ADR-004-E: DBfi endpoint 외부화
+
+- **상태:** 완료 (2026-04-26)
+- **배경:** DBfi 스크래퍼는 base URL뿐 아니라 viewer/auth/document endpoint 조합도 코드에 남아 있어 Ghost Mode 원칙을 완전히 만족하지 못했음
+- **결정:** `modules/DBfi_19.py`의 endpoint 조합 규칙을 `~/secrets/ssh-reports-scraper/secrets.json`의 `urls.DBfi_19` 구조로 이동
+- **효과:**
+  - 코드에는 endpoint key 이름만 남고 실제 URL 문자열은 외부 시크릿으로 격리
+  - 과거 `modules/DBfi_19.py` 히스토리의 DBfi URL 흔적도 추가 `git filter-repo`로 정리
+- **주의:** repo rewrite 이후 원격은 force push로만 동기화 가능하며, `origin` remote가 자동 제거될 수 있음
+
 ### ADR-005: Oracle ATP 제거
 
 - **상태:** ADR-004 이후 진행
@@ -184,7 +220,11 @@ SQLite (telegram.db)는 롤백/최근 동기화 소스로 유지
 - [x] **ADR-004** `FirmInfo` PostgreSQL 기반으로 전환
 - [x] **ADR-004** 프로덕션 `DB_BACKEND=sqlite` 롤백 완료 (2026-04-20)
 - [x] **ADR-004** 최근 2일 SQLite→PostgreSQL 동기화 후 `DB_BACKEND=postgres` 재전환 (2026-04-21)
+- [x] **ADR-004** DBfi endpoint 전체 외부화 + 관련 히스토리 정리 (2026-04-26)
 - [ ] **ADR-004** `TARGET_URL` 컬럼 추가 (ADR-003 통합)
+- [ ] **ADR-004** URL 컬럼 의미 정규화 1차 (`ATTACH_URL` read path 제거)
+- [ ] **ADR-004-B** PostgreSQLManager로 DB 접근면 추가 통합
+- [ ] **ADR-004-D** `TELEGRAM_URL`/`PDF_URL` 단일 목적 fallback 재설계
 
 - [ ] **ADR-005** PostgREST 배포 + 프론트엔드 엔드포인트 교체
 - [ ] **ADR-005** Oracle ATP 제거

@@ -6,6 +6,40 @@
 
 ## 운영 변경 기록
 
+### 2026-04-26 — DBfi endpoint 외부화 및 URL 컬럼 정리 착수
+
+- `modules/DBfi_19.py`의 DBfi 전용 endpoint 조합을 `~/secrets/ssh-reports-scraper/secrets.json`의 `urls.DBfi_19` 구조로 외부화했습니다.
+- DBfi 모듈 히스토리에도 남아 있던 URL 흔적을 추가 `git filter-repo`로 정리했습니다.
+- 최근 DBfi dedup 개선, PostgreSQLManager 책임 통합, LS fallback 강화 이후에도 URL 컬럼 의미가 문서화되지 않았던 문제를 확인했고, 별도 문서 `docs/url-semantics.md`를 추가했습니다.
+- 앞으로의 URL 리팩토링 기준을 다음과 같이 고정했습니다.
+  - `KEY` = dedup 식별자 유지
+  - `TELEGRAM_URL` = 텔레그램 대표 링크
+  - `PDF_URL` = PDF 다운로드/archiver 링크
+  - `ARTICLE_URL` = 원문/상세 페이지 링크
+  - `ATTACH_URL` = deprecated, 단계적 제거 대상
+
+### 2026-04-25 ~ 2026-04-26 — DBfi/Manager 리팩토링 누적
+
+- `fix(DBfi): self-contained dedup scraper + URL secrets 정리`
+  - DBfi 스크래퍼가 자체적으로 dedup과 상세 조회를 더 안정적으로 처리하도록 정리
+- `feat: improve LS scraper with WARP fallback and disable scheduler initial run on startup`
+  - LS 수집 안정성을 위해 fallback 경로를 강화하고, 스케줄러 시작 직후 즉시 실행 동작을 조정
+- `refactor: consolidate database queries into PostgreSQLManager and refactor modules`
+  - 모듈 단 raw query 일부를 manager 인터페이스로 흡수하기 시작
+- `refactor: optimize DBfi_19 with 3-step logic and enhance PostgreSQLManager for global deduplication`
+  - DBfi를 목록 조회 → 전역 dedup → 상세 enrichment의 3단계로 정리
+  - PostgreSQLManager에 전역 중복 제거용 조회 책임을 추가
+
+### 2026-04-24 ~ 2026-04-25 — 운영 보조 도구 및 환경 분리
+
+- `fix: resolve conflict and apply architectural env separation in Makefile`
+- `refactor: improve Makefile according to architecture.md (split scraper, alert, api envs)`
+- `refactor: split env generation targets in Makefile for better service separation`
+- `feat: add Makefile for container orchestration and secret management`
+
+- 운영 앱별로 env 생성 책임을 분리하고, scraper/alert/api를 독립적으로 다룰 수 있게 정리했습니다.
+- 문서에는 반영이 늦었지만 실무적으로는 `generate_env.py`와 Makefile 조합이 운영 표준 진입점이 되었습니다.
+
 ### 2026-04-21 — PostgreSQL 재전환
 
 - `scripts/sync_recent_sqlite_to_postgres.py`를 추가해 최근 SQLite 데이터를 JSON으로 export한 뒤 PostgreSQL `TB_SEC_REPORTS`에 `KEY` 기준 upsert하고 정합성을 비교할 수 있게 했습니다.
@@ -121,21 +155,7 @@ docker-compose.yml      ← dev/prod 분리
 
 ---
 
-## 5기 — 품질 관리 및 자동 검증 (2026-04-19 ~ 현재)
-
-### 5-1. pytest 자동화 테스트 도입 (ADR-006)
-- **기본 검증:** `tests/test_db_logic.py` — DB 연결 및 최근 7일 데이터 적재 여부 자동 체크
-- **CI/CD 연동:** GitHub Actions에서 빌드 전 테스트 수행 단계 추가
-- **도구:** `pytest`, `pytest-asyncio` 기반 비동기 테스트 환경 구축
-
-### 5-2. 데이터 추출 및 감사 도구 고도화
-- `tests/test_db_export.py` — 운영 데이터를 JSON으로 추출하여 테스트 Fixture로 활용할 수 있는 기반 마련
-- `tests/test_db_compare_all.py` — SQLite ↔ PostgreSQL 27만 건 전수 조사 도구 도입
-- **성과:** PostgreSQL 데이터 마이그레이션 정합성 100% 달성 (271,038 rows 일치 확인)
-
-### 5-3. 텔레그램 통합 시스템 알림 도입 (ADR-007)
-- `traceback` 모듈 연동을 통한 상세 에러 위치 텔레그램 발송 기능 추가
-- 별도 외부 서비스 가입 없이 텔레그램만으로 디버깅 가능한 환경 구축
+## 4기 — 설정/메타/DB 아키텍처 재정립 (2026-04-17 ~ 2026-04-21)
 
 ### 4-1. ConfigManager 도입 (ADR-002, `3e89282`)
 ```python
@@ -181,6 +201,24 @@ db_factory.get_db()  ← DB_BACKEND 환경변수로 무중단 전환
 ```
 - `DB_BACKEND=sqlite` (기본) → `DB_BACKEND=postgres`로 롤백 없이 전환 가능
 - pgAdmin4 웹 GUI (Tailscale VPN 경유)
+
+---
+
+## 5기 — 품질 관리 및 자동 검증 (2026-04-19 ~ 현재)
+
+### 5-1. pytest 자동화 테스트 도입 (ADR-006)
+- **기본 검증:** `tests/test_db_logic.py` — DB 연결 및 최근 7일 데이터 적재 여부 자동 체크
+- **CI/CD 연동:** GitHub Actions에서 빌드 전 테스트 수행 단계 추가
+- **도구:** `pytest`, `pytest-asyncio` 기반 비동기 테스트 환경 구축
+
+### 5-2. 데이터 추출 및 감사 도구 고도화
+- `tests/test_db_export.py` — 운영 데이터를 JSON으로 추출하여 테스트 Fixture로 활용할 수 있는 기반 마련
+- `tests/test_db_compare_all.py` — SQLite ↔ PostgreSQL 27만 건 전수 조사 도구 도입
+- **성과:** PostgreSQL 데이터 마이그레이션 정합성 100% 달성 (271,038 rows 일치 확인)
+
+### 5-3. 텔레그램 통합 시스템 알림 도입 (ADR-007)
+- `traceback` 모듈 연동을 통한 상세 에러 위치 텔레그램 발송 기능 추가
+- 별도 외부 서비스 가입 없이 텔레그램만으로 디버깅 가능한 환경 구축
 
 ---
 
