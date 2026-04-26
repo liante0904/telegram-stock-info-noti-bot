@@ -90,42 +90,30 @@ async def extract_dbfi_pdf_url(session, encoded_url):
             return {
                 "gate_url": gate_url,
                 "viewer_url": f"{VIEWER_BASE}__DBFI_VIEWER_PATH__",
-                "doc_id": doc_id,
-                "file_name": file_name,
-                "pdf_url": pdf_url,
-            }
-    except Exception as e:
-        logger.error(f"DBfi: Failed to extract PDF URL: {e}")
-        return None
+                async def extract_dbfi_pdf_url(session, encoded_url):
+                    """
+                    DB증권 gate 토큰에서 실제 PDF 다운로드 URL을 추출합니다.
+                ...
+                    except Exception as e:
+                        logger.error(f"DBfi: Failed to extract PDF URL: {e}")
+                        return None
 
 
-def _fetch_existing_keys(sec_firm_order: int) -> set:
-    """우리 DB에서 최근 7일치 DB증권 KEY를 조회해 반환한다."""
-    try:
-        db = get_db()
-        rows = db._fetchall(
-            'SELECT "KEY" FROM "TB_SEC_REPORTS" WHERE "SEC_FIRM_ORDER" = %s',
-            (sec_firm_order,),
-        )
-        return {r["KEY"] for r in rows if r.get("KEY")}
-    except Exception as e:
-        logger.warning(f"DBfi: DB key lookup 실패 ({e}), 중복 제거 없이 진행")
-        return set()
+                async def DBfi_checkNewArticle():
+                    SEC_FIRM_ORDER = 19
+                    url_paths = [
+                        ("__DBFI_LIST_PATH_ENTR__", 0),
+                        ("__DBFI_LIST_PATH_BOND__", 1),
+                        ("__DBFI_LIST_PATH_STOCK__", 2),
+                    ]
 
+                    # 1. 우리 DB 최근 7일 KEY 조회 (PostgreSQLManager 공통 메서드 사용)
+                    db = get_db()
+                    existing_keys = db.fetch_existing_keys(SEC_FIRM_ORDER, days_limit=7)
+                    logger.info(f"DBfi: DB에 기존 KEY {len(existing_keys)}개 (최근 7일)")
 
-async def DBfi_checkNewArticle():
-    SEC_FIRM_ORDER = 19
-    url_paths = [
-        ("__DBFI_LIST_PATH_ENTR__", 0),
-        ("__DBFI_LIST_PATH_BOND__", 1),
-        ("__DBFI_LIST_PATH_STOCK__", 2),
-    ]
+                    # 2. 서버 목록 스크랩
 
-    # 1. 우리 DB 최근 7일 KEY 조회
-    existing_keys = _fetch_existing_keys(SEC_FIRM_ORDER)
-    logger.info(f"DBfi: DB에 기존 KEY {len(existing_keys)}개 (최근 7일)")
-
-    # 2. 서버 목록 스크랩
     timeout = aiohttp.ClientTimeout(total=15)
     candidates = []
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
