@@ -347,7 +347,8 @@ async def get_valid_url(new_filename, date_part, article, headers):
     except ValueError:
         return await create_fallback_url(article, None)
 
-    date_range = [date_obj + timedelta(days=i) for i in range(-2, 3)]
+    # 탐색 범위를 전후 10일로 대폭 확대 (작성일과 서버 업로드일 차이 대응)
+    date_range = [date_obj + timedelta(days=i) for i in range(-10, 11)]
     for test_date in date_range:
         test_date_str = test_date.strftime("%Y%m%d")
         test_filename = new_filename.replace(date_part, test_date_str)
