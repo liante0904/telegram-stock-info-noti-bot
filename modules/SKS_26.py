@@ -66,7 +66,6 @@ def Sks_checkNewArticle():
             "FIRM_NM": firm_info.get_firm_name(),
             "ARTICLE_TITLE": subject,
             "REG_DT": reg_date,
-            "ATTACH_URL": article_url,
             "ARTICLE_URL": article_url,
             "DOWNLOAD_URL": download_url,
             "TELEGRAM_URL": article_url,

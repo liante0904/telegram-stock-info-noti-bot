@@ -106,7 +106,6 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
-                    "ATTACH_URL": ' ',
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
                     "TELEGRAM_URL": LIST_ARTICLE_URL,
                     "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
@@ -214,7 +213,6 @@ async def ShinHanInvest_checkNewArticle():
                             "ARTICLE_BOARD_ORDER": article_board_order,
                             "FIRM_NM": firm_info.get_firm_name(),
                             "REG_DT": reg_dt,
-                            "ATTACH_URL": ' ',
                             "DOWNLOAD_URL": download_url,
                             "TELEGRAM_URL": download_url,
                             "PDF_URL": download_url,
@@ -303,4 +301,3 @@ if __name__ == "__main__":
     inserted_count_results = db.insert_json_data_list(results)
 
     logger.info(f"Articles Inserted: {inserted_count_results}")
-

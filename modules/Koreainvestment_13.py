@@ -111,7 +111,6 @@ async def Koreainvestment_selenium_checkNewArticle():
                         "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                         "FIRM_NM":firm_info.get_firm_name(),
                         "REG_DT":re.sub(r"[-./]", "", article_info_str[1]),
-                        "ATTACH_URL":LIST_ARTICLE_URL,
                         "DOWNLOAD_URL": LIST_ARTICLE_URL,
                         "TELEGRAM_URL": LIST_ARTICLE_URL,
                         "PDF_URL": LIST_ARTICLE_URL,

@@ -140,7 +140,6 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", str_date),
                     "ARTICLE_URL": '',
-                    "ATTACH_URL": '',
                     "DOWNLOAD_URL": '',
                     "TELEGRAM_URL": '',
                     "PDF_URL": '',

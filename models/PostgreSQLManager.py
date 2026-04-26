@@ -52,6 +52,17 @@ class PostgreSQLManager:
         "DATA_MAIN_DAILY_SEND": '"TB_SEC_REPORTS"',
     }
 
+    @staticmethod
+    def _derive_report_key(entry):
+        return (
+            entry.get("KEY")
+            or entry.get("ARTICLE_URL")
+            or entry.get("PDF_URL")
+            or entry.get("DOWNLOAD_URL")
+            or entry.get("TELEGRAM_URL")
+            or ""
+        )
+
     def __init__(self):
         load_dotenv(override=True)
         self.host = os.getenv("POSTGRES_HOST", "localhost")
@@ -135,7 +146,7 @@ class PostgreSQLManager:
                 entry.get("PDF_URL") or entry.get("TELEGRAM_URL"),
                 entry.get("WRITER", ""),
                 entry.get("MKT_TP", "KR"),
-                entry.get("KEY") or entry.get("ATTACH_URL", ""),
+                self._derive_report_key(entry),
                 entry.get("SAVE_TIME"),
             )
             for entry in json_data_list
@@ -324,7 +335,7 @@ class PostgreSQLManager:
         sql = f"""
         SELECT * FROM {self.main_table_name}
         WHERE ("GEMINI_SUMMARY" IS NULL OR "GEMINI_SUMMARY" = '')
-          AND "ATTACH_URL" IS NOT NULL AND "ATTACH_URL" != ''
+          AND COALESCE(NULLIF("PDF_URL",''), NULLIF("DOWNLOAD_URL",''), NULLIF("TELEGRAM_URL",'')) IS NOT NULL
           AND "SEC_FIRM_ORDER" NOT IN (19)
         ORDER BY "SAVE_TIME" DESC
         LIMIT %s
@@ -363,7 +374,7 @@ class PostgreSQLManager:
         """키워드 매칭된 미발송 리포트 조회 (SEND_USER에 user_id 없는 것)"""
         sql = f"""
             SELECT "FIRM_NM", "ARTICLE_TITLE",
-                   COALESCE(NULLIF("TELEGRAM_URL",''), NULLIF("DOWNLOAD_URL",''), NULLIF("ATTACH_URL",'')) AS "TELEGRAM_URL",
+                   COALESCE(NULLIF("TELEGRAM_URL",''), NULLIF("ARTICLE_URL",''), NULLIF("PDF_URL",''), NULLIF("DOWNLOAD_URL",'')) AS "TELEGRAM_URL",
                    "SAVE_TIME", "SEND_USER"
             FROM {self.main_table_name}
             WHERE ("ARTICLE_TITLE" ILIKE %s OR "WRITER" ILIKE %s)

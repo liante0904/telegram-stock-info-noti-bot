@@ -77,7 +77,6 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                                     "FIRM_NM": firm_info.get_firm_name(),
                                     "REG_DT": POST_DATE.strftime("%Y%m%d"),
                                     "ARTICLE_URL": LIST_ARTICLE_URL,
-                                    "ATTACH_URL": DOWNLOAD_URL,
                                     "DOWNLOAD_URL": DOWNLOAD_URL,
                                     "TELEGRAM_URL": DOWNLOAD_URL,
                                     "WRITER": WRITER,

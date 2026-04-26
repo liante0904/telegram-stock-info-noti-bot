@@ -142,7 +142,6 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                                         "FIRM_NM": firm_info.get_firm_name(),
                                         "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
                                         "ARTICLE_URL": BASE_URL,
-                                        "ATTACH_URL": attach_url,
                                         "DOWNLOAD_URL": attach_url,
                                         "TELEGRAM_URL": attach_url,
                                         "PDF_URL": attach_url,

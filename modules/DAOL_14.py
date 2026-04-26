@@ -131,7 +131,6 @@ async def DAOL_checkNewArticle():
                     "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
-                    "ATTACH_URL": LIST_ARTICLE_URL,
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
                     "TELEGRAM_URL": LIST_ARTICLE_URL,
                     "KEY": LIST_ARTICLE_URL,

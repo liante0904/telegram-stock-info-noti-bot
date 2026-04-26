@@ -83,7 +83,6 @@ async def Leading_checkNewArticle():
                     "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
                     "FIRM_NM":firm_info.get_firm_name(),
                     "REG_DT":REG_DT,
-                    "ATTACH_URL":LIST_ARTICLE_URL,
                     "DOWNLOAD_URL": DOWNLOAD_URL,
                     "TELEGRAM_URL": DOWNLOAD_URL,
                     "PDF_URL": DOWNLOAD_URL,

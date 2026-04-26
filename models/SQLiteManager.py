@@ -70,6 +70,17 @@ class SQLiteManager:
         rows = self.cursor.fetchall()
         return [dict(row) for row in rows]
 
+    @staticmethod
+    def _derive_report_key(entry):
+        return (
+            entry.get("KEY")
+            or entry.get("ARTICLE_URL")
+            or entry.get("PDF_URL")
+            or entry.get("DOWNLOAD_URL")
+            or entry.get("TELEGRAM_URL")
+            or ""
+        )
+
     def insert_json_data_list(self, json_data_list, table_name=None):
         """JSON 형태의 리스트 데이터를 데이터베이스 테이블에 삽입하며, 삽입 성공 및 업데이트된 건수를 출력합니다."""
         if table_name is None:
@@ -123,7 +134,7 @@ class SQLiteManager:
                     entry.get("PDF_URL") or entry.get("TELEGRAM_URL", None),  # PDF_URL이 없으면 TELEGRAM_URL을 넣음
                     entry.get("WRITER", ''),
                     entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
-                    entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
+                    self._derive_report_key(entry),
                     entry["SAVE_TIME"]
                 ))
 
