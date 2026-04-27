@@ -247,21 +247,22 @@ async def fetch_detailed_url(articles):
                     logger.warning(f"DBfi: PDF URL extraction failed for {key_url}")
                     continue
 
+                gate_url = extracted["gate_url"]
                 pdf_url = extracted["pdf_url"]
                 for article in key_articles:
-                    article["TELEGRAM_URL"] = pdf_url
+                    article["TELEGRAM_URL"] = gate_url
                     article["PDF_URL"] = pdf_url
                     article["FILE_NAME"] = extracted["file_name"]
                     article["DOC_ID"] = extracted["doc_id"]
-                    article["GATE_URL"] = extracted["gate_url"]
+                    article["GATE_URL"] = gate_url
                     article["VIEWER_URL"] = extracted["viewer_url"]
                 logger.info(
-                    "DBfi: key={} affected={} file={} docId={} pdf={}",
+                    "DBfi: key={} affected={} file={} docId={} gate={}",
                     key_url,
                     len(key_articles),
                     extracted["file_name"],
                     extracted["doc_id"],
-                    pdf_url,
+                    gate_url,
                 )
             except Exception as e:
                 logger.error(f"Network or timeout error while fetching detailed URL ({key_url}): {e}")
