@@ -78,8 +78,8 @@ FIRST_ARTICLE_URL = ''
 SEND_ADD_MESSAGE_TEXT = ''
 
 # LOOP 인덱스 변수
-SEC_FIRM_ORDER = 0 # 증권사 순번
-ARTICLE_BOARD_ORDER = 0 # 게시판 순번
+sec_firm_order = 0 # 증권사 순번
+article_board_order = 0 # 게시판 순번
 
 # 이모지
 EMOJI_FIRE = u'\U0001F525'
@@ -133,7 +133,7 @@ def send(ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL): # 파일의 경우 �
     #me = bot.getMe()
     #print('텔레그램 채널 정보 :',me)
 
-    if SEC_FIRM_ORDER == 999 or SEC_FIRM_ORDER == 998 or SEC_FIRM_ORDER == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
+    if sec_firm_order == 999 or sec_firm_order == 998 or sec_firm_order == 997 : # 매매동향의 경우 URL만 발송하여 프리뷰 처리 
         DISABLE_WEB_PAGE_PREVIEW = False
 
     #bot.sendMessage(chat_id = GetSendChatId(), text = sendMessageText, disable_web_page_preview = DISABLE_WEB_PAGE_PREVIEW)
@@ -229,12 +229,12 @@ def sendMarkdown(INDEX, ARTICLE_BOARD_NAME , ARTICLE_TITLE , ARTICLE_URL, ATTACH
     sendMessageText += ARTICLE_TITLE + "\n" 
 
     # 원문 링크 , 레포트 링크
-    if SEC_FIRM_ORDER == 996:
+    if sec_firm_order == 996:
         sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")"  + "\n" 
     else:
         sendMessageText += EMOJI_PICK  + "[링크]" + "("+ ARTICLE_URL + ")" + "        "+ EMOJI_PICK + "[레포트링크]" + "("+ ATTACH_URL + ")"
 
-    if SEC_FIRM_ORDER == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
+    if sec_firm_order == 996 and INDEX == 0 : return # 공매도 잔고의 경우 2건이상 일때 발송
 
     #생성한 텔레그램 봇 정보 assign (@ebest_noti_bot)
     bot = telegram.Bot(token = SECRETKEY.TELEGRAM_BOT_TOKEN_REPORT_ALARM_SECRET)
@@ -248,7 +248,7 @@ def DownloadFile(URL, FILE_NAME):
     global ATTACH_FILE_NAME
     print("DownloadFile()")
 
-    if SEC_FIRM_ORDER == 6: # 교보증권 예외 로직
+    if sec_firm_order == 6: # 교보증권 예외 로직
         # 로직 사유 : 레포트 첨부파일명에 한글이 포함된 경우 URL처리가 되어 있지 않음
         CONVERT_URL = URL 
         for c in URL: # URL내 한글이 있는 경우 인코딩 처리(URL에 파일명을 이용하여 조합함)
@@ -325,22 +325,22 @@ def GetSendMessageTitle():
     SendMessageTitle = ""
     msgFirmName = ""
     
-    if SEC_FIRM_ORDER == 999:
+    if sec_firm_order == 999:
         msgFirmName = "매매동향"
-    elif SEC_FIRM_ORDER == 998:
+    elif sec_firm_order == 998:
         msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
+        if  article_board_order == 0 : msgFirmName += "실시간 뉴스 속보"
         else: msgFirmName += "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
-    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
-    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
-    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
-    elif SEC_FIRM_ORDER == 900: 
+    elif sec_firm_order == 997: msgFirmName = "아이투자 - 랭킹스탁"
+    elif sec_firm_order == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
+    elif sec_firm_order == 995: msgFirmName = "조선비즈 - C-Biz봇"
+    elif sec_firm_order == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
+    elif sec_firm_order == 900: 
         msgFirmName = "[네이버 증권 "
-        if ARTICLE_BOARD_ORDER == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
-        elif ARTICLE_BOARD_ORDER == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
+        if article_board_order == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
+        elif article_board_order == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
         else: print(msgFirmName)
-    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
+    elif sec_firm_order == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
         msgFirmName =  FIRM_NM 
 
@@ -353,19 +353,19 @@ def GetSendChatId():
     SendMessageChatId = 0
     DB = herokuDB.herokuDB()
     DB.DB_SelNxtKey("123","123")
-    print("SEC_FIRM_ORDER ", DB.SEC_FIRM_ORDER )
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
+    print("sec_firm_order ", DB.sec_firm_order )
+    if sec_firm_order == 998:
+        if  article_board_order == 0 : 
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
         else:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
+    elif sec_firm_order == 997:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
-    elif SEC_FIRM_ORDER == 995:
+    elif sec_firm_order == 995:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
+    elif sec_firm_order == 123: # 오늘의 레포트 채널 나누기 
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
-    elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
+    elif sec_firm_order == 12: # 한경컨센 나누기
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
     else:
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
@@ -393,7 +393,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    dbResult = DB_SelNxtKey(sec_firm_order, article_board_order)
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
@@ -401,7 +401,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        NXT_KEY = DB_InsNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE)
 
 
     # 연속키 체크
@@ -440,10 +440,10 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
                 print(sendMessageText)
                 sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
 # 시간 및 날짜는 모두 한국 시간 (timezone('Asia/Seoul')) 으로 합니다.
@@ -601,14 +601,14 @@ def isNxtKey(*args):
 def fnguideTodayReport_checkNewArticle():
     global NXT_KEY
     global TEST_SEND_YN
-    global SEC_FIRM_ORDER
+    global sec_firm_order
 
-    SEC_FIRM_ORDER      = 123
-    ARTICLE_BOARD_ORDER = 123
+    sec_firm_order      = 123
+    article_board_order = 123
 
     # 유효 발송 시간에만 로직 실행
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    dbResult = DB_SelNxtKey(sec_firm_order, article_board_order)
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','fnguideTodayReport_checkNewArticle')
@@ -616,12 +616,12 @@ def fnguideTodayReport_checkNewArticle():
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', ' fnguideTodayReport_checkNewArticle 연속키는 존재하지 않습니다.')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, "0")
+        NXT_KEY = DB_InsNxtKey(sec_firm_order, article_board_order, "0")
         return True
 
 # 0시 발송여부 초기화 
     if int(GetCurrentTime('HH')) == 0: 
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'N')
+        dbResult = DB_UpdTodaySendKey(sec_firm_order = sec_firm_order, article_board_order= article_board_order, TODAY_SEND_YN = 'N')
         return True
     
     # 오늘의 레포트 발송조건
@@ -724,12 +724,12 @@ def fnguideTodayReport_checkNewArticle():
         asyncio.run(sendAlertMessage(sendMessageText)) #봇 실행하는 코드
 
     # 연속키 갱신
-    dbResult = DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, int(pageCnt), articleCnt)
+    dbResult = DB_UpdNxtKey(sec_firm_order, article_board_order, int(pageCnt), articleCnt)
 
     # 9시, 17시 두차례 발송을 위해 17시 발송후 발송여부 갱신
     if int(GetCurrentTime('HH')) == 17 :
         # 발송 처리
-        dbResult = DB_UpdTodaySendKey(SEC_FIRM_ORDER = SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER= ARTICLE_BOARD_ORDER, TODAY_SEND_YN = 'Y')
+        dbResult = DB_UpdTodaySendKey(sec_firm_order = sec_firm_order, article_board_order= article_board_order, TODAY_SEND_YN = 'Y')
 
     return True
 
@@ -766,22 +766,22 @@ def GetSendMessageTitle():
     SendMessageTitle = ""
     msgFirmName = ""
     
-    if SEC_FIRM_ORDER == 999:
+    if sec_firm_order == 999:
         msgFirmName = "매매동향"
-    elif SEC_FIRM_ORDER == 998:
+    elif sec_firm_order == 998:
         msgFirmName = "네이버 - "
-        if  ARTICLE_BOARD_ORDER == 0 : msgFirmName += "실시간 뉴스 속보"
+        if  article_board_order == 0 : msgFirmName += "실시간 뉴스 속보"
         else: msgFirmName += "가장 많이 본 뉴스"
-    elif SEC_FIRM_ORDER == 997: msgFirmName = "아이투자 - 랭킹스탁"
-    elif SEC_FIRM_ORDER == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
-    elif SEC_FIRM_ORDER == 995: msgFirmName = "조선비즈 - C-Biz봇"
-    elif SEC_FIRM_ORDER == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
-    elif SEC_FIRM_ORDER == 900: 
+    elif sec_firm_order == 997: msgFirmName = "아이투자 - 랭킹스탁"
+    elif sec_firm_order == 996: msgFirmName = "연합인포맥스 - 공매도 잔고 상위"
+    elif sec_firm_order == 995: msgFirmName = "조선비즈 - C-Biz봇"
+    elif sec_firm_order == 994: msgFirmName = "매경 증권 52주 신고저가 알림"
+    elif sec_firm_order == 900: 
         msgFirmName = "[네이버 증권 "
-        if ARTICLE_BOARD_ORDER == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
-        elif ARTICLE_BOARD_ORDER == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
+        if article_board_order == 0 : msgFirmName += "기업 리서치](https://m.stock.naver.com/investment/research/company)"
+        elif article_board_order == 1:  msgFirmName += "산업 리서치](https://m.stock.naver.com/investment/research/industry)"
         else: print(msgFirmName)
-    elif SEC_FIRM_ORDER == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
+    elif sec_firm_order == 123: msgFirmName = "[오늘의 레포트](https://comp.fnguide.com/SVO/WooriRenewal/Report.asp)"
     else: # 증권사
         msgFirmName =  FIRM_NM 
 
@@ -792,18 +792,18 @@ def GetSendMessageTitle():
 
 def GetSendChatId():
     SendMessageChatId = 0
-    if SEC_FIRM_ORDER == 998:
-        if  ARTICLE_BOARD_ORDER == 0 : 
+    if sec_firm_order == 998:
+        if  article_board_order == 0 : 
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_FLASHNEWS # 네이버 실시간 속보 뉴스 채널
         else:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_NAVER_RANKNEWS # 네이버 많이본 뉴스 채널
-    elif SEC_FIRM_ORDER == 997:
+    elif sec_firm_order == 997:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_ITOOZA # 아이투자
-    elif SEC_FIRM_ORDER == 995:
+    elif sec_firm_order == 995:
             SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_CHOSUNBIZBOT # 조선비즈 C-bot
-    elif SEC_FIRM_ORDER == 123: # 오늘의 레포트 채널 나누기 
+    elif sec_firm_order == 123: # 오늘의 레포트 채널 나누기 
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_TODAY_REPORT # 오늘의 레포트 채널
-    elif SEC_FIRM_ORDER == 12: # 한경컨센 나누기
+    elif sec_firm_order == 12: # 한경컨센 나누기
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_HANKYUNG_CONSEN # 한경 컨센
     else:
         SendMessageChatId = SECRETKEY.TELEGRAM_CHANNEL_ID_REPORT_ALARM # 운영 채널(증권사 신규 레포트 게시물 알림방)
@@ -831,7 +831,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
 
     # 연속키 데이터베이스화 작업
     # 연속키 데이터 저장 여부 확인 구간
-    dbResult = DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
+    dbResult = DB_SelNxtKey(sec_firm_order, article_board_order)
     if dbResult: # 1
         # 연속키가 존재하는 경우
         print('데이터베이스에 연속키가 존재합니다. ','(ChosunBizBot_JSONparse)')
@@ -839,7 +839,7 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
     else: # 0
         # 연속키가 존재하지 않는 경우 => 첫번째 게시물 연속키 정보 데이터 베이스 저장
         print('데이터베이스에 ', '(ChosunBizBot_JSONparse)')
-        NXT_KEY = DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE)
+        NXT_KEY = DB_InsNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE)
 
 
     # 연속키 체크
@@ -878,10 +878,10 @@ def GetJsonData(TARGET_URL, METHOD_TYPE):
                 print(sendMessageText)
                 sendText(GetSendMessageTitle() + sendMessageText)
 
-            DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
+            DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE)
             return True
 
-    DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
+    DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_ARTICLE_TITLE, FIRST_ARTICLE_TITLE) # 뉴스의 경우 연속 데이터가 다음 페이지로 넘어갈 경우 처리
     return True
 
 def MySQL_Open_Connect():
@@ -895,7 +895,7 @@ def MySQL_Open_Connect():
     cursor = conn.cursor()
     return cursor
 
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+def DB_SelNxtKey(sec_firm_order, article_board_order):
     global FIRM_NM
     global BOARD_NM
     global BOARD_URL
@@ -909,8 +909,8 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+    dbQuery  = " SELECT FIRM_NM, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s "
+    dbResult = cursor.execute(dbQuery, (sec_firm_order, article_board_order))
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
@@ -940,13 +940,13 @@ def DB_SelSleepKey(*args):
     nSleepCntKey = 0
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT 		SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   "
+    dbQuery  = " SELECT 		sec_firm_order, article_board_order, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = %s   "
     dbResult = cursor.execute(dbQuery, (9999))
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
         print(row)
-        nSleepCnt = row['ARTICLE_BOARD_ORDER']
+        nSleepCnt = row['article_board_order']
         nSleepCntKey = row['NXT_KEY']
 
     conn.close()
@@ -955,7 +955,7 @@ def DB_SelSleepKey(*args):
 
 def DB_DelSleepKey(*args):
     cursor = MySQL_Open_Connect()
-    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = 9999"
+    dbQuery  = " DELETE  FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = 9999"
     dbResult = cursor.execute(dbQuery)
 
     conn.close()
@@ -967,29 +967,29 @@ def DB_InsSleepKey(*args):
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
+    dbQuery = "INSERT INTO NXT_KEY (sec_firm_order, article_board_order, NXT_KEY, CHANGE_DATE_TIME)VALUES ( 9999, 0, ' ', DEFAULT);"
     cursor.execute(dbQuery)
     conn.close()
     return dbQuery
 
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def DB_InsNxtKey(sec_firm_order, article_board_order, FIRST_NXT_KEY):
     global NXT_KEY
     global TEST_SEND_YN
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
+    dbQuery = "INSERT INTO NXT_KEY (sec_firm_order, article_board_order, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
+    cursor.execute(dbQuery, ( sec_firm_order, article_board_order, FIRST_NXT_KEY ))
     NXT_KEY = FIRST_NXT_KEY
     conn.close()
     return NXT_KEY
 
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
+def DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
+    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s;"
+    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, sec_firm_order, article_board_order ))
     if dbResult:
         print('####DB업데이트 된 연속키####', end='\n')
         print(dbResult)
@@ -997,12 +997,12 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     conn.close()
     return dbResult
 
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
+def DB_UpdTodaySendKey(sec_firm_order, article_board_order, TODAY_SEND_YN):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s;"
+    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, sec_firm_order, article_board_order))
     conn.close()
     return dbResult
 
@@ -1026,7 +1026,7 @@ def isNxtKey(*args):
     
 def main():
     global SECRETKEY
-    global SEC_FIRM_ORDER  # 증권사 순번
+    global sec_firm_order  # 증권사 순번
     global REFRESH_TIME # 새로고침 주기
     global INTERVAL_TIME # 새로고침 주기 - 파일
     global TEST_SEND_YN

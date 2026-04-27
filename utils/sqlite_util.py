@@ -79,7 +79,7 @@ def convert_sql_to_telegram_messages(fetched_rows):
         sendMessageText += "*" + row['ARTICLE_TITLE'].replace("_", " ").replace("*", "") + "*" + "\n"
 
         # URL 우선순위 설정
-        if row.get('SEC_FIRM_ORDER') == 11:
+        if row.get('sec_firm_order') == 11:
             # DS투자의 경우, 트리거에 의해 생성된 TELEGRAM_URL이 최우선이며, 
             # 만약 비어있다면 아직 생성 전이므로 링크없음으로 처리하여 잘못된 링크 발송 방지
             link_url = row.get('TELEGRAM_URL') if row.get('TELEGRAM_URL') else "링크없음"
@@ -116,7 +116,12 @@ def format_message_sql(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME, SEND_USER = data
+        # fetch_keyword_reports 등에서 넘어오는 데이터 순서: report_id, FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME
+        if len(data) == 5:
+            _, FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME = data
+        else:
+            # 기존 4개 컬럼(FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME) 대응
+            FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME = data[:4]
 
         sendMessageText = ""
         

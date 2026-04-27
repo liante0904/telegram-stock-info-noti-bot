@@ -26,8 +26,8 @@ def generate_workdays(start_date: datetime.datetime, end_date: datetime.datetime
 
 async def NHQV_checkNewArticle(target_date=None):
     json_data_list = []
-    SEC_FIRM_ORDER = 2
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 2
+    article_board_order = 0
 
     urls = config.get_urls("NHQV_2")
     if not urls:
@@ -53,8 +53,8 @@ async def NHQV_checkNewArticle(target_date=None):
             target_date = now_kst.strftime('%Y%m%d')
 
     firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
     )
     logger.debug(f"NHQV Scraper Start: {firm_info.get_firm_name()} for date {target_date}")
 
@@ -90,8 +90,8 @@ async def NHQV_checkNewArticle(target_date=None):
                 for article in articles:
                     url = article.get('hpgeFleUrlCts')
                     json_data_list.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                        "sec_firm_order": sec_firm_order,
+                        "article_board_order": article_board_order,
                         "FIRM_NM": firm_info.get_firm_name(),
                         "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
                         "WRITER": article['rshPprDruEmpFnm'],

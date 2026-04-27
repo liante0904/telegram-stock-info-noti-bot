@@ -17,8 +17,8 @@ from models.db_factory import get_db
 from models.ConfigManager import config
 
 def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
-    SEC_FIRM_ORDER = 1
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 1
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -40,10 +40,10 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
     TARGET_URL_TUPLE = (TARGET_URL_0, TARGET_URL_1, TARGET_URL_2, TARGET_URL_3)
 
     # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
 
         # 변동되는 파라미터 
@@ -102,8 +102,8 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
                     LIST_ARTICLE_URL = item.get(url_key, '')
                 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
@@ -144,7 +144,7 @@ board_map = {
 }
 
 async def ShinHanInvest_checkNewArticle():
-    SEC_FIRM_ORDER = 1
+    sec_firm_order = 1
     json_data_list = []
     
     urls = config.get_urls("ShinHanInvest_1")
@@ -188,7 +188,7 @@ async def ShinHanInvest_checkNewArticle():
             if response.status == 200:
                 result = await response.json()
                 
-                firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=0) # Dummy board order
+                firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=0) # Dummy board order
 
                 collectionList = result.get('body', {}).get('collectionList', [])
                 for collection in collectionList:
@@ -212,8 +212,8 @@ async def ShinHanInvest_checkNewArticle():
                         article_url = f"https://bbs2.shinhaninvest.com/mobile/view.do?boardName={board_name}&messageId={message_id}&messageNumber={message_number}"
                                         
                         json_data_list.append({
-                            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                            "ARTICLE_BOARD_ORDER": article_board_order,
+                            "sec_firm_order": sec_firm_order,
+                            "article_board_order": article_board_order,
                             "FIRM_NM": firm_info.get_firm_name(),
                             "REG_DT": reg_dt,
                             "ARTICLE_URL": article_url,

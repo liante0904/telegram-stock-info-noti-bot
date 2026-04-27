@@ -98,7 +98,7 @@ async def extract_dbfi_pdf_url(session, encoded_url):
 
 
 async def DBfi_checkNewArticle():
-    SEC_FIRM_ORDER = 19
+    sec_firm_order = 19
     
     if not URL_PATHS:
         logger.error("DBfi: No URL_PATHS found in config. Check secrets.json.")
@@ -134,7 +134,7 @@ async def DBfi_checkNewArticle():
 
     # 2. 우리 DB 전체에서 중복 제거
     db = get_db()
-    existing_keys = db.fetch_existing_keys(SEC_FIRM_ORDER, days_limit=None)
+    existing_keys = db.fetch_existing_keys(sec_firm_order, days_limit=None)
     logger.info(f"DBfi: DB 전체 기존 KEY {len(existing_keys)}개 확인")
 
     candidates = []
@@ -143,10 +143,10 @@ async def DBfi_checkNewArticle():
         if key in existing_keys:
             continue
         
-        firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_order)
+        firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=board_order)
         candidates.append({
-            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": board_order,
+            "sec_firm_order": sec_firm_order,
+            "article_board_order": board_order,
             "FIRM_NM": firm_info.get_firm_name(),
             "REG_DT": item["rdt"][:8],
             "ARTICLE_URL": "",

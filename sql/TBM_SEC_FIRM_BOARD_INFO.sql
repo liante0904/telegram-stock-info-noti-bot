@@ -27,8 +27,8 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public."TBM_SEC_FIRM_BOARD_INFO" (
-    "SEC_FIRM_ORDER" integer NOT NULL,
-    "ARTICLE_BOARD_ORDER" integer NOT NULL,
+    "sec_firm_order" integer NOT NULL,
+    "article_board_order" integer NOT NULL,
     "BOARD_NM" text,
     "BOARD_CD" text,
     "LABEL_NM" text
@@ -40,15 +40,15 @@ CREATE TABLE public."TBM_SEC_FIRM_BOARD_INFO" (
 --
 
 ALTER TABLE ONLY public."TBM_SEC_FIRM_BOARD_INFO"
-    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_pkey" PRIMARY KEY ("SEC_FIRM_ORDER", "ARTICLE_BOARD_ORDER");
+    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_pkey" PRIMARY KEY ("sec_firm_order", "article_board_order");
 
 
 --
--- Name: TBM_SEC_FIRM_BOARD_INFO TBM_SEC_FIRM_BOARD_INFO_SEC_FIRM_ORDER_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: TBM_SEC_FIRM_BOARD_INFO TBM_SEC_FIRM_BOARD_INFO_sec_firm_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public."TBM_SEC_FIRM_BOARD_INFO"
-    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_SEC_FIRM_ORDER_fkey" FOREIGN KEY ("SEC_FIRM_ORDER") REFERENCES public."TBM_SEC_FIRM_INFO"("SEC_FIRM_ORDER");
+    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_sec_firm_order_fkey" FOREIGN KEY ("sec_firm_order") REFERENCES public."TBM_SEC_FIRM_INFO"("sec_firm_order");
 
 
 --

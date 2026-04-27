@@ -88,18 +88,18 @@ async def fetch_attach_url(session, bid, aid):
 
 # IM증권 기사 체크 함수
 async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
-    SEC_FIRM_ORDER = 18
+    sec_firm_order = 18
     bids = ["R_E08", "R_E09", "R_E14", "R_E03", "R_E04", "R_E05"]
     json_data_list = []
 
     async with aiohttp.ClientSession() as session:
         cookie = await generate_cookie()
-        for ARTICLE_BOARD_ORDER, bid in enumerate(bids):
+        for article_board_order, bid in enumerate(bids):
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
-            logger.debug(f"IMfnsec Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER} (bid: {bid})")
+            logger.debug(f"IMfnsec Scraper Start: {firm_info.get_firm_name()} Board {article_board_order} (bid: {bid})")
             
             secure_key = await generate_secure_key(session, bid)
             if not secure_key:
@@ -137,8 +137,8 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                                 try:
                                     attach_url = await fetch_attach_url(session, item['bid'], item['aid'])
                                     json_data_list.append({
-                                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                                        "sec_firm_order": sec_firm_order,
+                                        "article_board_order": article_board_order,
                                         "FIRM_NM": firm_info.get_firm_name(),
                                         "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
                                         "ARTICLE_URL": BASE_URL,

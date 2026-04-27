@@ -22,7 +22,7 @@ async def BNK_checkNewArticle():
         return []
 
 async def _BNK_checkNewArticle_impl():
-    SEC_FIRM_ORDER = 23
+    sec_firm_order = 23
 
     TARGET_URL_TUPLE = config.get_urls("BNKfn_23")
 
@@ -43,7 +43,7 @@ async def _BNK_checkNewArticle_impl():
         ]
         soups = await asyncio.gather(*tasks, return_exceptions=True)
 
-        for ARTICLE_BOARD_ORDER, (soup, url) in enumerate(zip(soups, TARGET_URL_TUPLE)):
+        for article_board_order, (soup, url) in enumerate(zip(soups, TARGET_URL_TUPLE)):
             if isinstance(soup, Exception):
                 logger.debug(f"BNK request final failure for {url}: {soup}")
                 continue
@@ -51,8 +51,8 @@ async def _BNK_checkNewArticle_impl():
                 continue
 
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
             table = soup.find("table", class_="table01")
 
@@ -87,8 +87,8 @@ async def _BNK_checkNewArticle_impl():
                 REG_DT = cells[4].get_text(strip=True)
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", REG_DT),
                     "ARTICLE_TITLE": ARTICLE_TITLE,

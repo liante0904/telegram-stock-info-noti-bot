@@ -14,7 +14,7 @@ from models.FirmInfo import FirmInfo
 from models.db_factory import get_db
 from models.ConfigManager import config
 
-SEC_FIRM_ORDER = 25
+sec_firm_order = 25
 
 _ibk_urls = config.get_urls("IBKs_25")
 URL_INFO = [
@@ -54,7 +54,7 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
     target_url = info["url"]
     screen_code = info["screen"]
     
-    firm_info = FirmInfo(sec_firm_order=SEC_FIRM_ORDER, article_board_order=board_idx)
+    firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=board_idx)
     logger.debug(f"IBK Scraper: Processing [{category_name}] page {page}")
     
     headers = BASE_HEADERS.copy()
@@ -108,8 +108,8 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
         market_type = 'GLOBAL' if category_name in ["해외기업분석", "글로벌ETF"] else 'KR'
         
         json_data_list.append({
-            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": board_idx,
+            "sec_firm_order": sec_firm_order,
+            "article_board_order": board_idx,
             "FIRM_NM": firm_info.get_firm_name(),
             "REG_DT": REG_DT,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,

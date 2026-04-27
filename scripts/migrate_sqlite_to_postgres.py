@@ -49,25 +49,25 @@ def migrate_firm_info():
     # FIRM_INFO
     psycopg2.extras.execute_values(
         cur,
-        '''INSERT INTO "TBM_SEC_FIRM_INFO" ("SEC_FIRM_ORDER","FIRM_NM","TELEGRAM_UPDATE_YN")
+        '''INSERT INTO "TBM_SEC_FIRM_INFO" ("sec_firm_order","FIRM_NM","TELEGRAM_UPDATE_YN")
            VALUES %s
-           ON CONFLICT ("SEC_FIRM_ORDER") DO UPDATE SET
+           ON CONFLICT ("sec_firm_order") DO UPDATE SET
                "FIRM_NM"=EXCLUDED."FIRM_NM",
                "TELEGRAM_UPDATE_YN"=EXCLUDED."TELEGRAM_UPDATE_YN"''',
-        [(r["SEC_FIRM_ORDER"], r["FIRM_NM"], r["TELEGRAM_UPDATE_YN"]) for r in firms],
+        [(r["sec_firm_order"], r["FIRM_NM"], r["TELEGRAM_UPDATE_YN"]) for r in firms],
     )
 
     # BOARD_INFO
     psycopg2.extras.execute_values(
         cur,
         '''INSERT INTO "TBM_SEC_FIRM_BOARD_INFO"
-               ("SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","BOARD_NM","BOARD_CD","LABEL_NM")
+               ("sec_firm_order","article_board_order","BOARD_NM","BOARD_CD","LABEL_NM")
            VALUES %s
-           ON CONFLICT ("SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER") DO UPDATE SET
+           ON CONFLICT ("sec_firm_order","article_board_order") DO UPDATE SET
                "BOARD_NM"=EXCLUDED."BOARD_NM",
                "BOARD_CD"=EXCLUDED."BOARD_CD",
                "LABEL_NM"=EXCLUDED."LABEL_NM"''',
-        [(r["SEC_FIRM_ORDER"], r["ARTICLE_BOARD_ORDER"], r["BOARD_NM"], r["BOARD_CD"], r["LABEL_NM"])
+        [(r["sec_firm_order"], r["article_board_order"], r["BOARD_NM"], r["BOARD_CD"], r["LABEL_NM"])
          for r in boards],
     )
 
@@ -102,8 +102,8 @@ def migrate_main(batch_size=5000, truncate=False):
     offset = 0
     sq_cur = sq.cursor()
     sq_cur.execute(
-        "SELECT report_id,SEC_FIRM_ORDER,ARTICLE_BOARD_ORDER,FIRM_NM,ATTACH_URL,"
-        "ARTICLE_TITLE,ARTICLE_URL,SEND_USER,MAIN_CH_SEND_YN,DOWNLOAD_STATUS_YN,"
+        "SELECT report_id,sec_firm_order,article_board_order,FIRM_NM,ATTACH_URL,"
+        "ARTICLE_TITLE,ARTICLE_URL,MAIN_CH_SEND_YN,DOWNLOAD_STATUS_YN,"
         "DOWNLOAD_URL,SAVE_TIME,REG_DT,WRITER,KEY,TELEGRAM_URL,MKT_TP,"
         "GEMINI_SUMMARY,SUMMARY_TIME,SUMMARY_MODEL,ARCHIVE_STATUS,ARCHIVE_FILE_NAME,"
         "ARCHIVE_PATH,retry_count,sync_status,PDF_URL "
@@ -117,7 +117,7 @@ def migrate_main(batch_size=5000, truncate=False):
 
         records = [
             (
-                r["report_id"], r["SEC_FIRM_ORDER"], r["ARTICLE_BOARD_ORDER"],
+                r["report_id"], r["sec_firm_order"], r["article_board_order"],
                 _clean(r["FIRM_NM"]), _clean(r["ATTACH_URL"]), _clean(r["ARTICLE_TITLE"]),
                 _clean(r["ARTICLE_URL"]), _clean(r["SEND_USER"]),
                 _clean(r["MAIN_CH_SEND_YN"]), _clean(r["DOWNLOAD_STATUS_YN"] or ''),
@@ -136,7 +136,7 @@ def migrate_main(batch_size=5000, truncate=False):
         psycopg2.extras.execute_values(
             cur,
             '''INSERT INTO "TB_SEC_REPORTS" (
-                report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","ATTACH_URL",
+                report_id,"sec_firm_order","article_board_order","FIRM_NM","ATTACH_URL",
                 "ARTICLE_TITLE","ARTICLE_URL","SEND_USER","MAIN_CH_SEND_YN","DOWNLOAD_STATUS_YN",
                 "DOWNLOAD_URL","SAVE_TIME","REG_DT","WRITER","KEY","TELEGRAM_URL","MKT_TP",
                 "GEMINI_SUMMARY","SUMMARY_TIME","SUMMARY_MODEL","ARCHIVE_STATUS","ARCHIVE_FILE_NAME",
@@ -177,7 +177,7 @@ def migrate_aux_table(table_name):
     sq.row_factory = sqlite3.Row
 
     rows = [dict(r) for r in sq.execute(
-        f"SELECT SEC_FIRM_ORDER,ARTICLE_BOARD_ORDER,FIRM_NM,ATTACH_URL,"
+        f"SELECT sec_firm_order,article_board_order,FIRM_NM,ATTACH_URL,"
         f"ARTICLE_TITLE,SEND_USER,MAIN_CH_SEND_YN,SAVE_TIME,ARTICLE_URL,DOWNLOAD_URL,WRITER"
         f" FROM {table_name}"
     ).fetchall()]
@@ -192,12 +192,12 @@ def migrate_aux_table(table_name):
     psycopg2.extras.execute_values(
         cur,
         f'''INSERT INTO {table_name}
-               ("SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","ATTACH_URL",
+               ("sec_firm_order","article_board_order","FIRM_NM","ATTACH_URL",
                 "ARTICLE_TITLE","SEND_USER","MAIN_CH_SEND_YN","SAVE_TIME",
                 "ARTICLE_URL","DOWNLOAD_URL","WRITER")
            VALUES %s
            ON CONFLICT ("ATTACH_URL") DO NOTHING''',
-        [(r["SEC_FIRM_ORDER"], r["ARTICLE_BOARD_ORDER"], r["FIRM_NM"], r["ATTACH_URL"],
+        [(r["sec_firm_order"], r["article_board_order"], r["FIRM_NM"], r["ATTACH_URL"],
           r["ARTICLE_TITLE"], r["SEND_USER"], r["MAIN_CH_SEND_YN"], r["SAVE_TIME"],
           r["ARTICLE_URL"], r["DOWNLOAD_URL"], r["WRITER"] or '') for r in rows],
     )

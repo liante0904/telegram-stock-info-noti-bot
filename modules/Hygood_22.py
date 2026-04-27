@@ -18,8 +18,8 @@ async def fetch_article(session, url, headers):
         return await response.text()
 
 async def Hanyang_checkNewArticle():
-    SEC_FIRM_ORDER = 22
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 22
+    article_board_order = 0
 
     TARGET_URL_TUPLE = config.get_urls("Hygood_22")
 
@@ -37,12 +37,12 @@ async def Hanyang_checkNewArticle():
         tasks = [fetch_article(session, url, headers) for url in TARGET_URL_TUPLE]
         responses = await asyncio.gather(*tasks)
     
-        for ARTICLE_BOARD_ORDER, (response, url) in enumerate(zip(responses, TARGET_URL_TUPLE)):
+        for article_board_order, (response, url) in enumerate(zip(responses, TARGET_URL_TUPLE)):
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
-            logger.debug(f"Hanyang Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+            logger.debug(f"Hanyang Scraper Start: {firm_info.get_firm_name()} Board {article_board_order}")
             
             soup = BeautifulSoup(response, "html.parser")
             table = soup.find("table", class_="board_list")
@@ -79,8 +79,8 @@ async def Hanyang_checkNewArticle():
                         ATTACH_URL = f"https://www.hygood.co.kr{ATTACH_URL}"
                 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                    "sec_firm_order":sec_firm_order,
+                    "article_board_order":article_board_order,
                     "FIRM_NM":firm_info.get_firm_name(),
                     "REG_DT":re.sub(r"[-./]", "", REG_DT),
                     "ARTICLE_TITLE": ARTICLE_TITLE,

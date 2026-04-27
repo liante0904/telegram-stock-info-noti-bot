@@ -15,7 +15,7 @@ from models.ConfigManager import config
 
 
 def DS_checkNewArticle(full_scan=False):
-    SEC_FIRM_ORDER = 11  # DS투자증권 고유 식별자
+    sec_firm_order = 11  # DS투자증권 고유 식별자
     requests.packages.urllib3.disable_warnings()
 
     TARGET_URL_TUPLE = config.get_urls("DS_11")
@@ -23,12 +23,12 @@ def DS_checkNewArticle(full_scan=False):
     json_data_list = []
     current_time_suffix = datetime.now().strftime("T%H:%M:%S")
 
-    for ARTICLE_BOARD_ORDER, BASE_URL in enumerate(TARGET_URL_TUPLE):
+    for article_board_order, BASE_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
-        logger.debug(f"DS Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER} (Full Scan: {full_scan})")
+        logger.debug(f"DS Scraper Start: {firm_info.get_firm_name()} Board {article_board_order} (Full Scan: {full_scan})")
 
         page = 1
         while True:
@@ -91,8 +91,8 @@ def DS_checkNewArticle(full_scan=False):
 
                     # JSON 데이터 구성
                     json_data_list.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                        "sec_firm_order": sec_firm_order,
+                        "article_board_order": article_board_order,
                         "FIRM_NM": firm_info.get_firm_name(),
                         "ARTICLE_TITLE": title,
                         "ARTICLE_URL": article_url,

@@ -28,12 +28,11 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public."TB_SEC_REPORTS" (
     report_id bigint NOT NULL,
-    "SEC_FIRM_ORDER" integer,
-    "ARTICLE_BOARD_ORDER" integer,
+    "sec_firm_order" integer,
+    "article_board_order" integer,
     "FIRM_NM" text,
     "ARTICLE_TITLE" text,
     "ARTICLE_URL" text,
-    "SEND_USER" text,
     "MAIN_CH_SEND_YN" text,
     "DOWNLOAD_STATUS_YN" text DEFAULT ''::text,
     "DOWNLOAD_URL" text,
@@ -121,7 +120,7 @@ CREATE INDEX idx_tb_sec_reports_reg_dt ON public."TB_SEC_REPORTS" USING btree ("
 -- Name: idx_tb_sec_reports_reg_dt_sec_firm; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_reg_dt_sec_firm ON public."TB_SEC_REPORTS" USING btree ("REG_DT" DESC, "SEC_FIRM_ORDER");
+CREATE INDEX idx_tb_sec_reports_reg_dt_sec_firm ON public."TB_SEC_REPORTS" USING btree ("REG_DT" DESC, "sec_firm_order");
 
 
 --

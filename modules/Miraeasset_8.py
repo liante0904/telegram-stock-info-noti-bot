@@ -14,8 +14,8 @@ from models.db_factory import get_db
 from models.ConfigManager import config
 
 def Miraeasset_checkNewArticle():
-    SEC_FIRM_ORDER      = 8
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 8
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -24,7 +24,7 @@ def Miraeasset_checkNewArticle():
     
     for idx, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
+            sec_firm_order=sec_firm_order,
             article_board_order=idx
         )
         logger.debug(f"MiraeAsset Scraper: Fetching {firm_info.get_board_name()}")
@@ -62,8 +62,8 @@ def Miraeasset_checkNewArticle():
                     DOWNLOAD_URL = LIST_ARTICLE_URL
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": idx,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": idx,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
                     "WRITER": WRITER,

@@ -53,7 +53,7 @@ def get_soup_with_warp(url, headers):
 
 def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     global USE_WARP_ONLY
-    SEC_FIRM_ORDER = 0
+    sec_firm_order = 0
     json_data_list = []
     requests.packages.urllib3.disable_warnings()
 
@@ -68,8 +68,8 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
     if skip_boards is None:
         skip_boards = set()
 
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        if ARTICLE_BOARD_ORDER in skip_boards:
+    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        if article_board_order in skip_boards:
             continue
 
         soupList = []
@@ -79,8 +79,8 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
         time.sleep(random.uniform(1.0, 2.0))
 
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
 
         # 1차 시도: 직접 접속. OCI 대역 차단 가능성이 있어 짧게 2회만 확인 후 WARP로 넘긴다.
@@ -112,7 +112,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
             if soup:
                 soupList = soup.select('#contents > table > tbody > tr')
             else:
-                skip_boards.add(ARTICLE_BOARD_ORDER)
+                skip_boards.add(article_board_order)
 
         logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
 
@@ -135,8 +135,8 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 LIST_ARTICLE_TITLE = title_text[title_text.find("]")+1:].strip()
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", str_date),
                     "ARTICLE_URL": '',

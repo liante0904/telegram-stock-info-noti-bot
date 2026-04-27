@@ -21,12 +21,11 @@ class PostgreSQLManager:
 
     MAIN_TABLE = '"TB_SEC_REPORTS"'
     _LEGACY_COLUMNS = (
-        "SEC_FIRM_ORDER",
-        "ARTICLE_BOARD_ORDER",
+        "sec_firm_order",
+        "article_board_order",
         "FIRM_NM",
         "ARTICLE_TITLE",
         "ARTICLE_URL",
-        "SEND_USER",
         "MAIN_CH_SEND_YN",
         "DOWNLOAD_STATUS_YN",
         "DOWNLOAD_URL",
@@ -121,8 +120,8 @@ class PostgreSQLManager:
 
         records = [
             (
-                entry.get("SEC_FIRM_ORDER"),
-                entry.get("ARTICLE_BOARD_ORDER"),
+                entry.get("sec_firm_order"),
+                entry.get("article_board_order"),
                 entry.get("FIRM_NM"),
                 entry.get("REG_DT", ""),
                 entry.get("ATTACH_URL", ""),
@@ -142,17 +141,17 @@ class PostgreSQLManager:
 
         sql = f'''
             INSERT INTO {table_name} (
-                "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT","ATTACH_URL",
-                "ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN","DOWNLOAD_URL",
-                "TELEGRAM_URL","PDF_URL","WRITER","MKT_TP","KEY","SAVE_TIME"
+                sec_firm_order, article_board_order, "FIRM_NM", "REG_DT", "ATTACH_URL",
+                "ARTICLE_TITLE", "ARTICLE_URL", "MAIN_CH_SEND_YN", "DOWNLOAD_URL",
+                "TELEGRAM_URL", "PDF_URL", "WRITER", "MKT_TP", "KEY", "SAVE_TIME"
             ) VALUES %s
             ON CONFLICT ("KEY") DO UPDATE SET
                 "REG_DT"       = EXCLUDED."REG_DT",
                 "WRITER"       = EXCLUDED."WRITER",
                 "MKT_TP"       = EXCLUDED."MKT_TP",
-                "DOWNLOAD_URL" = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",''),  {table_name}."DOWNLOAD_URL"),
-                "TELEGRAM_URL" = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",''), {table_name}."TELEGRAM_URL"),
-                "PDF_URL"      = COALESCE(NULLIF(EXCLUDED."PDF_URL",''),       {table_name}."PDF_URL")
+                "DOWNLOAD_URL" = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",\'\'),  {table_name}."DOWNLOAD_URL"),
+                "TELEGRAM_URL" = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",\'\'), {table_name}."TELEGRAM_URL"),
+                "PDF_URL"      = COALESCE(NULLIF(EXCLUDED."PDF_URL",\'\'),       {table_name}."PDF_URL")
             RETURNING (xmax = 0) AS inserted
         '''
 
@@ -181,30 +180,30 @@ class PostgreSQLManager:
         date_to = (base + timedelta(days=2)).strftime("%Y%m%d")
 
         sql = f"""
-        SELECT report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT",
+        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
                "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
                "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY","PDF_URL"
         FROM   {self.main_table_name}
         WHERE  "REG_DT" BETWEEN %s AND %s
-          AND  "SEC_FIRM_ORDER" = %s
+          AND  sec_firm_order = %s
           AND  "KEY" IS NOT NULL
           AND  ("TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = '')
-        ORDER BY "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","SAVE_TIME"
+        ORDER BY sec_firm_order,article_board_order,"SAVE_TIME"
         """
-        return self._fetchall(sql, (date_from, date_to, str(firmInfo["SEC_FIRM_ORDER"])))
+        return self._fetchall(sql, (date_from, date_to, str(firmInfo["sec_firm_order"])))
 
     async def fetch_all_empty_telegram_url_articles(self, firm_info, days_limit=None):
         firmInfo = firm_info.get_state()
         sql = f"""
-        SELECT report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT",
+        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
                "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
                "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY","PDF_URL"
         FROM   {self.main_table_name}
-        WHERE  "SEC_FIRM_ORDER" = %s
+        WHERE  sec_firm_order = %s
           AND  "KEY" IS NOT NULL
           AND  ("TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = '')
         """
-        params = [str(firmInfo["SEC_FIRM_ORDER"])]
+        params = [str(firmInfo["sec_firm_order"])]
         if days_limit:
             cutoff = (datetime.now() - timedelta(days=days_limit)).strftime("%Y-%m-%d %H:%M:%S")
             sql += ' AND "SAVE_TIME" >= %s'
@@ -214,13 +213,13 @@ class PostgreSQLManager:
 
     async def fetch_ls_detail_targets(self):
         sql = f"""
-        SELECT report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT",
+        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
                "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
                "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY"
         FROM   {self.main_table_name}
-        WHERE  "SEC_FIRM_ORDER" = 0
-          AND  ("TELEGRAM_URL" NOT LIKE '%.pdf'
-                OR "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = '')
+        WHERE  sec_firm_order = 0
+          AND  ("TELEGRAM_URL" NOT LIKE \'%.pdf\'
+                OR "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = \'\')
         """
         return self._fetchall(sql)
 
@@ -250,7 +249,7 @@ class PostgreSQLManager:
 
         if type == "send":
             cond = """("MAIN_CH_SEND_YN" != 'Y' OR "MAIN_CH_SEND_YN" IS NULL)
-                      AND ("SEC_FIRM_ORDER" != 19 OR ("SEC_FIRM_ORDER" = 19 AND "TELEGRAM_URL" <> ''))"""
+                      AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND "TELEGRAM_URL" <> ''))"""
         else:
             cond = '"MAIN_CH_SEND_YN" = \'Y\' AND "DOWNLOAD_STATUS_YN" != \'Y\''
 
@@ -260,7 +259,7 @@ class PostgreSQLManager:
             CASE WHEN "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = ''
                  THEN report_id::TEXT ELSE "TELEGRAM_URL" END
         )
-            report_id,"SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","FIRM_NM","REG_DT",
+            report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
             "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
             "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL"
         FROM   {self.main_table_name}
@@ -271,7 +270,7 @@ class PostgreSQLManager:
         ORDER BY
             CASE WHEN "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = ''
                  THEN report_id::TEXT ELSE "TELEGRAM_URL" END,
-            "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","SAVE_TIME"
+            sec_firm_order,article_board_order,"SAVE_TIME"
         """
         return self._fetchall(sql, (query_date, three_days_ago, query_reg_dt))
 
@@ -324,7 +323,7 @@ class PostgreSQLManager:
         SELECT * FROM {self.main_table_name}
         WHERE ("GEMINI_SUMMARY" IS NULL OR "GEMINI_SUMMARY" = '')
           AND "ATTACH_URL" IS NOT NULL AND "ATTACH_URL" != ''
-          AND "SEC_FIRM_ORDER" NOT IN (19)
+          AND sec_firm_order NOT IN (19)
         ORDER BY "SAVE_TIME" DESC
         LIMIT %s
         """
@@ -332,7 +331,7 @@ class PostgreSQLManager:
 
     def fetch_existing_keys(self, sec_firm_order: int, days_limit: int = 7) -> set:
         """특정 증권사의 KEY 목록을 조회하여 반환 (중복 방지용)"""
-        sql = f'SELECT "KEY" FROM {self.main_table_name} WHERE "SEC_FIRM_ORDER" = %s'
+        sql = f'SELECT "KEY" FROM {self.main_table_name} WHERE sec_firm_order = %s'
         params = [sec_firm_order]
         
         if days_limit is not None:
@@ -344,12 +343,12 @@ class PostgreSQLManager:
         return {r["KEY"] for r in rows if r.get("KEY")}
 
     async def reset_send_status(self, sec_firm_order: int, date_str: str, board_order: int = None):
-        """특정 증권사/날짜의 발송 상태를 초기화 ('N'으로 변경)"""
+        """특정 증권사/날짜의 발송 상태를 초기화 (\'N\'으로 변경)"""
         params = [sec_firm_order, date_str]
-        sql = f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN" = \'N\' WHERE "SEC_FIRM_ORDER" = %s AND DATE("SAVE_TIME") = %s'
+        sql = f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN" = \'N\' WHERE sec_firm_order = %s AND DATE("SAVE_TIME") = %s'
         
         if board_order is not None:
-            sql += ' AND "ARTICLE_BOARD_ORDER" = %s'
+            sql += ' AND article_board_order = %s'
             params.append(board_order)
             
         return self._execute(sql, tuple(params))
@@ -359,34 +358,52 @@ class PostgreSQLManager:
     # ------------------------------------------------------------------
 
     def fetch_keyword_reports(self, date: str, keyword: str, user_id: str):
-        """키워드 매칭된 미발송 리포트 조회 (SEND_USER에 user_id 없는 것)"""
+        """키워드 매칭된 미발송 리포트 조회 (tbl_report_send_history에 user_id 없는 것)"""
         sql = f"""
-            SELECT "FIRM_NM", "ARTICLE_TITLE",
-                   COALESCE(NULLIF("TELEGRAM_URL",''), NULLIF("DOWNLOAD_URL",''), NULLIF("ATTACH_URL",'')) AS "TELEGRAM_URL",
-                   "SAVE_TIME", "SEND_USER"
-            FROM {self.main_table_name}
-            WHERE ("ARTICLE_TITLE" ILIKE %s OR "WRITER" ILIKE %s)
-              AND DATE("SAVE_TIME") = %s
-              AND NOT (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb @> to_jsonb(%s::text))
-            ORDER BY "SAVE_TIME" ASC, "FIRM_NM" ASC
+            SELECT r."report_id", r."FIRM_NM", r."ARTICLE_TITLE",
+                   COALESCE(NULLIF(r."TELEGRAM_URL",\'\'), NULLIF(r."DOWNLOAD_URL",\'\'), NULLIF(r."ATTACH_URL",\'\')) AS "TELEGRAM_URL",
+                   r."SAVE_TIME"
+            FROM {self.main_table_name} r
+            LEFT JOIN tbl_report_send_history h 
+                   ON r.report_id = h.report_id AND h.user_id = %s
+            WHERE (r."ARTICLE_TITLE" ILIKE %s OR r."WRITER" ILIKE %s)
+              AND DATE(r."SAVE_TIME") = %s
+              AND h.id IS NULL
+            ORDER BY r."SAVE_TIME" ASC, r."FIRM_NM" ASC
         """
         keyword_param = f"%{keyword}%"
-        return self._fetchall(sql, (keyword_param, keyword_param, date, user_id))
+        return self._fetchall(sql, (user_id, keyword_param, keyword_param, date))
 
     def update_keyword_send_user(self, date: str, keyword: str, user_id: str):
-        """발송 완료한 user_id를 SEND_USER JSON 배열에 추가 (중복 방지)"""
-        sql = f"""
-            UPDATE {self.main_table_name}
-            SET "SEND_USER" = (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb || to_jsonb(%s::text))::text
-            WHERE ("ARTICLE_TITLE" ILIKE %s OR "WRITER" ILIKE %s)
-              AND DATE("SAVE_TIME") = %s
-              AND NOT (COALESCE(NULLIF("SEND_USER",''), '[]')::jsonb @> to_jsonb(%s::text))
+        """발송 완료한 user_id를 tbl_report_send_history 테이블에 기록 (중복 방지)"""
+        # 먼저 해당 키워드와 날짜에 매칭되는 report_id들을 가져옵니다.
+        # (기존 로직이 키워드 기반 벌크 업데이트였으므로 동일하게 유지)
+        fetch_sql = f"""
+            SELECT r.report_id 
+            FROM {self.main_table_name} r
+            LEFT JOIN tbl_report_send_history h 
+                   ON r.report_id = h.report_id AND h.user_id = %s
+            WHERE (r."ARTICLE_TITLE" ILIKE %s OR r."WRITER" ILIKE %s)
+              AND DATE(r."SAVE_TIME") = %s
+              AND h.id IS NULL
         """
         keyword_param = f"%{keyword}%"
-        result = self._execute(sql, (user_id, keyword_param, keyword_param, date, user_id))
-        if result["affected_rows"] > 0:
-            logger.info(f"[TB_SEC_REPORTS] {result['affected_rows']} rows updated for user {user_id}.")
-        return result
+        reports = self._fetchall(fetch_sql, (user_id, keyword_param, keyword_param, date))
+        
+        inserted_count = 0
+        for report in reports:
+            insert_sql = """
+                INSERT INTO tbl_report_send_history (report_id, user_id, keyword)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (report_id, user_id) DO NOTHING
+            """
+            result = self._execute(insert_sql, (report['report_id'], user_id, keyword))
+            if result["affected_rows"] > 0:
+                inserted_count += result["affected_rows"]
+        
+        if inserted_count > 0:
+            logger.info(f"[tbl_report_send_history] {inserted_count} rows inserted for user {user_id}.")
+        return {"affected_rows": inserted_count}
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -397,7 +414,12 @@ class PostgreSQLManager:
         del close
         if params:
             query = query.replace("?", "%s")
+        
+        # sec_firm_order와 article_board_order를 제외한 나머지 레거시 컬럼들에 대해 자동 따옴표 부여
         for column in self._LEGACY_COLUMNS:
+            if column in ["sec_firm_order", "article_board_order"]:
+                continue
+            # 이미 따옴표가 있는 경우는 건너뜀
             query = re.sub(rf'(?<!")\b{column}\b(?!")', f'"{column}"', query)
 
         if query.strip().lower().startswith("select"):

@@ -208,7 +208,7 @@ def fetch_pending_reports(limit=FETCH_LIMIT):
     FROM data_main_daily_send 
     WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '') 
     AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '') 
-    AND SEC_FIRM_ORDER NOT IN (19) 
+    AND sec_firm_order NOT IN (19) 
     ORDER BY SAVE_TIME DESC 
     LIMIT {limit};
     """

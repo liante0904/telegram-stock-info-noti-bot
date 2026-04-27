@@ -55,8 +55,8 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
         LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cms_cd}/{cms_cd}_{list_item['NT_NO']}_1.pdf"
         LIST_ARTICLE_TITLE = list_item['TITLE']
         json_data_list.append({
-            "SEC_FIRM_ORDER": sec_firm_order,
-            "ARTICLE_BOARD_ORDER": article_board_order,
+            "sec_firm_order": sec_firm_order,
+            "article_board_order": article_board_order,
             "FIRM_NM": firm_info.get_firm_name(),
             "REG_DT": REG_DT,
             "DOWNLOAD_URL": LIST_ARTICLE_URL,
@@ -71,7 +71,7 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
 
 
 async def Sangsanginib_checkNewArticle():
-    SEC_FIRM_ORDER = 6
+    sec_firm_order = 6
     urls = config.get_urls("Sangsanginib_6")
     if not urls:
         logger.warning("No URLs found for Sangsanginib_6")
@@ -98,7 +98,7 @@ async def Sangsanginib_checkNewArticle():
 
     async with aiohttp.ClientSession() as session:
         tasks = [
-            process_board_order(session, SEC_FIRM_ORDER, idx, TARGET_URL, cms_cd, headers, cookies)
+            process_board_order(session, sec_firm_order, idx, TARGET_URL, cms_cd, headers, cookies)
             for idx, cms_cd in enumerate(cmsCd_list)
         ]
 

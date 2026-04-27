@@ -27,7 +27,7 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public."TBM_SEC_FIRM_INFO" (
-    "SEC_FIRM_ORDER" integer NOT NULL,
+    "sec_firm_order" integer NOT NULL,
     "FIRM_NM" text NOT NULL,
     "TELEGRAM_UPDATE_YN" text DEFAULT 'N'::text,
     "COMMENT_PDF_URL" text
@@ -39,7 +39,7 @@ CREATE TABLE public."TBM_SEC_FIRM_INFO" (
 --
 
 ALTER TABLE ONLY public."TBM_SEC_FIRM_INFO"
-    ADD CONSTRAINT "TBM_SEC_FIRM_INFO_pkey" PRIMARY KEY ("SEC_FIRM_ORDER");
+    ADD CONSTRAINT "TBM_SEC_FIRM_INFO_pkey" PRIMARY KEY ("sec_firm_order");
 
 
 --

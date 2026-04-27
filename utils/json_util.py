@@ -67,7 +67,7 @@ def format_message(data_list):
     return "\n".join(formatted_messages)
 
 
-def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, download_url=None, send_users=None, main_ch_send_yn="N"):
+def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, download_url=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
 
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
@@ -78,9 +78,6 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # 현재 시간을 저장합니다.
     current_time = datetime.now().isoformat()
     
-    # `send_users`가 None이면 빈 배열로 초기화합니다.
-    if send_users is None:
-        send_users = []
     # `article_url`가 None이면 attach_url로 대체합니다. (임시 추후변경)
     if article_url is None:
         article_url = attach_url
@@ -89,13 +86,12 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
         
     # 새 데이터를 딕셔너리로 저장합니다.
     new_data = {
-        "SEC_FIRM_ORDER": sec_firm_order,
-        "ARTICLE_BOARD_ORDER": article_board_order,
+        "sec_firm_order": sec_firm_order,
+        "article_board_order": article_board_order,
         "FIRM_NM": firm_nm,
         "ATTACH_URL": attach_url,
         "ARTICLE_TITLE": article_title,
         "ARTICLE_URL": article_url,
-        "SEND_USER": send_users,
         "MAIN_CH_SEND_YN": main_ch_send_yn,
         "DOWNLOAD_URL":download_url,
         "SAVE_TIME": current_time

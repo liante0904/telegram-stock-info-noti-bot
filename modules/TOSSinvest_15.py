@@ -14,18 +14,18 @@ from models.WebScraper import SyncWebScraper
 from models.ConfigManager import config
 
 def TOSSinvest_checkNewArticle():
-    SEC_FIRM_ORDER      = 15
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 15
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
  
     TARGET_URL_TUPLE = config.get_urls("TOSSinvest_15")
     
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
 
         scraper = SyncWebScraper(TARGET_URL, firm_info)
@@ -47,8 +47,8 @@ def TOSSinvest_checkNewArticle():
             LIST_ARTICLE_URL   =  list['files'][0]['filePath']
             REG_DT = list['createdAt'].split("T")[0]
             json_data_list.append({
-                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "sec_firm_order":sec_firm_order,
+                "article_board_order":article_board_order,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "REG_DT": re.sub(r"[-./]", "", REG_DT),
                 "DOWNLOAD_URL": LIST_ARTICLE_URL,

@@ -12,7 +12,7 @@ from models.FirmInfo import FirmInfo
 from models.WebScraper import AsyncWebScraper
 from models.ConfigManager import config
 
-SEC_FIRM_ORDER = 12
+sec_firm_order = 12
 
 BASE_URLS = config.get_urls("eugenefn_12")
 
@@ -52,7 +52,7 @@ def get_eugene_headers():
             
     return headers
 
-async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
+async def parse_article_list(html_text, article_board_order):
     articles = []
     if html_text:
         soup = BeautifulSoup(html_text, 'html.parser')
@@ -84,13 +84,13 @@ async def parse_article_list(html_text, ARTICLE_BOARD_ORDER):
                 writer = writer_tag.text.strip() if writer_tag else ''
                 
                 firm_info = FirmInfo(
-                    sec_firm_order=SEC_FIRM_ORDER,
-                    article_board_order=ARTICLE_BOARD_ORDER
+                    sec_firm_order=sec_firm_order,
+                    article_board_order=article_board_order
                 )
 
                 articles.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": reg_dt,
                     "WRITER": writer,
@@ -109,10 +109,10 @@ async def eugene_checkNewArticle():
     all_articles = []
     headers = get_eugene_headers()
     
-    for ARTICLE_BOARD_ORDER, base_url in enumerate(BASE_URLS):
+    for article_board_order, base_url in enumerate(BASE_URLS):
         referer_url = base_url.replace('Add.do', '.do')
-        firm_info = FirmInfo(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER)
-        logger.debug(f"Eugene Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+        firm_info = FirmInfo(sec_firm_order, article_board_order)
+        logger.debug(f"Eugene Scraper Start: {firm_info.get_firm_name()} Board {article_board_order}")
         
         # 각 요청마다 Referer 헤더 업데이트
         current_headers = headers.copy()
@@ -130,7 +130,7 @@ async def eugene_checkNewArticle():
                         break
                         
                     html_text = str(response_soup)
-                    articles = await parse_article_list(html_text, ARTICLE_BOARD_ORDER)
+                    articles = await parse_article_list(html_text, article_board_order)
                     all_articles.extend(articles)
                     logger.info(f"Eugene Scraper: Found {len(articles)} articles on page {page_no}")
                 else:

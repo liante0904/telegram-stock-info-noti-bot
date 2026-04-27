@@ -14,8 +14,8 @@ from models.ConfigManager import config
 
 
 def Sks_checkNewArticle():
-    SEC_FIRM_ORDER = 26   # SK증권 (원하시는 번호로)
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 26   # SK증권 (원하시는 번호로)
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -23,8 +23,8 @@ def Sks_checkNewArticle():
     TARGET_URL = config.get_urls("SKS_26")[0]
 
     firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
     )
 
     scraper = SyncWebScraper(TARGET_URL, firm_info)
@@ -49,7 +49,7 @@ def Sks_checkNewArticle():
         pdfpath = item.get("PDFPATH", "").strip()
         subject = item.get("RSUBJECT", "").strip()
         writer = item.get("RESECHNM", "").strip()
-        ARTICLE_BOARD_ORDER = int(item.get("CATEGYID", "").strip())
+        article_board_order = int(item.get("CATEGYID", "").strip())
         CATEGYID_NAME = item.get("CATEGYID_NAME", "").strip()
         reg_date = item.get("CURNDATE", "").strip().replace('.', '')
         
@@ -61,8 +61,8 @@ def Sks_checkNewArticle():
         article_url = download_url
 
         json_data_list.append({
-            "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+            "sec_firm_order": sec_firm_order,
+            "article_board_order": article_board_order,
             "FIRM_NM": firm_info.get_firm_name(),
             "ARTICLE_TITLE": subject,
             "REG_DT": reg_date,

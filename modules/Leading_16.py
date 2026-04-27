@@ -15,19 +15,19 @@ from models.WebScraper import AsyncWebScraper
 from models.ConfigManager import config
 
 async def Leading_checkNewArticle():
-    SEC_FIRM_ORDER      = 16
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 16
+    article_board_order = 0
     json_data_list = []
 
     TARGET_URL_TUPLE = config.get_urls("Leading_16")
 
     async with aiohttp.ClientSession() as session:
-        for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
-            logger.debug(f"Leading Scraper Start: {firm_info.get_firm_name()} Board {ARTICLE_BOARD_ORDER}")
+            logger.debug(f"Leading Scraper Start: {firm_info.get_firm_name()} Board {article_board_order}")
             
             scraper = AsyncWebScraper(TARGET_URL)
             soup = await scraper.Get(session=session)
@@ -79,8 +79,8 @@ async def Leading_checkNewArticle():
                 REG_DT = re.sub(r"[-./]", "", REG_DT)
                 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                    "sec_firm_order":sec_firm_order,
+                    "article_board_order":article_board_order,
                     "FIRM_NM":firm_info.get_firm_name(),
                     "REG_DT":REG_DT,
                     "DOWNLOAD_URL": DOWNLOAD_URL,

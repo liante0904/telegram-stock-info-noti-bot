@@ -24,11 +24,11 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
     if page_size is None:
         page_size = 1000
 
-    SEC_FIRM_ORDER = 21
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 21
+    article_board_order = 0
     firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
     )
     logger.debug(f"Hanwha Scraper Start: {firm_info.get_firm_name()}")
     
@@ -81,8 +81,8 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                     )
 
                     articles.append({
-                        "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                        "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                        "sec_firm_order": sec_firm_order,
+                        "article_board_order": article_board_order,
                         "FIRM_NM": firm_info.get_firm_name(),
                         "REG_DT": reg_date,
                         "DOWNLOAD_URL": download_url,

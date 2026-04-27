@@ -111,8 +111,8 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                     ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
                 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": sec_firm_order,
-                    "ARTICLE_BOARD_ORDER": article_board_order,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": REG_DT,
                     "DOWNLOAD_URL": ATTACH_URL,
@@ -134,7 +134,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
 async def Kyobo_checkNewArticle(full_fetch=False):
     """교보증권 데이터 수집"""
-    SEC_FIRM_ORDER = 24
+    sec_firm_order = 24
     TARGET_URL_TUPLE = config.get_urls("Kyobo_24")
 
     max_pages = None if full_fetch else 3
@@ -154,9 +154,9 @@ async def Kyobo_checkNewArticle(full_fetch=False):
     all_results = []
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):
-            firm_info = FirmInfo(SEC_FIRM_ORDER, article_board_order)
+            firm_info = FirmInfo(sec_firm_order, article_board_order)
             logger.debug(f"Kyobo Scraper Start: {firm_info.get_firm_name()}")
-            results = await fetch_all_pages(session, base_url, SEC_FIRM_ORDER, article_board_order, headers, max_pages)
+            results = await fetch_all_pages(session, base_url, sec_firm_order, article_board_order, headers, max_pages)
             all_results.extend(results)
 
     gc.collect()

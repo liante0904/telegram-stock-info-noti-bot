@@ -28,37 +28,37 @@ class MariaDB:
         if self.conn:
             self.conn.close()
 
-    def SelNxtKey(self, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+    def SelNxtKey(self, sec_firm_order, article_board_order):
         query = """
-            SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, 
+            SELECT FIRM_NM, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, 
                    NXT_KEY, NXT_KEY_BF, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, 
                    TODAY_SEND_YN, TIMESTAMPDIFF(second, CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 
             FROM NXT_KEY
-            WHERE SEC_FIRM_ORDER = %s AND ARTICLE_BOARD_ORDER = %s
+            WHERE sec_firm_order = %s AND article_board_order = %s
         """
-        self.cursor.execute(query, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+        self.cursor.execute(query, (sec_firm_order, article_board_order))
         return self.cursor.fetchone()
 
-    def InsNxtKey(self, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+    def InsNxtKey(self, sec_firm_order, article_board_order, FIRST_NXT_KEY):
         query = """
-            INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)
+            INSERT INTO NXT_KEY (sec_firm_order, article_board_order, NXT_KEY, CHANGE_DATE_TIME)
             VALUES (%s, %s, %s, DEFAULT)
         """
-        self.cursor.execute(query, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY))
+        self.cursor.execute(query, (sec_firm_order, article_board_order, FIRST_NXT_KEY))
         self.conn.commit()
 
-    def UpdNxtKey(self, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
+    def UpdNxtKey(self, sec_firm_order, article_board_order, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
         query = """
             UPDATE NXT_KEY SET NXT_KEY = %s, NXT_KEY_ARTICLE_TITLE = %s 
-            WHERE SEC_FIRM_ORDER = %s AND ARTICLE_BOARD_ORDER = %s
+            WHERE sec_firm_order = %s AND article_board_order = %s
         """
-        self.cursor.execute(query, (FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+        self.cursor.execute(query, (FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, sec_firm_order, article_board_order))
         self.conn.commit()
 
-    def UpdTodaySendKey(self, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
+    def UpdTodaySendKey(self, sec_firm_order, article_board_order, TODAY_SEND_YN):
         query = """
             UPDATE NXT_KEY SET TODAY_SEND_YN = %s 
-            WHERE SEC_FIRM_ORDER = %s AND ARTICLE_BOARD_ORDER = %s
+            WHERE sec_firm_order = %s AND article_board_order = %s
         """
-        self.cursor.execute(query, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+        self.cursor.execute(query, (TODAY_SEND_YN, sec_firm_order, article_board_order))
         self.conn.commit()

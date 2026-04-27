@@ -15,8 +15,8 @@ from models.ConfigManager import config
 
 
 def Hmsec_checkNewArticle():
-    SEC_FIRM_ORDER      = 9
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 9
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -28,10 +28,10 @@ def Hmsec_checkNewArticle():
 
     # URL GET
     soupList = None
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
         payload = {"curPage":1}
 
@@ -72,8 +72,8 @@ def Hmsec_checkNewArticle():
             # ATTACH_FILE_NAME = DownloadFile(URL = LIST_ATTACHMENT_URL, FILE_NAME = LIST_ARTICLE_TITLE +'.pdf')
 
             json_data_list.append({
-                "SEC_FIRM_ORDER":SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER":ARTICLE_BOARD_ORDER,
+                "sec_firm_order":sec_firm_order,
+                "article_board_order":article_board_order,
                 "FIRM_NM":firm_info.get_firm_name(),
                 "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
                 "REG_DT":REG_DT,

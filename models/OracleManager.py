@@ -92,8 +92,8 @@ class OracleManager:
         conn = self._get_connection_sync()
         query = f"""
         MERGE INTO {table_name} t
-        USING (SELECT :REPORT_ID as REPORT_ID, :SEC_FIRM_ORDER as SEC_FIRM_ORDER, 
-                      :ARTICLE_BOARD_ORDER as ARTICLE_BOARD_ORDER, :FIRM_NM as FIRM_NM, 
+        USING (SELECT :REPORT_ID as REPORT_ID, :sec_firm_order as sec_firm_order, 
+                      :article_board_order as article_board_order, :FIRM_NM as FIRM_NM, 
                       :SEND_USER as SEND_USER, :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, 
                       :DOWNLOAD_STATUS_YN as DOWNLOAD_STATUS_YN, :SAVE_TIME_STR as SAVE_TIME_STR,
                       :REG_DT as REG_DT, :WRITER as WRITER, :KEY as KEY, :MKT_TP as MKT_TP, 
@@ -104,8 +104,8 @@ class OracleManager:
         ON (t.REPORT_ID = s.REPORT_ID)
         WHEN MATCHED THEN
             UPDATE SET 
-                t.SEC_FIRM_ORDER = NVL(s.SEC_FIRM_ORDER, t.SEC_FIRM_ORDER),
-                t.ARTICLE_BOARD_ORDER = NVL(s.ARTICLE_BOARD_ORDER, t.ARTICLE_BOARD_ORDER),
+                t.sec_firm_order = NVL(s.sec_firm_order, t.sec_firm_order),
+                t.article_board_order = NVL(s.article_board_order, t.article_board_order),
                 t.FIRM_NM = NVL(s.FIRM_NM, t.FIRM_NM),
                 t.SEND_USER = NVL(s.SEND_USER, t.SEND_USER),
                 t.MAIN_CH_SEND_YN = NVL(s.MAIN_CH_SEND_YN, t.MAIN_CH_SEND_YN),
@@ -121,11 +121,11 @@ class OracleManager:
                 t.ARTICLE_URL = NVL(s.ARTICLE_URL, t.ARTICLE_URL),
                 t.DOWNLOAD_URL = NVL(s.DOWNLOAD_URL, t.DOWNLOAD_URL)
         WHEN NOT MATCHED THEN
-            INSERT (REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, SEND_USER,
+            INSERT (REPORT_ID, sec_firm_order, article_board_order, FIRM_NM, SEND_USER,
                     MAIN_CH_SEND_YN, DOWNLOAD_STATUS_YN, SAVE_TIME, REG_DT, WRITER, 
                     KEY, MKT_TP, ATTACH_URL, ARTICLE_TITLE, TELEGRAM_URL, 
                     ARTICLE_URL, DOWNLOAD_URL)
-            VALUES (s.REPORT_ID, s.SEC_FIRM_ORDER, s.ARTICLE_BOARD_ORDER, s.FIRM_NM, s.SEND_USER,
+            VALUES (s.REPORT_ID, s.sec_firm_order, s.article_board_order, s.FIRM_NM, s.SEND_USER,
                     s.MAIN_CH_SEND_YN, s.DOWNLOAD_STATUS_YN, TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), s.REG_DT, s.WRITER, 
                     s.KEY, s.MKT_TP, s.ATTACH_URL, s.ARTICLE_TITLE, s.TELEGRAM_URL, 
                     s.ARTICLE_URL, s.DOWNLOAD_URL)
@@ -154,8 +154,8 @@ class OracleManager:
 
             params_list.append({
                 "REPORT_ID": ci.get("report_id"),
-                "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
-                "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
+                "sec_firm_order": ci.get("sec_firm_order"),
+                "article_board_order": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 100),
                 "SEND_USER": get_str("send_user", 100),
                 "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 100),
@@ -193,12 +193,12 @@ class OracleManager:
         conn = self._get_connection_sync()
         query = f"""
         INSERT /*+ APPEND_VALUES */ INTO {table_name} (
-            REPORT_ID, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT, ATTACH_URL, 
+            REPORT_ID, sec_firm_order, article_board_order, FIRM_NM, REG_DT, ATTACH_URL, 
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
             TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
             GEMINI_SUMMARY, SUMMARY_TIME, SUMMARY_MODEL
         ) VALUES (
-            :REPORT_ID, :SEC_FIRM_ORDER, :ARTICLE_BOARD_ORDER, :FIRM_NM, :REG_DT, :ATTACH_URL, 
+            :REPORT_ID, :sec_firm_order, :article_board_order, :FIRM_NM, :REG_DT, :ATTACH_URL, 
             :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN, :DOWNLOAD_URL, 
             :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME,
             :GEMINI_SUMMARY, :SUMMARY_TIME, :SUMMARY_MODEL
@@ -223,8 +223,8 @@ class OracleManager:
 
             params_list.append({
                 "REPORT_ID": ci.get("report_id"),
-                "SEC_FIRM_ORDER": ci.get("sec_firm_order"),
-                "ARTICLE_BOARD_ORDER": ci.get("article_board_order"),
+                "sec_firm_order": ci.get("sec_firm_order"),
+                "article_board_order": ci.get("article_board_order"),
                 "FIRM_NM": get_str("firm_nm", 300),
                 "REG_DT": get_str("reg_dt", 20),
                 "ATTACH_URL": get_str("attach_url", 1000),
@@ -312,14 +312,14 @@ class OracleManager:
         reg_dt_end = (base_dt + timedelta(days=2)).strftime('%Y%m%d')
 
         condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'" if type == 'download' else \
-                    "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL IS NOT NULL))"
+                    "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND TELEGRAM_URL IS NOT NULL))"
 
         query = f"""
         SELECT * FROM DATA_MAIN_DAILY_SEND 
         WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = '{q_date}'
           AND REG_DT BETWEEN '{reg_dt_start}' AND '{reg_dt_end}'
           AND {condition}
-        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
         """
         return await self.execute_query(query)
 
@@ -341,16 +341,16 @@ class OracleManager:
     async def fetch_daily_articles_by_date(self, firm_info, date_str=None):
         """텔레그램 URL 갱신이 필요한 데이터 조회"""
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
-        sec_firm_order = firm_info.get_state()["SEC_FIRM_ORDER"]
+        sec_firm_order = firm_info.get_state()["sec_firm_order"]
         
         query = f"""
         SELECT * FROM DATA_MAIN_DAILY_SEND
         WHERE REG_DT BETWEEN TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') - 3, 'YYYYMMDD')
                         AND TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') + 2, 'YYYYMMDD')
-          AND SEC_FIRM_ORDER = :sec_order
+          AND sec_firm_order = :sec_order
           AND KEY IS NOT NULL
           AND TELEGRAM_URL IS NULL
-        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
         """
         return await self.execute_query(query, {"sec_order": sec_firm_order})
 

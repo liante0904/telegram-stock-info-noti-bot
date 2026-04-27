@@ -8,7 +8,7 @@ class MetaFirmInfo(type):
     def firm_names(cls):
         if not cls._is_loaded:
             cls.load_data_from_db()
-        # 키(SEC_FIRM_ORDER) 순으로 정렬된 FIRM_NM 리스트 반환
+        # 키(sec_firm_order) 순으로 정렬된 FIRM_NM 리스트 반환
         max_order = max(cls._firm_data.keys()) if cls._firm_data else -1
         names = []
         for i in range(max_order + 1):
@@ -50,18 +50,18 @@ class FirmInfo(metaclass=MetaFirmInfo):
                 password=os.getenv("POSTGRES_PASSWORD", ""),
             )
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute('SELECT "SEC_FIRM_ORDER","FIRM_NM","TELEGRAM_UPDATE_YN" FROM "TBM_SEC_FIRM_INFO" ORDER BY "SEC_FIRM_ORDER"')
+                cur.execute('SELECT sec_firm_order, firm_nm, telegram_update_yn FROM tbm_sec_firm_info ORDER BY sec_firm_order')
                 for row in cur.fetchall():
-                    cls._firm_data[row['SEC_FIRM_ORDER']] = {
-                        "name": row['FIRM_NM'],
-                        "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y'
+                    cls._firm_data[row['sec_firm_order']] = {
+                        "name": row['firm_nm'],
+                        "update_required": row['telegram_update_yn'] == 'Y'
                     }
-                cur.execute('SELECT "SEC_FIRM_ORDER","ARTICLE_BOARD_ORDER","BOARD_NM","BOARD_CD","LABEL_NM" FROM "TBM_SEC_FIRM_BOARD_INFO"')
+                cur.execute('SELECT sec_firm_order, article_board_order, board_nm, board_cd, label_nm FROM tbm_sec_firm_board_info')
                 for row in cur.fetchall():
-                    cls._board_data[(row['SEC_FIRM_ORDER'], row['ARTICLE_BOARD_ORDER'])] = {
-                        "name": row['BOARD_NM'],
-                        "code": row['BOARD_CD'] or "",
-                        "label": row['LABEL_NM'] or ""
+                    cls._board_data[(row['sec_firm_order'], row['article_board_order'])] = {
+                        "name": row['board_nm'],
+                        "code": row['board_cd'] or "",
+                        "label": row['label_nm'] or ""
                     }
             conn.close()
             cls._is_loaded = True
@@ -78,19 +78,19 @@ class FirmInfo(metaclass=MetaFirmInfo):
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            cursor.execute("SELECT SEC_FIRM_ORDER, FIRM_NM, TELEGRAM_UPDATE_YN FROM TBM_SEC_FIRM_INFO ORDER BY SEC_FIRM_ORDER")
+            cursor.execute("SELECT sec_firm_order, firm_nm, telegram_update_yn FROM tbm_sec_firm_info ORDER BY sec_firm_order")
             for row in cursor.fetchall():
-                cls._firm_data[row['SEC_FIRM_ORDER']] = {
-                    "name": row['FIRM_NM'],
-                    "update_required": row['TELEGRAM_UPDATE_YN'] == 'Y'
+                cls._firm_data[row['sec_firm_order']] = {
+                    "name": row['firm_nm'],
+                    "update_required": row['telegram_update_yn'] == 'Y'
                 }
 
-            cursor.execute("SELECT SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_NM, BOARD_CD, LABEL_NM FROM TBM_SEC_FIRM_BOARD_INFO")
+            cursor.execute("SELECT sec_firm_order, article_board_order, board_nm, board_cd, label_nm FROM tbm_sec_firm_board_info")
             for row in cursor.fetchall():
-                cls._board_data[(row['SEC_FIRM_ORDER'], row['ARTICLE_BOARD_ORDER'])] = {
-                    "name": row['BOARD_NM'],
-                    "code": row['BOARD_CD'] or "",
-                    "label": row['LABEL_NM'] or ""
+                cls._board_data[(row['sec_firm_order'], row['article_board_order'])] = {
+                    "name": row['board_nm'],
+                    "code": row['board_cd'] or "",
+                    "label": row['label_nm'] or ""
                 }
             cls._is_loaded = True
             logger.debug(f"FirmInfo: Data successfully loaded from SQLite ({db_path}).")
@@ -103,41 +103,41 @@ class FirmInfo(metaclass=MetaFirmInfo):
             self.load_data_from_db()
 
         if firm_info:
-            self.SEC_FIRM_ORDER = firm_info.SEC_FIRM_ORDER
-            self.ARTICLE_BOARD_ORDER = firm_info.ARTICLE_BOARD_ORDER
+            self.sec_firm_order = firm_info.sec_firm_order
+            self.article_board_order = firm_info.article_board_order
         else:
-            self.SEC_FIRM_ORDER = sec_firm_order
-            self.ARTICLE_BOARD_ORDER = article_board_order
+            self.sec_firm_order = sec_firm_order
+            self.article_board_order = article_board_order
 
-        firm_info_cached = self._firm_data.get(self.SEC_FIRM_ORDER, {})
+        firm_info_cached = self._firm_data.get(self.sec_firm_order, {})
         self.telegram_update_required = firm_info_cached.get("update_required", False)
 
     def get_firm_name(self):
-        return self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("name", f"Unknown({self.SEC_FIRM_ORDER})")
+        return self._firm_data.get(self.sec_firm_order, {}).get("name", f"Unknown({self.sec_firm_order})")
 
     def get_board_name(self):
-        key = (self.SEC_FIRM_ORDER, self.ARTICLE_BOARD_ORDER)
+        key = (self.sec_firm_order, self.article_board_order)
         return self._board_data.get(key, {}).get("name", "")
 
     def get_board_code(self):
-        key = (self.SEC_FIRM_ORDER, self.ARTICLE_BOARD_ORDER)
+        key = (self.sec_firm_order, self.article_board_order)
         return self._board_data.get(key, {}).get("code", "")
 
     def get_label_name(self):
-        key = (self.SEC_FIRM_ORDER, self.ARTICLE_BOARD_ORDER)
+        key = (self.sec_firm_order, self.article_board_order)
         return self._board_data.get(key, {}).get("label", "")
 
     def set_sec_firm_order(self, sec_firm_order):
-        self.SEC_FIRM_ORDER = sec_firm_order
-        self.telegram_update_required = self._firm_data.get(self.SEC_FIRM_ORDER, {}).get("update_required", False)
+        self.sec_firm_order = sec_firm_order
+        self.telegram_update_required = self._firm_data.get(self.sec_firm_order, {}).get("update_required", False)
 
     def set_article_board_order(self, article_board_order):
-        self.ARTICLE_BOARD_ORDER = article_board_order
+        self.article_board_order = article_board_order
 
     def get_state(self):
         return {
-            "SEC_FIRM_ORDER": self.SEC_FIRM_ORDER,
-            "ARTICLE_BOARD_ORDER": self.ARTICLE_BOARD_ORDER,
+            "sec_firm_order": self.sec_firm_order,
+            "article_board_order": self.article_board_order,
             "FIRM_NAME": self.get_firm_name(),
             "BOARD_NAME": self.get_board_name(),
             "LABEL_NAME": self.get_label_name(),

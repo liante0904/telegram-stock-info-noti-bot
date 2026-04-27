@@ -90,8 +90,8 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 market_type = 'GLOBAL' if article_board_order in (9, 10, 11) else 'KR'
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": sec_firm_order,
-                    "ARTICLE_BOARD_ORDER": article_board_order,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": adjust_date(REG_DT, time_str),
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,
@@ -114,7 +114,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
 async def HANA_checkNewArticle(full_fetch=False):
     """하나금융 데이터 수집"""
-    SEC_FIRM_ORDER = 3
+    sec_firm_order = 3
 
     TARGET_URL_TUPLE = config.get_urls("HANA_3")
 
@@ -123,9 +123,9 @@ async def HANA_checkNewArticle(full_fetch=False):
     
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):
-            firm_info = FirmInfo(SEC_FIRM_ORDER, article_board_order)
+            firm_info = FirmInfo(sec_firm_order, article_board_order)
             logger.debug(f"HANA Scraper Start: {firm_info.get_firm_name()} Board {article_board_order}")
-            results = await fetch_all_pages(session, base_url, SEC_FIRM_ORDER, article_board_order, max_pages)
+            results = await fetch_all_pages(session, base_url, sec_firm_order, article_board_order, max_pages)
             all_results.extend(results)
 
     gc.collect()

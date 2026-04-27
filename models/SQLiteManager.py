@@ -86,7 +86,7 @@ class SQLiteManager:
             for entry in json_data_list:
                 self.cursor.execute(f'''
                     INSERT INTO {table_name} (
-                        SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+                        sec_firm_order, article_board_order, FIRM_NM, REG_DT,
                         ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
                         DOWNLOAD_URL, TELEGRAM_URL, PDF_URL, WRITER, MKT_TP, KEY, SAVE_TIME
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -110,8 +110,8 @@ class SQLiteManager:
                             ELSE PDF_URL -- 기존 값을 유지
                         END
                 ''', (
-                    entry["SEC_FIRM_ORDER"],
-                    entry["ARTICLE_BOARD_ORDER"],
+                    entry["sec_firm_order"],
+                    entry["article_board_order"],
                     entry["FIRM_NM"],
                     entry.get("REG_DT", ''),
                     entry.get("ATTACH_URL", ''),
@@ -146,7 +146,7 @@ class SQLiteManager:
         TELEGRAM_URL 갱신이 필요한 레코드를 조회합니다.
         
         Args:
-            firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
+            firm_info (FirmInfo): sec_firm_order와 article_board_order 속성을 포함한 FirmInfo 인스턴스.
             date_str (str, optional): 조회할 날짜 (형식: 'YYYYMMDD'). 지정하지 않으면 오늘 날짜로 설정됩니다.
         
         Returns:
@@ -155,10 +155,10 @@ class SQLiteManager:
         self.open_connection()
         query_date = date_str if date_str else datetime.now().strftime('%Y%m%d')
         firmInfo = firm_info.get_state()
-        logger.debug(f"Fetching daily articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
+        logger.debug(f"Fetching daily articles for firm order: {firmInfo['sec_firm_order']}")
         query = f"""
         SELECT 
-            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
         FROM 
@@ -166,10 +166,10 @@ class SQLiteManager:
         WHERE 
             REG_DT BETWEEN strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '-3 days'))
                     AND strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '+2 days'))
-            AND SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
+            AND sec_firm_order = '{firmInfo["sec_firm_order"]}'
             AND KEY IS NOT NULL
             AND TELEGRAM_URL  = ''
-        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
         """
 
         self.cursor.execute(query)
@@ -183,7 +183,7 @@ class SQLiteManager:
         TELEGRAM_URL 갱신이 필요한 전체 레코드를 조회합니다.
         
         Args:
-            firm_info (FirmInfo): SEC_FIRM_ORDER와 ARTICLE_BOARD_ORDER 속성을 포함한 FirmInfo 인스턴스.
+            firm_info (FirmInfo): sec_firm_order와 article_board_order 속성을 포함한 FirmInfo 인스턴스.
             days_limit (int, optional): 최근 며칠 이내의 데이터를 조회할지 여부.
         
         Returns:
@@ -191,17 +191,17 @@ class SQLiteManager:
         """
         self.open_connection()
         firmInfo = firm_info.get_state()
-        logger.debug(f"Fetching articles for firm order: {firmInfo['SEC_FIRM_ORDER']}")
+        logger.debug(f"Fetching articles for firm order: {firmInfo['sec_firm_order']}")
         
         query = f"""
         SELECT 
-            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
             ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
         FROM 
             {self.main_table_name}
         WHERE 
-            SEC_FIRM_ORDER = '{firmInfo["SEC_FIRM_ORDER"]}'
+            sec_firm_order = '{firmInfo["sec_firm_order"]}'
             AND KEY IS NOT NULL
             AND (TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
         """
@@ -219,17 +219,17 @@ class SQLiteManager:
 
     async def fetch_ls_detail_targets(self):
         """
-        LS증권(SEC_FIRM_ORDER=0) 레포트 중 TELEGRAM_URL이 .pdf로 끝나지 않는 대상을 조회합니다.
+        LS증권(sec_firm_order=0) 레포트 중 TELEGRAM_URL이 .pdf로 끝나지 않는 대상을 조회합니다.
         """
         query = f"""
         SELECT 
-            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY
         FROM 
             {self.main_table_name}
         WHERE 
-            SEC_FIRM_ORDER = 0
+            sec_firm_order = 0
             AND (TELEGRAM_URL NOT LIKE '%.pdf' OR TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
         """
         return await self.execute_query(query)
@@ -318,7 +318,7 @@ class SQLiteManager:
         # 쿼리 타입에 따라 조건을 다르게 설정
         if type == 'send':
             query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
-            query_condition += "AND (SEC_FIRM_ORDER != 19 OR (SEC_FIRM_ORDER = 19 AND TELEGRAM_URL <> ''))"
+            query_condition += "AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND TELEGRAM_URL <> ''))"
         elif type == 'download':
             query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
 
@@ -327,7 +327,7 @@ class SQLiteManager:
 
         query = f"""
         SELECT 
-            report_id, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRM_NM, REG_DT,
+            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
             ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
             DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, MAIN_CH_SEND_YN
         FROM 
@@ -338,7 +338,7 @@ class SQLiteManager:
             AND REG_DT <= '{query_reg_dt}'
             AND {query_condition}
         GROUP BY (CASE WHEN TELEGRAM_URL IS NULL OR TELEGRAM_URL = '' THEN report_id ELSE TELEGRAM_URL END)
-        ORDER BY SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, SAVE_TIME
+        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
         """
         
         return await self.execute_query(query)
@@ -417,7 +417,7 @@ class SQLiteManager:
         FROM {self.main_table_name}
         WHERE (GEMINI_SUMMARY "IS NULL" OR GEMINI_SUMMARY = '')
         AND (TELEGRAM_URL IS NOT NULL AND TELEGRAM_URL != '')
-        AND SEC_FIRM_ORDER NOT IN ({", ".join(map(str, exclude_firms))})
+        AND sec_firm_order NOT IN ({", ".join(map(str, exclude_firms))})
         ORDER BY SAVE_TIME DESC
         LIMIT ?
         """

@@ -88,8 +88,8 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
 
                 # JSON 데이터 생성
                 article_data = {
-                    "SEC_FIRM_ORDER": sec_firm_order,
-                    "ARTICLE_BOARD_ORDER": article_board_order,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
                     "REG_DT": REG_DT,
                     "ARTICLE_URL": LIST_ARTICLE_URL,
@@ -113,7 +113,7 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
 
 async def MERITZ_checkNewArticle(full_fetch=False):
     """메리츠증권 데이터 수집"""
-    SEC_FIRM_ORDER = 20
+    sec_firm_order = 20
 
     TARGET_URL_TUPLE = config.get_urls("MERITZ_20")
 
@@ -123,7 +123,7 @@ async def MERITZ_checkNewArticle(full_fetch=False):
     async with aiohttp.ClientSession() as session:
         for article_board_order, base_url in enumerate(TARGET_URL_TUPLE):
             logger.info(f"Processing MERITZ board {article_board_order + 1}/{len(TARGET_URL_TUPLE)}")
-            results = await fetch_all_pages_meritz(session, base_url, SEC_FIRM_ORDER, article_board_order, max_pages)
+            results = await fetch_all_pages_meritz(session, base_url, sec_firm_order, article_board_order, max_pages)
             all_results.extend(results)
 
     gc.collect()

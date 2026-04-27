@@ -14,8 +14,8 @@ from models.WebScraper import SyncWebScraper
 from models.ConfigManager import config
 
 def Samsung_checkNewArticle():
-    SEC_FIRM_ORDER      = 5
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 5
+    article_board_order = 0
     json_data_list = []
 
     requests.packages.urllib3.disable_warnings()
@@ -24,10 +24,10 @@ def Samsung_checkNewArticle():
 
     
     # URL GET
-    for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
         firm_info = FirmInfo(
-            sec_firm_order=SEC_FIRM_ORDER,
-            article_board_order=ARTICLE_BOARD_ORDER
+            sec_firm_order=sec_firm_order,
+            article_board_order=article_board_order
         )
 
         scraper = SyncWebScraper(TARGET_URL, firm_info)
@@ -73,8 +73,8 @@ def Samsung_checkNewArticle():
                 
                 # 결과 저장
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
                     "DOWNLOAD_URL": '',

@@ -91,8 +91,8 @@ FIRST_ARTICLE_URL = ''
 SEND_ADD_MESSAGE_TEXT = ''
 
 # LOOP 인덱스 변수
-SEC_FIRM_ORDER = 0 # 증권사 순번
-ARTICLE_BOARD_ORDER = 0 # 게시판 순번
+sec_firm_order = 0 # 증권사 순번
+article_board_order = 0 # 게시판 순번
 
 # 이모지
 EMOJI_FIRE = u'\U0001F525'
@@ -121,7 +121,7 @@ def MySQL_Open_Connect():
     cursor = conn.cursor()
     return cursor
 
-def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
+def DB_SelNxtKey(sec_firm_order, article_board_order):
     global FIRM_NM
     global BOARD_NM
     global BOARD_URL
@@ -135,8 +135,8 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s "
-    dbResult = cursor.execute(dbQuery, (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+    dbQuery  = " SELECT FIRM_NM, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s "
+    dbResult = cursor.execute(dbQuery, (sec_firm_order, article_board_order))
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
@@ -153,24 +153,24 @@ def DB_SelNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER):
     conn.close()
     return dbResult
 
-def DB_InsNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY):
+def DB_InsNxtKey(sec_firm_order, article_board_order, FIRST_NXT_KEY):
     global NXT_KEY
     global TEST_SEND_YN
     global conn
     global cursor
     cursor = MySQL_Open_Connect()
-    dbQuery = "INSERT INTO NXT_KEY (SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
-    cursor.execute(dbQuery, ( SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY ))
+    dbQuery = "INSERT INTO NXT_KEY (sec_firm_order, article_board_order, NXT_KEY, CHANGE_DATE_TIME)VALUES ( %s, %s, %s, DEFAULT);"
+    cursor.execute(dbQuery, ( sec_firm_order, article_board_order, FIRST_NXT_KEY ))
     NXT_KEY = FIRST_NXT_KEY
     conn.close()
     return NXT_KEY
 
-def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
+def DB_UpdNxtKey(sec_firm_order, article_board_order, FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER ))
+    dbQuery = "UPDATE NXT_KEY SET NXT_KEY = %s , NXT_KEY_ARTICLE_TITLE = %s WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s;"
+    dbResult = cursor.execute(dbQuery, ( FIRST_NXT_KEY, NXT_KEY_ARTICLE_TITLE, sec_firm_order, article_board_order ))
     if dbResult:
         print('####DB업데이트 된 연속키####', end='\n')
         print(dbResult)
@@ -178,12 +178,12 @@ def DB_UpdNxtKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, FIRST_NXT_KEY, NXT_KEY_ART
     conn.close()
     return dbResult
 
-def DB_UpdTodaySendKey(SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER, TODAY_SEND_YN):
+def DB_UpdTodaySendKey(sec_firm_order, article_board_order, TODAY_SEND_YN):
     global NXT_KEY
     global TEST_SEND_YN
     cursor = MySQL_Open_Connect()
-    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  SEC_FIRM_ORDER = %s   AND ARTICLE_BOARD_ORDER = %s;"
-    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, SEC_FIRM_ORDER, ARTICLE_BOARD_ORDER))
+    dbQuery = "UPDATE NXT_KEY SET TODAY_SEND_YN = %s WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s;"
+    dbResult = cursor.execute(dbQuery, (TODAY_SEND_YN, sec_firm_order, article_board_order))
     conn.close()
     return dbResult
 

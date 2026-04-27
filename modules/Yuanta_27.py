@@ -72,8 +72,8 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                                     DOWNLOAD_URL = f"http://file.myasset.com/sitemanager/upload/{pdf_path}"
 
                                 json_data_list.append({
-                                    "SEC_FIRM_ORDER": sec_firm_order,
-                                    "ARTICLE_BOARD_ORDER": article_board_order,
+                                    "sec_firm_order": sec_firm_order,
+                                    "article_board_order": article_board_order,
                                     "FIRM_NM": firm_info.get_firm_name(),
                                     "REG_DT": POST_DATE.strftime("%Y%m%d"),
                                     "ARTICLE_URL": LIST_ARTICLE_URL,
@@ -104,7 +104,7 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
 async def Yuanta_checkNewArticle(is_imported_flag=False):
     """유안타증권 비동기 데이터 수집 진입점 (표준화된 명칭)"""
     all_articles = []
-    SEC_FIRM_ORDER = 27
+    sec_firm_order = 27
     semaphore = asyncio.Semaphore(5)
 
     async with aiohttp.ClientSession() as session:
@@ -126,7 +126,7 @@ async def Yuanta_checkNewArticle(is_imported_flag=False):
                             end_date=end_date.strftime('%Y%m%d'),
                             page=page
                         )
-                        articles_on_page = await scrape_yuanta_page_async(session, target_url, SEC_FIRM_ORDER, i, is_imported_flag, semaphore)
+                        articles_on_page = await scrape_yuanta_page_async(session, target_url, sec_firm_order, i, is_imported_flag, semaphore)
                         if articles_on_page:
                             all_articles.extend(articles_on_page)
                             articles_in_month_count += len(articles_on_page)
@@ -148,7 +148,7 @@ async def Yuanta_checkNewArticle(is_imported_flag=False):
             for i, board_code in enumerate(YUANTA_BOARD_CODES):
                 for page in range(1, 6):
                     target_url = YUANTA_URL_TEMPLATE_DEFAULT.format(board_code=board_code, page=page)
-                    tasks.append(scrape_yuanta_page_async(session, target_url, SEC_FIRM_ORDER, i, is_imported_flag, semaphore))
+                    tasks.append(scrape_yuanta_page_async(session, target_url, sec_firm_order, i, is_imported_flag, semaphore))
             
             results = await asyncio.gather(*tasks)
             for result in results:

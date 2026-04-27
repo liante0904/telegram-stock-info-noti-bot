@@ -24,7 +24,7 @@ async def fetch_html(session, url):
 async def LS_checkNewArticle():
     db_manager = SQLiteManager()
     json_data_list = []
-    SEC_FIRM_ORDER = 0
+    sec_firm_order = 0
     FIRM_NM = "LS증권"
 
     TARGET_URLS = [
@@ -39,16 +39,16 @@ async def LS_checkNewArticle():
     ]
 
     async with aiohttp.ClientSession() as session:
-        for ARTICLE_BOARD_ORDER, base_url in enumerate(TARGET_URLS):
+        for article_board_order, base_url in enumerate(TARGET_URLS):
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
 
             page = 1
             while True:
-                if ARTICLE_BOARD_ORDER == 0:
-                    print(f"{ARTICLE_BOARD_ORDER}는 이제 그만함")
+                if article_board_order == 0:
+                    print(f"{article_board_order}는 이제 그만함")
                     break
                 if page == 20:
                     break

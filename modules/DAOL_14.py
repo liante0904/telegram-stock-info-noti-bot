@@ -18,8 +18,8 @@ async def fetch_article(session, TARGET_URL, form_data, headers):
         return await response.text()
 
 async def DAOL_checkNewArticle():
-    SEC_FIRM_ORDER = 14
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 14
+    article_board_order = 0
     json_data_list = []
 
     TARGET_URL_TUPLE = config.get_urls("DAOL_14")
@@ -28,10 +28,10 @@ async def DAOL_checkNewArticle():
     async with aiohttp.ClientSession() as session:
         tasks = []
         
-        for ARTICLE_BOARD_ORDER, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+        for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
             firm_info = FirmInfo(
-                sec_firm_order=SEC_FIRM_ORDER,
-                article_board_order=ARTICLE_BOARD_ORDER
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
             )
             # URL 파싱 및 수정
             parsed_url = urlparse.urlparse(TARGET_URL)
@@ -127,8 +127,8 @@ async def DAOL_checkNewArticle():
                 DOWNLOAD_URL = LIST_ARTICLE_URL
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": REG_DT,
                     "DOWNLOAD_URL": LIST_ARTICLE_URL,

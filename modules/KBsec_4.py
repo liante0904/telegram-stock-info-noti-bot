@@ -17,8 +17,8 @@ from models.ConfigManager import config
 # JSON API 타입
 async def KB_checkNewArticle():
     json_data_list = []
-    SEC_FIRM_ORDER = 4
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order = 4
+    article_board_order = 0
 
     urls = config.get_urls("KBsec_4")
     if not urls:
@@ -27,8 +27,8 @@ async def KB_checkNewArticle():
     TARGET_URL = urls[0]
 
     firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
     )
     logger.debug(f"KB Scraper Start: {firm_info.get_firm_name()}")
 
@@ -73,8 +73,8 @@ async def KB_checkNewArticle():
             LIST_ARTICLE_URL = f"http://rdata.kbsec.com/pdf_data/{document_id}.pdf"
             
             json_data_list.append({
-                "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                "sec_firm_order": sec_firm_order,
+                "article_board_order": article_board_order,
                 "FIRM_NM": firm_info.get_firm_name(),
                 "REG_DT": REG_DT,
                 "WRITER": WRITER,

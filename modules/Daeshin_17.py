@@ -14,13 +14,13 @@ from models.FirmInfo import FirmInfo
 from models.ConfigManager import config
 
 async def Daeshin_checkNewArticle():
-    SEC_FIRM_ORDER      = 17
-    ARTICLE_BOARD_ORDER = 0
+    sec_firm_order      = 17
+    article_board_order = 0
     json_data_list = []
 
     firm_info = FirmInfo(
-        sec_firm_order=SEC_FIRM_ORDER,
-        article_board_order=ARTICLE_BOARD_ORDER
+        sec_firm_order=sec_firm_order,
+        article_board_order=article_board_order
     )
     logger.debug(f"Daeshin Scraper Start: {firm_info.get_firm_name()}")
 
@@ -87,8 +87,8 @@ async def Daeshin_checkNewArticle():
                 attach_url = await fetch_attach_url(session, article_url)
 
                 json_data_list.append({
-                    "SEC_FIRM_ORDER": SEC_FIRM_ORDER,
-                    "ARTICLE_BOARD_ORDER": ARTICLE_BOARD_ORDER,
+                    "sec_firm_order": sec_firm_order,
+                    "article_board_order": article_board_order,
                     "FIRM_NM": firm_info.get_firm_name(),
                     "REG_DT": re.sub(r"[-./]", "", reg_dt),
                     "ARTICLE_URL": article_url,
