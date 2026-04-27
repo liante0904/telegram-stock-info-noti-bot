@@ -23,10 +23,10 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: TBM_SEC_FIRM_BOARD_INFO; Type: TABLE; Schema: public; Owner: -
+-- Name: tbm_sec_firm_board_info; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public."TBM_SEC_FIRM_BOARD_INFO" (
+CREATE TABLE public.tbm_sec_firm_board_info (
     "sec_firm_order" integer NOT NULL,
     "article_board_order" integer NOT NULL,
     "BOARD_NM" text,
@@ -36,19 +36,19 @@ CREATE TABLE public."TBM_SEC_FIRM_BOARD_INFO" (
 
 
 --
--- Name: TBM_SEC_FIRM_BOARD_INFO TBM_SEC_FIRM_BOARD_INFO_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: tbm_sec_firm_board_info tbm_sec_firm_board_info_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."TBM_SEC_FIRM_BOARD_INFO"
-    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_pkey" PRIMARY KEY ("sec_firm_order", "article_board_order");
+ALTER TABLE ONLY public.tbm_sec_firm_board_info
+    ADD CONSTRAINT "tbm_sec_firm_board_info_pkey" PRIMARY KEY ("sec_firm_order", "article_board_order");
 
 
 --
--- Name: TBM_SEC_FIRM_BOARD_INFO TBM_SEC_FIRM_BOARD_INFO_sec_firm_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: tbm_sec_firm_board_info tbm_sec_firm_board_info_sec_firm_order_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."TBM_SEC_FIRM_BOARD_INFO"
-    ADD CONSTRAINT "TBM_SEC_FIRM_BOARD_INFO_sec_firm_order_fkey" FOREIGN KEY ("sec_firm_order") REFERENCES public."TBM_SEC_FIRM_INFO"("sec_firm_order");
+ALTER TABLE ONLY public.tbm_sec_firm_board_info
+    ADD CONSTRAINT "tbm_sec_firm_board_info_sec_firm_order_fkey" FOREIGN KEY ("sec_firm_order") REFERENCES public.tbm_sec_firm_info("sec_firm_order");
 
 
 --

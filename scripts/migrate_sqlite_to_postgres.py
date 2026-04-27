@@ -35,12 +35,12 @@ def get_pg_conn():
 
 
 def migrate_firm_info():
-    logger.info("Migrating TBM_SEC_FIRM_INFO and TBM_SEC_FIRM_BOARD_INFO...")
+    logger.info("Migrating tbm_sec_firm_info and tbm_sec_firm_board_info...")
     sq = sqlite3.connect(SQLITE_DB)
     sq.row_factory = sqlite3.Row
 
-    firms = [dict(r) for r in sq.execute("SELECT * FROM TBM_SEC_FIRM_INFO").fetchall()]
-    boards = [dict(r) for r in sq.execute("SELECT * FROM TBM_SEC_FIRM_BOARD_INFO").fetchall()]
+    firms = [dict(r) for r in sq.execute("SELECT * FROM tbm_sec_firm_info").fetchall()]
+    boards = [dict(r) for r in sq.execute("SELECT * FROM tbm_sec_firm_board_info").fetchall()]
     sq.close()
 
     pg = get_pg_conn()
@@ -49,7 +49,7 @@ def migrate_firm_info():
     # FIRM_INFO
     psycopg2.extras.execute_values(
         cur,
-        '''INSERT INTO "TBM_SEC_FIRM_INFO" ("sec_firm_order","FIRM_NM","TELEGRAM_UPDATE_YN")
+        '''INSERT INTO tbm_sec_firm_info ("sec_firm_order","FIRM_NM","TELEGRAM_UPDATE_YN")
            VALUES %s
            ON CONFLICT ("sec_firm_order") DO UPDATE SET
                "FIRM_NM"=EXCLUDED."FIRM_NM",
@@ -60,7 +60,7 @@ def migrate_firm_info():
     # BOARD_INFO
     psycopg2.extras.execute_values(
         cur,
-        '''INSERT INTO "TBM_SEC_FIRM_BOARD_INFO"
+        '''INSERT INTO tbm_sec_firm_board_info
                ("sec_firm_order","article_board_order","BOARD_NM","BOARD_CD","LABEL_NM")
            VALUES %s
            ON CONFLICT ("sec_firm_order","article_board_order") DO UPDATE SET

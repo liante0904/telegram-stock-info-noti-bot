@@ -8,7 +8,7 @@ class MetaFirmInfo(type):
     def firm_names(cls):
         if not cls._is_loaded:
             cls.load_data_from_db()
-        # 키(sec_firm_order) 순으로 정렬된 FIRM_NM 리스트 반환
+        # 키(sec_firm_order) 순으로 정렬된 firm_nm 리스트 반환
         max_order = max(cls._firm_data.keys()) if cls._firm_data else -1
         names = []
         for i in range(max_order + 1):
