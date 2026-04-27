@@ -422,5 +422,3 @@ class PostgreSQLManager:
                     return {"status": "success", "affected_rows": cur.rowcount}
         finally:
             conn.close()
-y:
-            conn.close()
