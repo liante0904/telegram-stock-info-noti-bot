@@ -88,8 +88,8 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
     json_data_list = []
 
     for report in report_list:
-        REG_DT = report.get('REG_DATE', '')
-        REG_DT = re.sub(r"[-./]", "", REG_DT)
+        reg_dt = report.get('REG_DATE', '')
+        reg_dt = re.sub(r"[-./]", "", reg_dt)
         
         file_name = report.get('ATTATCH1', '')
         gubun = report.get('GUBUN', '')
@@ -102,24 +102,24 @@ async def process_reports(session: aiohttp.ClientSession, info: dict, page: int,
 
         LIST_ARTICLE_URL = f"https://download.ibks.com/emsdata/tradeinfo/{path_name}/{file_name}"
         
-        ARTICLE_TITLE = report.get('TITLE', 'No Title').strip()
-        WRITER = report.get('REG_NAME', '').strip()
+        article_title = report.get('TITLE', 'No Title').strip()
+        writer = report.get('REG_NAME', '').strip()
         
         market_type = 'GLOBAL' if category_name in ["해외기업분석", "글로벌ETF"] else 'KR'
         
         json_data_list.append({
             "sec_firm_order": sec_firm_order,
             "article_board_order": board_idx,
-            "FIRM_NM": firm_info.get_firm_name(),
-            "REG_DT": REG_DT,
-            "DOWNLOAD_URL": LIST_ARTICLE_URL,
-            "ARTICLE_TITLE": ARTICLE_TITLE,
-            "WRITER": WRITER,
-            "TELEGRAM_URL": LIST_ARTICLE_URL,
-            "PDF_URL": LIST_ARTICLE_URL,
-            "KEY": LIST_ARTICLE_URL,
-            "MKT_TP": market_type,
-            "SAVE_TIME": datetime.now().isoformat()
+            "firm_nm": firm_info.get_firm_name(),
+            "reg_dt": reg_dt,
+            "download_url": LIST_ARTICLE_URL,
+            "article_title": article_title,
+            "writer": writer,
+            "telegram_url": LIST_ARTICLE_URL,
+            "pdf_url": LIST_ARTICLE_URL,
+            "key": LIST_ARTICLE_URL,
+            "mkt_tp": market_type,
+            "save_time": datetime.now().isoformat()
         })
 
     return json_data_list

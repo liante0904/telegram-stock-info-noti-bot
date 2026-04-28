@@ -49,25 +49,28 @@ def migrate_firm_info():
     # FIRM_INFO
     psycopg2.extras.execute_values(
         cur,
-        '''INSERT INTO tbm_sec_firm_info ("sec_firm_order","FIRM_NM","TELEGRAM_UPDATE_YN")
+        '''INSERT INTO tbm_sec_firm_info (sec_firm_order, firm_nm, telegram_update_yn)
            VALUES %s
-           ON CONFLICT ("sec_firm_order") DO UPDATE SET
-               "FIRM_NM"=EXCLUDED."FIRM_NM",
-               "TELEGRAM_UPDATE_YN"=EXCLUDED."TELEGRAM_UPDATE_YN"''',
-        [(r["sec_firm_order"], r["FIRM_NM"], r["TELEGRAM_UPDATE_YN"]) for r in firms],
+           ON CONFLICT (sec_firm_order) DO UPDATE SET
+               firm_nm=EXCLUDED.firm_nm,
+               telegram_update_yn=EXCLUDED.telegram_update_yn''',
+        [(r["sec_firm_order"], r["firm_nm"], r.get("telegram_update_yn") or r.get("TELEGRAM_UPDATE_YN")) for r in firms],
     )
 
     # BOARD_INFO
     psycopg2.extras.execute_values(
         cur,
         '''INSERT INTO tbm_sec_firm_board_info
-               ("sec_firm_order","article_board_order","BOARD_NM","BOARD_CD","LABEL_NM")
+               (sec_firm_order, article_board_order, board_nm, board_cd, label_nm)
            VALUES %s
-           ON CONFLICT ("sec_firm_order","article_board_order") DO UPDATE SET
-               "BOARD_NM"=EXCLUDED."BOARD_NM",
-               "BOARD_CD"=EXCLUDED."BOARD_CD",
-               "LABEL_NM"=EXCLUDED."LABEL_NM"''',
-        [(r["sec_firm_order"], r["article_board_order"], r["BOARD_NM"], r["BOARD_CD"], r["LABEL_NM"])
+           ON CONFLICT (sec_firm_order, article_board_order) DO UPDATE SET
+               board_nm=EXCLUDED.board_nm,
+               board_cd=EXCLUDED.board_cd,
+               label_nm=EXCLUDED.label_nm''',
+        [(r["sec_firm_order"], r["article_board_order"], 
+          r.get("board_nm") or r.get("BOARD_NM"), 
+          r.get("board_cd") or r.get("BOARD_CD"), 
+          r.get("label_nm") or r.get("LABEL_NM"))
          for r in boards],
     )
 
@@ -78,7 +81,7 @@ def migrate_firm_info():
 
 
 def migrate_main(batch_size=5000, truncate=False):
-    logger.info('Migrating TB_SEC_REPORTS...')
+    logger.info('Migrating tbl_sec_reports...')
     sq = sqlite3.connect(SQLITE_DB)
     sq.row_factory = sqlite3.Row
 
@@ -89,24 +92,24 @@ def migrate_main(batch_size=5000, truncate=False):
     cur = pg.cursor()
 
     if truncate:
-        logger.warning('Truncating TB_SEC_REPORTS before migration...')
-        cur.execute('TRUNCATE TABLE "TB_SEC_REPORTS" CASCADE')
+        logger.warning('Truncating tbl_sec_reports before migration...')
+        cur.execute('TRUNCATE TABLE tbl_sec_reports CASCADE')
         pg.commit()
         logger.info('  Table truncated.')
 
     # Check already-migrated max report_id
-    cur.execute('SELECT COALESCE(MAX(report_id), 0) FROM "TB_SEC_REPORTS"')
+    cur.execute('SELECT COALESCE(MAX(report_id), 0) FROM tbl_sec_reports')
     max_pg_id = cur.fetchone()[0]
     logger.info(f"  PostgreSQL max report_id: {max_pg_id} — starting from there")
 
     offset = 0
     sq_cur = sq.cursor()
     sq_cur.execute(
-        "SELECT report_id,sec_firm_order,article_board_order,FIRM_NM,ATTACH_URL,"
-        "ARTICLE_TITLE,ARTICLE_URL,MAIN_CH_SEND_YN,DOWNLOAD_STATUS_YN,"
-        "DOWNLOAD_URL,SAVE_TIME,REG_DT,WRITER,KEY,TELEGRAM_URL,MKT_TP,"
-        "GEMINI_SUMMARY,SUMMARY_TIME,SUMMARY_MODEL,ARCHIVE_STATUS,ARCHIVE_FILE_NAME,"
-        "ARCHIVE_PATH,retry_count,sync_status,PDF_URL "
+        "SELECT report_id,sec_firm_order,article_board_order,firm_nm,"
+        "article_title,article_url,main_ch_send_yn,download_status_yn,"
+        "download_url,save_time,reg_dt,writer,key,telegram_url,mkt_tp,"
+        "gemini_summary,summary_time,summary_model,archive_status,"
+        "pdf_sync_status,pdf_url "
         "FROM data_main_daily_send ORDER BY report_id"
     )
 
@@ -118,40 +121,39 @@ def migrate_main(batch_size=5000, truncate=False):
         records = [
             (
                 r["report_id"], r["sec_firm_order"], r["article_board_order"],
-                _clean(r["FIRM_NM"]), _clean(r["ATTACH_URL"]), _clean(r["ARTICLE_TITLE"]),
-                _clean(r["ARTICLE_URL"]), _clean(r["SEND_USER"]),
-                _clean(r["MAIN_CH_SEND_YN"]), _clean(r["DOWNLOAD_STATUS_YN"] or ''),
-                _clean(r["DOWNLOAD_URL"]), _clean(r["SAVE_TIME"]),
-                _clean(r["REG_DT"] or ''), _clean(r["WRITER"] or ''),
-                _clean(r["KEY"]), _clean(r["TELEGRAM_URL"] or ''),
-                _clean(r["MKT_TP"] or 'KR'), _clean(r["GEMINI_SUMMARY"]),
-                _clean(r["SUMMARY_TIME"]), _clean(r["SUMMARY_MODEL"]),
-                _clean(r["ARCHIVE_STATUS"] or 'INIT'),
-                _clean(r["ARCHIVE_FILE_NAME"]), _clean(r["ARCHIVE_PATH"]),
-                r["retry_count"] or 0, r["sync_status"] or 0, _clean(r["PDF_URL"] or ''),
+                _clean(r["firm_nm"]), _clean(r["article_title"]),
+                _clean(r["article_url"]),
+                _clean(r["main_ch_send_yn"]), _clean(r["download_status_yn"] or ''),
+                _clean(r["download_url"]), _clean(r["save_time"]),
+                _clean(r["reg_dt"] or ''), _clean(r["writer"] or ''),
+                _clean(r["key"]), _clean(r["telegram_url"] or ''),
+                _clean(r["mkt_tp"] or 'KR'), _clean(r["gemini_summary"]),
+                _clean(r["summary_time"]), _clean(r["summary_model"]),
+                _clean(r.get("archive_status") or r.get("ARCHIVE_STATUS") or 'INIT'),
+                r["pdf_sync_status"] or 0, _clean(r["pdf_url"] or ''),
             )
             for r in rows
         ]
 
         psycopg2.extras.execute_values(
             cur,
-            '''INSERT INTO "TB_SEC_REPORTS" (
-                report_id,"sec_firm_order","article_board_order","FIRM_NM","ATTACH_URL",
-                "ARTICLE_TITLE","ARTICLE_URL","SEND_USER","MAIN_CH_SEND_YN","DOWNLOAD_STATUS_YN",
-                "DOWNLOAD_URL","SAVE_TIME","REG_DT","WRITER","KEY","TELEGRAM_URL","MKT_TP",
-                "GEMINI_SUMMARY","SUMMARY_TIME","SUMMARY_MODEL","ARCHIVE_STATUS","ARCHIVE_FILE_NAME",
-                "ARCHIVE_PATH","retry_count","sync_status","PDF_URL"
+            '''INSERT INTO tbl_sec_reports (
+                report_id, sec_firm_order, article_board_order, firm_nm,
+                article_title, article_url, main_ch_send_yn, download_status_yn,
+                download_url, save_time, reg_dt, writer, key, telegram_url, mkt_tp,
+                gemini_summary, summary_time, summary_model, archive_status,
+                pdf_sync_status, pdf_url
             ) VALUES %s
-            ON CONFLICT ("KEY") DO UPDATE SET
-                "REG_DT"             = EXCLUDED."REG_DT",
-                "WRITER"             = EXCLUDED."WRITER",
-                "MKT_TP"             = EXCLUDED."MKT_TP",
-                "MAIN_CH_SEND_YN"    = EXCLUDED."MAIN_CH_SEND_YN",
-                "DOWNLOAD_STATUS_YN" = EXCLUDED."DOWNLOAD_STATUS_YN",
-                "GEMINI_SUMMARY"     = COALESCE(NULLIF(EXCLUDED."GEMINI_SUMMARY",''), "TB_SEC_REPORTS"."GEMINI_SUMMARY"),
-                "DOWNLOAD_URL"       = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",''),  "TB_SEC_REPORTS"."DOWNLOAD_URL"),
-                "TELEGRAM_URL"       = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",''),  "TB_SEC_REPORTS"."TELEGRAM_URL"),
-                "PDF_URL"            = COALESCE(NULLIF(EXCLUDED."PDF_URL",''),        "TB_SEC_REPORTS"."PDF_URL")''',
+            ON CONFLICT (key) DO UPDATE SET
+                reg_dt             = EXCLUDED.reg_dt,
+                writer             = EXCLUDED.writer,
+                mkt_tp             = EXCLUDED.mkt_tp,
+                main_ch_send_yn    = EXCLUDED.main_ch_send_yn,
+                download_status_yn = EXCLUDED.download_status_yn,
+                gemini_summary     = COALESCE(NULLIF(EXCLUDED.gemini_summary,''), tbl_sec_reports.gemini_summary),
+                download_url       = COALESCE(NULLIF(EXCLUDED.download_url,''),  tbl_sec_reports.download_url),
+                telegram_url       = COALESCE(NULLIF(EXCLUDED.telegram_url,''),  tbl_sec_reports.telegram_url),
+                pdf_url            = COALESCE(NULLIF(EXCLUDED.pdf_url,''),        tbl_sec_reports.pdf_url)''',
             records,
             page_size=batch_size,
         )
@@ -160,7 +162,7 @@ def migrate_main(batch_size=5000, truncate=False):
         logger.info(f"  progress: {offset}/{total}")
 
     # Advance sequence past max id
-    cur.execute('SELECT MAX(report_id) FROM "TB_SEC_REPORTS"')
+    cur.execute('SELECT MAX(report_id) FROM tbl_sec_reports')
     max_id = cur.fetchone()[0] or 0
     cur.execute(f"SELECT setval('tb_sec_reports_report_id_seq', {max_id})")
     pg.commit()
@@ -177,8 +179,8 @@ def migrate_aux_table(table_name):
     sq.row_factory = sqlite3.Row
 
     rows = [dict(r) for r in sq.execute(
-        f"SELECT sec_firm_order,article_board_order,FIRM_NM,ATTACH_URL,"
-        f"ARTICLE_TITLE,SEND_USER,MAIN_CH_SEND_YN,SAVE_TIME,ARTICLE_URL,DOWNLOAD_URL,WRITER"
+        f"SELECT sec_firm_order,article_board_order,firm_nm,pdf_url,"
+        f"article_title,send_user,main_ch_send_yn,save_time,article_url,download_url,writer"
         f" FROM {table_name}"
     ).fetchall()]
     sq.close()
@@ -192,14 +194,15 @@ def migrate_aux_table(table_name):
     psycopg2.extras.execute_values(
         cur,
         f'''INSERT INTO {table_name}
-               ("sec_firm_order","article_board_order","FIRM_NM","ATTACH_URL",
-                "ARTICLE_TITLE","SEND_USER","MAIN_CH_SEND_YN","SAVE_TIME",
-                "ARTICLE_URL","DOWNLOAD_URL","WRITER")
+               (sec_firm_order, article_board_order, firm_nm, pdf_url,
+                article_title, send_user, main_ch_send_yn, save_time,
+                article_url, download_url, writer)
            VALUES %s
-           ON CONFLICT ("ATTACH_URL") DO NOTHING''',
-        [(r["sec_firm_order"], r["article_board_order"], r["FIRM_NM"], r["ATTACH_URL"],
-          r["ARTICLE_TITLE"], r["SEND_USER"], r["MAIN_CH_SEND_YN"], r["SAVE_TIME"],
-          r["ARTICLE_URL"], r["DOWNLOAD_URL"], r["WRITER"] or '') for r in rows],
+           ON CONFLICT (pdf_url) DO NOTHING''',
+        [(r["sec_firm_order"], r["article_board_order"], r["firm_nm"], r["pdf_url"],
+          r["article_title"], r.get("send_user") or r.get("SEND_USER"), 
+          r["main_ch_send_yn"], r["save_time"],
+          r["article_url"], r["download_url"], r["writer"] or '') for r in rows],
     )
     pg.commit()
     cur.close()

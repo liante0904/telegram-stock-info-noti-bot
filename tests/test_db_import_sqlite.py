@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import sys
+import pytest
 from loguru import logger
 from dotenv import load_dotenv
 
@@ -18,6 +19,7 @@ async def import_json_to_sqlite():
     """
     postgres_to_sqlite_sync.json 파일을 SQLite에 주입합니다.
     """
+    pytest.skip("SQLite는 더 이상 사용하지 않으므로 import 테스트를 중단합니다.")
     logger.info("Starting SQLite data import (Reverse Sync)...")
     
     file_path = os.path.join(os.path.dirname(__file__), '..', 'json', 'postgres_to_sqlite_sync.json')

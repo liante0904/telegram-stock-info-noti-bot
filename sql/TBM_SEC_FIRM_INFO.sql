@@ -2,11 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict YgBGKseGda1pqLvLIDRk3qMLTFlEsRXIu0jthj9zW8hYrraonGbrr0LNM2luYsA
-
--- Dumped from database version 15.17
--- Dumped by pg_dump version 15.17
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -27,10 +22,10 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.tbm_sec_firm_info (
-    "sec_firm_order" integer NOT NULL,
-    "FIRM_NM" text NOT NULL,
-    "TELEGRAM_UPDATE_YN" text DEFAULT 'N'::text,
-    "COMMENT_PDF_URL" text
+    sec_firm_order integer NOT NULL,
+    firm_nm text NOT NULL,
+    telegram_update_yn text DEFAULT 'N'::text,
+    comment_pdf_url text
 );
 
 
@@ -39,12 +34,4 @@ CREATE TABLE public.tbm_sec_firm_info (
 --
 
 ALTER TABLE ONLY public.tbm_sec_firm_info
-    ADD CONSTRAINT "tbm_sec_firm_info_pkey" PRIMARY KEY ("sec_firm_order");
-
-
---
--- PostgreSQL database dump complete
---
-
-\unrestrict YgBGKseGda1pqLvLIDRk3qMLTFlEsRXIu0jthj9zW8hYrraonGbrr0LNM2luYsA
-
+    ADD CONSTRAINT tbm_sec_firm_info_pkey PRIMARY KEY (sec_firm_order);

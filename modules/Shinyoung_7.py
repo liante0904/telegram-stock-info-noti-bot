@@ -51,26 +51,26 @@ def Shinyoung_checkNewArticle():
     # JSON To List
     for list in soupList:
         # logger.debug('list***************** \n',list)
-        MKT_TP              = "KR"    
-        REG_DT              = re.sub(r"[-./]", "", list['APPDATE'])
-        WRITER              = list['EMPNM']
+        mkt_tp              = "KR"    
+        reg_dt              = re.sub(r"[-./]", "", list['APPDATE'])
+        writer              = list['EMPNM']
         # logger.debug('NT_NO=',list['NT_NO'], 'CMS_CD=',cmsCd[article_board_order])
         LIST_ARTICLE_URL = Shinyoung_detail(SEQ=list['SEQ'], BBSNO=list['BBSNO'])
         LIST_ARTICLE_TITLE = list['TITLE']
         if "해외주식" in LIST_ARTICLE_TITLE :
-            MKT_TP = "GLOBAL"
-        DOWNLOAD_URL = LIST_ARTICLE_URL
+            mkt_tp = "GLOBAL"
+        download_url = LIST_ARTICLE_URL
         json_data_list.append({
             "sec_firm_order":sec_firm_order,
             "article_board_order":article_board_order,
-            "FIRM_NM":firm_info.get_firm_name(),
-            "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-            "REG_DT":REG_DT,
-            "WRITER":WRITER,
-            "TELEGRAM_URL": DOWNLOAD_URL,
-            "MKT_TP": MKT_TP,
-            "KEY":LIST_ARTICLE_URL,
-            "SAVE_TIME": datetime.now().isoformat()
+            "firm_nm":firm_info.get_firm_name(),
+            "article_title":LIST_ARTICLE_TITLE,
+            "reg_dt":reg_dt,
+            "writer":writer,
+            "telegram_url": download_url,
+            "mkt_tp": mkt_tp,
+            "key":LIST_ARTICLE_URL,
+            "save_time": datetime.now().isoformat()
         })
             
 

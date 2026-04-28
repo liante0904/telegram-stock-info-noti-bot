@@ -30,7 +30,7 @@ class MariaDB:
 
     def SelNxtKey(self, sec_firm_order, article_board_order):
         query = """
-            SELECT FIRM_NM, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, 
+            SELECT firm_nm, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, 
                    NXT_KEY, NXT_KEY_BF, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, 
                    TODAY_SEND_YN, TIMESTAMPDIFF(second, CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 
             FROM NXT_KEY

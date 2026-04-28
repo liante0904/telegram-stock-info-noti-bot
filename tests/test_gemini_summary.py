@@ -6,15 +6,23 @@ from dotenv import load_dotenv
 # 프로젝트 루트 경로 추가 (tests 폴더의 상위 경로)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models.SQLiteManager import SQLiteManager
+from models.db_factory import get_db
 from models.GeminiManager import GeminiManager
 from utils.file_util import download_file_wget
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 Gemini 테스트를 건너뜁니다.", allow_module_level=True)
 
 async def test_summary():
     print("🚀 제미나이 PDF 요약 테스트를 시작합니다...")
+    if not os.getenv("GEMINI_API_KEY"):
+        import pytest
+        pytest.skip("GEMINI_API_KEY가 없어서 요약 테스트를 건너뜁니다.")
     
     # 1. DB 매니저 초기화 및 대상 조회 (여유 있게 10개 조회)
-    db_manager = SQLiteManager()
+    db_manager = get_db()
     pending_reports = await db_manager.fetch_pending_summary_reports(limit=10)
     
     if not pending_reports:
@@ -25,11 +33,11 @@ async def test_summary():
     success_found = False
 
     for report in pending_reports:
-        print(f"\n📋 대상 레포트 시도: {report['ARTICLE_TITLE']} ({report['FIRM_NM']})")
+        print(f"\n📋 대상 레포트 시도: {report['article_title']} ({report['firm_nm']})")
         
         # 2. PDF 다운로드 대상 URL 선정
-        # TELEGRAM_URL, DOWNLOAD_URL 중 유효한 것 찾기
-        download_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL') or report.get('PDF_URL')
+        # telegram_url, download_url 중 유효한 것 찾기
+        download_url = report.get('telegram_url') or report.get('download_url') or report.get('pdf_url')
         
         # URL이 .pdf로 끝나지 않으면 건너뜀 (디렉토리 링크 방지)
         if not download_url or not ('.pdf' in download_url.lower() or '.PDF' in download_url.lower()):

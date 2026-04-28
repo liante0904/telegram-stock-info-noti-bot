@@ -63,26 +63,26 @@ async def scrape_yuanta_page_async(session, target_url, sec_firm_order, article_
                                 seq = title_tag['data-seq']
                                 LIST_ARTICLE_URL = f"https://www.myasset.com/myasset/research/rs_list/rs_view.cmd?cd007={firm_info.get_board_code()}&SEQ={seq}"
                                 writers = [a.get_text(strip=True) for a in item.select('td:nth-of-type(7) a.js-link')]
-                                WRITER = ', '.join(writers)
+                                writer = ', '.join(writers)
 
                                 pdf_tag = item.select_one('a.ico.acrobat')
-                                DOWNLOAD_URL = ''
+                                download_url = ''
                                 if pdf_tag and pdf_tag.has_attr('data-seq'):
                                     pdf_path = pdf_tag['data-seq']
-                                    DOWNLOAD_URL = f"http://file.myasset.com/sitemanager/upload/{pdf_path}"
+                                    download_url = f"http://file.myasset.com/sitemanager/upload/{pdf_path}"
 
                                 json_data_list.append({
                                     "sec_firm_order": sec_firm_order,
                                     "article_board_order": article_board_order,
-                                    "FIRM_NM": firm_info.get_firm_name(),
-                                    "REG_DT": POST_DATE.strftime("%Y%m%d"),
-                                    "ARTICLE_URL": LIST_ARTICLE_URL,
-                                    "DOWNLOAD_URL": DOWNLOAD_URL,
-                                    "TELEGRAM_URL": DOWNLOAD_URL,
-                                    "WRITER": WRITER,
-                                    "KEY": LIST_ARTICLE_URL,
-                                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                                    "SAVE_TIME": datetime.now().isoformat()
+                                    "firm_nm": firm_info.get_firm_name(),
+                                    "reg_dt": POST_DATE.strftime("%Y%m%d"),
+                                    "article_url": LIST_ARTICLE_URL,
+                                    "download_url": download_url,
+                                    "telegram_url": download_url,
+                                    "writer": writer,
+                                    "key": LIST_ARTICLE_URL,
+                                    "article_title": LIST_ARTICLE_TITLE,
+                                    "save_time": datetime.now().isoformat()
                                 })
                             except Exception as e:
                                 logger.error(f"Error parsing article item: {e}")

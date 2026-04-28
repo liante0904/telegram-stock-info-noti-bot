@@ -57,17 +57,17 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                 
                 # 작성일시
                 date_column = "작성일" if "작성일" in header_map else "작성일시"
-                REG_DT = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
-                REG_DT = re.sub(r"[-./]", "", REG_DT)  # 날짜 포맷 정리
+                reg_dt = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
+                reg_dt = re.sub(r"[-./]", "", reg_dt)  # 날짜 포맷 정리
                 
                 # 작성자
                 date_column = "작성자" if "작성자" in header_map else "작성자명"
-                WRITER = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
+                writer = list_item.select_one(f'td:nth-child({header_map[date_column] + 1})').get_text().strip()
                 
                 # 카테고리
                 CATEGORY = list_item.select_one(f'td:nth-child({header_map["분류"] + 1})').get_text().strip() if "분류" in header_map else ""
 
-                # DOWNLOAD_URL, TELEGRAM_URL 생성
+                # download_url, telegram_url 생성
                 try:
                     article_html = await fetch(session, LIST_ARTICLE_URL)
                     article_soup = BeautifulSoup(article_html, "html.parser")
@@ -76,30 +76,30 @@ async def fetch_all_pages_meritz(session, base_url, sec_firm_order, article_boar
                     if download_tag and 'title' in download_tag.attrs:
                         file_name = download_tag['title']
                         file_name = file_name.replace(" 파일 다운로드", "").strip()
-                        DOWNLOAD_URL = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
-                        TELEGRAM_URL = DOWNLOAD_URL
+                        download_url = f"https://home.imeritz.com/include/resource/research/WorkFlow/{file_name}"
+                        telegram_url = download_url
                     else:
                         logger.warning(f"No 'title' attribute found in download tag at {LIST_ARTICLE_URL}")
-                        DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL
+                        download_url = telegram_url = LIST_ARTICLE_URL
 
                 except Exception as e:
-                    logger.error(f"Error fetching DOWNLOAD_URL from {LIST_ARTICLE_URL}: {e}")
-                    DOWNLOAD_URL = TELEGRAM_URL = LIST_ARTICLE_URL
+                    logger.error(f"Error fetching download_url from {LIST_ARTICLE_URL}: {e}")
+                    download_url = telegram_url = LIST_ARTICLE_URL
 
                 # JSON 데이터 생성
                 article_data = {
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "ARTICLE_URL": LIST_ARTICLE_URL,
-                    "DOWNLOAD_URL": DOWNLOAD_URL,
-                    "TELEGRAM_URL": TELEGRAM_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": WRITER,
+                    "firm_nm": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "article_url": LIST_ARTICLE_URL,
+                    "download_url": download_url,
+                    "telegram_url": telegram_url,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": writer,
                     "CATEGORY": CATEGORY,
-                    "KEY": TELEGRAM_URL, # 중복 방지 키
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "key": telegram_url, # 중복 방지 키
+                    "save_time": datetime.now().isoformat()
                 }
                 json_data_list.append(article_data)
             except Exception as e:

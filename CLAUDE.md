@@ -12,7 +12,7 @@
 ```
 scraper.py (스케줄러)
   └── modules/{증권사명}_{번호}.py  (증권사별 스크래퍼)
-        └── models/db_factory.get_db()  → PostgreSQL (TB_SEC_REPORTS)
+        └── models/db_factory.get_db()  → PostgreSQL (tbl_sec_reports)
               └── utils/telegram_util.py  → 텔레그램 발송
 ```
 
@@ -25,6 +25,7 @@ scraper.py (스케줄러)
 3. **`secrets.json`에 불필요한 키를 추가하지 말 것** — `common` 섹션은 `generate_env.py`가 실제로 쓰는 키만 존재
 4. **`OracleManager` / Oracle 관련 코드를 건드리지 말 것** — ADR-005에서 제거 예정, 현재 비활성
 5. **.env는 자동 생성** — `python3 ~/secrets/generate_env.py scraper`로 생성. 직접 편집하지 않음
+6. **`.env` 갱신 원칙** — 워크스페이스별 `.env`는 `~/secrets/generate_env.py scraper`가 단일 진실 소스이며, 변경이 필요하면 먼저 `~/secrets/ssh-reports-scraper/secrets.json` 또는 `~/secrets/infra/secrets.json`를 확인할 것
 
 ---
 
@@ -36,7 +37,7 @@ scraper.py (스케줄러)
 | `modules/{Name}_{N}.py` | 증권사별 스크래퍼 (N=0~27) |
 | `models/ConfigManager.py` | 환경설정 싱글톤. `config.get_urls(key)`로 URL 취득 |
 | `models/db_factory.py` | `DB_BACKEND` 환경변수로 SQLite/PostgreSQL 전환 |
-| `models/PostgreSQLManager.py` | 운영 DB (TB_SEC_REPORTS) CRUD |
+| `models/PostgreSQLManager.py` | 운영 DB (tbl_sec_reports) CRUD |
 | `models/FirmInfo.py` | 증권사 메타 정보 — DB에서 동적 로드 |
 | `utils/telegram_util.py` | 텔레그램 전송 유틸리티 |
 | `~/secrets/ssh-reports-scraper/secrets.json` | 시크릿 단일 진실 소스 |
@@ -130,5 +131,6 @@ TARGET_URL = "https://www.samsungpop.com/..."
 - `secrets.json`의 `common`에 `API_URL_*`, `*_BASE`, `*_LIST_PATH`, `*_PARAM_*` 같은 분해된 URL 키를 추가하지 말 것 (Gemini가 추가해서 문제가 된 전례 있음)
 - `OracleManager`를 새 코드에서 참조하지 말 것
 - `.env`를 직접 편집하지 말 것 — `generate_env.py`로 재생성할 것
+- `.env`가 어긋나 보이면 먼저 `~/secrets/generate_env.py scraper`를 다시 실행하고, 그 다음 `POSTGRES_*` / `SQLITE_DB_PATH`가 기대값인지 확인할 것
 - `docs/architecture.md`의 ADR에 반하는 설계 변경을 하지 말 것
 - `PostgreSQLManagerV2`를 `DB_BACKEND=postgres_v2`로 운영에 사용하지 말 것 (검증 전용)

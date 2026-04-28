@@ -63,15 +63,15 @@ def Sks_checkNewArticle():
         json_data_list.append({
             "sec_firm_order": sec_firm_order,
             "article_board_order": article_board_order,
-            "FIRM_NM": firm_info.get_firm_name(),
-            "ARTICLE_TITLE": subject,
-            "REG_DT": reg_date,
-            "ARTICLE_URL": article_url,
-            "DOWNLOAD_URL": download_url,
-            "TELEGRAM_URL": article_url,
-            "KEY": download_url,
-            "WRITER": writer,
-            "SAVE_TIME": datetime.now().isoformat()
+            "firm_nm": firm_info.get_firm_name(),
+            "article_title": subject,
+            "reg_dt": reg_date,
+            "article_url": article_url,
+            "download_url": download_url,
+            "telegram_url": article_url,
+            "key": download_url,
+            "writer": writer,
+            "save_time": datetime.now().isoformat()
         })
 
     del soupList

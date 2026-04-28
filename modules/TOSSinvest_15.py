@@ -45,17 +45,17 @@ def TOSSinvest_checkNewArticle():
         for list in soupList:
             LIST_ARTICLE_TITLE = list['title']
             LIST_ARTICLE_URL   =  list['files'][0]['filePath']
-            REG_DT = list['createdAt'].split("T")[0]
+            reg_dt = list['createdAt'].split("T")[0]
             json_data_list.append({
                 "sec_firm_order":sec_firm_order,
                 "article_board_order":article_board_order,
-                "FIRM_NM":firm_info.get_firm_name(),
-                "REG_DT": re.sub(r"[-./]", "", REG_DT),
-                "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                "TELEGRAM_URL": LIST_ARTICLE_URL,
-                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-                "KEY":LIST_ARTICLE_URL,
-                "SAVE_TIME": datetime.now().isoformat()
+                "firm_nm":firm_info.get_firm_name(),
+                "reg_dt": re.sub(r"[-./]", "", reg_dt),
+                "download_url": LIST_ARTICLE_URL,
+                "telegram_url": LIST_ARTICLE_URL,
+                "article_title":LIST_ARTICLE_TITLE,
+                "key":LIST_ARTICLE_URL,
+                "save_time": datetime.now().isoformat()
             })
             
     # 메모리 정리

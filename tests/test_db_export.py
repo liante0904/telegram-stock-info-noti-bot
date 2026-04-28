@@ -9,10 +9,15 @@ from loguru import logger
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from models.db_factory import get_db
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 DB export 테스트를 건너뜁니다.", allow_module_level=True)
 
 async def export_sqlite_data_to_json():
     """
-    어제와 오늘 SQLite에 적재된(SAVE_TIME 기준) 데이터를 조회하여 JSON으로 저장합니다.
+    어제와 오늘 SQLite에 적재된(save_time 기준) 데이터를 조회하여 JSON으로 저장합니다.
     """
     logger.info("Starting SQLite data export test...")
     
@@ -28,13 +33,13 @@ async def export_sqlite_data_to_json():
     
     logger.info(f"Target date range: {date_yesterday_str} ~ {date_today_str}")
 
-    # SQL 쿼리 작성 (SAVE_TIME 필드 기준)
-    # DATE(SAVE_TIME) 함수를 사용하여 날짜 부분만 비교
+    # SQL 쿼리 작성 (save_time 필드 기준)
+    # DATE(save_time) 함수를 사용하여 날짜 부분만 비교
     query = f"""
     SELECT * 
     FROM {table_name} 
-    WHERE DATE(SAVE_TIME) BETWEEN ? AND ?
-    ORDER BY SAVE_TIME DESC
+    WHERE DATE(save_time) BETWEEN ? AND ?
+    ORDER BY save_time DESC
     """
     params = (date_yesterday_str, date_today_str)
 
@@ -65,7 +70,7 @@ async def export_sqlite_data_to_json():
         
         # 샘플 출력 (첫 번째 데이터 요약)
         sample = results[0]
-        logger.debug(f"Sample data (Latest): [{sample.get('FIRM_NM')}] {sample.get('ARTICLE_TITLE')} ({sample.get('SAVE_TIME')})")
+        logger.debug(f"Sample data (Latest): [{sample.get('firm_nm')}] {sample.get('article_title')} ({sample.get('save_time')})")
 
     except Exception as e:
         logger.error(f"Failed to export data: {e}")

@@ -106,7 +106,7 @@ LIST_ARTICLE_TITLE = ''
 
 
 #################### global 변수 정리 ###################################
-FIRM_NM = ''
+firm_nm = ''
 BOARD_NM = ''
 #################### global 변수 정리 끝###################################
 
@@ -122,7 +122,7 @@ def MySQL_Open_Connect():
     return cursor
 
 def DB_SelNxtKey(sec_firm_order, article_board_order):
-    global FIRM_NM
+    global firm_nm
     global BOARD_NM
     global BOARD_URL
     global NXT_KEY
@@ -135,13 +135,13 @@ def DB_SelNxtKey(sec_firm_order, article_board_order):
     global cursor
 
     cursor = MySQL_Open_Connect()
-    dbQuery  = " SELECT FIRM_NM, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s "
+    dbQuery  = " SELECT firm_nm, BOARD_NM, sec_firm_order, article_board_order, BOARD_URL, NXT_KEY, NXT_KEY_ARTICLE_TITLE, SEND_YN, CHANGE_DATE_TIME, TODAY_SEND_YN, TIMESTAMPDIFF(second ,  CHANGE_DATE_TIME, CURRENT_TIMESTAMP) as SEND_TIME_TERM 		FROM NXT_KEY		WHERE 1=1 AND  sec_firm_order = %s   AND article_board_order = %s "
     dbResult = cursor.execute(dbQuery, (sec_firm_order, article_board_order))
     rows = cursor.fetchall()
     for row in rows:
         print('####DB조회된 연속키####', end='\n')
         print(row)
-        FIRM_NM = row['FIRM_NM']
+        firm_nm = row['firm_nm']
         BOARD_NM = row['BOARD_NM']
         BOARD_URL = row['BOARD_URL']
         NXT_KEY = row['NXT_KEY']

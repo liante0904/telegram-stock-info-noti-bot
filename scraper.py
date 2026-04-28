@@ -70,7 +70,7 @@ async def enrich_data():
                     pass
                 elif sec_firm_order == 0:  # LS
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
-                    tasks = [db.update_telegram_url(r['report_id'], r['TELEGRAM_URL'], r.get('ARTICLE_TITLE'), pdf_url=r.get('PDF_URL') or r['TELEGRAM_URL']) for r in update_records if r.get('TELEGRAM_URL')]
+                    tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in update_records if r.get('telegram_url')]
                     if tasks: await asyncio.gather(*tasks)
                 elif sec_firm_order == 11:  # DS
                     # 트리거가 자동으로 처리하므로 별도 로직 불필요
@@ -181,7 +181,7 @@ async def main(date_str=None):
     await run_async_scrapers(async_functions, total_data)
 
     if total_data:
-        unique = { d.get("KEY"): d for d in total_data if d.get("KEY") }
+        unique = { d.get("key"): d for d in total_data if d.get("key") }
         total_list = list(unique.values())
         db = get_db()
         try:

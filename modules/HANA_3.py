@@ -17,8 +17,8 @@ async def fetch(session, url):
     async with session.get(url) as response:
         return await response.text()
 
-def adjust_date(REG_DT, time_str):
-    reg_date = datetime.strptime(REG_DT, "%Y%m%d")
+def adjust_date(reg_dt, time_str):
+    reg_date = datetime.strptime(reg_dt, "%Y%m%d")
     time_str = time_str.strip()
 
     match = re.match(r"(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", time_str)
@@ -82,9 +82,9 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
             try:
                 LIST_ARTICLE_TITLE = list_item.select_one('div.con > ul > li.mb4 > h3 > a').get_text()
                 LIST_ARTICLE_URL = 'https://www.hanaw.com' + list_item.select_one('div.con > ul > li:nth-child(5)> div > a').attrs['href']
-                REG_DT = list_item.select_one('div.con > ul > li.mb7.m-info.info > span:nth-child(3)').get_text()
-                REG_DT = re.sub(r"[-./]", "", REG_DT)
-                WRITER = list_item.select_one('div.con > ul > li.mb7.m-info.info > span.none.m-name').get_text()
+                reg_dt = list_item.select_one('div.con > ul > li.mb7.m-info.info > span:nth-child(3)').get_text()
+                reg_dt = re.sub(r"[-./]", "", reg_dt)
+                writer = list_item.select_one('div.con > ul > li.mb7.m-info.info > span.none.m-name').get_text()
                 time_str = list_item.select_one('div.con > ul > li.mb7.m-info.info > span.hide-on-mobile.txtbasic.r-side-bar').get_text()
 
                 market_type = 'GLOBAL' if article_board_order in (9, 10, 11) else 'KR'
@@ -92,16 +92,16 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
-                    "REG_DT": adjust_date(REG_DT, time_str),
-                    "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
-                    "PDF_URL": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": WRITER,
-                    "KEY": LIST_ARTICLE_URL,
-                    "SAVE_TIME": datetime.now().isoformat(),
-                    "MKT_TP": market_type
+                    "firm_nm": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
+                    "reg_dt": adjust_date(reg_dt, time_str),
+                    "download_url": LIST_ARTICLE_URL,
+                    "telegram_url": LIST_ARTICLE_URL,
+                    "pdf_url": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": writer,
+                    "key": LIST_ARTICLE_URL,
+                    "save_time": datetime.now().isoformat(),
+                    "mkt_tp": market_type
                 })
             except Exception as e:
                 logger.error(f"Error parsing HANA article: {e}")

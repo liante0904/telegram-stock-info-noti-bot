@@ -59,7 +59,7 @@ def Samsung_checkNewArticle():
                     continue
 
                 a_href_path = a_href_parts[0].strip()  # PDF 파일 경로
-                REG_DT = a_href_parts[2].strip().replace(";", "")       # REG_DT 값 추출 및 세미콜론 제거
+                reg_dt = a_href_parts[2].strip().replace(";", "")       # reg_dt 값 추출 및 세미콜론 제거
 
                 LIST_ARTICLE_URL = f'https://www.samsungpop.com/common.do?cmd=down&saveKey=research.pdf&fileName={a_href_path}&contentType=application/pdf&inlineYn=Y'
 
@@ -75,21 +75,21 @@ def Samsung_checkNewArticle():
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "DOWNLOAD_URL": '',
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": author,
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "download_url": '',
+                    "telegram_url": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": author,
                     "BOARD_NM": category,
-                    "SAVE_TIME": datetime.now().isoformat(),
-                    "KEY": LIST_ARTICLE_URL,
+                    "save_time": datetime.now().isoformat(),
+                    "key": LIST_ARTICLE_URL,
                 })
 
                 # # 유효 데이터 출력
                 # logger.debug(f"[Title]: {LIST_ARTICLE_TITLE}")
                 # logger.debug(f"[File Path]: {a_href_path}")
-                # logger.debug(f"[Registration Date]: {REG_DT}")
+                # logger.debug(f"[Registration Date]: {reg_dt}")
                 # logger.debug(f"[PDF URL]: {LIST_ARTICLE_URL}")
                 # logger.debug(f"[Publish Date]: {pub_date}")
                 # logger.debug(f"[Category]: {category}")
@@ -127,7 +127,7 @@ def extract_and_deduplicate(json_list):
     seen_board_nms = set()  # 중복된 BOARD_NM 값을 추적하기 위한 set
 
     for item in json_list:
-        key_value = item.get("KEY")
+        key_value = item.get("key")
         if key_value:
             file_name = re.search(r"fileName=([^&]+)", key_value).group(1)
             year = file_name[:4]

@@ -29,12 +29,12 @@ async def verify_ls_urls():
     
     # 1. 대상 데이터 추출 (msg. 방식이 아닌 LS 리포트)
     query = """
-        SELECT report_id, "ARTICLE_TITLE", "TELEGRAM_URL", "REG_DT"
-        FROM "TB_SEC_REPORTS"
-        WHERE "FIRM_NM" = 'LS증권'
-          AND "TELEGRAM_URL" NOT LIKE 'https://msg.ls-sec.co.kr/%'
-          AND "TELEGRAM_URL" LIKE 'https://www.ls-sec.co.kr/upload/%'
-        ORDER BY "REG_DT" DESC
+        SELECT report_id, "article_title", "telegram_url", "reg_dt"
+        FROM "tbl_sec_reports"
+        WHERE "firm_nm" = 'LS증권'
+          AND "telegram_url" NOT LIKE 'https://msg.ls-sec.co.kr/%'
+          AND "telegram_url" LIKE 'https://www.ls-sec.co.kr/upload/%'
+        ORDER BY "reg_dt" DESC
     """
     
     records = await db.execute_query(query)
@@ -55,13 +55,13 @@ async def verify_ls_urls():
     logger.info(f"최근 {sample_size}건에 대해 실제 파일 존재 여부를 확인합니다...")
     
     async with aiohttp.ClientSession() as session:
-        tasks = [check_url_validity(session, r['TELEGRAM_URL'], semaphore) for r in samples]
+        tasks = [check_url_validity(session, r['telegram_url'], semaphore) for r in samples]
         results = await asyncio.gather(*tasks)
         
         for i, is_valid in enumerate(results):
             record = samples[i]
             status = "✅ [OK]" if is_valid else "❌ [FAILED]"
-            logger.info(f"{status} | {record['REG_DT']} | {record['ARTICLE_TITLE'][:30]}... | {record['TELEGRAM_URL']}")
+            logger.info(f"{status} | {record['reg_dt']} | {record['article_title'][:30]}... | {record['telegram_url']}")
             if is_valid:
                 success_count += 1
 

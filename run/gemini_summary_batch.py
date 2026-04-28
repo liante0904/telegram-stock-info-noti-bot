@@ -33,10 +33,10 @@ async def run_batch_summary(batch_limit=10):
     fail_count = 0
 
     for report in pending_reports:
-        # print(f"\n[작업 시작] {report['ARTICLE_TITLE']} ({report['FIRM_NM']})")
+        # print(f"\n[작업 시작] {report['article_title']} ({report['firm_nm']})")
         
         # 유효한 PDF URL 확인
-        download_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL') or report.get('PDF_URL')
+        download_url = report.get('telegram_url') or report.get('download_url') or report.get('pdf_url')
         
         file_name = f"temp_batch_{report['report_id']}.pdf"
         
@@ -72,8 +72,8 @@ async def run_batch_summary(batch_limit=10):
                     break
             
             if summary_result:
-                # 3. DB 업데이트 (TELEGRAM_URL 기준, 발송 완료된 최신 레코드만)
-                target_url = report.get('TELEGRAM_URL') or report.get('DOWNLOAD_URL')
+                # 3. DB 업데이트 (telegram_url 기준, 발송 완료된 최신 레코드만)
+                target_url = report.get('telegram_url') or report.get('download_url')
                 
                 # SQLite 업데이트
                 await db_manager.update_report_summary_by_telegram_url(

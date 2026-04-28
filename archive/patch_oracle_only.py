@@ -25,7 +25,7 @@ async def patch_oracle_recent_data(days=7):
         
         print(f"📦 [sec_firm_order {sfo}] SQLite 데이터 조회 중...")
         sqlite.open_connection()
-        query = f"SELECT * FROM data_main_daily_send WHERE sec_firm_order = {sfo} AND SAVE_TIME >= datetime('now', '-{days} days', 'localtime')"
+        query = f"SELECT * FROM data_main_daily_send WHERE sec_firm_order = {sfo} AND save_time >= datetime('now', '-{days} days', 'localtime')"
         sqlite.cursor.execute(query)
         rows = sqlite.cursor.fetchall()
         sqlite.close_connection()
@@ -38,7 +38,7 @@ async def patch_oracle_recent_data(days=7):
         print(f"📤 [sec_firm_order {sfo}] Oracle로 {len(json_data_list)}건 패치(MERGE) 중...")
         
         # OracleManager.insert_json_data_list는 내부적으로 MERGE INTO를 사용하므로
-        # 기존 데이터가 있으면 TELEGRAM_URL 등 변경된 컬럼만 업데이트함
+        # 기존 데이터가 있으면 telegram_url 등 변경된 컬럼만 업데이트함
         result_count = await oracle.insert_json_data_list(json_data_list)
         
         print(f"✅ [sec_firm_order {sfo}] 패치 완료: {result_count}건 처리되었습니다.")

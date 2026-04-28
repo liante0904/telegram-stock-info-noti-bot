@@ -10,9 +10,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # PostgreSQL 강제 설정
 os.environ["DB_BACKEND"] = "postgres"
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from models.PostgreSQLManager import PostgreSQLManager
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 recent verification 테스트를 건너뜁니다.", allow_module_level=True)
 
 async def verify_recent_postgres_data():
     """
@@ -28,19 +33,19 @@ async def verify_recent_postgres_data():
 
     # 1. 날짜별 건수 조회
     query_count = f"""
-    SELECT DATE("SAVE_TIME") as date, COUNT(*) as cnt
+    SELECT DATE("save_time") as date, COUNT(*) as cnt
     FROM {db.main_table_name}
-    WHERE DATE("SAVE_TIME") BETWEEN %s AND %s
-    GROUP BY DATE("SAVE_TIME")
+    WHERE DATE("save_time") BETWEEN %s AND %s
+    GROUP BY DATE("save_time")
     ORDER BY date DESC
     """
     
     # 2. 최신 데이터 샘플 조회
     query_sample = f"""
-    SELECT "FIRM_NM", "ARTICLE_TITLE", "SAVE_TIME", "TELEGRAM_URL"
+    SELECT "firm_nm", "article_title", "save_time", "telegram_url"
     FROM {db.main_table_name}
-    WHERE DATE("SAVE_TIME") BETWEEN %s AND %s
-    ORDER BY "SAVE_TIME" DESC
+    WHERE DATE("save_time") BETWEEN %s AND %s
+    ORDER BY "save_time" DESC
     LIMIT 5
     """
 
@@ -58,8 +63,8 @@ async def verify_recent_postgres_data():
         logger.info("---------------------------------------------------------------")
         logger.info("Latest 5 Samples:")
         for i, s in enumerate(samples, 1):
-            logger.debug(f"{i}. [{s['FIRM_NM']}] {s['ARTICLE_TITLE'][:50]}...")
-            logger.debug(f"   Time: {s['SAVE_TIME']} | URL: {s['TELEGRAM_URL']}")
+            logger.debug(f"{i}. [{s['firm_nm']}] {s['article_title'][:50]}...")
+            logger.debug(f"   Time: {s['save_time']} | URL: {s['telegram_url']}")
         logger.success("===============================================================")
 
     except Exception as e:

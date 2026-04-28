@@ -74,21 +74,21 @@ async def Leading_checkNewArticle():
                 
                 LIST_ARTICLE_TITLE = item.get('제목', 'No Title')
                 LIST_ARTICLE_URL = attachment_link
-                DOWNLOAD_URL     = attachment_link
-                REG_DT = item.get('작성일', '')
-                REG_DT = re.sub(r"[-./]", "", REG_DT)
+                download_url     = attachment_link
+                reg_dt = item.get('작성일', '')
+                reg_dt = re.sub(r"[-./]", "", reg_dt)
                 
                 json_data_list.append({
                     "sec_firm_order":sec_firm_order,
                     "article_board_order":article_board_order,
-                    "FIRM_NM":firm_info.get_firm_name(),
-                    "REG_DT":REG_DT,
-                    "DOWNLOAD_URL": DOWNLOAD_URL,
-                    "TELEGRAM_URL": DOWNLOAD_URL,
-                    "PDF_URL": DOWNLOAD_URL,
-                    "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-                    "SAVE_TIME": datetime.now().isoformat(),
-                    "KEY": attachment_link
+                    "firm_nm":firm_info.get_firm_name(),
+                    "reg_dt":reg_dt,
+                    "download_url": download_url,
+                    "telegram_url": download_url,
+                    "pdf_url": download_url,
+                    "article_title":LIST_ARTICLE_TITLE,
+                    "save_time": datetime.now().isoformat(),
+                    "key": attachment_link
                 })
             
             

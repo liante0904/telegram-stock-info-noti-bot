@@ -204,12 +204,12 @@ def run_remote_sql(sql_query):
 
 def fetch_pending_reports(limit=FETCH_LIMIT):
     sql = f"""
-    SELECT report_id, ARTICLE_TITLE, ATTACH_URL, FIRM_NM, TELEGRAM_URL, DOWNLOAD_URL
+    SELECT report_id, article_title, pdf_url, firm_nm, telegram_url, download_url
     FROM data_main_daily_send 
-    WHERE (GEMINI_SUMMARY IS NULL OR GEMINI_SUMMARY = '') 
-    AND (ATTACH_URL IS NOT NULL AND ATTACH_URL != '') 
+    WHERE (gemini_summary IS NULL OR gemini_summary = '') 
+    AND COALESCE(NULLIF(pdf_url, ''), NULLIF(download_url, ''), NULLIF(telegram_url, '')) IS NOT NULL
     AND sec_firm_order NOT IN (19) 
-    ORDER BY SAVE_TIME DESC 
+    ORDER BY save_time DESC 
     LIMIT {limit};
     """
     result = run_remote_sql(sql)

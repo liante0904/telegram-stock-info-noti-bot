@@ -14,7 +14,7 @@ def test_ls():
         print(f"발견된 게시글 수: {len(articles)}")
         if articles:
             for article in articles[:3]:
-                print(f"- 제목: {article['ARTICLE_TITLE']}, 날짜: {article['REG_DT']}")
+                print(f"- 제목: {article['article_title']}, 날짜: {article['reg_dt']}")
         else:
             print("게시글이 발견되지 않았습니다.")
     except Exception as e:

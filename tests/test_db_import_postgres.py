@@ -11,9 +11,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # 환경 변수 강제 설정 (임포트 전에 수행)
 os.environ["DB_BACKEND"] = "postgres"
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from models.PostgreSQLManager import PostgreSQLManager
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 import 테스트를 건너뜁니다.", allow_module_level=True)
 
 async def import_json_to_postgres():
     """

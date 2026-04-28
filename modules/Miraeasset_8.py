@@ -41,14 +41,14 @@ def Miraeasset_checkNewArticle():
 
         for list_item in soupList:
             try:
-                REG_DT = list_item.select_one("td:nth-child(1)").get_text(strip=True) # 날짜
-                REG_DT = re.sub(r"[-./]", "", REG_DT) # 날짜 포맷 정리
+                reg_dt = list_item.select_one("td:nth-child(1)").get_text(strip=True) # 날짜
+                reg_dt = re.sub(r"[-./]", "", reg_dt) # 날짜 포맷 정리
                 
                 LIST_ARTICLE_TITLE = list_item.select_one("td:nth-child(2)").get_text(strip=True) # 제목
-                WRITER = list_item.select_one("td:nth-child(4)").get_text(strip=True) # 작성자
+                writer = list_item.select_one("td:nth-child(4)").get_text(strip=True) # 작성자
                 
                 LIST_ARTICLE_URL = "없음"
-                DOWNLOAD_URL = "없음"
+                download_url = "없음"
                 attachment_element = list_item.select_one(".bbsList_layer_icon a")
                 
                 if attachment_element:
@@ -59,19 +59,19 @@ def Miraeasset_checkNewArticle():
                     title_nodes = list_item.select(".subject a")
                     if title_nodes:
                         LIST_ARTICLE_TITLE = " : ".join([node.get_text(strip=True) for node in title_nodes])
-                    DOWNLOAD_URL = LIST_ARTICLE_URL
+                    download_url = LIST_ARTICLE_URL
 
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": idx,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "WRITER": WRITER,
-                    "DOWNLOAD_URL": DOWNLOAD_URL,
-                    "TELEGRAM_URL": DOWNLOAD_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "SAVE_TIME": datetime.now().isoformat(),
-                    "KEY": DOWNLOAD_URL
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "writer": writer,
+                    "download_url": download_url,
+                    "telegram_url": download_url,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "save_time": datetime.now().isoformat(),
+                    "key": download_url
                 })
             except Exception as e:
                 logger.error(f"Error parsing MiraeAsset article row: {e}")

@@ -77,7 +77,7 @@ async def parse_article_list(html_text, article_board_order):
                 date_tag = item.find('span', class_='date')
                 date = date_tag.text.strip() if date_tag else ''
                 
-                # REG_DT 포맷 변경: yyyyMMdd
+                # reg_dt 포맷 변경: yyyyMMdd
                 reg_dt = re.sub(r"[-./]", "", date)
                 
                 writer_tag = item.find('span', class_='writer')
@@ -91,16 +91,16 @@ async def parse_article_list(html_text, article_board_order):
                 articles.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": reg_dt,
-                    "WRITER": writer,
-                    "ARTICLE_URL": '',
-                    "DOWNLOAD_URL": url,  # 필요시 변경
-                    "TELEGRAM_URL": url,
-                    "PDF_URL": url,
-                    "ARTICLE_TITLE": title,
-                    "KEY": url,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "writer": writer,
+                    "article_url": '',
+                    "download_url": url,  # 필요시 변경
+                    "telegram_url": url,
+                    "pdf_url": url,
+                    "article_title": title,
+                    "key": url,
+                    "save_time": datetime.now().isoformat()
                 })
                 
     return articles

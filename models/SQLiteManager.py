@@ -86,45 +86,44 @@ class SQLiteManager:
             for entry in json_data_list:
                 self.cursor.execute(f'''
                     INSERT INTO {table_name} (
-                        sec_firm_order, article_board_order, FIRM_NM, REG_DT,
-                        ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN,
-                        DOWNLOAD_URL, TELEGRAM_URL, PDF_URL, WRITER, MKT_TP, KEY, SAVE_TIME
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(KEY) DO UPDATE SET
-                        REG_DT = excluded.REG_DT,  -- 항상 갱신
-                        WRITER = excluded.WRITER,  -- 항상 갱신
-                        MKT_TP = excluded.MKT_TP,  -- 항상 갱신
-                        DOWNLOAD_URL = CASE
-                            WHEN excluded.DOWNLOAD_URL IS NOT NULL AND excluded.DOWNLOAD_URL != ''
-                            THEN excluded.DOWNLOAD_URL
-                            ELSE DOWNLOAD_URL -- 기존 값을 유지
+                        sec_firm_order, article_board_order, firm_nm, reg_dt,
+                        article_title, article_url, main_ch_send_yn,
+                        download_url, telegram_url, pdf_url, writer, mkt_tp, key, save_time
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(key) DO UPDATE SET
+                        reg_dt = excluded.reg_dt,  -- 항상 갱신
+                        writer = excluded.writer,  -- 항상 갱신
+                        mkt_tp = excluded.mkt_tp,  -- 항상 갱신
+                        download_url = CASE
+                            WHEN excluded.download_url IS NOT NULL AND excluded.download_url != ''
+                            THEN excluded.download_url
+                            ELSE download_url -- 기존 값을 유지
                         END,
-                        TELEGRAM_URL = CASE
-                            WHEN excluded.TELEGRAM_URL IS NOT NULL AND excluded.TELEGRAM_URL != ''
-                            THEN excluded.TELEGRAM_URL
-                            ELSE TELEGRAM_URL -- 기존 값을 유지
+                        telegram_url = CASE
+                            WHEN excluded.telegram_url IS NOT NULL AND excluded.telegram_url != ''
+                            THEN excluded.telegram_url
+                            ELSE telegram_url -- 기존 값을 유지
                         END,
-                        PDF_URL = CASE
-                            WHEN excluded.PDF_URL IS NOT NULL AND excluded.PDF_URL != ''
-                            THEN excluded.PDF_URL
-                            ELSE PDF_URL -- 기존 값을 유지
+                        pdf_url = CASE
+                            WHEN excluded.pdf_url IS NOT NULL AND excluded.pdf_url != ''
+                            THEN excluded.pdf_url
+                            ELSE pdf_url -- 기존 값을 유지
                         END
                 ''', (
                     entry["sec_firm_order"],
                     entry["article_board_order"],
-                    entry["FIRM_NM"],
-                    entry.get("REG_DT", ''),
-                    entry.get("ATTACH_URL", ''),
-                    entry["ARTICLE_TITLE"],
-                    entry.get("ARTICLE_URL", None),  # ARTICLE_URL이 없으면 NULL을 넣음
-                    entry.get("MAIN_CH_SEND_YN", 'N'),  # 기본값 'N'
-                    entry.get("DOWNLOAD_URL", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
-                    entry.get("TELEGRAM_URL", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
-                    entry.get("PDF_URL") or entry.get("TELEGRAM_URL", None),  # PDF_URL이 없으면 TELEGRAM_URL을 넣음
-                    entry.get("WRITER", ''),
-                    entry.get("MKT_TP", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
-                    entry.get("KEY") or entry.get("ATTACH_URL", ''),  # KEY가 없거나 빈 값일 때 ATTACH_URL을 사용
-                    entry["SAVE_TIME"]
+                    entry["firm_nm"],
+                    entry.get("reg_dt", ''),
+                    entry["article_title"],
+                    entry.get("article_url", None),  # ARTICLE_URL이 없으면 NULL을 넣음
+                    entry.get("main_ch_send_yn", 'N'),  # 기본값 'N'
+                    entry.get("download_url", None),  # DOWNLOAD_URL이 없으면 NULL을 넣음
+                    entry.get("telegram_url", None),  # TELEGRAM_URL이 없으면 NULL을 넣음
+                    entry.get("pdf_url") or entry.get("download_url") or entry.get("telegram_url", None),  # PDF_URL이 없으면 대체 URL을 넣음
+                    entry.get("writer", ''),
+                    entry.get("mkt_tp", "KR"),  # MKT_TP가 빈값이면 KR을 넣음
+                    entry.get("key") or entry.get("pdf_url") or entry.get("download_url") or entry.get("telegram_url", ''),  # KEY가 없거나 빈 값일 때 대체 URL을 사용
+                    entry["save_time"]
                 ))
 
                 # 삽입 또는 업데이트 확인
@@ -143,7 +142,7 @@ class SQLiteManager:
 
     async def fetch_daily_articles_by_date(self, firm_info: FirmInfo, date_str=None):
         """
-        TELEGRAM_URL 갱신이 필요한 레코드를 조회합니다.
+        telegram_url 갱신이 필요한 레코드를 조회합니다.
         
         Args:
             firm_info (FirmInfo): sec_firm_order와 article_board_order 속성을 포함한 FirmInfo 인스턴스.
@@ -158,18 +157,18 @@ class SQLiteManager:
         logger.debug(f"Fetching daily articles for firm order: {firmInfo['sec_firm_order']}")
         query = f"""
         SELECT 
-            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
-            ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-            DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
+            report_id, sec_firm_order, article_board_order, firm_nm, reg_dt,
+            article_title, article_url, main_ch_send_yn, 
+            download_url, writer, save_time, main_ch_send_yn, telegram_url, key, pdf_url
         FROM 
             {self.main_table_name}
         WHERE 
-            REG_DT BETWEEN strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '-3 days'))
+            reg_dt BETWEEN strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '-3 days'))
                     AND strftime('%Y%m%d', date(substr('{query_date}', 1, 4) || '-' || substr('{query_date}', 5, 2) || '-' || substr('{query_date}', 7, 2), '+2 days'))
             AND sec_firm_order = '{firmInfo["sec_firm_order"]}'
-            AND KEY IS NOT NULL
-            AND TELEGRAM_URL  = ''
-        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
+            AND key IS NOT NULL
+            AND telegram_url  = ''
+        ORDER BY sec_firm_order, article_board_order, save_time
         """
 
         self.cursor.execute(query)
@@ -180,7 +179,7 @@ class SQLiteManager:
 
     async def fetch_all_empty_telegram_url_articles(self, firm_info: FirmInfo, days_limit: int = None):
         """
-        TELEGRAM_URL 갱신이 필요한 전체 레코드를 조회합니다.
+        telegram_url 갱신이 필요한 전체 레코드를 조회합니다.
         
         Args:
             firm_info (FirmInfo): sec_firm_order와 article_board_order 속성을 포함한 FirmInfo 인스턴스.
@@ -195,21 +194,21 @@ class SQLiteManager:
         
         query = f"""
         SELECT 
-            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
-            ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-            DOWNLOAD_URL, WRITER, SAVE_TIME, MAIN_CH_SEND_YN, TELEGRAM_URL, KEY, PDF_URL
+            report_id, sec_firm_order, article_board_order, firm_nm, reg_dt,
+            article_title, article_url, main_ch_send_yn, 
+            download_url, writer, save_time, main_ch_send_yn, telegram_url, key, pdf_url
         FROM 
             {self.main_table_name}
         WHERE 
             sec_firm_order = '{firmInfo["sec_firm_order"]}'
-            AND KEY IS NOT NULL
-            AND (TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
+            AND key IS NOT NULL
+            AND (telegram_url IS NULL OR telegram_url = '')
         """
         
         if days_limit:
-            query += f" AND SAVE_TIME >= datetime('now', '-{days_limit} days', 'localtime')"
+            query += f" AND save_time >= datetime('now', '-{days_limit} days', 'localtime')"
 
-        query += " ORDER BY REG_DT DESC, SAVE_TIME DESC"
+        query += " ORDER BY reg_dt DESC, save_time DESC"
 
         self.cursor.execute(query)
         rows = self.cursor.fetchall()
@@ -223,19 +222,19 @@ class SQLiteManager:
         """
         query = f"""
         SELECT 
-            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
-            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-            DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, KEY
+            report_id, sec_firm_order, article_board_order, firm_nm, reg_dt,
+            pdf_url, article_title, article_url, main_ch_send_yn, 
+            download_url, writer, save_time, telegram_url, key
         FROM 
             {self.main_table_name}
         WHERE 
             sec_firm_order = 0
-            AND (TELEGRAM_URL NOT LIKE '%.pdf' OR TELEGRAM_URL IS NULL OR TELEGRAM_URL = '')
+            AND (telegram_url NOT LIKE '%.pdf' OR telegram_url IS NULL OR telegram_url = '')
         """
         return await self.execute_query(query)
 
     async def update_telegram_url(self, record_id, telegram_url, article_title=None, pdf_url=None):
-        """report_id를 기준으로 TELEGRAM_URL 및 (옵션) ARTICLE_TITLE 컬럼을 비동기로 업데이트합니다."""
+        """report_id를 기준으로 telegram_url 및 (옵션) article_title 컬럼을 비동기로 업데이트합니다."""
         async with aiosqlite.connect(self.db_path) as db:
             # pdf_url이 없으면 telegram_url을 기본값으로 사용
             if pdf_url is None:
@@ -244,7 +243,7 @@ class SQLiteManager:
             # 기본 쿼리 구성
             query = f"""
             UPDATE {self.main_table_name}
-            SET TELEGRAM_URL = ?, PDF_URL = ?
+            SET telegram_url = ?, pdf_url = ?
             WHERE report_id = ?
             """
             params = [telegram_url, pdf_url, record_id]  # 기본 매개변수
@@ -253,7 +252,7 @@ class SQLiteManager:
             if article_title is not None:
                 query = f"""
                 UPDATE {self.main_table_name}
-                SET TELEGRAM_URL = ?, PDF_URL = ?, ARTICLE_TITLE = ?
+                SET telegram_url = ?, pdf_url = ?, article_title = ?
                 WHERE report_id = ?
                 """
                 params = [telegram_url, pdf_url, article_title, record_id]
@@ -317,28 +316,28 @@ class SQLiteManager:
 
         # 쿼리 타입에 따라 조건을 다르게 설정
         if type == 'send':
-            query_condition = "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL)"
-            query_condition += "AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND TELEGRAM_URL <> ''))"
+            query_condition = "(main_ch_send_yn != 'Y' OR main_ch_send_yn IS NULL)"
+            query_condition += "AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND telegram_url <> ''))"
         elif type == 'download':
-            query_condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'"
+            query_condition = "main_ch_send_yn = 'Y' AND download_status_yn != 'Y'"
 
         # 3일 이내 조건 추가
         three_days_ago = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
 
         query = f"""
         SELECT 
-            report_id, sec_firm_order, article_board_order, FIRM_NM, REG_DT,
-            ATTACH_URL, ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, 
-            DOWNLOAD_URL, WRITER, SAVE_TIME, TELEGRAM_URL, MAIN_CH_SEND_YN
+            report_id, sec_firm_order, article_board_order, firm_nm, reg_dt,
+            pdf_url, article_title, article_url, main_ch_send_yn, 
+            download_url, writer, save_time, telegram_url, main_ch_send_yn
         FROM 
             {self.main_table_name} 
         WHERE 
-            DATE(SAVE_TIME) = '{query_date}'
-            AND REG_DT >= '{three_days_ago}'
-            AND REG_DT <= '{query_reg_dt}'
+            DATE(save_time) = '{query_date}'
+            AND reg_dt >= '{three_days_ago}'
+            AND reg_dt <= '{query_reg_dt}'
             AND {query_condition}
-        GROUP BY (CASE WHEN TELEGRAM_URL IS NULL OR TELEGRAM_URL = '' THEN report_id ELSE TELEGRAM_URL END)
-        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
+        GROUP BY (CASE WHEN telegram_url IS NULL OR telegram_url = '' THEN report_id ELSE telegram_url END)
+        ORDER BY sec_firm_order, article_board_order, save_time
         """
         
         return await self.execute_query(query)
@@ -356,37 +355,37 @@ class SQLiteManager:
 
         if type == 'send':
             for row in fetched_rows:
-                telegram_url = row.get('TELEGRAM_URL')
+                telegram_url = row.get('telegram_url')
                 if telegram_url:
-                    update_query = f"UPDATE {self.main_table_name} SET MAIN_CH_SEND_YN = 'Y' WHERE TELEGRAM_URL = ?"
+                    update_query = f"UPDATE {self.main_table_name} SET main_ch_send_yn = 'Y' WHERE telegram_url = ?"
                     param = (telegram_url,)
                 else:
-                    update_query = f"UPDATE {self.main_table_name} SET MAIN_CH_SEND_YN = 'Y' WHERE report_id = ?"
+                    update_query = f"UPDATE {self.main_table_name} SET main_ch_send_yn = 'Y' WHERE report_id = ?"
                     param = (row['report_id'],)
                 
                 await self.execute_query(update_query, param)
 
         elif type == 'download':
-            update_query = f"UPDATE {self.main_table_name} SET DOWNLOAD_STATUS_YN = 'Y' WHERE report_id = ?"
+            update_query = f"UPDATE {self.main_table_name} SET download_status_yn = 'Y' WHERE report_id = ?"
             for row in fetched_rows:
                 await self.execute_query(update_query, (row['report_id'],))
         
         return {"status": "success"}
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
-        """TELEGRAM_URL이 일치하고 발송완료(MAIN_CH_SEND_YN='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
+        """TELEGRAM_URL이 일치하고 발송완료(main_ch_send_yn='Y')된 레코드 중 report_id가 가장 큰 최신 레코드에 요약 정보를 업데이트합니다."""
         query = f"""
         UPDATE {self.main_table_name}
-        SET GEMINI_SUMMARY = ?, 
-            SUMMARY_TIME = ?, 
-            SUMMARY_MODEL = ?
-        WHERE TELEGRAM_URL = ?
-          AND MAIN_CH_SEND_YN = 'Y'
+        SET gemini_summary = ?, 
+            summary_time = ?, 
+            summary_model = ?
+        WHERE telegram_url = ?
+          AND main_ch_send_yn = 'Y'
           AND report_id = (
               SELECT MAX(report_id) 
               FROM {self.main_table_name} 
-              WHERE TELEGRAM_URL = ? 
-                AND MAIN_CH_SEND_YN = 'Y'
+              WHERE telegram_url = ? 
+                AND main_ch_send_yn = 'Y'
           )
         """
         now = datetime.now().isoformat()
@@ -397,9 +396,9 @@ class SQLiteManager:
         """{self.main_table_name} 테이블의 특정 report_id 레코드에 제미나이 요약 내용을 업데이트합니다."""
         query = f"""
         UPDATE {self.main_table_name}
-        SET GEMINI_SUMMARY = ?, 
-            SUMMARY_TIME = ?, 
-            SUMMARY_MODEL = ?
+        SET gemini_summary = ?, 
+            summary_time = ?, 
+            summary_model = ?
         WHERE report_id = ?
         """
         now = datetime.now().isoformat()
@@ -415,10 +414,10 @@ class SQLiteManager:
         query = f"""
         SELECT *
         FROM {self.main_table_name}
-        WHERE (GEMINI_SUMMARY "IS NULL" OR GEMINI_SUMMARY = '')
-        AND (TELEGRAM_URL IS NOT NULL AND TELEGRAM_URL != '')
+        WHERE (gemini_summary "IS NULL" OR gemini_summary = '')
+        AND (telegram_url IS NOT NULL AND telegram_url != '')
         AND sec_firm_order NOT IN ({", ".join(map(str, exclude_firms))})
-        ORDER BY SAVE_TIME DESC
+        ORDER BY save_time DESC
         LIMIT ?
         """
         

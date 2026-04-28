@@ -2,11 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict gKUtuGxZ5OI0y2mhsdKt86SWiTJJ7ueNckXE4jXY00s6eCqNPdr5Vv1JHFbm4dv
-
--- Dumped from database version 15.17
--- Dumped by pg_dump version 15.17
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -27,11 +22,11 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.tbm_sec_firm_board_info (
-    "sec_firm_order" integer NOT NULL,
-    "article_board_order" integer NOT NULL,
-    "BOARD_NM" text,
-    "BOARD_CD" text,
-    "LABEL_NM" text
+    sec_firm_order integer NOT NULL,
+    article_board_order integer NOT NULL,
+    board_nm text,
+    board_cd text,
+    label_nm text
 );
 
 
@@ -40,7 +35,7 @@ CREATE TABLE public.tbm_sec_firm_board_info (
 --
 
 ALTER TABLE ONLY public.tbm_sec_firm_board_info
-    ADD CONSTRAINT "tbm_sec_firm_board_info_pkey" PRIMARY KEY ("sec_firm_order", "article_board_order");
+    ADD CONSTRAINT tbm_sec_firm_board_info_pkey PRIMARY KEY (sec_firm_order, article_board_order);
 
 
 --
@@ -48,12 +43,4 @@ ALTER TABLE ONLY public.tbm_sec_firm_board_info
 --
 
 ALTER TABLE ONLY public.tbm_sec_firm_board_info
-    ADD CONSTRAINT "tbm_sec_firm_board_info_sec_firm_order_fkey" FOREIGN KEY ("sec_firm_order") REFERENCES public.tbm_sec_firm_info("sec_firm_order");
-
-
---
--- PostgreSQL database dump complete
---
-
-\unrestrict gKUtuGxZ5OI0y2mhsdKt86SWiTJJ7ueNckXE4jXY00s6eCqNPdr5Vv1JHFbm4dv
-
+    ADD CONSTRAINT tbm_sec_firm_board_info_sec_firm_order_fkey FOREIGN KEY (sec_firm_order) REFERENCES public.tbm_sec_firm_info(sec_firm_order);

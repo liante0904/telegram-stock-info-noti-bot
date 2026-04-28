@@ -109,16 +109,16 @@ async def Koreainvestment_selenium_checkNewArticle():
                     json_data_list.append({
                         "sec_firm_order":sec_firm_order,
                         "article_board_order":article_board_order,
-                        "FIRM_NM":firm_info.get_firm_name(),
-                        "REG_DT":re.sub(r"[-./]", "", article_info_str[1]),
-                        "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                        "TELEGRAM_URL": LIST_ARTICLE_URL,
-                        "PDF_URL": LIST_ARTICLE_URL,
-                        "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-                        "WRITER": article_info_str[0],
-                        "KEY": LIST_ARTICLE_URL,
-                        "SAVE_TIME": datetime.now().isoformat(),
-                        "MKT_TP": cat["mkt_tp"]
+                        "firm_nm":firm_info.get_firm_name(),
+                        "reg_dt":re.sub(r"[-./]", "", article_info_str[1]),
+                        "download_url": LIST_ARTICLE_URL,
+                        "telegram_url": LIST_ARTICLE_URL,
+                        "pdf_url": LIST_ARTICLE_URL,
+                        "article_title":LIST_ARTICLE_TITLE,
+                        "writer": article_info_str[0],
+                        "key": LIST_ARTICLE_URL,
+                        "save_time": datetime.now().isoformat(),
+                        "mkt_tp": cat["mkt_tp"]
                     })
     except Exception as e:
         logger.error(f"Error during KoreaInvestment scraping: {e}")

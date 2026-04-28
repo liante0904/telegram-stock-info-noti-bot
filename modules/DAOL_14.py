@@ -94,14 +94,14 @@ async def DAOL_checkNewArticle():
                 if len(cells) < 3:
                     continue  # 필요한 데이터가 없는 경우 무시
 
-                # REG_DT 추출 및 변환
+                # reg_dt 추출 및 변환
                 reg_date = cells[0].get_text(strip=True)
-                REG_DT = reg_date.replace('/', '')  # YYYYMMDD 형식으로 변환
+                reg_dt = reg_date.replace('/', '')  # YYYYMMDD 형식으로 변환
 
                 # 작성자 정보
-                WRITER = cells[4].get_text(strip=True)
+                writer = cells[4].get_text(strip=True)
 
-                # ARTICLE_TITLE 및 ARTICLE_URL 추출
+                # article_title 및 article_url 추출
                 article_link = cells[1].select_one('a.del_w')
                 if not article_link:
                     continue  # 링크가 없는 경우 무시
@@ -124,19 +124,19 @@ async def DAOL_checkNewArticle():
                 research_id = parts[2].split(")")[0]
 
                 LIST_ARTICLE_URL = f"https://www.ktb.co.kr/common/download.jspx?cmd=viewPDF&path={path}/{filename}"
-                DOWNLOAD_URL = LIST_ARTICLE_URL
+                download_url = LIST_ARTICLE_URL
 
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
-                    "KEY": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": WRITER,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "download_url": LIST_ARTICLE_URL,
+                    "telegram_url": LIST_ARTICLE_URL,
+                    "key": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": writer,
+                    "save_time": datetime.now().isoformat()
                 })
 
         # 메모리 정리

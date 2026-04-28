@@ -89,20 +89,20 @@ async def Daeshin_checkNewArticle():
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": re.sub(r"[-./]", "", reg_dt),
-                    "ARTICLE_URL": article_url,
-                    "DOWNLOAD_URL": attach_url,
-                    "TELEGRAM_URL": attach_url,
-                    "PDF_URL": attach_url,
-                    "KEY": attach_url,
-                    "ARTICLE_TITLE": title,
-                    "WRITER": author,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": re.sub(r"[-./]", "", reg_dt),
+                    "article_url": article_url,
+                    "download_url": attach_url,
+                    "telegram_url": attach_url,
+                    "pdf_url": attach_url,
+                    "key": attach_url,
+                    "article_title": title,
+                    "writer": author,
+                    "save_time": datetime.now().isoformat()
                 })
 
     async def fetch_attach_url(session, article_url):
-        """ARTICLE_URL 페이지에서 ATTACH_URL 추출"""
+        """article_url 페이지에서 pdf_url 추출"""
         try:
             async with session.get(article_url, headers=headers) as response:
                 html = await response.text()

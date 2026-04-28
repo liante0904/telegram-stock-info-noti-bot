@@ -32,33 +32,33 @@ def format_message(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        ARTICLE_TITLE = data.get('ARTICLE_TITLE','')
-        ARTICLE_URL = data.get('ATTACH_URL','')
+        article_title = data.get('article_title','')
+        article_url = data.get('telegram_url') or data.get('pdf_url') or data.get('download_url') or data.get('article_url','')
         
         sendMessageText = ""
         
-        # 'FIRM_NM'이 존재하는 경우에만 포함
-        if 'FIRM_NM' in data:
-            FIRM_NM = data['FIRM_NM']
+        # 'firm_nm'이 존재하는 경우에만 포함
+        if 'firm_nm' in data:
+            firm_nm = data['firm_nm']
             # data_list가 단건인 경우, 회사명 출력을 생략
             if len(data_list) > 1:
                 # 제외할 FIRM_NM이 아닌 경우에만 처리
-                if '네이버' not in FIRM_NM or '조선비즈' not in FIRM_NM:
+                if '네이버' not in firm_nm or '조선비즈' not in firm_nm:
                     # 새로운 FIRM_NM이거나 첫 번째 데이터일 때만 FIRM_NM을 포함
-                    if FIRM_NM != last_firm_nm:
-                        sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                        last_firm_nm = FIRM_NM
+                    if firm_nm != last_firm_nm:
+                        sendMessageText += "\n\n" + "●" + firm_nm + "\n"
+                        last_firm_nm = firm_nm
         
 
     # 게시글 제목이 유효한 값인지 확인
-    if ARTICLE_TITLE:
-        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+    if article_title:
+        sendMessageText += "*" + article_title.replace("_", " ").replace("*", "") + "*" + "\n"
     else:
         sendMessageText += ""  # 제목이 없을 경우의 처리
 
     # 원문 링크가 유효한 값인지 확인
-    if ARTICLE_URL:
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + ARTICLE_URL + ")" + "\n"
+    if article_url:
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + article_url + ")" + "\n"
     else:
         sendMessageText += ""  # 링크가 없을 경우의 처리
 
@@ -67,7 +67,7 @@ def format_message(data_list):
     return "\n".join(formatted_messages)
 
 
-def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, attach_url, article_title, article_url=None, download_url=None, main_ch_send_yn="N"):
+def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_nm, pdf_url, article_title, article_url=None, download_url=None, main_ch_send_yn="N"):
     directory = os.path.dirname(filename)
 
     # 디렉터리가 존재하는지 확인하고, 없으면 생성합니다.
@@ -78,23 +78,23 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     # 현재 시간을 저장합니다.
     current_time = datetime.now().isoformat()
     
-    # `article_url`가 None이면 attach_url로 대체합니다. (임시 추후변경)
+    # `article_url`가 None이면 pdf_url로 대체합니다. (임시 추후변경)
     if article_url is None:
-        article_url = attach_url
+        article_url = pdf_url
     if download_url is None:
-        download_url = attach_url
+        download_url = pdf_url
         
     # 새 데이터를 딕셔너리로 저장합니다.
     new_data = {
         "sec_firm_order": sec_firm_order,
         "article_board_order": article_board_order,
-        "FIRM_NM": firm_nm,
-        "ATTACH_URL": attach_url,
-        "ARTICLE_TITLE": article_title,
-        "ARTICLE_URL": article_url,
-        "MAIN_CH_SEND_YN": main_ch_send_yn,
-        "DOWNLOAD_URL":download_url,
-        "SAVE_TIME": current_time
+        "firm_nm": firm_nm,
+        "article_title": article_title,
+        "article_url": article_url,
+        "main_ch_send_yn": main_ch_send_yn,
+        "download_url": download_url,
+        "pdf_url": pdf_url,
+        "save_time": current_time
     }
 
 
@@ -112,10 +112,10 @@ def save_data_to_local_json(filename, sec_firm_order, article_board_order, firm_
     else:
         existing_data = []
 
-    # 중복 체크 (FIRM_NM, ARTICLE_TITLE 중복 확인)
+    # 중복 체크 (firm_nm, article_title 중복 확인)
     is_duplicate = any(
-        existing_item.get("FIRM_NM") == new_data["FIRM_NM"] and
-        existing_item.get("ARTICLE_TITLE") == new_data["ARTICLE_TITLE"]
+        existing_item.get("firm_nm") == new_data["firm_nm"] and
+        existing_item.get("article_title") == new_data["article_title"]
         for existing_item in existing_data
     )
 
@@ -163,7 +163,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
         print(f"\n파일 경로 '{filename}'가 존재하지 않거나 비어 있습니다.")
         return []
 
-    # 중복 확인을 위해 json/data_main_daily_send.json의 FIRM_NM 목록을 가져옵니다.
+    # 중복 확인을 위해 json/data_main_daily_send.json의 firm_nm 목록을 가져옵니다.
     main_daily_send_path = 'json/data_main_daily_send.json'
     sent_firms = set()
     if os.path.exists(main_daily_send_path) and os.path.getsize(main_daily_send_path) > 0:
@@ -171,8 +171,8 @@ def get_unsent_main_ch_data_to_local_json(filename):
             with open(main_daily_send_path, 'r', encoding='utf-8') as json_file:
                 main_daily_data = json.load(json_file)
                 if isinstance(main_daily_data, list):
-                    sent_firms = {item.get("FIRM_NM") for item in main_daily_data if item.get("FIRM_NM")}
-                    print(f"\n중복 확인을 위해 로드된 FIRM_NM 목록: {sent_firms}")
+                    sent_firms = {item.get("firm_nm") for item in main_daily_data if item.get("firm_nm")}
+                    print(f"\n중복 확인을 위해 로드된 firm_nm 목록: {sent_firms}")
         except json.JSONDecodeError:
             print(f"Warning: {main_daily_send_path} is corrupted.")
 
@@ -184,14 +184,14 @@ def get_unsent_main_ch_data_to_local_json(filename):
 
     # 추가된 목록을 sent_firms에 합치기
     sent_firms.update(additional_firms)
-    print(f"\n최종 FIRM_NM 목록: {sent_firms}")
+    print(f"\n최종 firm_nm 목록: {sent_firms}")
 
     # 조건에 맞는 데이터를 필터링합니다.
     unsent_data = [
         item for item in data
-        if item.get("SAVE_TIME", "").startswith(today_str) and 
-           item.get("MAIN_CH_SEND_YN") == "N" and 
-           item.get("FIRM_NM") not in sent_firms
+        if item.get("save_time", "").startswith(today_str) and 
+           item.get("main_ch_send_yn") == "N" and 
+           item.get("firm_nm") not in sent_firms
     ]
 
     # 디버깅 로그 추가
@@ -203,7 +203,7 @@ def get_unsent_main_ch_data_to_local_json(filename):
     first_record = True  # 첫 번째 레코드인지 여부를 추적
 
     for item in unsent_data:
-        firm_nm = item.get('FIRM_NM', '알 수 없음')
+        firm_nm = item.get('firm_nm', '알 수 없음')
         message_part = format_message(item)
 
         # 첫 번째 레코드 처리
@@ -252,15 +252,15 @@ def update_main_ch_send_yn_to_y(file_path, target_date=None):
         if not isinstance(data, list):
             return
 
-        # 대상 날짜의 항목들에 대해 MAIN_CH_SEND_YN 값을 Y로 설정합니다.
+        # 대상 날짜의 항목들에 대해 main_ch_send_yn 값을 Y로 설정합니다.
         for item in data:
-            if item.get("SAVE_TIME", "").startswith(target_date):
-                item["MAIN_CH_SEND_YN"] = "Y"
+            if item.get("save_time", "").startswith(target_date):
+                item["main_ch_send_yn"] = "Y"
 
         # 안전한 쓰기 방식 적용
         safe_json_dump(data, file_path)
         
-        print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 MAIN_CH_SEND_YN 키가 Y로 업데이트되었습니다.")
+        print(f"\n{file_path} 파일의 {target_date} 날짜 항목에 대해 main_ch_send_yn 키가 Y로 업데이트되었습니다.")
     except json.JSONDecodeError:
         print(f"Error updating {file_path}: File is corrupted.")
 
@@ -287,7 +287,7 @@ def filter_news_by_save_time(filename):
     # 뉴스 리스트 필터링
     filtered_news_list = [
         news for news in data
-        if datetime.fromisoformat(news.get('SAVE_TIME', today.isoformat())) >= one_week_ago
+        if datetime.fromisoformat(news.get('save_time', today.isoformat())) >= one_week_ago
     ]
 
     # 안전한 쓰기 방식 적용

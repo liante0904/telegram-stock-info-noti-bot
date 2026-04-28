@@ -67,19 +67,19 @@ async def Kiwoom_checkNewArticle(stdate=None, eddate=None, page_size=100):
                 LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(list_item['rMenuGb'], list_item['attaFile'], list_item['makeDt'])
                 LIST_ARTICLE_TITLE = list_item['titl']
 
-                WRITER = list_item['workId']
+                writer = list_item['workId']
                 articles.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": re.sub(r"[-./]", "", list_item['makeDt']),
-                    "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": WRITER,
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
-                    "PDF_URL": LIST_ARTICLE_URL,
-                    "KEY": LIST_ARTICLE_URL,
-                    "SAVE_TIME": datetime.datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": re.sub(r"[-./]", "", list_item['makeDt']),
+                    "download_url": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": writer,
+                    "telegram_url": LIST_ARTICLE_URL,
+                    "pdf_url": LIST_ARTICLE_URL,
+                    "key": LIST_ARTICLE_URL,
+                    "save_time": datetime.datetime.now().isoformat()
                 })
             return articles
         except Exception as e:

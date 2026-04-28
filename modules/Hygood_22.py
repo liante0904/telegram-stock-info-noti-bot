@@ -63,33 +63,33 @@ async def Hanyang_checkNewArticle():
                 if not article_link:
                     continue
 
-                ARTICLE_TITLE = article_link.get_text(strip=True)
-                ARTICLE_URL = article_link['href']
+                article_title = article_link.get_text(strip=True)
+                article_url = article_link['href']
 
-                if ARTICLE_URL.startswith("/"):
-                    ARTICLE_URL = f"https://www.hygood.co.kr{ARTICLE_URL}"
+                if article_url.startswith("/"):
+                    article_url = f"https://www.hygood.co.kr{article_url}"
 
-                REG_DT = cells[2].get_text(strip=True)
+                reg_dt = cells[2].get_text(strip=True)
 
                 attachment_cell = cells[3].find("a")
-                ATTACH_URL = ""
+                attach_url = ""
                 if attachment_cell:
-                    ATTACH_URL = attachment_cell['href']
-                    if ATTACH_URL.startswith("/"):
-                        ATTACH_URL = f"https://www.hygood.co.kr{ATTACH_URL}"
+                    attach_url = attachment_cell['href']
+                    if attach_url.startswith("/"):
+                        attach_url = f"https://www.hygood.co.kr{attach_url}"
                 
                 json_data_list.append({
                     "sec_firm_order":sec_firm_order,
                     "article_board_order":article_board_order,
-                    "FIRM_NM":firm_info.get_firm_name(),
-                    "REG_DT":re.sub(r"[-./]", "", REG_DT),
-                    "ARTICLE_TITLE": ARTICLE_TITLE,
-                    "ARTICLE_URL": ATTACH_URL,
-                    "DOWNLOAD_URL": ATTACH_URL,
-                    "TELEGRAM_URL": ATTACH_URL,
-                    "PDF_URL": ATTACH_URL,
-                    "SAVE_TIME": datetime.now().isoformat(),
-                    "KEY": ATTACH_URL
+                    "firm_nm":firm_info.get_firm_name(),
+                    "reg_dt":re.sub(r"[-./]", "", reg_dt),
+                    "article_title": article_title,
+                    "article_url": attach_url,
+                    "download_url": attach_url,
+                    "telegram_url": attach_url,
+                    "pdf_url": attach_url,
+                    "save_time": datetime.now().isoformat(),
+                    "key": attach_url
                 })
 
     gc.collect()

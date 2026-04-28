@@ -121,7 +121,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
         for list_item in soupList:
             try:
-                WRITER = list_item.select('td')[2].get_text().strip()
+                writer = list_item.select('td')[2].get_text().strip()
                 str_date = list_item.select('td')[3].get_text().strip()
                 a_tag = list_item.select_one('a')
                 if not a_tag: continue
@@ -137,16 +137,16 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": re.sub(r"[-./]", "", str_date),
-                    "ARTICLE_URL": '',
-                    "DOWNLOAD_URL": '',
-                    "TELEGRAM_URL": '',
-                    "PDF_URL": '',
-                    "WRITER": WRITER,
-                    "KEY": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": re.sub(r"[-./]", "", str_date),
+                    "article_url": '',
+                    "download_url": '',
+                    "telegram_url": '',
+                    "pdf_url": '',
+                    "writer": writer,
+                    "key": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "save_time": datetime.now().isoformat()
                 })
             except Exception as e:
                 logger.error(f"Error parsing LS article row: {e}")
@@ -214,13 +214,13 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
                 return None
 
 async def process_article(session: ClientSession, article: dict, headers: dict):
-    TARGET_URL = article["KEY"]
+    TARGET_URL = article["key"]
 
     if ".pdf" in TARGET_URL:
-        article["ARTICLE_URL"] = TARGET_URL
-        article["TELEGRAM_URL"] = TARGET_URL
-        article["PDF_URL"] = TARGET_URL
-        article["DOWNLOAD_URL"] = TARGET_URL
+        article["article_url"] = TARGET_URL
+        article["telegram_url"] = TARGET_URL
+        article["pdf_url"] = TARGET_URL
+        article["download_url"] = TARGET_URL
         return
 
     html_content = await fetch(session, TARGET_URL, headers)
@@ -239,7 +239,7 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
             td_text = td.get_text(strip=True)
 
             if th_text == "제목":
-                article["ARTICLE_TITLE"] = td_text
+                article["article_title"] = td_text
             elif th_text == "첨부파일":
                 attach_tag = tr.select_one("td.attach a")
                 if attach_tag:
@@ -260,28 +260,28 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                             new_filename = f"{date_part}_{new_name}.pdf"
 
                             url = await get_valid_url(new_filename, date_part, article, headers)
-                            article["ARTICLE_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["TELEGRAM_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["PDF_URL"] = urllib.parse.quote(url, safe=":/")
-                            article["DOWNLOAD_URL"] = urllib.parse.quote(url, safe=":/")
+                            article["article_url"] = urllib.parse.quote(url, safe=":/")
+                            article["telegram_url"] = urllib.parse.quote(url, safe=":/")
+                            article["pdf_url"] = urllib.parse.quote(url, safe=":/")
+                            article["download_url"] = urllib.parse.quote(url, safe=":/")
                         else:
                             url = await create_fallback_url(article, soup)
-                            article["ARTICLE_URL"] = url
-                            article["TELEGRAM_URL"] = url
-                            article["PDF_URL"] = url
-                            article["DOWNLOAD_URL"] = url
+                            article["article_url"] = url
+                            article["telegram_url"] = url
+                            article["pdf_url"] = url
+                            article["download_url"] = url
                     else:
                         url = await create_fallback_url(article, soup)
-                        article["ARTICLE_URL"] = url
-                        article["TELEGRAM_URL"] = url
-                        article["PDF_URL"] = url
-                        article["DOWNLOAD_URL"] = url
+                        article["article_url"] = url
+                        article["telegram_url"] = url
+                        article["pdf_url"] = url
+                        article["download_url"] = url
                 else:
                     url = await create_fallback_url(article, soup)
-                    article["ARTICLE_URL"] = url
-                    article["TELEGRAM_URL"] = url
-                    article["PDF_URL"] = url
-                    article["DOWNLOAD_URL"] = url
+                    article["article_url"] = url
+                    article["telegram_url"] = url
+                    article["pdf_url"] = url
+                    article["download_url"] = url
 
 async def LS_detail(articles, firm_info=None):
     if isinstance(articles, dict):
@@ -321,7 +321,7 @@ async def LS_detailAll(articles=None, firm_info=None):
         logger.info("Detail 처리가 필요한 LS 레포트가 없습니다.")
         return []
 
-    target_articles = [a for a in articles if not str(a.get('TELEGRAM_URL', '')).lower().endswith('.pdf')]
+    target_articles = [a for a in articles if not str(a.get('telegram_url', '')).lower().endswith('.pdf')]
     if not target_articles:
         return articles
 
@@ -329,14 +329,14 @@ async def LS_detailAll(articles=None, firm_info=None):
     updated_articles = await LS_detail(target_articles, firm_info)
     
     for article in updated_articles:
-        if article.get('TELEGRAM_URL') and str(article.get('TELEGRAM_URL')).lower().endswith('.pdf'):
+        if article.get('telegram_url') and str(article.get('telegram_url')).lower().endswith('.pdf'):
             await db.update_telegram_url(
                 record_id=article['report_id'], 
-                telegram_url=article['TELEGRAM_URL'],
-                article_title=article.get('ARTICLE_TITLE'),
-                pdf_url=article.get('PDF_URL') or article.get('TELEGRAM_URL')
+                telegram_url=article['telegram_url'],
+                article_title=article.get('article_title'),
+                pdf_url=article.get('pdf_url') or article.get('telegram_url')
             )
-            logger.debug(f"DB 업데이트 완료: {article.get('ARTICLE_TITLE')}")
+            logger.debug(f"DB 업데이트 완료: {article.get('article_title')}")
             
     return updated_articles
 
@@ -366,7 +366,7 @@ async def get_valid_url(new_filename, date_part, article, headers):
 
 
 async def create_fallback_url(article, soup=None):
-    URL_PARAM = article["REG_DT"]
+    URL_PARAM = article["reg_dt"]
     URL_PARAM_0 = "B" + URL_PARAM[:6]
     
     attach_file_name = article.get("ATTACH_FILE_NAME", "")

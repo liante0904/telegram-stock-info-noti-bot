@@ -92,14 +92,14 @@ async def NHQV_checkNewArticle(target_date=None):
                     json_data_list.append({
                         "sec_firm_order": sec_firm_order,
                         "article_board_order": article_board_order,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "REG_DT": article['rshPprDruDtNm'].replace(".", ""),
-                        "WRITER": article['rshPprDruEmpFnm'],
-                        "TELEGRAM_URL": url,
-                        "PDF_URL": url,
-                        "ARTICLE_TITLE": article['rshPprTilCts'],
-                        "KEY": url,
-                        "SAVE_TIME": datetime.datetime.now().isoformat()
+                        "firm_nm": firm_info.get_firm_name(),
+                        "reg_dt": article['rshPprDruDtNm'].replace(".", ""),
+                        "writer": article['rshPprDruEmpFnm'],
+                        "telegram_url": url,
+                        "pdf_url": url,
+                        "article_title": article['rshPprTilCts'],
+                        "key": url,
+                        "save_time": datetime.datetime.now().isoformat()
                     })
 
                 # 연속키 확인 (NH는 페이지당 최대 11개인 것으로 보임)

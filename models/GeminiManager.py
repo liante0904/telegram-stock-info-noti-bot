@@ -1,14 +1,20 @@
 import os
 import time
-import google.generativeai as genai
 from datetime import datetime
 from loguru import logger
+
+try:
+    import google.generativeai as genai
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    genai = None
 
 class GeminiManager:
     def __init__(self, api_key=None, model_name="models/gemini-2.5-flash-lite"):
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not set in environment variables.")
+        if genai is None:
+            raise ModuleNotFoundError("google.generativeai is not installed.")
         
         genai.configure(api_key=self.api_key)
         self.model_name = model_name

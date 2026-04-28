@@ -10,6 +10,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 IS_CI = os.getenv('GITHUB_ACTIONS') == 'true'
 
 from models.db_factory import get_db
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 DB 통합 테스트를 건너뜁니다.", allow_module_level=True)
 
 @pytest.mark.skipif(IS_CI, reason="CI 환경에서는 실제 DB 연결 테스트를 건너뜁니다.")
 @pytest.mark.asyncio
@@ -42,7 +47,7 @@ async def test_recent_data_exists():
     query = f"""
     SELECT COUNT(*) as cnt 
     FROM {table_name} 
-    WHERE DATE(SAVE_TIME) >= ?
+    WHERE DATE(save_time) >= ?
     """
     result = await db.execute_query(query, (seven_days_ago,))
     
@@ -53,18 +58,18 @@ async def test_recent_data_exists():
 @pytest.mark.asyncio
 async def test_data_integrity():
     """
-    가장 최근 데이터 1건을 가져와 필수 필드(FIRM_NM, ARTICLE_TITLE)가 채워져 있는지 확인
+    가장 최근 데이터 1건을 가져와 필수 필드(firm_nm, article_title)가 채워져 있는지 확인
     """
     db = get_db()
     table_name = getattr(db, 'main_table_name', 'data_main_daily_send')
     
-    query = f"SELECT FIRM_NM, ARTICLE_TITLE, SAVE_TIME FROM {table_name} ORDER BY SAVE_TIME DESC LIMIT 1"
+    query = f"SELECT firm_nm, article_title, save_time FROM {table_name} ORDER BY save_time DESC LIMIT 1"
     result = await db.execute_query(query)
     
     if result:
         row = result[0]
-        assert row['FIRM_NM'] is not None and row['FIRM_NM'] != "", "증권사 이름이 비어있습니다."
-        assert row['ARTICLE_TITLE'] is not None and row['ARTICLE_TITLE'] != "", "기사 제목이 비어있습니다."
-        assert row['SAVE_TIME'] is not None, "저장 시간이 비어있습니다."
+        assert row['firm_nm'] is not None and row['firm_nm'] != "", "증권사 이름이 비어있습니다."
+        assert row['article_title'] is not None and row['article_title'] != "", "기사 제목이 비어있습니다."
+        assert row['save_time'] is not None, "저장 시간이 비어있습니다."
     else:
         pytest.skip("검증할 데이터가 없습니다.")

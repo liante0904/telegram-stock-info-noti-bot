@@ -93,14 +93,14 @@ def DS_checkNewArticle(full_scan=False):
                     json_data_list.append({
                         "sec_firm_order": sec_firm_order,
                         "article_board_order": article_board_order,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "ARTICLE_TITLE": title,
-                        "ARTICLE_URL": article_url,
-                        "TELEGRAM_URL": telegram_url,
-                        "PDF_URL": pdf_url,
-                        "REG_DT": reg_dt,
-                        "SAVE_TIME": save_time,
-                        "KEY": pdf_url if pdf_url != "없음" else article_url
+                        "firm_nm": firm_info.get_firm_name(),
+                        "article_title": title,
+                        "article_url": article_url,
+                        "telegram_url": telegram_url,
+                        "pdf_url": pdf_url,
+                        "reg_dt": reg_dt,
+                        "save_time": save_time,
+                        "key": pdf_url if pdf_url != "없음" else article_url
                     })
 
                 # 한 페이지만 가져올 경우 루프 종료

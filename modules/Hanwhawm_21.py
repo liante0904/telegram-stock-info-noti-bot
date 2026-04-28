@@ -83,16 +83,16 @@ async def Hanwha_checkNewArticle(stdate=None, eddate=None, page_size=100):
                     articles.append({
                         "sec_firm_order": sec_firm_order,
                         "article_board_order": article_board_order,
-                        "FIRM_NM": firm_info.get_firm_name(),
-                        "REG_DT": reg_date,
-                        "DOWNLOAD_URL": download_url,
-                        "ARTICLE_TITLE": title,
-                        "WRITER": writer,
-                        "MKT_TP": mkt_tp,
-                        "KEY": download_url,
-                        "TELEGRAM_URL": download_url,
-                        "PDF_URL": download_url,
-                        "SAVE_TIME": datetime.datetime.now().isoformat()
+                        "firm_nm": firm_info.get_firm_name(),
+                        "reg_dt": reg_date,
+                        "download_url": download_url,
+                        "article_title": title,
+                        "writer": writer,
+                        "mkt_tp": mkt_tp,
+                        "key": download_url,
+                        "telegram_url": download_url,
+                        "pdf_url": download_url,
+                        "save_time": datetime.datetime.now().isoformat()
                     })
                 except Exception as e:
                     continue

@@ -21,11 +21,11 @@ def reset_yesterday_status():
     logger.info(f"Target date for reset: {target_date}")
     
     # PostgreSQL 쿼리 실행
-    # "MAIN_CH_SEND_YN"을 'N'으로 변경하여 재발송 대상으로 만듭니다.
+    # "main_ch_send_yn"을 'N'으로 변경하여 재발송 대상으로 만듭니다.
     sql = f"""
         UPDATE {db.MAIN_TABLE}
-        SET "MAIN_CH_SEND_YN" = 'N'
-        WHERE DATE("SAVE_TIME") = %s
+        SET "main_ch_send_yn" = 'N'
+        WHERE DATE("save_time") = %s
     """
     
     try:

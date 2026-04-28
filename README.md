@@ -160,6 +160,8 @@ uv sync && cp .env.example .env
 uv run scraper.py
 ```
 
+`.env`는 수동 편집하지 말고, 항상 `python3 ~/secrets/generate_env.py scraper`로 재생성합니다.
+
 ---
 
 *본 프로젝트는 개인 투자 정보 확인 목적으로 제작되었습니다. 리서치 자료의 저작권은 각 증권사에 있으며 상업적 이용을 금지합니다.*

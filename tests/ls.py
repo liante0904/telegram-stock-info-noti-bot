@@ -25,7 +25,7 @@ async def LS_checkNewArticle():
     db_manager = SQLiteManager()
     json_data_list = []
     sec_firm_order = 0
-    FIRM_NM = "LS증권"
+    firm_nm = "LS증권"
 
     TARGET_URLS = [
         'REMOVED',
@@ -77,14 +77,14 @@ async def LS_checkNewArticle():
                     link_element = item.select_one('a')
                     LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + link_element['href'].replace("amp;", "")
                     LIST_ARTICLE_TITLE = link_element.get_text().strip().replace("...", "")
-                    WRITER = item.select('td')[2].get_text().strip()
-                    REG_DT = post_date_obj.strftime('%Y%m%d')
+                    writer = item.select('td')[2].get_text().strip()
+                    reg_dt = post_date_obj.strftime('%Y%m%d')
 
                     select_query = """
                     SELECT * FROM data_main_daily_send 
-                    WHERE KEY like '%upload% AND 'FIRM_NM = ? AND ARTICLE_TITLE LIKE ? LIMIT 1
+                    WHERE key like '%upload% AND 'firm_nm = ? AND article_title LIKE ? LIMIT 1
                     """
-                    params = (FIRM_NM, f"%{LIST_ARTICLE_TITLE}%")
+                    params = (firm_nm, f"%{LIST_ARTICLE_TITLE}%")
                     print(params)
                     result = db_manager.execute_query(select_query, params)
 
@@ -92,11 +92,11 @@ async def LS_checkNewArticle():
                         record_id = result[0]['id']
                         update_query = """
                         UPDATE data_main_daily_send 
-                        SET REG_DT = ?, KEY = ? 
+                        SET reg_dt = ?, key = ? 
                         WHERE id = ?
                         """
-                        db_manager.execute_query(update_query, (REG_DT, LIST_ARTICLE_URL, record_id))
-                        print(f"Updated record with id {record_id}: REG_DT={REG_DT}, KEY={LIST_ARTICLE_URL}")
+                        db_manager.execute_query(update_query, (reg_dt, LIST_ARTICLE_URL, record_id))
+                        print(f"Updated record with id {record_id}: reg_dt={reg_dt}, key={LIST_ARTICLE_URL}")
 
                 page += 1
                 print(f"{page} 진행중...")

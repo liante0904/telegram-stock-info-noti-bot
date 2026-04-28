@@ -93,42 +93,42 @@ class OracleManager:
         query = f"""
         MERGE INTO {table_name} t
         USING (SELECT :REPORT_ID as REPORT_ID, :sec_firm_order as sec_firm_order, 
-                      :article_board_order as article_board_order, :FIRM_NM as FIRM_NM, 
-                      :SEND_USER as SEND_USER, :MAIN_CH_SEND_YN as MAIN_CH_SEND_YN, 
-                      :DOWNLOAD_STATUS_YN as DOWNLOAD_STATUS_YN, :SAVE_TIME_STR as SAVE_TIME_STR,
-                      :REG_DT as REG_DT, :WRITER as WRITER, :KEY as KEY, :MKT_TP as MKT_TP, 
-                      :ATTACH_URL as ATTACH_URL, :ARTICLE_TITLE as ARTICLE_TITLE, 
-                      :TELEGRAM_URL as TELEGRAM_URL, :ARTICLE_URL as ARTICLE_URL, 
-                      :DOWNLOAD_URL as DOWNLOAD_URL
+                      :article_board_order as article_board_order, :firm_nm as firm_nm, 
+                      :SEND_USER as SEND_USER, :main_ch_send_yn as main_ch_send_yn, 
+                      :download_status_yn as download_status_yn, :SAVE_TIME_STR as SAVE_TIME_STR,
+                      :reg_dt as reg_dt, :writer as writer, :key as key, :mkt_tp as mkt_tp, 
+                      :ATTACH_URL as ATTACH_URL, :article_title as article_title, 
+                      :telegram_url as telegram_url, :article_url as article_url, 
+                      :download_url as download_url
                FROM DUAL) s
         ON (t.REPORT_ID = s.REPORT_ID)
         WHEN MATCHED THEN
             UPDATE SET 
                 t.sec_firm_order = NVL(s.sec_firm_order, t.sec_firm_order),
                 t.article_board_order = NVL(s.article_board_order, t.article_board_order),
-                t.FIRM_NM = NVL(s.FIRM_NM, t.FIRM_NM),
+                t.firm_nm = NVL(s.firm_nm, t.firm_nm),
                 t.SEND_USER = NVL(s.SEND_USER, t.SEND_USER),
-                t.MAIN_CH_SEND_YN = NVL(s.MAIN_CH_SEND_YN, t.MAIN_CH_SEND_YN),
-                t.DOWNLOAD_STATUS_YN = NVL(s.DOWNLOAD_STATUS_YN, t.DOWNLOAD_STATUS_YN),
-                t.SAVE_TIME = NVL(TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), t.SAVE_TIME),
-                t.REG_DT = NVL(s.REG_DT, t.REG_DT),
-                t.WRITER = NVL(s.WRITER, t.WRITER),
-                t.KEY = NVL(s.KEY, t.KEY),
-                t.MKT_TP = NVL(s.MKT_TP, t.MKT_TP),
-                t.TELEGRAM_URL = NVL(s.TELEGRAM_URL, t.TELEGRAM_URL),
+                t.main_ch_send_yn = NVL(s.main_ch_send_yn, t.main_ch_send_yn),
+                t.download_status_yn = NVL(s.download_status_yn, t.download_status_yn),
+                t.save_time = NVL(TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), t.save_time),
+                t.reg_dt = NVL(s.reg_dt, t.reg_dt),
+                t.writer = NVL(s.writer, t.writer),
+                t.key = NVL(s.key, t.key),
+                t.mkt_tp = NVL(s.mkt_tp, t.mkt_tp),
+                t.telegram_url = NVL(s.telegram_url, t.telegram_url),
                 t.ATTACH_URL = NVL(s.ATTACH_URL, t.ATTACH_URL),
-                t.ARTICLE_TITLE = NVL(s.ARTICLE_TITLE, t.ARTICLE_TITLE),
-                t.ARTICLE_URL = NVL(s.ARTICLE_URL, t.ARTICLE_URL),
-                t.DOWNLOAD_URL = NVL(s.DOWNLOAD_URL, t.DOWNLOAD_URL)
+                t.article_title = NVL(s.article_title, t.article_title),
+                t.article_url = NVL(s.article_url, t.article_url),
+                t.download_url = NVL(s.download_url, t.download_url)
         WHEN NOT MATCHED THEN
-            INSERT (REPORT_ID, sec_firm_order, article_board_order, FIRM_NM, SEND_USER,
-                    MAIN_CH_SEND_YN, DOWNLOAD_STATUS_YN, SAVE_TIME, REG_DT, WRITER, 
-                    KEY, MKT_TP, ATTACH_URL, ARTICLE_TITLE, TELEGRAM_URL, 
-                    ARTICLE_URL, DOWNLOAD_URL)
-            VALUES (s.REPORT_ID, s.sec_firm_order, s.article_board_order, s.FIRM_NM, s.SEND_USER,
-                    s.MAIN_CH_SEND_YN, s.DOWNLOAD_STATUS_YN, TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), s.REG_DT, s.WRITER, 
-                    s.KEY, s.MKT_TP, s.ATTACH_URL, s.ARTICLE_TITLE, s.TELEGRAM_URL, 
-                    s.ARTICLE_URL, s.DOWNLOAD_URL)
+            INSERT (REPORT_ID, sec_firm_order, article_board_order, firm_nm, SEND_USER,
+                    main_ch_send_yn, download_status_yn, save_time, reg_dt, writer, 
+                    key, mkt_tp, ATTACH_URL, article_title, telegram_url, 
+                    article_url, download_url)
+            VALUES (s.REPORT_ID, s.sec_firm_order, s.article_board_order, s.firm_nm, s.SEND_USER,
+                    s.main_ch_send_yn, s.download_status_yn, TO_TIMESTAMP(s.SAVE_TIME_STR, 'YYYY-MM-DD HH24:MI:SS.FF'), s.reg_dt, s.writer, 
+                    s.key, s.mkt_tp, s.ATTACH_URL, s.article_title, s.telegram_url, 
+                    s.article_url, s.download_url)
         """
         
         params_list = []
@@ -148,7 +148,7 @@ class OracleManager:
                 key_val = get_str("key", max_len)
                 return key_val if key_val else "N/A"
 
-            # SAVE_TIME 포맷 정규화
+            # save_time 포맷 정규화
             st_raw = ci.get("save_time")
             st_str = str(st_raw).replace('T', ' ') if st_raw else None
 
@@ -156,20 +156,20 @@ class OracleManager:
                 "REPORT_ID": ci.get("report_id"),
                 "sec_firm_order": ci.get("sec_firm_order"),
                 "article_board_order": ci.get("article_board_order"),
-                "FIRM_NM": get_str("firm_nm", 100),
+                "firm_nm": get_str("firm_nm", 100),
                 "SEND_USER": get_str("send_user", 100),
-                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 100),
-                "DOWNLOAD_STATUS_YN": get_str("download_status_yn", 100),
+                "main_ch_send_yn": get_str("main_ch_send_yn", 100),
+                "download_status_yn": get_str("download_status_yn", 100),
                 "SAVE_TIME_STR": st_str,
-                "REG_DT": get_str("reg_dt", 100),
-                "WRITER": get_str("writer", 100),
-                "KEY": get_str("key", 4000),
-                "MKT_TP": get_str("mkt_tp", 100),
+                "reg_dt": get_str("reg_dt", 100),
+                "writer": get_str("writer", 100),
+                "key": get_str("key", 4000),
+                "mkt_tp": get_str("mkt_tp", 100),
                 "ATTACH_URL": get_url_val("attach_url", 4000),
-                "ARTICLE_TITLE": get_str("article_title", 4000) or "No Title",
-                "TELEGRAM_URL": get_str("telegram_url", 4000),
-                "ARTICLE_URL": get_url_val("article_url", 4000),
-                "DOWNLOAD_URL": get_url_val("download_url", 4000)
+                "article_title": get_str("article_title", 4000) or "No Title",
+                "telegram_url": get_str("telegram_url", 4000),
+                "article_url": get_url_val("article_url", 4000),
+                "download_url": get_url_val("download_url", 4000)
             })
             
         try:
@@ -193,15 +193,15 @@ class OracleManager:
         conn = self._get_connection_sync()
         query = f"""
         INSERT /*+ APPEND_VALUES */ INTO {table_name} (
-            REPORT_ID, sec_firm_order, article_board_order, FIRM_NM, REG_DT, ATTACH_URL, 
-            ARTICLE_TITLE, ARTICLE_URL, MAIN_CH_SEND_YN, DOWNLOAD_URL, 
-            TELEGRAM_URL, WRITER, MKT_TP, KEY, SAVE_TIME,
-            GEMINI_SUMMARY, SUMMARY_TIME, SUMMARY_MODEL
+            REPORT_ID, sec_firm_order, article_board_order, firm_nm, reg_dt, ATTACH_URL, 
+            article_title, article_url, main_ch_send_yn, download_url, 
+            telegram_url, writer, mkt_tp, key, save_time,
+            gemini_summary, summary_time, summary_model
         ) VALUES (
-            :REPORT_ID, :sec_firm_order, :article_board_order, :FIRM_NM, :REG_DT, :ATTACH_URL, 
-            :ARTICLE_TITLE, :ARTICLE_URL, :MAIN_CH_SEND_YN, :DOWNLOAD_URL, 
-            :TELEGRAM_URL, :WRITER, :MKT_TP, :KEY, :SAVE_TIME,
-            :GEMINI_SUMMARY, :SUMMARY_TIME, :SUMMARY_MODEL
+            :REPORT_ID, :sec_firm_order, :article_board_order, :firm_nm, :reg_dt, :ATTACH_URL, 
+            :article_title, :article_url, :main_ch_send_yn, :download_url, 
+            :telegram_url, :writer, :mkt_tp, :key, :save_time,
+            :gemini_summary, :summary_time, :summary_model
         )
         """
         
@@ -225,26 +225,26 @@ class OracleManager:
                 "REPORT_ID": ci.get("report_id"),
                 "sec_firm_order": ci.get("sec_firm_order"),
                 "article_board_order": ci.get("article_board_order"),
-                "FIRM_NM": get_str("firm_nm", 300),
-                "REG_DT": get_str("reg_dt", 20),
+                "firm_nm": get_str("firm_nm", 300),
+                "reg_dt": get_str("reg_dt", 20),
                 "ATTACH_URL": get_str("attach_url", 1000),
-                "ARTICLE_TITLE": get_str("article_title", 1000) or "No Title",
-                "ARTICLE_URL": get_str("article_url", 1000),
-                "MAIN_CH_SEND_YN": get_str("main_ch_send_yn", 1) or "N",
-                "DOWNLOAD_URL": get_str("download_url", 1000), 
-                "TELEGRAM_URL": get_str("telegram_url", 1000),
-                "WRITER": get_str("writer", 200),
-                "MKT_TP": get_str("mkt_tp", 10) or "KR",
-                "KEY": get_str("key", 1000),
-                "SAVE_TIME": parse_dt(ci.get("save_time")),
-                "GEMINI_SUMMARY": get_str("gemini_summary", 4000),
-                "SUMMARY_TIME": parse_dt(ci.get("summary_time")),
-                "SUMMARY_MODEL": get_str("summary_model", 100)
+                "article_title": get_str("article_title", 1000) or "No Title",
+                "article_url": get_str("article_url", 1000),
+                "main_ch_send_yn": get_str("main_ch_send_yn", 1) or "N",
+                "download_url": get_str("download_url", 1000), 
+                "telegram_url": get_str("telegram_url", 1000),
+                "writer": get_str("writer", 200),
+                "mkt_tp": get_str("mkt_tp", 10) or "KR",
+                "key": get_str("key", 1000),
+                "save_time": parse_dt(ci.get("save_time")),
+                "gemini_summary": get_str("gemini_summary", 4000),
+                "summary_time": parse_dt(ci.get("summary_time")),
+                "summary_model": get_str("summary_model", 100)
             })
             
         try:
             with conn.cursor() as cursor:
-                cursor.setinputsizes(GEMINI_SUMMARY=oracledb.DB_TYPE_CLOB)
+                cursor.setinputsizes(gemini_summary=oracledb.DB_TYPE_CLOB)
                 cursor.executemany(query, params_list)
                 conn.commit()
             return len(params_list)
@@ -258,26 +258,26 @@ class OracleManager:
         """REPORT_ID 기준 요약 정보 업데이트"""
         query = """
         UPDATE DATA_MAIN_DAILY_SEND
-        SET GEMINI_SUMMARY = :summary, 
-            SUMMARY_TIME = :st, 
-            SUMMARY_MODEL = :model
+        SET gemini_summary = :summary, 
+            summary_time = :st, 
+            summary_model = :model
         WHERE REPORT_ID = :id
         """
         params = {"summary": summary, "st": datetime.now(), "model": model_name, "id": record_id}
         return await self.execute_query(query, params)
 
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
-        """TELEGRAM_URL 기준 최신 레코드 요약 정보 업데이트"""
+        """telegram_url 기준 최신 레코드 요약 정보 업데이트"""
         query = """
         UPDATE DATA_MAIN_DAILY_SEND
-        SET GEMINI_SUMMARY = :summary, 
-            SUMMARY_TIME = :st, 
-            SUMMARY_MODEL = :model
-        WHERE TELEGRAM_URL = :url
-          AND MAIN_CH_SEND_YN = 'Y'
+        SET gemini_summary = :summary, 
+            summary_time = :st, 
+            summary_model = :model
+        WHERE telegram_url = :url
+          AND main_ch_send_yn = 'Y'
           AND REPORT_ID = (
               SELECT MAX(REPORT_ID) FROM DATA_MAIN_DAILY_SEND 
-              WHERE TELEGRAM_URL = :url AND MAIN_CH_SEND_YN = 'Y'
+              WHERE telegram_url = :url AND main_ch_send_yn = 'Y'
           )
         """
         params = {"summary": summary, "st": datetime.now(), "model": model_name, "url": telegram_url}
@@ -288,10 +288,10 @@ class OracleManager:
         if pdf_url is None:
             pdf_url = telegram_url
         if article_title:
-            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, PDF_URL = :pdf_url, ARTICLE_TITLE = :title WHERE REPORT_ID = :id"
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET telegram_url = :url, pdf_url = :pdf_url, article_title = :title WHERE REPORT_ID = :id"
             params = {"url": telegram_url, "pdf_url": pdf_url, "title": article_title, "id": record_id}
         else:
-            query = "UPDATE DATA_MAIN_DAILY_SEND SET TELEGRAM_URL = :url, PDF_URL = :pdf_url WHERE REPORT_ID = :id"
+            query = "UPDATE DATA_MAIN_DAILY_SEND SET telegram_url = :url, pdf_url = :pdf_url WHERE REPORT_ID = :id"
             params = {"url": telegram_url, "pdf_url": pdf_url, "id": record_id}
         return await self.execute_query(query, params)
 
@@ -311,15 +311,15 @@ class OracleManager:
         reg_dt_start = (base_dt - timedelta(days=3)).strftime('%Y%m%d')
         reg_dt_end = (base_dt + timedelta(days=2)).strftime('%Y%m%d')
 
-        condition = "MAIN_CH_SEND_YN = 'Y' AND DOWNLOAD_STATUS_YN != 'Y'" if type == 'download' else \
-                    "(MAIN_CH_SEND_YN != 'Y' OR MAIN_CH_SEND_YN IS NULL) AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND TELEGRAM_URL IS NOT NULL))"
+        condition = "main_ch_send_yn = 'Y' AND download_status_yn != 'Y'" if type == 'download' else \
+                    "(main_ch_send_yn != 'Y' OR main_ch_send_yn IS NULL) AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND telegram_url IS NOT NULL))"
 
         query = f"""
         SELECT * FROM DATA_MAIN_DAILY_SEND 
-        WHERE TO_CHAR(SAVE_TIME, 'YYYY-MM-DD') = '{q_date}'
-          AND REG_DT BETWEEN '{reg_dt_start}' AND '{reg_dt_end}'
+        WHERE TO_CHAR(save_time, 'YYYY-MM-DD') = '{q_date}'
+          AND reg_dt BETWEEN '{reg_dt_start}' AND '{reg_dt_end}'
           AND {condition}
-        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
+        ORDER BY sec_firm_order, article_board_order, save_time
         """
         return await self.execute_query(query)
 
@@ -328,7 +328,7 @@ class OracleManager:
         if not fetched_rows: return 0
         if isinstance(fetched_rows, dict): fetched_rows = [fetched_rows]
         
-        col = "DOWNLOAD_STATUS_YN" if type == "download" else "MAIN_CH_SEND_YN"
+        col = "download_status_yn" if type == "download" else "main_ch_send_yn"
         query = f"UPDATE DATA_MAIN_DAILY_SEND SET {col} = 'Y' WHERE REPORT_ID = :id"
         
         async with await self._get_connection_async() as conn:
@@ -345,12 +345,12 @@ class OracleManager:
         
         query = f"""
         SELECT * FROM DATA_MAIN_DAILY_SEND
-        WHERE REG_DT BETWEEN TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') - 3, 'YYYYMMDD')
+        WHERE reg_dt BETWEEN TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') - 3, 'YYYYMMDD')
                         AND TO_CHAR(TO_DATE('{query_date}', 'YYYYMMDD') + 2, 'YYYYMMDD')
           AND sec_firm_order = :sec_order
-          AND KEY IS NOT NULL
-          AND TELEGRAM_URL IS NULL
-        ORDER BY sec_firm_order, article_board_order, SAVE_TIME
+          AND key IS NOT NULL
+          AND telegram_url IS NULL
+        ORDER BY sec_firm_order, article_board_order, save_time
         """
         return await self.execute_query(query, {"sec_order": sec_firm_order})
 
@@ -410,7 +410,7 @@ class OracleManager:
         from models.SQLiteManager import SQLiteManager
         sqlite_db = SQLiteManager()
         sqlite_db.open_connection()
-        query = f"SELECT * FROM DATA_MAIN_DAILY_SEND WHERE SAVE_TIME >= datetime('now', '-{hours} hour', 'localtime')"
+        query = f"SELECT * FROM DATA_MAIN_DAILY_SEND WHERE save_time >= datetime('now', '-{hours} hour', 'localtime')"
         sqlite_db.cursor.execute(query)
         rows = sqlite_db.cursor.fetchall()
         sqlite_data = [dict(row) for row in rows]

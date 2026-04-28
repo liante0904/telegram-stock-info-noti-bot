@@ -57,11 +57,11 @@ async def KB_checkNewArticle():
 
         # JSON To List 변환
         for item in soupList:
-            MKT_TP = "KR"
+            mkt_tp = "KR"
             if item.get('pCategoryid') == 26:
-                MKT_TP = "GLOBAL"
-            REG_DT = re.sub(r"[-./]", "", item.get('publicDate', ''))
-            WRITER = item.get('analystNm', '')
+                mkt_tp = "GLOBAL"
+            reg_dt = re.sub(r"[-./]", "", item.get('publicDate', ''))
+            writer = item.get('analystNm', '')
             docTitle = item.get('docTitle', '')
             docTitleSub = item.get('docTitleSub', '')
             
@@ -75,16 +75,16 @@ async def KB_checkNewArticle():
             json_data_list.append({
                 "sec_firm_order": sec_firm_order,
                 "article_board_order": article_board_order,
-                "FIRM_NM": firm_info.get_firm_name(),
-                "REG_DT": REG_DT,
-                "WRITER": WRITER,
-                "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                "TELEGRAM_URL": LIST_ARTICLE_URL,
-                "PDF_URL": LIST_ARTICLE_URL,
-                "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                "MKT_TP": MKT_TP,
-                "KEY": LIST_ARTICLE_URL,
-                "SAVE_TIME": datetime.now().isoformat()
+                "firm_nm": firm_info.get_firm_name(),
+                "reg_dt": reg_dt,
+                "writer": writer,
+                "download_url": LIST_ARTICLE_URL,
+                "telegram_url": LIST_ARTICLE_URL,
+                "pdf_url": LIST_ARTICLE_URL,
+                "article_title": LIST_ARTICLE_TITLE,
+                "mkt_tp": mkt_tp,
+                "key": LIST_ARTICLE_URL,
+                "save_time": datetime.now().isoformat()
             })
     except Exception as e:
         logger.error(f"Error scraping KB Securities: {e}")

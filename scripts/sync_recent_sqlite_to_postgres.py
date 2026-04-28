@@ -2,7 +2,7 @@
 """
 Export recent SQLite rows to JSON, upsert them into PostgreSQL, and compare.
 
-Default range is the last 3 calendar days including today, based on SAVE_TIME.
+Default range is the last 3 calendar days including today, based on save_time.
 """
 import argparse
 import json
@@ -25,56 +25,48 @@ SQLITE_COLUMNS = [
     "report_id",
     "sec_firm_order",
     "article_board_order",
-    "FIRM_NM",
-    "ARTICLE_TITLE",
-    "ARTICLE_URL",
-    "MAIN_CH_SEND_YN",
-    "DOWNLOAD_STATUS_YN",
-    "DOWNLOAD_URL",
-    "SAVE_TIME",
-    "REG_DT",
-    "WRITER",
-    "KEY",
-    "TELEGRAM_URL",
-    "MKT_TP",
-    "GEMINI_SUMMARY",
-    "SUMMARY_TIME",
-    "SUMMARY_MODEL",
+    "firm_nm",
+    "article_title",
+    "article_url",
+    "main_ch_send_yn",
+    "download_status_yn",
+    "download_url",
+    "save_time",
+    "reg_dt",
+    "writer",
+    "key",
+    "telegram_url",
+    "mkt_tp",
+    "gemini_summary",
+    "summary_time",
+    "summary_model",
     "ARCHIVE_STATUS",
-    "ARCHIVE_FILE_NAME",
-    "ARCHIVE_PATH",
-    "retry_count",
-    "sync_status",
-    "PDF_URL",
+    "pdf_sync_status",
+    "pdf_url",
 ]
 
 PG_COLUMNS = [
     "report_id",
     '"sec_firm_order"',
     '"article_board_order"',
-    '"FIRM_NM"',
-    '"ATTACH_URL"',
-    '"ARTICLE_TITLE"',
-    '"ARTICLE_URL"',
-    '"SEND_USER"',
-    '"MAIN_CH_SEND_YN"',
-    '"DOWNLOAD_STATUS_YN"',
-    '"DOWNLOAD_URL"',
-    '"SAVE_TIME"',
-    '"REG_DT"',
-    '"WRITER"',
-    '"KEY"',
-    '"TELEGRAM_URL"',
-    '"MKT_TP"',
-    '"GEMINI_SUMMARY"',
-    '"SUMMARY_TIME"',
-    '"SUMMARY_MODEL"',
+    '"firm_nm"',
+    '"article_title"',
+    '"article_url"',
+    '"main_ch_send_yn"',
+    '"download_status_yn"',
+    '"download_url"',
+    '"save_time"',
+    '"reg_dt"',
+    '"writer"',
+    '"key"',
+    '"telegram_url"',
+    '"mkt_tp"',
+    '"gemini_summary"',
+    '"summary_time"',
+    '"summary_model"',
     '"ARCHIVE_STATUS"',
-    '"ARCHIVE_FILE_NAME"',
-    '"ARCHIVE_PATH"',
-    '"retry_count"',
-    '"sync_status"',
-    '"PDF_URL"',
+    '"pdf_sync_status"',
+    '"pdf_url"',
 ]
 
 COMPARE_COLUMNS = [c for c in SQLITE_COLUMNS if c != "report_id"]
@@ -119,10 +111,10 @@ def export_sqlite(days, output_path):
     query = f"""
         SELECT {columns}
         FROM data_main_daily_send
-        WHERE DATE(SAVE_TIME) >= DATE(?)
-          AND "KEY" IS NOT NULL
-          AND "KEY" != ''
-        ORDER BY SAVE_TIME DESC, report_id DESC
+        WHERE DATE(save_time) >= DATE(?)
+          AND "key" IS NOT NULL
+          AND "key" != ''
+        ORDER BY save_time DESC, report_id DESC
     """
 
     conn = sqlite3.connect(sqlite_db)
@@ -136,7 +128,7 @@ def export_sqlite(days, output_path):
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2, default=json_default)
 
-    logger.info(f"SQLite export range: SAVE_TIME >= {start_date}")
+    logger.info(f"SQLite export range: save_time >= {start_date}")
     logger.info(f"SQLite rows exported: {len(rows)}")
     logger.info(f"JSON written: {output_path}")
     return rows, start_date
@@ -154,12 +146,12 @@ def upsert_postgres(rows):
     update_assignments = ",".join(
         f"{col}=EXCLUDED.{col}"
         for col in PG_COLUMNS
-        if col not in ("report_id", '"KEY"')
+        if col not in ("report_id", '"key"')
     )
     sql = f"""
-        INSERT INTO "TB_SEC_REPORTS" ({insert_cols})
+        INSERT INTO "tbl_sec_reports" ({insert_cols})
         VALUES %s
-        ON CONFLICT ("KEY") DO UPDATE SET {update_assignments}
+        ON CONFLICT ("key") DO UPDATE SET {update_assignments}
         RETURNING (xmax = 0) AS inserted
     """
 
@@ -175,7 +167,7 @@ def upsert_postgres(rows):
                     else:
                         updated += 1
 
-                cur.execute('SELECT MAX(report_id) FROM "TB_SEC_REPORTS"')
+                cur.execute('SELECT MAX(report_id) FROM "tbl_sec_reports"')
                 max_id = cur.fetchone()[0] or 0
                 cur.execute("SELECT setval('tb_sec_reports_report_id_seq', %s)", (max_id,))
     finally:
@@ -194,16 +186,16 @@ def fetch_postgres_by_keys(keys):
     try:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(
-                f'SELECT {select_cols} FROM "TB_SEC_REPORTS" WHERE "KEY" = ANY(%s)',
+                f'SELECT {select_cols} FROM "tbl_sec_reports" WHERE "key" = ANY(%s)',
                 (list(keys),),
             )
-            return {row["KEY"]: dict(row) for row in cur.fetchall()}
+            return {row["key"]: dict(row) for row in cur.fetchall()}
     finally:
         conn.close()
 
 
 def compare_rows(sqlite_rows):
-    sqlite_by_key = {row["KEY"]: row for row in sqlite_rows}
+    sqlite_by_key = {row["key"]: row for row in sqlite_rows}
     pg_by_key = fetch_postgres_by_keys(sqlite_by_key.keys())
 
     missing_in_pg = sorted(set(sqlite_by_key) - set(pg_by_key))
@@ -216,7 +208,7 @@ def compare_rows(sqlite_rows):
             if comparable(sqlite_row.get(column)) != comparable(pg_row.get(column)):
                 mismatches.append(
                     {
-                        "KEY": key,
+                        "key": key,
                         "column": column,
                         "sqlite": comparable(sqlite_row.get(column)),
                         "postgres": comparable(pg_row.get(column)),
@@ -235,7 +227,7 @@ def compare_rows(sqlite_rows):
     if missing_in_pg or mismatches:
         raise SystemExit(1)
 
-    logger.success("SQLite and PostgreSQL recent data match by KEY and compared columns.")
+    logger.success("SQLite and PostgreSQL recent data match by key and compared columns.")
 
 
 def main():

@@ -87,12 +87,12 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
 
             # JSON To List
             for item in soupList:
-                REG_DT = item.get(reg_dt_key, '')  # 등록일
-                if REG_DT:
-                    REG_DT = re.sub(r"[-./]", "", REG_DT).replace(";", "")
+                reg_dt = item.get(reg_dt_key, '')  # 등록일
+                if reg_dt:
+                    reg_dt = re.sub(r"[-./]", "", reg_dt).replace(";", "")
                 LIST_ARTICLE_TITLE = item.get(title_key, '')  # 제목
                 LIST_ARTICLE_URL = item.get(url_key, '')  # 파일명
-                WRITER = item.get(writer_key, '')  # 작성자
+                writer = item.get(writer_key, '')  # 작성자
 
                 try:
                     LIST_ARTICLE_URL = LIST_ARTICLE_URL.replace('shinhaninvest.com', 'shinhansec.com')
@@ -104,14 +104,14 @@ def ShinHanInvest_checkNewArticle_back(cur_page=1, single_page_only=True):
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": firm_info.get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "DOWNLOAD_URL": LIST_ARTICLE_URL,
-                    "TELEGRAM_URL": LIST_ARTICLE_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-                    "WRITER": WRITER,
-                    "KEY:": LIST_ARTICLE_URL,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "firm_nm": firm_info.get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "download_url": LIST_ARTICLE_URL,
+                    "telegram_url": LIST_ARTICLE_URL,
+                    "article_title": LIST_ARTICLE_TITLE,
+                    "writer": writer,
+                    "key:": LIST_ARTICLE_URL,
+                    "save_time": datetime.now().isoformat()
                 })
 
             # 다음 페이지로 이동
@@ -200,7 +200,7 @@ async def ShinHanInvest_checkNewArticle():
                         
                         article_board_order = board_map.get(board_name, 99)
 
-                        reg_dt = item.get('REG_DT', '')[0:8]
+                        reg_dt = item.get('reg_dt', '')[0:8]
                         if reg_dt:
                             reg_dt = re.sub(r"[-./]", "", reg_dt)
 
@@ -214,16 +214,16 @@ async def ShinHanInvest_checkNewArticle():
                         json_data_list.append({
                             "sec_firm_order": sec_firm_order,
                             "article_board_order": article_board_order,
-                            "FIRM_NM": firm_info.get_firm_name(),
-                            "REG_DT": reg_dt,
-                            "ARTICLE_URL": article_url,
-                            "DOWNLOAD_URL": download_url,
-                            "TELEGRAM_URL": download_url,
-                            "PDF_URL": download_url,
-                            "ARTICLE_TITLE": item.get('TITLE', ''),
-                            "WRITER": item.get('REGISTER_NICKNAME', ''),
-                            "KEY": download_url,
-                            "SAVE_TIME": datetime.now().isoformat()
+                            "firm_nm": firm_info.get_firm_name(),
+                            "reg_dt": reg_dt,
+                            "article_url": article_url,
+                            "download_url": download_url,
+                            "telegram_url": download_url,
+                            "pdf_url": download_url,
+                            "article_title": item.get('TITLE', ''),
+                            "writer": item.get('REGISTER_NICKNAME', ''),
+                            "key": download_url,
+                            "save_time": datetime.now().isoformat()
                         })
                 return json_data_list
             else:

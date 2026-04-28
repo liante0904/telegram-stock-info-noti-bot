@@ -5,7 +5,7 @@ from models.SQLiteManager import SQLiteManager
 from models.OracleManager import OracleManager
 
 async def migrate_all_to_oracle():
-    """SQLite의 모든 레포트 데이터를 Oracle(TB_SEC_REPORTS)로 이관합니다."""
+    """SQLite의 모든 레포트 데이터를 Oracle(tbl_sec_reports)로 이관합니다."""
     sqlite = SQLiteManager()
     oracle = OracleManager()
 
@@ -20,8 +20,8 @@ async def migrate_all_to_oracle():
 
     # Oracle 테이블 비우기 (TRUNCATE)
     try:
-        print(f"🧨 [Oracle] TB_SEC_REPORTS 테이블 비우는 중 (TRUNCATE)...")
-        await oracle.execute_query("TRUNCATE TABLE TB_SEC_REPORTS")
+        print(f"🧨 [Oracle] tbl_sec_reports 테이블 비우는 중 (TRUNCATE)...")
+        await oracle.execute_query("TRUNCATE TABLE tbl_sec_reports")
         print(f"✨ [Oracle] 테이블이 성공적으로 비워졌습니다.")
     except Exception as e:
         print(f"⚠️ [Oracle] 테이블 비우기 실패 (무시하고 진행): {e}")
@@ -38,7 +38,7 @@ async def migrate_all_to_oracle():
                 continue
 
             # sqlite3.Row 객체를 dict 리스트로 변환 (OracleManager가 처리할 수 있게 함)
-            # SQLiteManager의 로직에 따라 KEY 컬럼이 이미 존재할 것이므로 그대로 전달
+            # SQLiteManager의 로직에 따라 key 컬럼이 이미 존재할 것이므로 그대로 전달
             json_data_list = [dict(row) for row in rows]
             
             print(f"📤 [{table_name}] Oracle로 {len(json_data_list)}건 전송 중...")

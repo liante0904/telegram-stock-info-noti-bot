@@ -51,20 +51,20 @@ async def process_board_order(session: ClientSession, sec_firm_order: int, artic
     json_data_list = []
 
     for list_item in soup_list:
-        REG_DT = re.sub(r"[-./]", "", list_item['REGDT'])
+        reg_dt = re.sub(r"[-./]", "", list_item['REGDT'])
         LIST_ARTICLE_URL = f"https://www.sangsanginib.com/_upload/attFile/{cms_cd}/{cms_cd}_{list_item['NT_NO']}_1.pdf"
         LIST_ARTICLE_TITLE = list_item['TITLE']
         json_data_list.append({
             "sec_firm_order": sec_firm_order,
             "article_board_order": article_board_order,
-            "FIRM_NM": firm_info.get_firm_name(),
-            "REG_DT": REG_DT,
-            "DOWNLOAD_URL": LIST_ARTICLE_URL,
-            "TELEGRAM_URL": LIST_ARTICLE_URL,
-            "PDF_URL": LIST_ARTICLE_URL,
-            "KEY": LIST_ARTICLE_URL,
-            "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
-            "SAVE_TIME": datetime.now().isoformat()
+            "firm_nm": firm_info.get_firm_name(),
+            "reg_dt": reg_dt,
+            "download_url": LIST_ARTICLE_URL,
+            "telegram_url": LIST_ARTICLE_URL,
+            "pdf_url": LIST_ARTICLE_URL,
+            "key": LIST_ARTICLE_URL,
+            "article_title": LIST_ARTICLE_TITLE,
+            "save_time": datetime.now().isoformat()
         })
 
     return json_data_list

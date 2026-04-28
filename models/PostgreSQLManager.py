@@ -19,42 +19,46 @@ class PostgreSQLManager:
     New methods mirror SQLiteManager's interface for the scraper pipeline.
     """
 
-    MAIN_TABLE = '"TB_SEC_REPORTS"'
+    MAIN_TABLE = "tbl_sec_reports"
     _LEGACY_COLUMNS = (
         "sec_firm_order",
         "article_board_order",
-        "FIRM_NM",
-        "ARTICLE_TITLE",
-        "ARTICLE_URL",
-        "MAIN_CH_SEND_YN",
-        "DOWNLOAD_STATUS_YN",
-        "DOWNLOAD_URL",
-        "SAVE_TIME",
-        "REG_DT",
-        "WRITER",
-        "KEY",
-        "TELEGRAM_URL",
-        "MKT_TP",
-        "GEMINI_SUMMARY",
-        "SUMMARY_TIME",
-        "SUMMARY_MODEL",
-        "ARCHIVE_STATUS",
-        "ARCHIVE_FILE_NAME",
-        "ARCHIVE_PATH",
-        "PDF_URL",
+        "firm_nm",
+        "article_title",
+        "article_url",
+        "main_ch_send_yn",
+        "download_status_yn",
+        "download_url",
+        "save_time",
+        "reg_dt",
+        "writer",
+        "key",
+        "telegram_url",
+        "mkt_tp",
+        "gemini_summary",
+        "summary_time",
+        "summary_model",
+        "archive_status",
+        "archive_file_name",
+        "archive_path",
+        "retry_count",
+        "sync_status",
+        "pdf_url",
+        "pdf_sync_status",
     )
 
     # Callers that still pass the old SQLite table name are transparently remapped.
     _TABLE_MAP = {
-        "data_main_daily_send": '"TB_SEC_REPORTS"',
-        "DATA_MAIN_DAILY_SEND": '"TB_SEC_REPORTS"',
+        "data_main_daily_send": "tbl_sec_reports",
+        "tbl_sec_reports": "tbl_sec_reports",
     }
 
     def __init__(self):
         load_dotenv(override=True)
         self.host = os.getenv("POSTGRES_HOST", "localhost")
         self.port = os.getenv("POSTGRES_PORT", "5432")
-        self.database = os.getenv("POSTGRES_DB", "ssh_reports_hub")
+        self.database = os.getenv("POSTGRES_REPORT_DB", "ssh_reports_hub")
+        self.keyword_database = os.getenv("POSTGRES_KEYWORD_DB", self.database)
         self.user = os.getenv("POSTGRES_USER", "ssh_reports_hub")
         self.password = os.getenv("POSTGRES_PASSWORD", "")
         self.main_table_name = self.MAIN_TABLE
@@ -68,6 +72,15 @@ class PostgreSQLManager:
             password=self.password,
         )
 
+    def get_keyword_connection(self):
+        return psycopg2.connect(
+            host=self.host,
+            port=self.port,
+            dbname=self.keyword_database,
+            user=self.user,
+            password=self.password,
+        )
+
     # ------------------------------------------------------------------
     # Keyword-alert (existing, unchanged)
     # ------------------------------------------------------------------
@@ -76,7 +89,16 @@ class PostgreSQLManager:
         """PostgreSQL에서 활성화된 키워드 정보를 가져와 기존 JSON 구조와 호환되는 dict 형태로 반환합니다."""
         conn = None
         try:
-            conn = self.get_connection()
+            conn = self.get_keyword_connection()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT to_regclass('tbm_sec_reports_alert_keywords')
+                """)
+                table_exists = cur.fetchone()[0]
+                if not table_exists:
+                    logger.warning("Keyword table tbm_sec_reports_alert_keywords does not exist. Returning empty keyword set.")
+                    return {}
+
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute("""
                     SELECT user_id, keyword, created_at
@@ -122,36 +144,35 @@ class PostgreSQLManager:
             (
                 entry.get("sec_firm_order"),
                 entry.get("article_board_order"),
-                entry.get("FIRM_NM"),
-                entry.get("REG_DT", ""),
-                entry.get("ATTACH_URL", ""),
-                entry.get("ARTICLE_TITLE"),
-                entry.get("ARTICLE_URL"),
-                entry.get("MAIN_CH_SEND_YN", "N"),
-                entry.get("DOWNLOAD_URL"),
-                entry.get("TELEGRAM_URL"),
-                entry.get("PDF_URL") or entry.get("TELEGRAM_URL"),
-                entry.get("WRITER", ""),
-                entry.get("MKT_TP", "KR"),
-                entry.get("KEY") or entry.get("ATTACH_URL", ""),
-                entry.get("SAVE_TIME"),
+                entry.get("firm_nm"),
+                entry.get("reg_dt", ""),
+                entry.get("article_title"),
+                entry.get("article_url"),
+                entry.get("main_ch_send_yn", "N"),
+                entry.get("download_url"),
+                entry.get("telegram_url"),
+                entry.get("pdf_url") or entry.get("telegram_url"),
+                entry.get("writer", ""),
+                entry.get("mkt_tp", "KR"),
+                entry.get("key") or entry.get("article_url", ""),
+                entry.get("save_time"),
             )
             for entry in json_data_list
         ]
 
         sql = f'''
             INSERT INTO {table_name} (
-                sec_firm_order, article_board_order, "FIRM_NM", "REG_DT", "ATTACH_URL",
-                "ARTICLE_TITLE", "ARTICLE_URL", "MAIN_CH_SEND_YN", "DOWNLOAD_URL",
-                "TELEGRAM_URL", "PDF_URL", "WRITER", "MKT_TP", "KEY", "SAVE_TIME"
+                sec_firm_order, article_board_order, firm_nm, reg_dt,
+                article_title, article_url, main_ch_send_yn, download_url,
+                telegram_url, pdf_url, writer, mkt_tp, key, save_time
             ) VALUES %s
-            ON CONFLICT ("KEY") DO UPDATE SET
-                "REG_DT"       = EXCLUDED."REG_DT",
-                "WRITER"       = EXCLUDED."WRITER",
-                "MKT_TP"       = EXCLUDED."MKT_TP",
-                "DOWNLOAD_URL" = COALESCE(NULLIF(EXCLUDED."DOWNLOAD_URL",\'\'),  {table_name}."DOWNLOAD_URL"),
-                "TELEGRAM_URL" = COALESCE(NULLIF(EXCLUDED."TELEGRAM_URL",\'\'), {table_name}."TELEGRAM_URL"),
-                "PDF_URL"      = COALESCE(NULLIF(EXCLUDED."PDF_URL",\'\'),       {table_name}."PDF_URL")
+            ON CONFLICT (key) DO UPDATE SET
+                reg_dt       = EXCLUDED.reg_dt,
+                writer       = EXCLUDED.writer,
+                mkt_tp       = EXCLUDED.mkt_tp,
+                download_url = COALESCE(NULLIF(EXCLUDED.download_url,\'\'),  {table_name}.download_url),
+                telegram_url = COALESCE(NULLIF(EXCLUDED.telegram_url,\'\'), {table_name}.telegram_url),
+                pdf_url      = COALESCE(NULLIF(EXCLUDED.pdf_url,\'\'),       {table_name}.pdf_url)
             RETURNING (xmax = 0) AS inserted
         '''
 
@@ -180,46 +201,46 @@ class PostgreSQLManager:
         date_to = (base + timedelta(days=2)).strftime("%Y%m%d")
 
         sql = f"""
-        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
-               "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
-               "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY","PDF_URL"
+        SELECT report_id,sec_firm_order,article_board_order,firm_nm,reg_dt,
+               article_title,article_url,main_ch_send_yn,
+               download_url,writer,save_time,telegram_url,key,pdf_url
         FROM   {self.main_table_name}
-        WHERE  "REG_DT" BETWEEN %s AND %s
+        WHERE  reg_dt BETWEEN %s AND %s
           AND  sec_firm_order = %s
-          AND  "KEY" IS NOT NULL
-          AND  ("TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = '')
-        ORDER BY sec_firm_order,article_board_order,"SAVE_TIME"
+          AND  key IS NOT NULL
+          AND  (telegram_url IS NULL OR telegram_url = '')
+        ORDER BY sec_firm_order,article_board_order,save_time
         """
         return self._fetchall(sql, (date_from, date_to, str(firmInfo["sec_firm_order"])))
 
     async def fetch_all_empty_telegram_url_articles(self, firm_info, days_limit=None):
         firmInfo = firm_info.get_state()
         sql = f"""
-        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
-               "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
-               "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY","PDF_URL"
+        SELECT report_id,sec_firm_order,article_board_order,firm_nm,reg_dt,
+               article_title,article_url,main_ch_send_yn,
+               download_url,writer,save_time,telegram_url,key,pdf_url
         FROM   {self.main_table_name}
         WHERE  sec_firm_order = %s
-          AND  "KEY" IS NOT NULL
-          AND  ("TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = '')
+          AND  key IS NOT NULL
+          AND  (telegram_url IS NULL OR telegram_url = '')
         """
         params = [str(firmInfo["sec_firm_order"])]
         if days_limit:
             cutoff = (datetime.now() - timedelta(days=days_limit)).strftime("%Y-%m-%d %H:%M:%S")
-            sql += ' AND "SAVE_TIME" >= %s'
+            sql += ' AND save_time >= %s'
             params.append(cutoff)
-        sql += ' ORDER BY "REG_DT" DESC, "SAVE_TIME" DESC'
+        sql += ' ORDER BY reg_dt DESC, save_time DESC'
         return self._fetchall(sql, params)
 
     async def fetch_ls_detail_targets(self):
         sql = f"""
-        SELECT report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
-               "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
-               "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL","KEY"
+        SELECT report_id,sec_firm_order,article_board_order,firm_nm,reg_dt,
+               article_title,article_url,main_ch_send_yn,
+               download_url,writer,save_time,telegram_url,key
         FROM   {self.main_table_name}
         WHERE  sec_firm_order = 0
-          AND  ("TELEGRAM_URL" NOT LIKE \'%.pdf\'
-                OR "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = \'\')
+          AND  (telegram_url NOT LIKE \'%.pdf\'
+                OR telegram_url IS NULL OR telegram_url = \'\')
         """
         return self._fetchall(sql)
 
@@ -227,10 +248,10 @@ class PostgreSQLManager:
         if pdf_url is None:
             pdf_url = telegram_url
         if article_title is not None:
-            sql = f'UPDATE {self.main_table_name} SET "TELEGRAM_URL"=%s,"PDF_URL"=%s,"ARTICLE_TITLE"=%s WHERE report_id=%s'
+            sql = f'UPDATE {self.main_table_name} SET telegram_url=%s,pdf_url=%s,article_title=%s WHERE report_id=%s'
             params = (telegram_url, pdf_url, article_title, record_id)
         else:
-            sql = f'UPDATE {self.main_table_name} SET "TELEGRAM_URL"=%s,"PDF_URL"=%s WHERE report_id=%s'
+            sql = f'UPDATE {self.main_table_name} SET telegram_url=%s,pdf_url=%s WHERE report_id=%s'
             params = (telegram_url, pdf_url, record_id)
         return self._execute(sql, params)
 
@@ -248,29 +269,29 @@ class PostgreSQLManager:
         three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y%m%d")
 
         if type == "send":
-            cond = """("MAIN_CH_SEND_YN" != 'Y' OR "MAIN_CH_SEND_YN" IS NULL)
-                      AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND "TELEGRAM_URL" <> ''))"""
+            cond = """(main_ch_send_yn != 'Y' OR main_ch_send_yn IS NULL)
+                      AND (sec_firm_order != 19 OR (sec_firm_order = 19 AND telegram_url <> ''))"""
         else:
-            cond = '"MAIN_CH_SEND_YN" = \'Y\' AND "DOWNLOAD_STATUS_YN" != \'Y\''
+            cond = 'main_ch_send_yn = \'Y\' AND download_status_yn != \'Y\''
 
         # DISTINCT ON replaces SQLite GROUP BY trick
         sql = f"""
         SELECT DISTINCT ON (
-            CASE WHEN "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = ''
-                 THEN report_id::TEXT ELSE "TELEGRAM_URL" END
+            CASE WHEN telegram_url IS NULL OR telegram_url = ''
+                 THEN report_id::TEXT ELSE telegram_url END
         )
-            report_id,sec_firm_order,article_board_order,"FIRM_NM","REG_DT",
-            "ATTACH_URL","ARTICLE_TITLE","ARTICLE_URL","MAIN_CH_SEND_YN",
-            "DOWNLOAD_URL","WRITER","SAVE_TIME","TELEGRAM_URL"
+            report_id,sec_firm_order,article_board_order,firm_nm,reg_dt,
+            article_title,article_url,main_ch_send_yn,
+            download_url,writer,save_time,telegram_url
         FROM   {self.main_table_name}
-        WHERE  DATE("SAVE_TIME") = %s
-          AND  "REG_DT" >= %s
-          AND  "REG_DT" <= %s
+        WHERE  DATE(save_time) = %s
+          AND  reg_dt >= %s
+          AND  reg_dt <= %s
           AND  {cond}
         ORDER BY
-            CASE WHEN "TELEGRAM_URL" IS NULL OR "TELEGRAM_URL" = ''
-                 THEN report_id::TEXT ELSE "TELEGRAM_URL" END,
-            sec_firm_order,article_board_order,"SAVE_TIME"
+            CASE WHEN telegram_url IS NULL OR telegram_url = ''
+                 THEN report_id::TEXT ELSE telegram_url END,
+            sec_firm_order,article_board_order,save_time
         """
         return self._fetchall(sql, (query_date, three_days_ago, query_reg_dt))
 
@@ -279,21 +300,21 @@ class PostgreSQLManager:
             raise ValueError("Invalid type. Must be 'send' or 'download'.")
         if type == "send":
             for row in fetched_rows:
-                tg = row.get("TELEGRAM_URL")
+                tg = row.get("telegram_url")
                 if tg:
                     self._execute(
-                        f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN"=\'Y\' WHERE "TELEGRAM_URL"=%s',
+                        f"UPDATE {self.main_table_name} SET main_ch_send_yn='Y' WHERE telegram_url=%s",
                         (tg,),
                     )
                 else:
                     self._execute(
-                        f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN"=\'Y\' WHERE report_id=%s',
+                        f"UPDATE {self.main_table_name} SET main_ch_send_yn='Y' WHERE report_id=%s",
                         (row["report_id"],),
                     )
         else:
             for row in fetched_rows:
                 self._execute(
-                    f'UPDATE {self.main_table_name} SET "DOWNLOAD_STATUS_YN"=\'Y\' WHERE report_id=%s',
+                    f"UPDATE {self.main_table_name} SET download_status_yn='Y' WHERE report_id=%s",
                     (row["report_id"],),
                 )
         return {"status": "success"}
@@ -301,11 +322,11 @@ class PostgreSQLManager:
     async def update_report_summary_by_telegram_url(self, telegram_url, summary, model_name):
         sql = f"""
         UPDATE {self.main_table_name}
-        SET "GEMINI_SUMMARY"=%s,"SUMMARY_TIME"=%s,"SUMMARY_MODEL"=%s
-        WHERE "TELEGRAM_URL"=%s AND "MAIN_CH_SEND_YN"='Y'
+        SET gemini_summary=%s,summary_time=%s,summary_model=%s
+        WHERE telegram_url=%s AND main_ch_send_yn='Y'
           AND report_id = (
               SELECT MAX(report_id) FROM {self.main_table_name}
-              WHERE "TELEGRAM_URL"=%s AND "MAIN_CH_SEND_YN"='Y'
+              WHERE telegram_url=%s AND main_ch_send_yn='Y'
           )
         """
         return self._execute(sql, (summary, datetime.now().isoformat(), model_name, telegram_url, telegram_url))
@@ -313,7 +334,7 @@ class PostgreSQLManager:
     async def update_report_summary(self, record_id, summary, model_name):
         sql = f"""
         UPDATE {self.main_table_name}
-        SET "GEMINI_SUMMARY"=%s,"SUMMARY_TIME"=%s,"SUMMARY_MODEL"=%s
+        SET gemini_summary=%s,summary_time=%s,summary_model=%s
         WHERE report_id=%s
         """
         return self._execute(sql, (summary, datetime.now().isoformat(), model_name, record_id))
@@ -321,31 +342,31 @@ class PostgreSQLManager:
     async def fetch_pending_summary_reports(self, limit=10):
         sql = f"""
         SELECT * FROM {self.main_table_name}
-        WHERE ("GEMINI_SUMMARY" IS NULL OR "GEMINI_SUMMARY" = '')
-          AND "ATTACH_URL" IS NOT NULL AND "ATTACH_URL" != ''
+        WHERE (gemini_summary IS NULL OR gemini_summary = '')
+          AND article_url IS NOT NULL AND article_url != ''
           AND sec_firm_order NOT IN (19)
-        ORDER BY "SAVE_TIME" DESC
+        ORDER BY save_time DESC
         LIMIT %s
         """
         return self._fetchall(sql, (limit,))
 
     def fetch_existing_keys(self, sec_firm_order: int, days_limit: int = 7) -> set:
-        """특정 증권사의 KEY 목록을 조회하여 반환 (중복 방지용)"""
-        sql = f'SELECT "KEY" FROM {self.main_table_name} WHERE sec_firm_order = %s'
+        """특정 증권사의 key 목록을 조회하여 반환 (중복 방지용)"""
+        sql = f'SELECT key FROM {self.main_table_name} WHERE sec_firm_order = %s'
         params = [sec_firm_order]
         
         if days_limit is not None:
             cutoff = (datetime.now() - timedelta(days=days_limit)).strftime("%Y-%m-%d %H:%M:%S")
-            sql += ' AND "SAVE_TIME" >= %s'
+            sql += ' AND save_time >= %s'
             params.append(cutoff)
             
         rows = self._fetchall(sql, tuple(params))
-        return {r["KEY"] for r in rows if r.get("KEY")}
+        return {r["key"] for r in rows if r.get("key")}
 
     async def reset_send_status(self, sec_firm_order: int, date_str: str, board_order: int = None):
         """특정 증권사/날짜의 발송 상태를 초기화 (\'N\'으로 변경)"""
         params = [sec_firm_order, date_str]
-        sql = f'UPDATE {self.main_table_name} SET "MAIN_CH_SEND_YN" = \'N\' WHERE sec_firm_order = %s AND DATE("SAVE_TIME") = %s'
+        sql = f"UPDATE {self.main_table_name} SET main_ch_send_yn = 'N' WHERE sec_firm_order = %s AND DATE(save_time) = %s"
         
         if board_order is not None:
             sql += ' AND article_board_order = %s'
@@ -360,31 +381,29 @@ class PostgreSQLManager:
     def fetch_keyword_reports(self, date: str, keyword: str, user_id: str):
         """키워드 매칭된 미발송 리포트 조회 (tbl_report_send_history에 user_id 없는 것)"""
         sql = f"""
-            SELECT r."report_id", r."FIRM_NM", r."ARTICLE_TITLE",
-                   COALESCE(NULLIF(r."TELEGRAM_URL",\'\'), NULLIF(r."DOWNLOAD_URL",\'\'), NULLIF(r."ATTACH_URL",\'\')) AS "TELEGRAM_URL",
-                   r."SAVE_TIME"
+            SELECT r.report_id, r.firm_nm, r.article_title,
+                   COALESCE(NULLIF(r.telegram_url,\'\'), NULLIF(r.download_url,\'\')) AS telegram_url,
+                   r.save_time
             FROM {self.main_table_name} r
             LEFT JOIN tbl_report_send_history h 
                    ON r.report_id = h.report_id AND h.user_id = %s
-            WHERE (r."ARTICLE_TITLE" ILIKE %s OR r."WRITER" ILIKE %s)
-              AND DATE(r."SAVE_TIME") = %s
+            WHERE (r.article_title ILIKE %s OR r.writer ILIKE %s)
+              AND DATE(r.save_time) = %s
               AND h.id IS NULL
-            ORDER BY r."SAVE_TIME" ASC, r."FIRM_NM" ASC
+            ORDER BY r.save_time ASC, r.firm_nm ASC
         """
         keyword_param = f"%{keyword}%"
         return self._fetchall(sql, (user_id, keyword_param, keyword_param, date))
 
     def update_keyword_send_user(self, date: str, keyword: str, user_id: str):
         """발송 완료한 user_id를 tbl_report_send_history 테이블에 기록 (중복 방지)"""
-        # 먼저 해당 키워드와 날짜에 매칭되는 report_id들을 가져옵니다.
-        # (기존 로직이 키워드 기반 벌크 업데이트였으므로 동일하게 유지)
         fetch_sql = f"""
             SELECT r.report_id 
             FROM {self.main_table_name} r
             LEFT JOIN tbl_report_send_history h 
                    ON r.report_id = h.report_id AND h.user_id = %s
-            WHERE (r."ARTICLE_TITLE" ILIKE %s OR r."WRITER" ILIKE %s)
-              AND DATE(r."SAVE_TIME") = %s
+            WHERE (r.article_title ILIKE %s OR r.writer ILIKE %s)
+              AND DATE(r.save_time) = %s
               AND h.id IS NULL
         """
         keyword_param = f"%{keyword}%"
@@ -415,13 +434,6 @@ class PostgreSQLManager:
         if params:
             query = query.replace("?", "%s")
         
-        # sec_firm_order와 article_board_order를 제외한 나머지 레거시 컬럼들에 대해 자동 따옴표 부여
-        for column in self._LEGACY_COLUMNS:
-            if column in ["sec_firm_order", "article_board_order"]:
-                continue
-            # 이미 따옴표가 있는 경우는 건너뜀
-            query = re.sub(rf'(?<!")\b{column}\b(?!")', f'"{column}"', query)
-
         if query.strip().lower().startswith("select"):
             return self._fetchall(query, params)
         return self._execute(query, params)

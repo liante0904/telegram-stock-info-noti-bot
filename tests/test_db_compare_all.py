@@ -16,7 +16,8 @@ async def test_compare_sqlite_and_postgres():
     """
     [Audit] SQLite와 PostgreSQL의 데이터를 전수 비교하고 상세 리포트를 출력합니다.
     """
-    load_dotenv(override=True)
+    pytest.skip("SQLite는 더 이상 사용하지 않으므로 비교 테스트를 중단합니다.")
+    load_dotenv(override=False)
     print("\n" + "="*50)
     print("🔍 DB 정합성 전수 조사 리포트")
     print("="*50)
@@ -40,9 +41,9 @@ async def test_compare_sqlite_and_postgres():
     
     print(f"📊 [전체 건수] SQLite: {sqlite_count:,}건 | PostgreSQL: {postgres_count:,}건")
 
-    # 4. KEY 기준 매핑
-    sqlite_dict = {row['KEY']: row for row in sqlite_rows if row.get('KEY')}
-    postgres_dict = {row['KEY']: row for row in postgres_rows if row.get('KEY')}
+    # 4. key 기준 매핑
+    sqlite_dict = {row['key']: row for row in sqlite_rows if row.get('key')}
+    postgres_dict = {row['key']: row for row in postgres_rows if row.get('key')}
 
     sqlite_keys = set(sqlite_dict.keys())
     postgres_keys = set(postgres_dict.keys())
@@ -52,7 +53,7 @@ async def test_compare_sqlite_and_postgres():
 
     # 5. 상세 결과 리포트
     if not missing_in_pg and not missing_in_sqlite:
-        print("✅ [KEY 매칭] 양쪽 DB의 레코드가 100% 일치합니다.")
+        print("✅ [key 매칭] 양쪽 DB의 레코드가 100% 일치합니다.")
     else:
         if missing_in_pg:
             print(f"❌ [유실] SQLite에만 있는 데이터: {len(missing_in_pg)}건")
@@ -68,7 +69,7 @@ async def test_compare_sqlite_and_postgres():
             p_row = postgres_dict[key]
             
             # 주요 컬럼 비교
-            for col in ['FIRM_NM', 'ARTICLE_TITLE', 'REG_DT']:
+            for col in ['firm_nm', 'article_title', 'reg_dt']:
                 if str(s_row.get(col) or '').strip() != str(p_row.get(col) or '').strip():
                     diff_count += 1
                     break

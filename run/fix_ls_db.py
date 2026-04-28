@@ -15,11 +15,11 @@ async def fix_ls_urls():
     # 1. 대상 데이터 추출 (upload/ 방식의 Fallback URL들)
     # 최근 3일치 위주로 먼저 확인 (필요시 기간 확대 가능)
     query = """
-        SELECT report_id, "ARTICLE_TITLE", "TELEGRAM_URL", "ARTICLE_URL", "REG_DT", "KEY"
-        FROM "TB_SEC_REPORTS"
-        WHERE "FIRM_NM" = 'LS증권'
-          AND "TELEGRAM_URL" LIKE 'https://www.ls-sec.co.kr/upload/%'
-        ORDER BY "REG_DT" DESC
+        SELECT report_id, "article_title", "telegram_url", "article_url", "reg_dt", "key"
+        FROM "tbl_sec_reports"
+        WHERE "firm_nm" = 'LS증권'
+          AND "telegram_url" LIKE 'https://www.ls-sec.co.kr/upload/%'
+        ORDER BY "reg_dt" DESC
     """
     
     records = await db.execute_query(query)
@@ -48,22 +48,22 @@ async def fix_ls_urls():
         results = await LS_detail(chunk)
         
         for article in results:
-            new_url = article.get('TELEGRAM_URL', '')
+            new_url = article.get('telegram_url', '')
             # 정적 URL(msg.)로 변경되었는지 확인
             if new_url.startswith('https://msg.ls-sec.co.kr/'):
                 success = await db.update_telegram_url(
                     record_id=article['report_id'],
                     telegram_url=new_url,
-                    article_title=article['ARTICLE_TITLE'],
+                    article_title=article['article_title'],
                     pdf_url=new_url
                 )
                 if success:
-                    logger.success(f"복구 완료: {article['ARTICLE_TITLE']} -> {new_url}")
+                    logger.success(f"복구 완료: {article['article_title']} -> {new_url}")
                     updated_count += 1
                 else:
-                    logger.error(f"DB 업데이트 실패: {article['ARTICLE_TITLE']}")
+                    logger.error(f"DB 업데이트 실패: {article['article_title']}")
             else:
-                logger.warning(f"복구 실패 (여전히 Fallback): {article['ARTICLE_TITLE']}")
+                logger.warning(f"복구 실패 (여전히 Fallback): {article['article_title']}")
         
         # LS 서버 부하 방지 및 차단 회피를 위한 대기 (이미 LS_detail 내부에 sleep이 있지만 추가 확보)
         await asyncio.sleep(1)

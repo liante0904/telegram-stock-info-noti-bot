@@ -16,8 +16,8 @@ from models.db_factory import get_db
 
 # 시크릿 설정 로드
 dbfi_cfg = config.get_urls("DBfi_19")
-BASE_URL = dbfi_cfg["base_urls"][0]
-VIEWER_BASE = dbfi_cfg["base_urls"][1]
+BASE_URL = dbfi_cfg["base_url"]
+VIEWER_BASE = dbfi_cfg["viewer_base_url"]
 URL_PATHS = dbfi_cfg["url_paths"]
 
 HEADERS_TEMPLATE = {
@@ -135,7 +135,7 @@ async def DBfi_checkNewArticle():
     # 2. 우리 DB 전체에서 중복 제거
     db = get_db()
     existing_keys = db.fetch_existing_keys(sec_firm_order, days_limit=None)
-    logger.info(f"DBfi: DB 전체 기존 KEY {len(existing_keys)}개 확인")
+    logger.info(f"DBfi: DB 전체 기존 key {len(existing_keys)}개 확인")
 
     candidates = []
     for item, board_order in raw_items:
@@ -147,16 +147,16 @@ async def DBfi_checkNewArticle():
         candidates.append({
             "sec_firm_order": sec_firm_order,
             "article_board_order": board_order,
-            "FIRM_NM": firm_info.get_firm_name(),
-            "REG_DT": item["rdt"][:8],
-            "ARTICLE_URL": "",
-            "TELEGRAM_URL": "",
-            "PDF_URL": "",
-            "ARTICLE_TITLE": item["tit"],
-            "WRITER": item["wnm"],
+            "firm_nm": firm_info.get_firm_name(),
+            "reg_dt": item["rdt"][:8],
+            "article_url": "",
+            "telegram_url": "",
+            "pdf_url": "",
+            "article_title": item["tit"],
+            "writer": item["wnm"],
             "CATEGORY": item["div"],
-            "KEY": key,
-            "SAVE_TIME": datetime.now().isoformat(),
+            "key": key,
+            "save_time": datetime.now().isoformat(),
         })
 
     logger.info(f"DBfi: DB 전체 대조 후 신규 건수 {len(candidates)}건")
@@ -176,23 +176,23 @@ async def fetch_detailed_url(articles):
         # DB증권은 동일 리포트가 여러 게시판에 중복 노출되는 경우가 있어
         # 제목/작성자/등록일/카테고리 기준으로 대표 건만 상세 조회합니다.
         return (
-            _normalize_text(article.get("REG_DT", "")),
-            _normalize_text(article.get("ARTICLE_TITLE", "")),
-            _normalize_text(article.get("WRITER", "")),
+            _normalize_text(article.get("reg_dt", "")),
+            _normalize_text(article.get("article_title", "")),
+            _normalize_text(article.get("writer", "")),
             _normalize_text(article.get("CATEGORY", "")),
         )
 
     timeout = aiohttp.ClientTimeout(total=15)
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context), timeout=timeout) as session:
-        # Group by article signature first, then choose a single representative KEY
+        # Group by article signature first, then choose a single representative key
         # to avoid hitting detail endpoints for the same report multiple times.
         pending_by_signature = {}
         skipped_existing = 0
         collapsed_duplicates = 0
         for article in articles:
-            if article.get("TELEGRAM_URL") and article.get("PDF_URL"):
+            if article.get("telegram_url") and article.get("pdf_url"):
                 continue
-            key_url = article.get("KEY")
+            key_url = article.get("key")
             if not key_url:
                 continue
             signature = _article_signature(article)
@@ -250,8 +250,8 @@ async def fetch_detailed_url(articles):
                 gate_url = extracted["gate_url"]
                 pdf_url = extracted["pdf_url"]
                 for article in key_articles:
-                    article["TELEGRAM_URL"] = gate_url
-                    article["PDF_URL"] = pdf_url
+                    article["telegram_url"] = gate_url
+                    article["pdf_url"] = pdf_url
                     article["FILE_NAME"] = extracted["file_name"]
                     article["DOC_ID"] = extracted["doc_id"]
                     article["GATE_URL"] = gate_url
@@ -277,9 +277,9 @@ async def main():
     for article in detailed_articles[:5]:
         logger.info(
             "DBfi sample | title={} | file={} | pdf={}",
-            article.get("ARTICLE_TITLE"),
+            article.get("article_title"),
             article.get("FILE_NAME"),
-            article.get("PDF_URL"),
+            article.get("pdf_url"),
         )
 
 

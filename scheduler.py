@@ -16,13 +16,17 @@ def run_scraper():
     """메인 스크래퍼 실행 (scraper.py)"""
     logger.info("--- [Job Start] Main Scraper (scraper.py) ---")
     try:
-        # uv run scraper.py 실행
+        # uv run scraper.py 실행 (출력 캡처)
         result = subprocess.run(
             ["uv", "run", "scraper.py"],
+            capture_output=True,
+            text=True,
             check=False
         )
         if result.returncode != 0:
             logger.error(f"Scraper process exited with error code {result.returncode}")
+            if result.stderr:
+                logger.error(f"Scraper Error Output:\n{result.stderr}")
         else:
             logger.success("Scraper job completed successfully.")
     except Exception as e:

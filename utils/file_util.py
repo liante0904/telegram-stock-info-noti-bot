@@ -26,22 +26,22 @@ async def download_file_wget(report_info_row, URL=None, FILE_NAME=None):
 
     BOARD_NM = ''
     URL = (
-        report_info_row.get('DOWNLOAD_URL') if report_info_row.get('DOWNLOAD_URL')
-        else report_info_row.get('ARTICLE_URL') if report_info_row.get('ARTICLE_URL')
-        else report_info_row.get('TELEGRAM_URL')
+        report_info_row.get('download_url') if report_info_row.get('download_url')
+        else report_info_row.get('article_url') if report_info_row.get('article_url')
+        else report_info_row.get('telegram_url')
     )
 
     if FILE_NAME is None:
         # FILE_NAME이 None인 경우 기존 로직으로 파일 이름 생성
-        FILE_NAME = report_info_row.get('ARTICLE_TITLE', 'Unknown')
-        FIRM_NAME = report_info_row.get('FIRM_NM', 'Unknown')
+        FILE_NAME = report_info_row.get('article_title', 'Unknown')
+        FIRM_NAME = report_info_row.get('firm_nm', 'Unknown')
         
         KST = datetime.timezone(datetime.timedelta(hours=9))
         now_kst = datetime.datetime.now(KST)
         today_str = now_kst.strftime('%Y%m%d')
         
-        # report_info_row['REG_DT'] 값이 있으면 이를 사용하고 없으면 현재 날짜 사용
-        DATE_PART = report_info_row['REG_DT'][2:8] if report_info_row.get('REG_DT') else today_str[2:8]
+        # report_info_row['reg_dt'] 값이 있으면 이를 사용하고 없으면 현재 날짜 사용
+        DATE_PART = report_info_row['reg_dt'][2:8] if report_info_row.get('reg_dt') else today_str[2:8]
 
         # DATE_PART가 비어 있는 경우 현재 날짜를 기본값으로 설정
         if not DATE_PART:

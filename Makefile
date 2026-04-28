@@ -1,26 +1,30 @@
 SECRETS_SCRIPT := python3 $(HOME)/secrets/generate_env.py
 COMPOSE        := docker compose
 
-.PHONY: up down restart restart-scraper restart-alert logs logs-scraper logs-alert ps env env-scraper env-alert env-api
+.PHONY: up down build restart restart-scraper restart-alert logs logs-scraper logs-alert ps env env-scraper env-alert env-api test lint
 
-## 전체 서비스 기동 (모든 환경 변수 갱신)
-up: env
+## 전체 서비스 기동 (빌드 포함, 환경 변수 갱신)
+up: env build
 	$(COMPOSE) up -d
 
 ## 전체 서비스 중단
 down:
 	$(COMPOSE) down
 
+## 이미지 빌드
+build:
+	$(COMPOSE) build
+
 ## 전체 재시작
-restart: env
+restart: env build
 	$(COMPOSE) restart
 
-## 서비스별 시크릿 갱신 후 재시작
+## 서비스별 시크릿 갱신 및 빌드 후 재시작
 restart-scraper: env-scraper
-	$(COMPOSE) restart main-scraper
+	$(COMPOSE) up -d --build main-scraper
 
 restart-alert: env-alert
-	$(COMPOSE) restart report-keyword-alert
+	$(COMPOSE) up -d --build report-keyword-alert
 
 ## 전체 로그 (follow)
 logs:
@@ -36,7 +40,15 @@ logs-alert:
 ps:
 	$(COMPOSE) ps
 
-## 전체 환경 변수 생성 (architecture.md 원칙 준수)
+## 테스트 실행 (표준 인터페이스)
+test:
+	uv run pytest tests/test_scrapers_health.py -v
+
+## 린트 체크 (표준 인터페이스)
+lint:
+	uv run ruff check .
+
+## 전체 환경 변수 생성
 env:
 	$(SECRETS_SCRIPT)
 

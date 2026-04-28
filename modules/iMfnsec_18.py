@@ -139,16 +139,16 @@ async def iMfnsec_checkNewArticle(cur_page="1", single_page_only=True):
                                     json_data_list.append({
                                         "sec_firm_order": sec_firm_order,
                                         "article_board_order": article_board_order,
-                                        "FIRM_NM": firm_info.get_firm_name(),
-                                        "REG_DT": re.sub(r"[-./]", "", item['reg_dt']),
-                                        "ARTICLE_URL": BASE_URL,
-                                        "DOWNLOAD_URL": attach_url,
-                                        "TELEGRAM_URL": attach_url,
-                                        "PDF_URL": attach_url,
-                                        "ARTICLE_TITLE": item['title'],
-                                        "WRITER": item['username'],
-                                        "KEY": attach_url,
-                                        "SAVE_TIME": datetime.now().isoformat()
+                                        "firm_nm": firm_info.get_firm_name(),
+                                        "reg_dt": re.sub(r"[-./]", "", item['reg_dt']),
+                                        "article_url": BASE_URL,
+                                        "download_url": attach_url,
+                                        "telegram_url": attach_url,
+                                        "pdf_url": attach_url,
+                                        "article_title": item['title'],
+                                        "writer": item['username'],
+                                        "key": attach_url,
+                                        "save_time": datetime.now().isoformat()
                                     })
                                 except KeyError as e:
                                     logger.error(f"KeyError encountered: {e} for item in bid {bid}, page {page}.")

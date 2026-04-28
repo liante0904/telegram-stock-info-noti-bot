@@ -31,7 +31,7 @@ def create_table():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS STOCK_INFO_MASTER_KR_ISU (
             ISU_NO TEXT(6) UNIQUE,           -- 6자리 종목 코드 (유니크 설정)
-            ISU_NM TEXT(40) PRIMARY KEY,     -- 40자리 종목명 (PRIMARY KEY로 설정)
+            ISU_NM TEXT(40) PRIMARY key,     -- 40자리 종목명 (PRIMARY KEY로 설정)
             MARKET TEXT NOT NULL,            -- 시장 종류 (KOSPI, KOSDAQ)
             SECTOR TEXT,                     -- 업종
             LAST_UPDATED DATETIME DEFAULT CURRENT_TIMESTAMP  -- 마지막 업데이트 시점

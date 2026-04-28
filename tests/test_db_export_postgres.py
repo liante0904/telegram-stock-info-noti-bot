@@ -10,9 +10,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # PostgreSQL 강제 설정
 os.environ["DB_BACKEND"] = "postgres"
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from models.PostgreSQLManager import PostgreSQLManager
+from tests.db_test_utils import postgres_available
+
+if not postgres_available():
+    import pytest
+    pytest.skip("PostgreSQL에 연결할 수 없어 export 테스트를 건너뜁니다.", allow_module_level=True)
 
 async def export_postgres_to_json():
     """
@@ -23,7 +28,7 @@ async def export_postgres_to_json():
     db = PostgreSQLManager()
     
     # 모든 데이터 조회
-    query = f'SELECT * FROM {db.main_table_name} ORDER BY "SAVE_TIME" DESC'
+    query = f'SELECT * FROM {db.main_table_name} ORDER BY "save_time" DESC'
 
     try:
         results = db._fetchall(query)

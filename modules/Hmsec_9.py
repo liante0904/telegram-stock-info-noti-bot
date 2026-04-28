@@ -53,18 +53,18 @@ def Hmsec_checkNewArticle():
         for list in soupList:
             # logger.debug(list)
             # https://www.hmsec.com/documents/research/20230103075940673_ko.pdf
-            DOWNLOAD_URL = 'https://www.hmsec.com/documents/research/{}'
-            DOWNLOAD_URL = DOWNLOAD_URL.format(list['UPLOAD_FILE1'])
+            download_url = 'https://www.hmsec.com/documents/research/{}'
+            download_url = download_url.format(list['UPLOAD_FILE1'])
 
             # https://docs.hmsec.com/SynapDocViewServer/job?fid=#&sync=true&fileType=URL&filePath=#
             LIST_ARTICLE_URL = 'https://docs.hmsec.com/SynapDocViewServer/job?fid={}&sync=true&fileType=URL&filePath={}'
-            LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(DOWNLOAD_URL, DOWNLOAD_URL)
+            LIST_ARTICLE_URL = LIST_ARTICLE_URL.format(download_url, download_url)
 
             LIST_ARTICLE_TITLE = list['SUBJECT']
 
-            REG_DT = list['REG_DATE'].strip()
+            reg_dt = list['REG_DATE'].strip()
             list['NAME'] = (list.get('NAME') or '').strip()
-            WRITER = list['NAME'].strip()
+            writer = list['NAME'].strip()
             # logger.debug(jres['data_list'])
             # SERIAL_NO = jres['data_list'][0]['SERIAL_NO']
 
@@ -74,15 +74,16 @@ def Hmsec_checkNewArticle():
             json_data_list.append({
                 "sec_firm_order":sec_firm_order,
                 "article_board_order":article_board_order,
-                "FIRM_NM":firm_info.get_firm_name(),
-                "ARTICLE_TITLE":LIST_ARTICLE_TITLE,
-                "REG_DT":REG_DT,
-                "ARTICLE_URL":LIST_ARTICLE_URL,
-                "DOWNLOAD_URL": DOWNLOAD_URL,
-                "TELEGRAM_URL": LIST_ARTICLE_URL,
-                "KEY": LIST_ARTICLE_URL,
-                "WRITER": WRITER,
-                "SAVE_TIME": datetime.now().isoformat()
+                "firm_nm":firm_info.get_firm_name(),
+                "article_title":LIST_ARTICLE_TITLE,
+                "reg_dt":reg_dt,
+                "article_url":LIST_ARTICLE_URL,
+                "pdf_url": download_url,
+                "download_url": download_url,
+                "telegram_url": LIST_ARTICLE_URL,
+                "key": LIST_ARTICLE_URL,
+                "writer": writer,
+                "save_time": datetime.now().isoformat()
             })
 
 

@@ -2,11 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict tj6WfPW1u4T2DqMnf3b5IJ7JH9lZZtWBNBxay18N6jerYkMXeZ7tE8i7zpaHuX2
-
--- Dumped from database version 15.17
--- Dumped by pg_dump version 15.17
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -23,41 +18,34 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: TB_SEC_REPORTS; Type: TABLE; Schema: public; Owner: -
+-- Name: tbl_sec_reports; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public."TB_SEC_REPORTS" (
+CREATE TABLE public.tbl_sec_reports (
     report_id bigint NOT NULL,
-    "sec_firm_order" integer,
-    "article_board_order" integer,
-    "FIRM_NM" text,
-    "ARTICLE_TITLE" text,
-    "ARTICLE_URL" text,
-    "MAIN_CH_SEND_YN" text,
-    "DOWNLOAD_STATUS_YN" text DEFAULT ''::text,
-    "DOWNLOAD_URL" text,
-    "SAVE_TIME" text,
-    "REG_DT" text DEFAULT ''::text,
-    "WRITER" text DEFAULT ''::text,
-    "KEY" text,
-    "TELEGRAM_URL" text DEFAULT ''::text,
-    "MKT_TP" text DEFAULT 'KR'::text,
-    "GEMINI_SUMMARY" text,
-    "SUMMARY_TIME" text,
-    "SUMMARY_MODEL" text,
-    "ARCHIVE_PATH" text,
+    sec_firm_order integer,
+    article_board_order integer,
+    firm_nm text,
+    article_title text,
+    article_url text,
+    main_ch_send_yn text,
+    download_status_yn text DEFAULT ''::text,
+    download_url text,
+    save_time text,
+    reg_dt text DEFAULT ''::text,
+    writer text DEFAULT ''::text,
+    key text,
+    telegram_url text DEFAULT ''::text,
+    mkt_tp text DEFAULT 'KR'::text,
+    gemini_summary text,
+    summary_time text,
+    summary_model text,
+    archive_path text,
     retry_count integer DEFAULT 0,
     sync_status integer DEFAULT 0,
-    "PDF_URL" text DEFAULT ''::text,
-    "ATTACH_URL" text
+    pdf_url text DEFAULT ''::text,
+    pdf_sync_status integer DEFAULT 0
 );
-
-
---
--- Name: COLUMN "TB_SEC_REPORTS"."ATTACH_URL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_SEC_REPORTS"."ATTACH_URL" IS 'ATTACH_URL';
 
 
 --
@@ -76,77 +64,69 @@ CREATE SEQUENCE public.tb_sec_reports_report_id_seq
 -- Name: tb_sec_reports_report_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
-ALTER SEQUENCE public.tb_sec_reports_report_id_seq OWNED BY public."TB_SEC_REPORTS".report_id;
+ALTER SEQUENCE public.tb_sec_reports_report_id_seq OWNED BY public.tbl_sec_reports.report_id;
 
 
 --
--- Name: TB_SEC_REPORTS report_id; Type: DEFAULT; Schema: public; Owner: -
+-- Name: tbl_sec_reports report_id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."TB_SEC_REPORTS" ALTER COLUMN report_id SET DEFAULT nextval('public.tb_sec_reports_report_id_seq'::regclass);
-
-
---
--- Name: TB_SEC_REPORTS TB_SEC_REPORTS_KEY_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."TB_SEC_REPORTS"
-    ADD CONSTRAINT "TB_SEC_REPORTS_KEY_key" UNIQUE ("KEY");
+ALTER TABLE ONLY public.tbl_sec_reports ALTER COLUMN report_id SET DEFAULT nextval('public.tb_sec_reports_report_id_seq'::regclass);
 
 
 --
--- Name: TB_SEC_REPORTS TB_SEC_REPORTS_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: tbl_sec_reports tbl_sec_reports_key_unique; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public."TB_SEC_REPORTS"
-    ADD CONSTRAINT "TB_SEC_REPORTS_pkey" PRIMARY KEY (report_id);
+ALTER TABLE ONLY public.tbl_sec_reports
+    ADD CONSTRAINT tbl_sec_reports_key_unique UNIQUE (key);
+
+
+--
+-- Name: tbl_sec_reports tbl_sec_reports_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tbl_sec_reports
+    ADD CONSTRAINT tbl_sec_reports_pkey PRIMARY KEY (report_id);
 
 
 --
 -- Name: idx_tb_sec_reports_key; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_key ON public."TB_SEC_REPORTS" USING btree ("KEY");
+CREATE INDEX idx_tb_sec_reports_key ON public.tbl_sec_reports USING btree (key);
 
 
 --
 -- Name: idx_tb_sec_reports_reg_dt; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_reg_dt ON public."TB_SEC_REPORTS" USING btree ("REG_DT");
+CREATE INDEX idx_tb_sec_reports_reg_dt ON public.tbl_sec_reports USING btree (reg_dt);
 
 
 --
 -- Name: idx_tb_sec_reports_reg_dt_sec_firm; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_reg_dt_sec_firm ON public."TB_SEC_REPORTS" USING btree ("REG_DT" DESC, "sec_firm_order");
+CREATE INDEX idx_tb_sec_reports_reg_dt_sec_firm ON public.tbl_sec_reports USING btree (reg_dt DESC, sec_firm_order);
 
 
 --
 -- Name: idx_tb_sec_reports_save_time; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_save_time ON public."TB_SEC_REPORTS" USING btree ("SAVE_TIME");
+CREATE INDEX idx_tb_sec_reports_save_time ON public.tbl_sec_reports USING btree (save_time);
 
 
 --
 -- Name: idx_tb_sec_reports_search; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_tb_sec_reports_search ON public."TB_SEC_REPORTS" USING btree ("FIRM_NM", "ARTICLE_TITLE", "WRITER");
+CREATE INDEX idx_tb_sec_reports_search ON public.tbl_sec_reports USING btree (firm_nm, article_title, writer);
 
 
 --
--- Name: TB_SEC_REPORTS trg_set_ds_share_telegram_url; Type: TRIGGER; Schema: public; Owner: -
+-- Name: tbl_sec_reports trg_set_ds_share_telegram_url; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_set_ds_share_telegram_url BEFORE INSERT OR UPDATE ON public."TB_SEC_REPORTS" FOR EACH ROW EXECUTE FUNCTION public.set_ds_share_telegram_url();
-
-
---
--- PostgreSQL database dump complete
---
-
-\unrestrict tj6WfPW1u4T2DqMnf3b5IJ7JH9lZZtWBNBxay18N6jerYkMXeZ7tE8i7zpaHuX2
-
+CREATE TRIGGER trg_set_ds_share_telegram_url BEFORE INSERT OR UPDATE ON public.tbl_sec_reports FOR EACH ROW EXECUTE FUNCTION public.set_ds_share_telegram_url();

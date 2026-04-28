@@ -18,13 +18,14 @@
 - 시크릿 관리: `~/secrets/{infra,ssh-reports-scraper,ssh-reports-hub}/secrets.json` (chmod 600)
 - **PostgreSQL 비번은 `infra/secrets.json`이 단일 진실 소스** (`POSTGRES_SSH_REPORTS_HUB_PASSWORD`)
 - `.env` 재생성: `python3 ~/secrets/generate_env.py` (전체) / `python3 ~/secrets/generate_env.py scraper` (개별)
+- 스크래퍼 워크스페이스 `.env`는 반드시 `python3 ~/secrets/generate_env.py scraper`로 갱신하며, 수동 편집하지 않음
 - 비번 변경 절차: `infra/secrets.json` 수정 → `generate_env.py` 실행 → 컨테이너 `down && up`
 
 ```
 스크래퍼 (scraper.py)
     │
     ▼
-PostgreSQL (TB_SEC_REPORTS)      ← DB_BACKEND=postgres (운영 중)
+PostgreSQL (tbl_sec_reports)      ← DB_BACKEND=postgres (운영 중)
     │
     ├── 텔레그램 채널 발송
     └── FastAPI / PostgREST 조회
@@ -39,11 +40,13 @@ PostgreSQL (TB_SEC_REPORTS)      ← DB_BACKEND=postgres (운영 중)
 | `models/db_factory.py` | DB_BACKEND 기반 팩토리 (SQLite ↔ PostgreSQL) |
 | `models/PostgreSQLManager.py` | PostgreSQL CRUD |
 | `models/PostgreSQLManagerV2.py` | PostgreSQL 소문자 스키마 검증용 CRUD |
-| `models/SQLiteManager.py` | SQLite CRUD (호환 인터페이스) |
+| `models/SQLiteManager.py` | SQLite CRUD (레거시 호환/롤백용) |
 | `models/FirmInfo.py` | 증권사/게시판 메타 정보 (DB 기반 동적 로드) |
 | `models/ConfigManager.py` | 환경별 설정 중앙화 (싱글톤) |
 | `models/WebScraper.py` | HTTP/Selenium 공통 스크래퍼 |
 | `scheduler_keyword_alert.py` | 키워드 알림 (PostgreSQL) |
+
+> 테스트 정책: `pytest`는 PostgreSQL/외부 사이트/구식 SQLite 경로를 전부 강제하지 않고, 연결 불가 시 스킵하는 방향으로 정리했습니다. 운영 검증은 PostgreSQL 연결 가능 환경에서만 수행합니다.
 
 ---
 

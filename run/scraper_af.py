@@ -20,7 +20,7 @@ from modules.DBfi_19 import fetch_detailed_url
 
 async def update_firm_telegram_url(date_str=None, target_firm_order=None):
     """
-    telegram_update_required가 True인 증권사의 TELEGRAM_URL 컬럼을 업데이트합니다.
+    telegram_update_required가 True인 증권사의 telegram_url 컬럼을 업데이트합니다.
     """
     logger.info(f"🚀 Starting Enrichment Process (Target: {target_firm_order if target_firm_order is not None else 'ALL'})")
     db = SQLiteManager()
@@ -57,11 +57,11 @@ async def update_firm_telegram_url(date_str=None, target_firm_order=None):
                         
                     update_records = await fetch_detailed_url(records)
                     for record in update_records:
-                        if record.get('TELEGRAM_URL'):
+                        if record.get('telegram_url'):
                             await db.update_telegram_url(
                                 record['report_id'], 
-                                record['TELEGRAM_URL'], 
-                                pdf_url=record.get('PDF_URL') or record['TELEGRAM_URL']
+                                record['telegram_url'], 
+                                pdf_url=record.get('pdf_url') or record['telegram_url']
                             )
                             logger.info(f"[{firm_name}] Updated URL for ID {record['report_id']}")
                 
@@ -73,9 +73,9 @@ async def update_firm_telegram_url(date_str=None, target_firm_order=None):
                             updated_item = res_list[0]
                             await db.update_telegram_url(
                                 updated_item['report_id'], 
-                                updated_item['TELEGRAM_URL'], 
-                                updated_item.get('ARTICLE_TITLE'), 
-                                pdf_url=updated_item.get('PDF_URL') or updated_item['TELEGRAM_URL']
+                                updated_item['telegram_url'], 
+                                updated_item.get('article_title'), 
+                                pdf_url=updated_item.get('pdf_url') or updated_item['telegram_url']
                             )
                             logger.info(f"[{firm_name}] Updated URL for ID {updated_item['report_id']}")
                 

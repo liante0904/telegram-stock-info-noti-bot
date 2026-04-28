@@ -21,8 +21,8 @@ async def fetch(session, url, headers):
         except UnicodeDecodeError:
             return raw_data.decode('euc-kr')
 
-def adjust_date(REG_DT, time_str):
-    reg_date = datetime.strptime(REG_DT, "%Y-%m-%d")
+def adjust_date(reg_dt, time_str):
+    reg_date = datetime.strptime(reg_dt, "%Y-%m-%d")
     time_str = time_str.strip()
 
     match = re.match(r"(오전|오후)?\s*(\d{1,2}):(\d{2})(?::(\d{2}))?", time_str)
@@ -80,7 +80,7 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
 
         for row in soupList:
             try:
-                REG_DT = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "")
+                reg_dt = row.select_one('td:nth-child(1)').get_text(strip=True).replace("/", "")
                 title_cell = row.select_one('td.tLeft a')
                 if not title_cell: continue
                 
@@ -103,26 +103,26 @@ async def fetch_all_pages(session, base_url, sec_firm_order, article_board_order
                 else:
                     article_board_order = 4
                 
-                WRITER = row.select_one('td:nth-child(5) a').get_text(strip=True)
+                writer = row.select_one('td:nth-child(5) a').get_text(strip=True)
 
                 attachment_tag = row.select_one('td:nth-child(7) a')
-                ATTACH_URL = None
+                attach_url = None
                 if attachment_tag:
-                    ATTACH_URL = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
+                    attach_url = "https://www.iprovest.com" + attachment_tag['href'].replace("javascript:fileDown('", "").replace("')", "").replace("weblogic/RSDownloadServlet?filePath=", "upload")
                 
                 json_data_list.append({
                     "sec_firm_order": sec_firm_order,
                     "article_board_order": article_board_order,
-                    "FIRM_NM": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
-                    "REG_DT": REG_DT,
-                    "DOWNLOAD_URL": ATTACH_URL,
-                    "TELEGRAM_URL": ATTACH_URL,
-                    "PDF_URL": ATTACH_URL,
-                    "ARTICLE_TITLE": LIST_ARTICLE_TITLE,
+                    "firm_nm": FirmInfo(sec_firm_order, article_board_order).get_firm_name(),
+                    "reg_dt": reg_dt,
+                    "download_url": attach_url,
+                    "telegram_url": attach_url,
+                    "pdf_url": attach_url,
+                    "article_title": LIST_ARTICLE_TITLE,
                     "CATEGORY": CATEGORY,
-                    "WRITER": WRITER,
-                    "KEY": ATTACH_URL,
-                    "SAVE_TIME": datetime.now().isoformat()
+                    "writer": writer,
+                    "key": attach_url,
+                    "save_time": datetime.now().isoformat()
                 })
             except Exception as e:
                 logger.error(f"Error parsing Kyobo article: {e}")

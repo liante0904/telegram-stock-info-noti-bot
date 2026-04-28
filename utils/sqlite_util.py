@@ -14,10 +14,10 @@ def convert_sql_to_telegram_messages(fetched_rows):
         fetched_rows (list of dict): A list where each element is a dictionary containing 
                                      the following keys:
                                      - 'id' (int): The ID of the row.
-                                     - 'FIRM_NM' (str): The name of the firm.
-                                     - 'ARTICLE_TITLE' (str): The title of the article.
-                                     - 'ARTICLE_URL' (str): The URL of the article.
-                                     - 'SAVE_TIME' (str): The save timestamp.
+                                     - 'firm_nm' (str): The name of the firm.
+                                     - 'article_title' (str): The title of the article.
+                                     - 'article_url' (str): The URL of the article.
+                                     - 'save_time' (str): The save timestamp.
                                      - 'SEND_USER' (str): The user who sent the message.
 
     Returns:
@@ -31,11 +31,11 @@ def convert_sql_to_telegram_messages(fetched_rows):
     
     Example:
         fetched_rows = [
-            {"id": 1, "FIRM_NM": "삼성전자", "ARTICLE_TITLE": "삼성 신제품 발표", 
-             "ARTICLE_URL": "https://example.com/article/1", "SAVE_TIME": "2024-09-27", 
+            {"id": 1, "firm_nm": "삼성전자", "article_title": "삼성 신제품 발표", 
+             "article_url": "https://example.com/article/1", "save_time": "2024-09-27", 
              "SEND_USER": "user1"},
-            {"id": 2, "FIRM_NM": "LG전자", "ARTICLE_TITLE": "LG OLED TV", 
-             "ARTICLE_URL": "https://example.com/article/2", "SAVE_TIME": "2024-09-27", 
+            {"id": 2, "firm_nm": "LG전자", "article_title": "LG OLED TV", 
+             "article_url": "https://example.com/article/2", "save_time": "2024-09-27", 
              "SEND_USER": "user2"}
         ]
         
@@ -57,33 +57,33 @@ def convert_sql_to_telegram_messages(fetched_rows):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for row in fetched_rows:
-        # 첫 번째 요소인 id는 무시하고, 나머지를 FIRM_NM, ARTICLE_TITLE, ARTICLE_URL, SAVE_TIME, SEND_USER로 할당
-        # id, fetched_row['FIRM_NM'], fetched_row['ARTICLE_TITLE'], fetched_row['ARTICLE_URL'], SAVE_TIME, SEND_USER = fetched_row
+        # 첫 번째 요소인 id는 무시하고, 나머지를 firm_nm, article_title, article_url, save_time, SEND_USER로 할당
+        # id, fetched_row['firm_nm'], fetched_row['article_title'], fetched_row['article_url'], save_time, SEND_USER = fetched_row
 
         sendMessageText = ""
 
-        # 'FIRM_NM'이 존재하는 경우에만 포함
-        if row['FIRM_NM']:
-            if row['FIRM_NM'] not in EXCLUDED_FIRMS:
-                if row['FIRM_NM'] != last_firm_nm:
+        # 'firm_nm'이 존재하는 경우에만 포함
+        if row['firm_nm']:
+            if row['firm_nm'] not in EXCLUDED_FIRMS:
+                if row['firm_nm'] != last_firm_nm:
                     # 메시지가 3500자를 넘으면 추가된 메시지들을 배열에 저장하고 새로 시작
                     if len(message_chunk) + len(sendMessageText) > message_limit:
                         formatted_messages.append(message_chunk.strip())
                         message_chunk = ""  # 새로 시작
 
-                    # 새 메시지 조각의 첫 줄에 FIRM_NM 추가
-                    message_chunk += "\n\n" + "●" + row['FIRM_NM'] + "\n"
-                    last_firm_nm = row['FIRM_NM']
+                    # 새 메시지 조각의 첫 줄에 firm_nm 추가
+                    message_chunk += "\n\n" + "●" + row['firm_nm'] + "\n"
+                    last_firm_nm = row['firm_nm']
 
         # 게시글 제목(굵게)
-        sendMessageText += "*" + row['ARTICLE_TITLE'].replace("_", " ").replace("*", "") + "*" + "\n"
+        sendMessageText += "*" + row['article_title'].replace("_", " ").replace("*", "") + "*" + "\n"
 
         # URL 우선순위 설정
         if row.get('sec_firm_order') == 11:
             # DS투자의 경우, 트리거에 의해 생성된 TELEGRAM_URL이 최우선이며, 
             # 만약 비어있다면 아직 생성 전이므로 링크없음으로 처리하여 잘못된 링크 발송 방지
-            link_url = row.get('TELEGRAM_URL') if row.get('TELEGRAM_URL') else "링크없음"
-        link_url = row.get('TELEGRAM_URL') or row.get('DOWNLOAD_URL') or row.get('ARTICLE_URL') or ""
+            link_url = row.get('telegram_url') if row.get('telegram_url') else "링크없음"
+        link_url = row.get('telegram_url') or row.get('download_url') or row.get('article_url') or ""
         
         # 원문 링크 추가
         if link_url == "링크없음":
@@ -95,8 +95,8 @@ def convert_sql_to_telegram_messages(fetched_rows):
         if len(message_chunk) + len(sendMessageText) > message_limit:
             # 이전 chunk를 저장하고 새로운 chunk 시작
             formatted_messages.append(message_chunk.strip())
-            # 새 메시지 조각의 첫 줄에 FIRM_NM 추가
-            message_chunk = "\n\n" + "●" + row['FIRM_NM'] + "\n" + sendMessageText
+            # 새 메시지 조각의 첫 줄에 firm_nm 추가
+            message_chunk = "\n\n" + "●" + row['firm_nm'] + "\n" + sendMessageText
         else:
             message_chunk += sendMessageText
 
@@ -116,26 +116,26 @@ def format_message_sql(data_list):
     last_firm_nm = None  # 마지막으로 출력된 FIRM_NM을 저장하는 변수
 
     for data in data_list:
-        # fetch_keyword_reports 등에서 넘어오는 데이터 순서: report_id, FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME
+        # fetch_keyword_reports 등에서 넘어오는 데이터 순서: report_id, firm_nm, article_title, telegram_url, save_time
         if len(data) == 5:
-            _, FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME = data
+            _, firm_nm, article_title, telegram_url, save_time = data
         else:
-            # 기존 4개 컬럼(FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME) 대응
-            FIRM_NM, ARTICLE_TITLE, TELEGRAM_URL, SAVE_TIME = data[:4]
+            # 기존 4개 컬럼(firm_nm, article_title, telegram_url, save_time) 대응
+            firm_nm, article_title, telegram_url, save_time = data[:4]
 
         sendMessageText = ""
         
-        # 'FIRM_NM'이 존재하는 경우에만 포함
-        if FIRM_NM:
-            if FIRM_NM not in EXCLUDED_FIRMS:
-                if FIRM_NM != last_firm_nm:
-                    sendMessageText += "\n\n" + "●" + FIRM_NM + "\n"
-                    last_firm_nm = FIRM_NM
+        # 'firm_nm'이 존재하는 경우에만 포함
+        if firm_nm:
+            if firm_nm not in EXCLUDED_FIRMS:
+                if firm_nm != last_firm_nm:
+                    sendMessageText += "\n\n" + "●" + firm_nm + "\n"
+                    last_firm_nm = firm_nm
         
         # 게시글 제목(굵게)
-        sendMessageText += "*" + ARTICLE_TITLE.replace("_", " ").replace("*", "") + "*" + "\n"
+        sendMessageText += "*" + article_title.replace("_", " ").replace("*", "") + "*" + "\n"
         # 원문 링크
-        sendMessageText += EMOJI_PICK + "[링크]" + "(" + TELEGRAM_URL + ")" + "\n"
+        sendMessageText += EMOJI_PICK + "[링크]" + "(" + telegram_url + ")" + "\n"
 
         # SEND_USER 값을 표시하고 싶다면 여기에 추가
         # sendMessageText += "발송 사용자: " + SEND_USER + "\n"
