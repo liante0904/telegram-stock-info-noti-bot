@@ -19,7 +19,7 @@ async def fix_ls_urls():
     # 1. 대상 데이터 추출 (upload/ fallback + 빈 문자열)
     # 최근 30일치 위주로 먼저 확인
     query = """
-        SELECT report_id, "article_title", "telegram_url", "article_url", "reg_dt", "key"
+        SELECT report_id, "article_title", "writer", "telegram_url", "article_url", "reg_dt", "key"
         FROM "tbl_sec_reports"
         WHERE "firm_nm" = 'LS증권'
           AND ("telegram_url" LIKE 'https://www.ls-sec.co.kr/upload/%'

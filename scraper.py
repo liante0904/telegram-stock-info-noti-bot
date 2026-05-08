@@ -83,7 +83,7 @@ async def enrich_data():
                     # 유휴시간(20시~06시)에는 전체 LS backlog 정리
                     if is_idle_time:
                         backlog = db._fetchall('''
-                            SELECT report_id, article_title, telegram_url, article_url, reg_dt, key
+                            SELECT report_id, article_title, writer, telegram_url, article_url, reg_dt, key
                             FROM tbl_sec_reports
                             WHERE sec_firm_order = 0
                               AND (telegram_url IS NULL OR telegram_url = ''
