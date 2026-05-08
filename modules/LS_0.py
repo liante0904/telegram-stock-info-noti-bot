@@ -464,20 +464,48 @@ async def reconstruct_msg_url_from_db(article, headers):
         except ValueError:
             return None
 
+        # 후보 URL 목록 생성 (날짜 ±5일 × seq +1~+30 = 330개)
+        candidates = []
         for day_offset in range(-5, 6):
             test_date = (base_date + timedelta(days=day_offset)).strftime("%Y%m%d")
             for seq_offset in range(1, 31):
                 test_seq = max_seq + seq_offset
                 test_url = f"https://msg.ls-sec.co.kr/eum/K_{test_date}_{writer_id}_{test_seq}.pdf"
+                candidates.append(test_url)
+
+        # 병렬 탐색 (static CDN, 20개씩 동시 요청)
+        found_url = None
+        concurrency = 20
+        sem = asyncio.Semaphore(concurrency)
+
+        async def check_url(url: str) -> str | None:
+            async with sem:
                 try:
-                    resp = requests.get(test_url, headers=headers, proxies=PROXIES, verify=False, timeout=10)
+                    resp = await asyncio.to_thread(
+                        lambda: requests.get(url, headers=headers, proxies=PROXIES,
+                                            verify=False, timeout=10)
+                    )
                     if resp.status_code == 200:
-                        logger.info(f"[LS][DB추론] writer={writer_name}, date={test_date}, seq={test_seq}, url={test_url}")
-                        return test_url
+                        return url
                 except Exception:
                     pass
+                return None
 
-        logger.debug(f"[LS][DB추론] writer={writer_name}, max_seq={max_seq}, seq range={max_seq+1}~{max_seq+30}, not found")
+        for i in range(0, len(candidates), concurrency):
+            batch = candidates[i:i + concurrency]
+            results = await asyncio.gather(*[check_url(u) for u in batch])
+            for r in results:
+                if r:
+                    found_url = r
+                    break
+            if found_url:
+                break
+
+        if found_url:
+            logger.info(f"[LS][DB추론] writer={writer_name}, url={found_url}")
+            return found_url
+
+        logger.debug(f"[LS][DB추론] writer={writer_name}, max_seq={max_seq}, not found")
         return None
     except Exception as e:
         logger.error(f"[LS][DB추론] {writer_name}: {e}")
