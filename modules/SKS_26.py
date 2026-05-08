@@ -86,8 +86,8 @@ def main():
         logger.info("No articles found.")
     else:
         db = get_db()
-        inserted_count = db.insert_json_data_list(result, 'data_main_daily_send')
-        logger.info(f"Inserted {inserted_count} articles.")
+        inserted_count, updated_count = db.insert_json_data_list(result)
+        logger.info(f"Inserted {inserted_count} articles, updated {updated_count}.")
 
 if __name__ == '__main__':
     main()

@@ -47,12 +47,6 @@ class PostgreSQLManager:
         "pdf_sync_status",
     )
 
-    # Callers that still pass the old SQLite table name are transparently remapped.
-    _TABLE_MAP = {
-        "data_main_daily_send": "tbl_sec_reports",
-        "tbl_sec_reports": "tbl_sec_reports",
-    }
-
     def __init__(self):
         load_dotenv(override=True)
         self.host = os.getenv("POSTGRES_HOST", "localhost")
@@ -138,7 +132,6 @@ class PostgreSQLManager:
         """Insert/upsert a list of report dicts. Returns (inserted, updated)."""
         if table_name is None:
             table_name = self.main_table_name
-        table_name = self._TABLE_MAP.get(table_name, table_name)
 
         records = [
             (
