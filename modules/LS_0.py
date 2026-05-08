@@ -278,11 +278,21 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                         article["pdf_url"] = url
                         article["download_url"] = url
                 else:
-                    url = await create_fallback_url(article, soup)
-                    article["article_url"] = url
-                    article["telegram_url"] = url
-                    article["pdf_url"] = url
-                    article["download_url"] = url
+                    # 이미지 없음 → DB 기반 writer ID 추론으로 msg URL 우선 시도
+                    db_url = await reconstruct_msg_url_from_db(article, headers)
+                    if db_url:
+                        quoted = urllib.parse.quote(db_url, safe=":/")
+                        article["article_url"] = quoted
+                        article["telegram_url"] = quoted
+                        article["pdf_url"] = quoted
+                        article["download_url"] = quoted
+                        logger.info(f"[LS][DB추론] msg URL 복구 성공: {db_url}")
+                    else:
+                        url = await create_fallback_url(article, soup)
+                        article["article_url"] = url
+                        article["telegram_url"] = url
+                        article["pdf_url"] = url
+                        article["download_url"] = url
 
 async def LS_detail(articles, firm_info=None):
     if isinstance(articles, dict):
@@ -384,6 +394,95 @@ async def create_fallback_url(article, soup=None):
         return fallback_url
     
     return ""
+
+async def reconstruct_msg_url_from_db(article, headers):
+    """DB에 있는 성공한 msg URL 데이터를 기반으로 writer ID와 seq를 추론해서 msg URL 재구성.
+
+    이미지가 없는 게시글(process_article에서 img=None)에서 첨부파일 fallback 대신
+    동일 작성자의 기존 성공 URL에서 writer_id와 최신 seq를 추출하여 msg URL을 찾는다.
+    """
+    writer_name = article.get("writer", "")
+    reg_dt = article.get("reg_dt", "")
+    if not writer_name or not reg_dt:
+        return None
+
+    try:
+        from models.db_factory import get_db
+        db = get_db()
+
+        rows = db._fetchall("""
+            SELECT telegram_url
+            FROM tbl_sec_reports
+            WHERE sec_firm_order = 0
+              AND writer = %s
+              AND telegram_url LIKE 'https://msg.ls-sec.co.kr/eum/K_%%'
+            ORDER BY save_time DESC
+            LIMIT 1
+        """, (writer_name,))
+
+        if not rows:
+            logger.debug(f"[LS][DB추론] writer={writer_name}: 성공 msg URL 없음")
+            return None
+
+        sample_url = rows[0]["telegram_url"]
+        m = re.search(r'K_(\d{8})_(.+)\.pdf', sample_url)
+        if not m:
+            return None
+
+        suffix = m.group(2)
+        parts = suffix.rsplit('_', 1)
+        if len(parts) != 2:
+            return None
+
+        writer_id = parts[0]
+
+        all_urls = db._fetchall("""
+            SELECT telegram_url
+            FROM tbl_sec_reports
+            WHERE sec_firm_order = 0
+              AND telegram_url LIKE 'https://msg.ls-sec.co.kr/eum/K_%%'
+              AND telegram_url LIKE '%%' || %s || '_%%'
+            ORDER BY telegram_url DESC
+            LIMIT 100
+        """, (writer_id,))
+
+        max_seq = 0
+        for row in all_urls:
+            m2 = re.search(rf'K_(\d{{8}})_{writer_id}_(\d+).pdf', row['telegram_url'])
+            if m2:
+                s = int(m2.group(2))
+                if s > max_seq:
+                    max_seq = s
+
+        if max_seq == 0:
+            logger.debug(f"[LS][DB추론] writer={writer_name}: seq 추출 실패")
+            return None
+
+        from datetime import datetime, timedelta
+        try:
+            base_date = datetime.strptime(reg_dt, "%Y%m%d")
+        except ValueError:
+            return None
+
+        for day_offset in range(-5, 6):
+            test_date = (base_date + timedelta(days=day_offset)).strftime("%Y%m%d")
+            for seq_offset in range(1, 31):
+                test_seq = max_seq + seq_offset
+                test_url = f"https://msg.ls-sec.co.kr/eum/K_{test_date}_{writer_id}_{test_seq}.pdf"
+                try:
+                    resp = requests.get(test_url, headers=headers, proxies=PROXIES, verify=False, timeout=10)
+                    if resp.status_code == 200:
+                        logger.info(f"[LS][DB추론] writer={writer_name}, date={test_date}, seq={test_seq}, url={test_url}")
+                        return test_url
+                except Exception:
+                    pass
+
+        logger.debug(f"[LS][DB추론] writer={writer_name}, max_seq={max_seq}, seq range={max_seq+1}~{max_seq+30}, not found")
+        return None
+    except Exception as e:
+        logger.error(f"[LS][DB추론] {writer_name}: {e}")
+        return None
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == 'fix':
