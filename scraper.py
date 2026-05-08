@@ -55,47 +55,56 @@ async def enrich_data():
     logger.info("Starting data enrichment process...")
     db = get_db()
     from models.FirmInfo import FirmInfo
-    
+
+    # KST 기준 시간 확인 (20시 이후 = 유휴시간 = 전체 backlog 정리)
+    import pytz
+    from datetime import datetime
+    kst_hour = datetime.now(pytz.timezone('Asia/Seoul')).hour
+    is_idle_time = kst_hour >= 20 or kst_hour < 6
+
     for sec_firm_order in range(len(FirmInfo.firm_names)):
         firm_info = FirmInfo(sec_firm_order=sec_firm_order, article_board_order=0)
         firm_name = firm_info.get_firm_name()
 
         if firm_name and firm_info.telegram_update_required:
-            records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info, days_limit=7)
+            # 최근 3일 비어있는 항목은 항상 후처리
+            records = await db.fetch_all_empty_telegram_url_articles(firm_info=firm_info, days_limit=3)
             if not records: continue
 
-            logger.info(f"[{firm_name}] Found {len(records)} records for enrichment.")
+            logger.info(f"[{firm_name}] Found {len(records)} records for enrichment (최근 3일).")
             try:
-                if sec_firm_order == 19:  # DB증권: DBfi_checkNewArticle() 안에서 이미 처리 완료
+                if sec_firm_order == 19:  # DB증권
                     pass
                 elif sec_firm_order == 0:  # LS
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in update_records if r.get('telegram_url')]
                     if tasks: await asyncio.gather(*tasks)
 
-                    # 추가: upload/ fallback URL을 가진 레코드들도 소량씩 재처리
-                    fallback_records = db._fetchall("""
-                        SELECT report_id, article_title, telegram_url, article_url, reg_dt, key
-                        FROM tbl_sec_reports
-                        WHERE sec_firm_order = 0
-                          AND telegram_url LIKE 'https://www.ls-sec.co.kr/upload/%%'
-                          AND key IS NOT NULL AND key != ''
-                        ORDER BY save_time DESC
-                        LIMIT 10
-                    """)
-                    if fallback_records:
-                        logger.info(f"[LS] upload/ fallback {len(fallback_records)}건 재처리 시도...")
-                        fixed = await LS_detail(articles=fallback_records, firm_info=firm_info)
-                        fix_tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in fixed if r.get('telegram_url', '').startswith('https://msg.ls-sec.co.kr/')]
-                        if fix_tasks:
-                            await asyncio.gather(*fix_tasks)
-                            logger.success(f"[LS] fallback {len(fix_tasks)}건 msg URL로 복구 완료")
+                    # 유휴시간(20시~06시)에는 전체 LS backlog 정리
+                    if is_idle_time:
+                        backlog = db._fetchall('''
+                            SELECT report_id, article_title, telegram_url, article_url, reg_dt, key
+                            FROM tbl_sec_reports
+                            WHERE sec_firm_order = 0
+                              AND (telegram_url IS NULL OR telegram_url = ''
+                                   OR telegram_url NOT LIKE 'https://msg.ls-sec.co.kr/%%')
+                              AND key IS NOT NULL AND key != ''
+                            ORDER BY save_time DESC
+                            LIMIT 50
+                        ''')
+                        if backlog:
+                            logger.info(f"[LS][유휴] 전체 backlog {len(backlog)}건 재처리...")
+                            fixed = await LS_detail(articles=backlog, firm_info=firm_info)
+                            fix_tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in fixed if r.get('telegram_url', '').startswith('https://msg.ls-sec.co.kr/')]
+                            if fix_tasks:
+                                await asyncio.gather(*fix_tasks)
+                                logger.success(f"[LS][유휴] {len(fix_tasks)}건 msg URL 복구 완료")
                 elif sec_firm_order == 11:  # DS
-                    # 트리거가 자동으로 처리하므로 별도 로직 불필요
                     pass
                 logger.success(f"[{firm_name}] Enrichment completed.")
             except Exception as e:
                 logger.error(f"[{firm_name}] Enrichment failed: {e}")
+
 
 async def daily_send_report(date_str=None):
     db = get_db()
