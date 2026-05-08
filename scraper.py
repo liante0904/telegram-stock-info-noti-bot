@@ -80,6 +80,25 @@ async def enrich_data():
                     tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in update_records if r.get('telegram_url')]
                     if tasks: await asyncio.gather(*tasks)
 
+                    # 최근 1일 이내 upload/ fallback → writer 기반 재시도 (reconstruct_msg_url_from_db 개선)
+                    fallback_records = db._fetchall('''
+                        SELECT report_id, article_title, writer, telegram_url, article_url, reg_dt, key
+                        FROM tbl_sec_reports
+                        WHERE sec_firm_order = 0
+                          AND telegram_url LIKE 'https://www.ls-sec.co.kr/upload/%%'
+                          AND save_time >= NOW() - INTERVAL '1 day'
+                          AND key IS NOT NULL AND key != ''
+                        ORDER BY save_time DESC
+                        LIMIT 50
+                    ''')
+                    if fallback_records:
+                        logger.info(f"[LS] 최근 upload/ fallback {len(fallback_records)}건 재시도...")
+                        refixed = await LS_detail(articles=fallback_records, firm_info=firm_info)
+                        refix_tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in refixed if r.get('telegram_url', '').startswith('https://msg.ls-sec.co.kr/')]
+                        if refix_tasks:
+                            await asyncio.gather(*refix_tasks)
+                            logger.success(f"[LS] upload/ fallback {len(refix_tasks)}건 msg URL 재복구 완료")
+
                     # 유휴시간(20시~06시)에는 전체 LS backlog 정리
                     if is_idle_time:
                         backlog = db._fetchall('''
@@ -90,7 +109,7 @@ async def enrich_data():
                                    OR telegram_url NOT LIKE 'https://msg.ls-sec.co.kr/%%')
                               AND key IS NOT NULL AND key != ''
                             ORDER BY save_time DESC
-                            LIMIT 50
+                            LIMIT 200
                         ''')
                         if backlog:
                             logger.info(f"[LS][유휴] 전체 backlog {len(backlog)}건 재처리...")

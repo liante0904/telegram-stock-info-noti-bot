@@ -246,6 +246,12 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                 if attach_tag:
                     article["ATTACH_FILE_NAME"] = attach_tag.get_text(strip=True)
 
+                # ── URL 해결 전략 (3단계) ──
+                # 1순위: img alt 기반 CDN URL 탐색 (get_valid_url)
+                #   img alt 텍스트(예: "홍길동_20260508")에서 파일명 추출 → msg.ls-sec.co.kr probing
+                #   ※ 실제 CDN 패턴은 K_{date}_{emp_id}_{seq}.pdf 이므로 img alt 기반은 잘 안 맞음
+                resolved_url = None
+
                 img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
                       soup.select_one("#contents > div.tbViewCon > div > p > img")
 
@@ -254,45 +260,31 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                     if img_filename:
                         name, extension = os.path.splitext(img_filename)
                         match = re.search(r"_(\d{8})$", name)
-
                         if match:
                             date_part = match.group(1)
                             new_name = re.sub(r"_(\d{8})$", "", name)
                             new_filename = f"{date_part}_{new_name}.pdf"
+                            resolved_url = await get_valid_url(new_filename, date_part, article, headers)
 
-                            url = await get_valid_url(new_filename, date_part, article, headers)
-                            article["article_url"] = urllib.parse.quote(url, safe=":/")
-                            article["telegram_url"] = urllib.parse.quote(url, safe=":/")
-                            article["pdf_url"] = urllib.parse.quote(url, safe=":/")
-                            article["download_url"] = urllib.parse.quote(url, safe=":/")
-                        else:
-                            url = await create_fallback_url(article, soup)
-                            article["article_url"] = url
-                            article["telegram_url"] = url
-                            article["pdf_url"] = url
-                            article["download_url"] = url
-                    else:
-                        url = await create_fallback_url(article, soup)
-                        article["article_url"] = url
-                        article["telegram_url"] = url
-                        article["pdf_url"] = url
-                        article["download_url"] = url
-                else:
-                    # 이미지 없음 → DB 기반 writer ID 추론으로 msg URL 우선 시도
+                # 2순위: DB 기반 writer ID 추론 → 올바른 CDN URL(K_date_empId_seq.pdf) 생성
+                #   img 기반 URL이 없거나 msg./nls. 도메인이 아니면 writer 기반 재시도
+                if not resolved_url or not (resolved_url.startswith('https://msg.ls-sec.co.kr/') or
+                                            resolved_url.startswith('https://nls-sec.co.kr/')):
                     db_url = await reconstruct_msg_url_from_db(article, headers)
                     if db_url:
-                        quoted = urllib.parse.quote(db_url, safe=":/")
-                        article["article_url"] = quoted
-                        article["telegram_url"] = quoted
-                        article["pdf_url"] = quoted
-                        article["download_url"] = quoted
+                        resolved_url = db_url
                         logger.info(f"[LS][DB추론] msg URL 복구 성공: {db_url}")
-                    else:
-                        url = await create_fallback_url(article, soup)
-                        article["article_url"] = url
-                        article["telegram_url"] = url
-                        article["pdf_url"] = url
-                        article["download_url"] = url
+
+                # 3순위: upload/ fallback URL (www.ls-sec.co.kr/upload/...)
+                if not resolved_url:
+                    resolved_url = await create_fallback_url(article, soup)
+
+                # 최종 URL 할당
+                quoted = urllib.parse.quote(resolved_url, safe=":/") if resolved_url else ""
+                article["article_url"] = quoted
+                article["telegram_url"] = quoted
+                article["pdf_url"] = quoted
+                article["download_url"] = quoted
 
 async def LS_detail(articles, firm_info=None):
     if isinstance(articles, dict):
@@ -398,8 +390,13 @@ async def create_fallback_url(article, soup=None):
 async def reconstruct_msg_url_from_db(article, headers):
     """DB에 있는 성공한 msg URL 데이터를 기반으로 writer ID와 seq를 추론해서 msg URL 재구성.
 
-    이미지가 없는 게시글(process_article에서 img=None)에서 첨부파일 fallback 대신
-    동일 작성자의 기존 성공 URL에서 writer_id와 최신 seq를 추출하여 msg URL을 찾는다.
+    동일 작성자의 기존 성공 URL에서 writer_id(emp_id)와 seq 패턴을 추출하여
+    K_{date}_{emp_id}_{seq}.pdf 형태의 올바른 CDN URL을 생성/probing한다.
+
+    개선 사항 (2026-05):
+    - seq 탐색 범위: 과거 seq까지 포함하도록 개선 (max_seq 기준 ±30)
+    - 날짜 탐색 범위: ±LS_SEARCH_DAYS (기본 ±10일)
+    - 선형 보간 기반 seq 추정 (fix_ls_db_by_empid.py 방식 참고)
     """
     writer_name = article.get("writer", "")
     reg_dt = article.get("reg_dt", "")
@@ -410,6 +407,7 @@ async def reconstruct_msg_url_from_db(article, headers):
         from models.db_factory import get_db
         db = get_db()
 
+        # 1. 해당 writer의 성공 URL 1건 찾기 (emp_id 확인용)
         rows = db._fetchall("""
             SELECT telegram_url
             FROM tbl_sec_reports
@@ -436,44 +434,84 @@ async def reconstruct_msg_url_from_db(article, headers):
 
         writer_id = parts[0]
 
+        # 2. 해당 writer_id의 전체 seq 이력 조회
         all_urls = db._fetchall("""
-            SELECT telegram_url
+            SELECT telegram_url, reg_dt
             FROM tbl_sec_reports
             WHERE sec_firm_order = 0
               AND telegram_url LIKE 'https://msg.ls-sec.co.kr/eum/K_%%'
               AND telegram_url LIKE '%%' || %s || '_%%'
             ORDER BY telegram_url DESC
-            LIMIT 100
+            LIMIT 200
         """, (writer_id,))
 
+        seq_history = []  # [(reg_dt, seq)]
         max_seq = 0
         for row in all_urls:
             m2 = re.search(rf'K_(\d{{8}})_{writer_id}_(\d+).pdf', row['telegram_url'])
             if m2:
                 s = int(m2.group(2))
+                seq_history.append((row['reg_dt'], s))
                 if s > max_seq:
                     max_seq = s
 
-        if max_seq == 0:
+        if not seq_history:
             logger.debug(f"[LS][DB추론] writer={writer_name}: seq 추출 실패")
             return None
 
-        from datetime import datetime, timedelta
+        # 3. 선형 보간으로 예상 seq 계산 (fix_ls_db_by_empid.py 방식)
+        reg_dt_int = reg_dt
+        sorted_h = sorted(seq_history, key=lambda x: x[0])
+        before = [(dt, sq) for dt, sq in sorted_h if dt <= reg_dt_int]
+        after  = [(dt, sq) for dt, sq in sorted_h if dt > reg_dt_int]
+
+        def date_diff_days(d1, d2):
+            try:
+                return abs((datetime.strptime(d1, "%Y%m%d") - datetime.strptime(d2, "%Y%m%d")).days)
+            except Exception:
+                return 999
+
+        est_seq = max_seq
+        if before and after:
+            dt1, sq1 = before[-1]
+            dt2, sq2 = after[0]
+            d1 = date_diff_days(reg_dt_int, dt1)
+            d2 = date_diff_days(reg_dt_int, dt2)
+            total = max(d1 + d2, 1)
+            est_seq = int(sq1 + (sq2 - sq1) * d1 / total)
+        elif before:
+            # 최근 두 점으로 속도 추정
+            dt1, sq1 = before[-1]
+            d = date_diff_days(reg_dt_int, dt1)
+            if len(before) >= 2:
+                dt0, sq0 = before[-2]
+                daily = abs(sq1 - sq0) / max(date_diff_days(dt1, dt0), 1)
+            else:
+                daily = 3
+            est_seq = int(sq1 + daily * d)
+
+        est_seq = max(1, est_seq)
+
+        # 4. 후보 URL 목록 생성 (넓은 범위 탐색)
         try:
             base_date = datetime.strptime(reg_dt, "%Y%m%d")
         except ValueError:
             return None
 
-        # 후보 URL 목록 생성 (날짜 ±5일 × seq +1~+30 = 330개)
         candidates = []
-        for day_offset in range(-5, 6):
+        # 날짜: ±LS_SEARCH_DAYS
+        for day_offset in range(-LS_SEARCH_DAYS, LS_SEARCH_DAYS + 1):
             test_date = (base_date + timedelta(days=day_offset)).strftime("%Y%m%d")
-            for seq_offset in range(1, 31):
-                test_seq = max_seq + seq_offset
+            # seq: 예상값 기준 ±50, 최소 1
+            for seq_offset in range(-50, 51):
+                test_seq = max(1, est_seq + seq_offset)
                 test_url = f"https://msg.ls-sec.co.kr/eum/K_{test_date}_{writer_id}_{test_seq}.pdf"
                 candidates.append(test_url)
 
-        # 병렬 탐색 (static CDN, 20개씩 동시 요청)
+        # 중복 제거 (날짜*seq 조합이 중복될 수 있음)
+        candidates = list(dict.fromkeys(candidates))
+
+        # 5. 병렬 탐색 (20개씩 동시 요청)
         found_url = None
         concurrency = 20
         sem = asyncio.Semaphore(concurrency)
@@ -505,7 +543,7 @@ async def reconstruct_msg_url_from_db(article, headers):
             logger.info(f"[LS][DB추론] writer={writer_name}, url={found_url}")
             return found_url
 
-        logger.debug(f"[LS][DB추론] writer={writer_name}, max_seq={max_seq}, not found")
+        logger.debug(f"[LS][DB추론] writer={writer_name}, est_seq={est_seq}, max_seq={max_seq}, not found")
         return None
     except Exception as e:
         logger.error(f"[LS][DB추론] {writer_name}: {e}")
