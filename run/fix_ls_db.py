@@ -12,19 +12,24 @@ from modules.LS_0 import LS_detail, LS_checkNewArticle
 async def fix_ls_urls():
     db = get_db()
     
-    # 1. 대상 데이터 추출 (upload/ 방식의 Fallback URL들)
-    # 최근 3일치 위주로 먼저 확인 (필요시 기간 확대 가능)
+    # 1. 대상 데이터 추출 (upload/ fallback + 빈 문자열)
+    # 최근 30일치 위주로 먼저 확인
     query = """
         SELECT report_id, "article_title", "telegram_url", "article_url", "reg_dt", "key"
         FROM "tbl_sec_reports"
         WHERE "firm_nm" = 'LS증권'
-          AND "telegram_url" LIKE 'https://www.ls-sec.co.kr/upload/%'
-        ORDER BY "reg_dt" DESC
+          AND ("telegram_url" LIKE 'https://www.ls-sec.co.kr/upload/%'
+               OR "telegram_url" IS NULL OR "telegram_url" = '')
+          AND "key" IS NOT NULL AND "key" != ''
+        ORDER BY "save_time" DESC
+        LIMIT 500
     """
     
     records = await db.execute_query(query)
     total = len(records)
-    logger.info(f"복구 대상 LS Fallback URL (upload/ 방식): {total}건")
+    upload_count = sum(1 for r in records if r.get('telegram_url', '').startswith('https://www.ls-sec.co.kr/upload/'))
+    empty_count = total - upload_count
+    logger.info(f"복구 대상: {total}건 (upload/ fallback {upload_count}건, 빈 문자열 {empty_count}건)")
     
     if total == 0:
         logger.info("복구할 데이터가 없습니다.")

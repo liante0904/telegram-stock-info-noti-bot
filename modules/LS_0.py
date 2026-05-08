@@ -41,7 +41,7 @@ def get_soup_with_warp(url, headers):
     global USE_WARP_ONLY
     for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
-            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
+            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=30)
             response.raise_for_status()
             return BeautifulSoup(response.content, "html.parser")
         except Exception as e:
@@ -202,7 +202,7 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
     for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
             def sync_get_warp():
-                response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=20)
+                response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=30)
                 response.raise_for_status()
                 return response.text
             return await loop.run_in_executor(None, sync_get_warp)
