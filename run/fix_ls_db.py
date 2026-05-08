@@ -7,8 +7,8 @@ from datetime import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# fix 스크립트 실행 시 msg.ls-sec.co.kr 탐색 범위를 ±60일로 확대
-os.environ["LS_SEARCH_DAYS"] = "60"
+# fix 스크립트 실행 시 msg.ls-sec.co.kr 탐색 범위를 ±5일로 설정 (작성일 기준 대부분 수렴)
+os.environ["LS_SEARCH_DAYS"] = "5"
 
 from models.db_factory import get_db
 from modules.LS_0 import LS_detail, LS_checkNewArticle
@@ -41,7 +41,7 @@ async def fix_ls_urls():
 
     # 상세 페이지 재파싱 및 정적 URL 탐색 진행
     # LS_detail 함수는 내부적으로 get_valid_url(±60일)을 호출함 (fix 전용 확대 범위)
-    logger.info(f"상세 페이지 재접속 및 정적 URL(msg.) 탐색을 시작합니다... (탐색 범위: ±60일)")
+    logger.info(f"상세 페이지 재접속 및 정적 URL(msg.) 탐색을 시작합니다... (탐색 범위: ±5일)")
     
     # LS_detail은 리스트를 받아서 내부 필드를 수정함
     # report_id 매핑을 위해 dict 형태로 유지
