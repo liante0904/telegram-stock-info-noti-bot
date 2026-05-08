@@ -32,6 +32,7 @@ USE_WARP_ONLY = False  # 직접 접속 실패 시 전역적으로 WARP만 사용
 SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
 LS_DIRECT_RETRIES = int(os.getenv("LS_DIRECT_RETRIES", "2"))
 LS_WARP_RETRIES = int(os.getenv("LS_WARP_RETRIES", "5"))
+LS_SEARCH_DAYS = int(os.getenv("LS_SEARCH_DAYS", "10"))  # msg.ls-sec.co.kr URL 탐색 날짜 범위 (±N일)
 PROXIES = {
     'http': SOCKS_PROXY,
     'https': SOCKS_PROXY
@@ -347,8 +348,8 @@ async def get_valid_url(new_filename, date_part, article, headers):
     except ValueError:
         return await create_fallback_url(article, None)
 
-    # 탐색 범위를 전후 10일로 대폭 확대 (작성일과 서버 업로드일 차이 대응)
-    date_range = [date_obj + timedelta(days=i) for i in range(-10, 11)]
+    # 탐색 범위를 전후 LS_SEARCH_DAYS일로 확대 (작성일과 서버 업로드일 차이 대응)
+    date_range = [date_obj + timedelta(days=i) for i in range(-LS_SEARCH_DAYS, LS_SEARCH_DAYS + 1)]
     for test_date in date_range:
         test_date_str = test_date.strftime("%Y%m%d")
         test_filename = new_filename.replace(date_part, test_date_str)
