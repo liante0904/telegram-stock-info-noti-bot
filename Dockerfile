@@ -21,10 +21,11 @@ RUN groupadd --gid 1001 appgroup && useradd --uid 1001 --gid 1001 --shell /bin/b
 # 5. 작업 디렉토리 설정
 WORKDIR /app
 
-# 6. 의존성 설치 (캐시 활용)
+# 6. 서브모듈(ssh-library) 포함하여 의존성 설치 (캐시 활용)
 # 소유권을 appuser로 지정하여 파일 복사
-COPY --chown=appuser:appgroup pyproject.toml uv.lock ./ 
-RUN uv sync --frozen --no-cache
+COPY --chown=appuser:appgroup pyproject.toml uv.lock ./
+COPY --chown=appuser:appgroup lib/ ./lib/
+RUN uv sync --frozen --no-cache && uv pip install -e lib/ssh-library --no-deps
 
 # 7. 필요한 소스 코드 복사
 COPY --chown=appuser:appgroup run/ ./run/
