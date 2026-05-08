@@ -167,12 +167,15 @@ class PostgreSQLManager:
                 telegram_url, pdf_url, writer, mkt_tp, key, save_time
             ) VALUES %s
             ON CONFLICT (key) DO UPDATE SET
-                reg_dt       = EXCLUDED.reg_dt,
-                writer       = EXCLUDED.writer,
-                mkt_tp       = EXCLUDED.mkt_tp,
-                download_url = COALESCE(NULLIF(EXCLUDED.download_url,\'\'),  {table_name}.download_url),
-                telegram_url = COALESCE(NULLIF(EXCLUDED.telegram_url,\'\'), {table_name}.telegram_url),
-                pdf_url      = COALESCE(NULLIF(EXCLUDED.pdf_url,\'\'),       {table_name}.pdf_url)
+                sec_firm_order      = EXCLUDED.sec_firm_order,
+                firm_nm             = EXCLUDED.firm_nm,
+                article_title       = EXCLUDED.article_title,
+                reg_dt              = EXCLUDED.reg_dt,
+                writer              = EXCLUDED.writer,
+                mkt_tp              = EXCLUDED.mkt_tp,
+                download_url        = COALESCE(NULLIF(EXCLUDED.download_url,\'\\'),  {table_name}.download_url),
+                telegram_url        = COALESCE(NULLIF(EXCLUDED.telegram_url,\'\\'), {table_name}.telegram_url),
+                pdf_url             = COALESCE(NULLIF(EXCLUDED.pdf_url,\'\\'),       {table_name}.pdf_url)
             RETURNING (xmax = 0) AS inserted
         '''
 
