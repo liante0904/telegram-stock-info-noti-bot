@@ -72,6 +72,24 @@ async def enrich_data():
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in update_records if r.get('telegram_url')]
                     if tasks: await asyncio.gather(*tasks)
+
+                    # 추가: upload/ fallback URL을 가진 레코드들도 소량씩 재처리
+                    fallback_records = db._fetchall("""
+                        SELECT report_id, article_title, telegram_url, article_url, reg_dt, key
+                        FROM tbl_sec_reports
+                        WHERE sec_firm_order = 0
+                          AND telegram_url LIKE 'https://www.ls-sec.co.kr/upload/%%'
+                          AND key IS NOT NULL AND key != ''
+                        ORDER BY save_time DESC
+                        LIMIT 10
+                    """)
+                    if fallback_records:
+                        logger.info(f"[LS] upload/ fallback {len(fallback_records)}건 재처리 시도...")
+                        fixed = await LS_detail(articles=fallback_records, firm_info=firm_info)
+                        fix_tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in fixed if r.get('telegram_url', '').startswith('https://msg.ls-sec.co.kr/')]
+                        if fix_tasks:
+                            await asyncio.gather(*fix_tasks)
+                            logger.success(f"[LS] fallback {len(fix_tasks)}건 msg URL로 복구 완료")
                 elif sec_firm_order == 11:  # DS
                     # 트리거가 자동으로 처리하므로 별도 로직 불필요
                     pass
