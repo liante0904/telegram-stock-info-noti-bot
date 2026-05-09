@@ -23,6 +23,7 @@ dependencies = [
     "selenium>=4.41.0",
     "wget>=3.2",
     "webdriver-manager>=4.0.2",
+    "questionary>=2.1.1",
 ]
 
 [dependency-groups]

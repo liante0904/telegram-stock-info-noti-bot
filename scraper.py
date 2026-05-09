@@ -86,7 +86,7 @@ async def enrich_data():
                         FROM tbl_sec_reports
                         WHERE sec_firm_order = 0
                           AND telegram_url LIKE 'https://www.ls-sec.co.kr/upload/%%'
-                          AND save_time >= NOW() - INTERVAL '1 day'
+                          AND save_time::timestamp >= NOW() - INTERVAL '1 day'
                           AND key IS NOT NULL AND key != ''
                         ORDER BY save_time DESC
                         LIMIT 50
