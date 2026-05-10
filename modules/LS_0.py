@@ -67,6 +67,22 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2)
     if skip_boards is None:
         skip_boards = set()
 
+    # ── WARP warm-up: SOCKS5 터널 선연결로 첫 요청 SSL EOF 방지 ──
+    warm_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    for _ in range(3):
+        try:
+            requests.get("https://www.ls-sec.co.kr/", headers=warm_headers,
+                         proxies=PROXIES, verify=False, timeout=20)
+            logger.debug("LS WARP warm-up 완료")
+            break
+        except Exception:
+            time.sleep(2)
+    else:
+        logger.warning("LS WARP warm-up 실패 (스크래핑 계속 진행)")
+
     # ── 페이지 순회 (기본 1~2페이지) ──
     for p in range(page, page + max_pages):
         if p == 1:
