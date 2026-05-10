@@ -167,7 +167,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2)
     # ── DB 키 조회 → 신규 레코드만 필터 ──
     if json_data_list:
         db = get_db()
-        existing_keys = db.fetch_existing_keys(sec_firm_order=sec_firm_order, days_limit=90)
+        existing_keys = db.fetch_existing_keys(sec_firm_order=sec_firm_order, days_limit=None)
         new_articles = [a for a in json_data_list if a.get("key") and a["key"] not in existing_keys]
         skipped = len(json_data_list) - len(new_articles)
         if skipped:
@@ -592,8 +592,9 @@ async def reconstruct_msg_url_from_db(article, headers):
             return None
 
         candidates = []
-        # 날짜: ±LS_SEARCH_DAYS
-        for day_offset in range(-LS_SEARCH_DAYS, LS_SEARCH_DAYS + 1):
+        # 날짜: 당일 → 미래 → 과거 순서로 탐색 (보고서는 게시일 이후 업로드가 일반적)
+        day_offsets = [0] + list(range(1, LS_SEARCH_DAYS + 1)) + list(range(-1, -LS_SEARCH_DAYS - 1, -1))
+        for day_offset in day_offsets:
             test_date = (base_date + timedelta(days=day_offset)).strftime("%Y%m%d")
             # seq: 예상값 기준 ±50, 최소 1
             for seq_offset in range(-50, 51):

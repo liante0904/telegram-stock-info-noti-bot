@@ -144,7 +144,7 @@ def build_probe_urls(reg_dt: str, emp_id: str, history: list) -> list[str]:
     seqs = sorted(range(max(1, est_seq - spread), est_seq + spread + 1),
                   key=lambda x: abs(x - est_seq))
     urls = []
-    for delta in (0, -1, 1):
+    for delta in (0, 1, -1):  # 당일 → 다음날 → 전날 순서 (보고서는 게시일 이후 업로드가 일반적)
         try:
             d = (datetime.strptime(reg_dt, "%Y%m%d") +
                  timedelta(days=delta)).strftime("%Y%m%d")
