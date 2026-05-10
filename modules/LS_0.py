@@ -380,7 +380,7 @@ async def LS_detail(articles, firm_info=None, db=None):
         async with semaphore:
             await process_article(session, article, headers, db=db)
             import random
-            await asyncio.sleep(random.uniform(2.5, 4.5))
+            await asyncio.sleep(random.uniform(5.0, 8.0))
 
     async with aiohttp.ClientSession() as session:
         tasks = [sem_process_article(session, article) for article in articles]
@@ -400,6 +400,24 @@ async def LS_detailAll(articles=None, firm_info=None):
     target_articles = [a for a in articles if not str(a.get('telegram_url', '')).lower().endswith('.pdf')]
     if not target_articles:
         return articles
+
+    # ── WARP warm-up (상세 페이지 fetch()에서도 첫 연결 SSL EOF 방지) ──
+    warm_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    for _ in range(3):
+        try:
+            await asyncio.to_thread(
+                lambda: requests.get("https://www.ls-sec.co.kr/", headers=warm_headers,
+                                     proxies=PROXIES, verify=False, timeout=20)
+            )
+            logger.debug("LS_detail WARP warm-up 완료")
+            break
+        except Exception:
+            await asyncio.sleep(2)
+    else:
+        logger.warning("LS_detail WARP warm-up 실패 (계속 진행)")
 
     logger.info(f"총 {len(target_articles)}개의 LS 레포트에 대해 상세 정보를 추출합니다.")
     # process_article 내에서 건별 DB 업데이트가 이루어지므로 LS_detail에 db 전달
