@@ -380,7 +380,7 @@ async def LS_detail(articles, firm_info=None, db=None):
         async with semaphore:
             await process_article(session, article, headers, db=db)
             import random
-            await asyncio.sleep(random.uniform(5.0, 8.0))
+            await asyncio.sleep(random.uniform(15.0, 20.0))
 
     async with aiohttp.ClientSession() as session:
         tasks = [sem_process_article(session, article) for article in articles]
