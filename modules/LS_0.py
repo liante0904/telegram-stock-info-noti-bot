@@ -42,12 +42,12 @@ def get_soup_with_warp(url, headers):
     global USE_WARP_ONLY
     for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
-            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=30)
+            response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=50)
             response.raise_for_status()
             return BeautifulSoup(response.content, "html.parser")
         except Exception as e:
             if attempt < LS_WARP_RETRIES:
-                time.sleep(attempt)
+                time.sleep(attempt * 5)
             else:
                 logger.error(f"LS WARP 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
                 return None
@@ -84,7 +84,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2)
             soup = None
 
             import random
-            time.sleep(random.uniform(1.0, 2.0))
+            time.sleep(random.uniform(10.0, 15.0))
 
             firm_info = FirmInfo(
                 sec_firm_order=sec_firm_order,
@@ -98,7 +98,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2)
             else:
                 for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
                     try:
-                        resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+                        resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=30)
                         resp.raise_for_status()
                         soup = BeautifulSoup(resp.content, "html.parser")
                         soupList = soup.select('#contents > table > tbody > tr')
@@ -206,7 +206,7 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
         for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
             try:
                 def sync_get_direct():
-                    response = requests.get(url, headers=headers, verify=False, timeout=10)
+                    response = requests.get(url, headers=headers, verify=False, timeout=30)
                     response.raise_for_status()
                     return response.text
                 return await loop.run_in_executor(None, sync_get_direct)
@@ -223,13 +223,13 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
     for attempt in range(1, LS_WARP_RETRIES + 1):
         try:
             def sync_get_warp():
-                response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=30)
+                response = requests.get(url, headers=headers, proxies=PROXIES, verify=False, timeout=50)
                 response.raise_for_status()
                 return response.text
             return await loop.run_in_executor(None, sync_get_warp)
         except Exception as e:
             if attempt < LS_WARP_RETRIES:
-                await asyncio.sleep(1 * attempt)
+                await asyncio.sleep(3 * attempt)
             else:
                 logger.error(f"LS WARP 상세 요청 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
                 return None
