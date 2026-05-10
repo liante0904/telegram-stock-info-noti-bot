@@ -232,11 +232,13 @@ class PostgreSQLManager:
         sql = f"""
         SELECT report_id,sec_firm_order,article_board_order,firm_nm,reg_dt,
                article_title,article_url,main_ch_send_yn,
-               download_url,writer,save_time,telegram_url,key
+               download_url,writer,save_time,telegram_url,key,pdf_url
         FROM   {self.main_table_name}
         WHERE  sec_firm_order = 0
-          AND  (telegram_url NOT LIKE \'%.pdf\'
-                OR telegram_url IS NULL OR telegram_url = \'\')
+          AND  (telegram_url IS NULL OR telegram_url = \'\'
+                OR (telegram_url NOT LIKE \'https://msg.%\'
+                    AND telegram_url NOT LIKE \'https://nls-%\'))
+          ORDER BY reg_dt DESC , report_id DESC
         """
         return self._fetchall(sql)
 

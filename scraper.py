@@ -37,7 +37,7 @@ from modules.TOSSinvest_15 import TOSSinvest_checkNewArticle
 from modules.Leading_16 import Leading_checkNewArticle
 from modules.Daeshin_17 import Daeshin_checkNewArticle
 from modules.iMfnsec_18 import iMfnsec_checkNewArticle
-from modules.DBfi_19 import DBfi_checkNewArticle
+from modules.DBfi_19 import DBfi_checkNewArticle, DBfi_detail
 from modules.MERITZ_20 import MERITZ_checkNewArticle
 from modules.Hanwhawm_21 import Hanwha_checkNewArticle
 from modules.Hygood_22 import Hanyang_checkNewArticle
@@ -74,7 +74,29 @@ async def enrich_data():
             logger.info(f"[{firm_name}] Found {len(records)} records for enrichment (최근 3일).")
             try:
                 if sec_firm_order == 19:  # DB증권
-                    pass
+                    update_records = await DBfi_detail(articles=records, firm_info=firm_info, db=db)
+                    # DBfi_detail 내부에서 건별 DB 업데이트를 이미 수행함
+                    success_count = sum(1 for r in update_records if r.get('telegram_url', '').startswith('https://whub.dbsec.co.kr/pv/gate'))
+                    if success_count:
+                        logger.success(f"[DBfi] {success_count}/{len(update_records)}건 gate URL 복구 완료")
+
+                    # 유휴시간(20시~06시) 전체 backlog 정리
+                    if is_idle_time:
+                        backlog = db._fetchall('''
+                            SELECT report_id, article_title, writer, telegram_url, article_url, reg_dt, key
+                            FROM tbl_sec_reports
+                            WHERE sec_firm_order = 19
+                              AND (telegram_url IS NULL OR telegram_url = ''
+                                   OR telegram_url NOT LIKE 'https://whub.dbsec.co.kr/pv/gate%%')
+                              AND key IS NOT NULL AND key != ''
+                            ORDER BY save_time DESC
+                            LIMIT 200
+                        ''')
+                        if backlog:
+                            logger.info(f"[DBfi][유휴] 전체 backlog {len(backlog)}건 재처리...")
+                            fixed = await DBfi_detail(articles=backlog, firm_info=firm_info, db=db)
+                            fixed_count = sum(1 for r in fixed if r.get('telegram_url', '').startswith('https://whub.dbsec.co.kr/pv/gate'))
+                            logger.success(f"[DBfi][유휴] {fixed_count}/{len(backlog)}건 gate URL 복구 완료")
                 elif sec_firm_order == 0:  # LS
                     update_records = await LS_detail(articles=records, firm_info=firm_info)
                     tasks = [db.update_telegram_url(r['report_id'], r['telegram_url'], r.get('article_title'), pdf_url=r.get('pdf_url') or r['telegram_url']) for r in update_records if r.get('telegram_url')]

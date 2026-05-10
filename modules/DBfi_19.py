@@ -8,6 +8,9 @@ import os
 import sys
 import urllib.parse as urlparse
 from loguru import logger
+import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from models.FirmInfo import FirmInfo
@@ -29,6 +32,15 @@ ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.set_ciphers("DEFAULT")
+
+# WARP 프록시 설정 (LS와 동일)
+SOCKS_PROXY = os.getenv("SOCKS_PROXY_URL", "socks5h://localhost:9091")
+PROXIES = {
+    'http': SOCKS_PROXY,
+    'https': SOCKS_PROXY
+}
+DBF_DIRECT_RETRIES = int(os.getenv("DBF_DIRECT_RETRIES", "2"))
+DBF_WARP_RETRIES = int(os.getenv("DBF_WARP_RETRIES", "3"))
 
 
 async def extract_dbfi_pdf_url(session, encoded_url):
@@ -266,6 +278,231 @@ async def fetch_detailed_url(articles):
                 )
             except Exception as e:
                 logger.error(f"Network or timeout error while fetching detailed URL ({key_url}): {e}")
+
+    return articles
+
+
+async def DBfi_detail(articles, firm_info=None, db=None):
+    """
+    DB증권 enrichment 전용 함수 (WARP 대응).
+    기존 DB 레코드의 bad URL을 복구합니다.
+    - key URL → encoded_url → gate_url + pdf_url
+    - 건별 DB 업데이트 (db 파라미터 전달 시)
+    - 직접 접속 실패 시 WARP SOCKS5 프록시 fallback
+    """
+    if not articles:
+        return []
+
+    import time
+    loop = asyncio.get_event_loop()
+
+    def _request_sync(url, headers, data=None, use_warp=False):
+        """sync POST 요청 (직접 or WARP)"""
+        kwargs = dict(headers=headers, verify=False, timeout=20)
+        if use_warp:
+            kwargs['proxies'] = PROXIES
+            kwargs['timeout'] = 30
+        try:
+            resp = requests.post(url, data=data, **kwargs)
+            resp.raise_for_status()
+            return resp
+        except Exception:
+            return None
+
+    def _fetch_key_url_sync(key_url):
+        """key URL POST → encoded_url (직접→WARP fallback)"""
+        for attempt in range(1, DBF_DIRECT_RETRIES + 1):
+            resp = _request_sync(key_url, HEADERS_TEMPLATE)
+            if resp:
+                try:
+                    data = resp.json()
+                    return data.get("data", {}).get("url", "")
+                except Exception:
+                    pass
+            if attempt < DBF_DIRECT_RETRIES:
+                time.sleep(attempt)
+        for attempt in range(1, DBF_WARP_RETRIES + 1):
+            resp = _request_sync(key_url, HEADERS_TEMPLATE, use_warp=True)
+            if resp:
+                try:
+                    data = resp.json()
+                    return data.get("data", {}).get("url", "")
+                except Exception:
+                    pass
+            if attempt < DBF_WARP_RETRIES:
+                time.sleep(attempt)
+        return ""
+
+    def _extract_doc_id_from_html(html_text):
+        """HTML에서 doc_id 추출 (8가지 패턴)"""
+        patterns = [
+            r'<div[^>]*id="([^"]+)"[^>]*class="item"',
+            r'<div[^>]*class="item"[^>]*id="([^"]+)"',
+            r'docId["\']\s*:\s*["\']([^"\']+)["\']',
+            r'/streamdocs/v4/documents/([a-zA-Z0-9_-]+)',
+            r'data-docid["\']?\s*=\s*["\']([^"\']+)["\']',
+            r'location\.href\s*[=]\s*["\'].*?doc[Ii][Dd]=([^"\'&]+)',
+            r'openDoc\s*\(\s*["\']([^"\']+)["\']',
+            r'https?://[^"\']*?streamdocs[^"\']*?documents/([a-zA-Z0-9_-]+)',
+        ]
+        for pat in patterns:
+            m = re.search(pat, html_text)
+            if m:
+                return m.group(1)
+        return None
+
+    def _extract_pdf_sync(encoded_url):
+        """gate/viewer flow - 3단계 전략"""
+        if not encoded_url:
+            return None
+        import base64
+        token = urlparse.unquote(encoded_url)
+        gate_q = urlparse.quote(token, safe="")
+        gate_url = f"{VIEWER_BASE}/pv/gate?q={gate_q}"
+
+        pv_headers = {
+            "User-Agent": HEADERS_TEMPLATE["User-Agent"],
+            "Content-Type": HEADERS_TEMPLATE["Content-Type"],
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Referer": gate_url,
+        }
+
+        def _do_extract(use_warp=False):
+            kwargs = dict(headers=pv_headers, verify=False, timeout=30)
+            if use_warp:
+                kwargs['proxies'] = PROXIES
+                kwargs['timeout'] = 45
+            try:
+                s = requests.Session()
+
+                gate_resp = None
+                try:
+                    gk = dict(headers=pv_headers, verify=False, timeout=15)
+                    if use_warp:
+                        gk['proxies'] = PROXIES
+                    gate_resp = s.get(gate_url, **gk)
+                except Exception:
+                    pass
+
+                s.post(f"{VIEWER_BASE}/pv/auth", **kwargs)
+
+                payload = {"q": token, "c": "", "target": "", "docId": ""}
+                vr = s.post(f"{VIEWER_BASE}/pv/viewer", data=payload, **kwargs)
+                html = vr.text if vr.status_code == 200 else ""
+                html_len = len(html)
+
+                # 전략 A: viewer HTML
+                doc_id = _extract_doc_id_from_html(html) if html else None
+
+                # 전략 B: viewer 짧으면 gate 응답
+                if not doc_id and html_len < 3000 and gate_resp and gate_resp.status_code == 200:
+                    doc_id = _extract_doc_id_from_html(gate_resp.text)
+                    if doc_id:
+                        logger.info(f"  ✓ doc_id from gate response (viewer_short={html_len}): {doc_id}")
+
+                # 전략 C: base64 토큰 → streamdocs 직접 HEAD
+                if not doc_id:
+                    try:
+                        decoded = base64.b64decode(token).decode('utf-8', errors='replace')
+                        clean_id = re.sub(r'[^a-zA-Z0-9_-]', '', decoded)
+                        if len(clean_id) >= 10:
+                            test_url = f"{VIEWER_BASE}/streamdocs/v4/documents/{clean_id}"
+                            hd = dict(headers=pv_headers, verify=False, timeout=10)
+                            if use_warp:
+                                hd['proxies'] = PROXIES
+                            tr = requests.head(test_url, **hd)
+                            if tr.status_code == 200:
+                                doc_id = clean_id
+                                logger.info(f"  ✓ doc_id from base64 token: {doc_id}")
+                    except Exception:
+                        pass
+
+                if not doc_id:
+                    logger.warning(f"  doc_id 미발견 (warp={use_warp}, html_len={html_len})")
+                    if html:
+                        logger.debug(f"  viewer HTML: {html[:2000]}")
+                    return {"gate_url": gate_url, "viewer_url": f"{VIEWER_BASE}/pv/viewer",
+                            "doc_id": "", "file_name": "", "pdf_url": gate_url}
+
+                pdf_url = f"{VIEWER_BASE}/streamdocs/v4/documents/{doc_id}"
+                logger.info(f"  ✓ doc_id={doc_id} (warp={use_warp})")
+                return {"gate_url": gate_url, "viewer_url": f"{VIEWER_BASE}/pv/viewer",
+                        "doc_id": doc_id, "file_name": "", "pdf_url": pdf_url}
+            except Exception as e:
+                logger.warning(f"  extract 예외 (warp={use_warp}): {e}")
+                return None
+
+        result = _do_extract(use_warp=False)
+        if result:
+            return result
+        return _do_extract(use_warp=True)
+
+    # ── Pass 1: key URL → gate_url (빠름) ──
+    pass1_ok = 0
+    for article in articles:
+        key_url = article.get("key")
+        if not key_url:
+            continue
+        try:
+            encoded_url = await loop.run_in_executor(None, _fetch_key_url_sync, key_url)
+            if not encoded_url:
+                continue
+
+            token = urlparse.unquote(encoded_url)
+            gate_q = urlparse.quote(token, safe="")
+            gate_url = f"{VIEWER_BASE}/pv/gate?q={gate_q}"
+
+            article["telegram_url"] = gate_url
+            article["pdf_url"] = gate_url
+            article["GATE_URL"] = gate_url
+            article["_token"] = encoded_url
+
+            if db and article.get('report_id'):
+                await db.update_telegram_url(
+                    record_id=article['report_id'],
+                    telegram_url=gate_url,
+                    article_title=article.get('article_title'),
+                    pdf_url=gate_url
+                )
+            logger.success(f"[DBfi][Pass1] gate_url 저장: {str(article.get('article_title', ''))[:40]}")
+            pass1_ok += 1
+            await asyncio.sleep(0.2)
+        except Exception as e:
+            logger.error(f"[DBfi][Pass1] 오류: {key_url} ({e})")
+
+    if pass1_ok:
+        logger.success(f"[DBfi][Pass1] 완료: {pass1_ok}/{len(articles)}건 gate_url 저장")
+
+    # ── Pass 2: gate_token → streamdocs pdf_url ──
+    pass2_ok = 0
+    for article in articles:
+        token = article.get("_token")
+        gate_url = article.get("GATE_URL")
+        if not token or not gate_url:
+            continue
+        try:
+            extracted = await loop.run_in_executor(None, _extract_pdf_sync, token)
+            if not extracted or not extracted.get("doc_id"):
+                continue
+
+            article["pdf_url"] = extracted["pdf_url"]
+            article["DOC_ID"] = extracted["doc_id"]
+
+            if db and article.get('report_id'):
+                await db.update_telegram_url(
+                    record_id=article['report_id'],
+                    telegram_url=gate_url,
+                    article_title=article.get('article_title'),
+                    pdf_url=extracted['pdf_url']
+                )
+            logger.success(f"[DBfi][Pass2] pdf_url 갱신: {extracted['pdf_url'][:60]}...")
+            pass2_ok += 1
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            logger.error(f"[DBfi][Pass2] 오류: {e}")
+
+    if pass2_ok:
+        logger.success(f"[DBfi][Pass2] 완료: {pass2_ok}건 pdf_url streamdocs로 갱신")
 
     return articles
 

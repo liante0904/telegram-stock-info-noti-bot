@@ -214,7 +214,7 @@ async def fetch(session: ClientSession, url: str, headers: dict) -> str:
                 logger.error(f"LS WARP 상세 요청 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
                 return None
 
-async def process_article(session: ClientSession, article: dict, headers: dict):
+async def process_article(session: ClientSession, article: dict, headers: dict, db=None):
     TARGET_URL = article["key"]
 
     if ".pdf" in TARGET_URL:
@@ -222,6 +222,15 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
         article["telegram_url"] = TARGET_URL
         article["pdf_url"] = TARGET_URL
         article["download_url"] = TARGET_URL
+        # 건별 업데이트: PDF URL이 곧바로 확정되었으면 즉시 DB 반영
+        if db and article.get('report_id'):
+            await db.update_telegram_url(
+                record_id=article['report_id'],
+                telegram_url=TARGET_URL,
+                article_title=article.get('article_title'),
+                pdf_url=TARGET_URL
+            )
+            logger.debug(f"[건별업데이트] report_id={article['report_id']}: PDF 직접 URL → DB 반영")
         return
 
     html_content = await fetch(session, TARGET_URL, headers)
@@ -241,33 +250,51 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
 
             if th_text == "제목":
                 article["article_title"] = td_text
+            elif th_text == "필명":
+                # 상세 페이지에서 writer 확보 → reconstruct_msg_url_from_db()에서 emp_id 추론 가능
+                if td_text:
+                    article["writer"] = td_text
+                    logger.debug(f"[LS][필명추출] writer={td_text}")
             elif th_text == "첨부파일":
-                attach_tag = tr.select_one("td.attach a")
-                if attach_tag:
-                    article["ATTACH_FILE_NAME"] = attach_tag.get_text(strip=True)
-
                 # ── URL 해결 전략 (3단계) ──
-                # 1순위: img alt 기반 CDN URL 탐색 (get_valid_url)
-                #   img alt 텍스트(예: "홍길동_20260508")에서 파일명 추출 → msg.ls-sec.co.kr probing
-                #   ※ 실제 CDN 패턴은 K_{date}_{emp_id}_{seq}.pdf 이므로 img alt 기반은 잘 안 맞음
+                # 1순위: 업로드 파일명 직접 파싱 → CDN URL (가장 빠름)
+                #   upload filename: {emp_id}_{seq}_{date}.ext → K_{date}_{emp_id}_{seq}.pdf
                 resolved_url = None
 
-                img = soup.select_one("#contents > div.tbViewCon > div > html > body > p > img") or \
-                      soup.select_one("#contents > div.tbViewCon > div > p > img")
+                upload_name = ""
+                # 소스 A: 첨부파일 td a 텍스트
+                for a_tag in tr.select("td a"):
+                    txt = a_tag.get_text(strip=True)
+                    if re.search(r'\d+_\d+_\d{8}\.\w+$', txt):
+                        upload_name = txt
+                        break
+                # 소스 B: 본문 img alt → src basename
+                if not upload_name:
+                    img = soup.select_one(
+                        "#contents > div.tbViewCon > div > html > body > p > img, "
+                        "#contents > div.tbViewCon > div > p > img"
+                    )
+                    if img:
+                        upload_name = img.get("alt") or ""
+                        if not upload_name:
+                            upload_name = os.path.basename(img.get("src", ""))
 
-                if img:
-                    img_filename = img.get("alt") or img.get("src")
-                    if img_filename:
-                        name, extension = os.path.splitext(img_filename)
-                        match = re.search(r"_(\d{8})$", name)
-                        if match:
-                            date_part = match.group(1)
-                            new_name = re.sub(r"_(\d{8})$", "", name)
-                            new_filename = f"{date_part}_{new_name}.pdf"
-                            resolved_url = await get_valid_url(new_filename, date_part, article, headers)
+                if upload_name:
+                    article["ATTACH_FILE_NAME"] = upload_name
+                    direct_url = upload_filename_to_cdn_url(upload_name)
+                    if direct_url:
+                        try:
+                            resp = await asyncio.to_thread(
+                                lambda: requests.head(direct_url, headers=headers, proxies=PROXIES,
+                                                      verify=False, timeout=10)
+                            )
+                            if resp.status_code == 200:
+                                resolved_url = direct_url
+                                logger.info(f"[LS][직접파싱] CDN URL: {direct_url}")
+                        except Exception:
+                            pass
 
-                # 2순위: DB 기반 writer ID 추론 → 올바른 CDN URL(K_date_empId_seq.pdf) 생성
-                #   img 기반 URL이 없거나 msg./nls. 도메인이 아니면 writer 기반 재시도
+                # 2순위: DB 기반 writer ID 추론
                 if not resolved_url or not (resolved_url.startswith('https://msg.ls-sec.co.kr/') or
                                             resolved_url.startswith('https://nls-sec.co.kr/')):
                     db_url = await reconstruct_msg_url_from_db(article, headers)
@@ -275,7 +302,7 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                         resolved_url = db_url
                         logger.info(f"[LS][DB추론] msg URL 복구 성공: {db_url}")
 
-                # 3순위: upload/ fallback URL (www.ls-sec.co.kr/upload/...)
+                # 3순위: upload/ fallback URL
                 if not resolved_url:
                     resolved_url = await create_fallback_url(article, soup)
 
@@ -286,7 +313,17 @@ async def process_article(session: ClientSession, article: dict, headers: dict):
                 article["pdf_url"] = quoted
                 article["download_url"] = quoted
 
-async def LS_detail(articles, firm_info=None):
+                # 건별 업데이트: URL이 확정되면 즉시 DB 반영 (report_id가 있는 경우)
+                if db and quoted and article.get('report_id'):
+                    await db.update_telegram_url(
+                        record_id=article['report_id'],
+                        telegram_url=quoted,
+                        article_title=article.get('article_title'),
+                        pdf_url=quoted
+                    )
+                    logger.debug(f"[건별업데이트] report_id={article['report_id']}: {article.get('article_title')}")
+
+async def LS_detail(articles, firm_info=None, db=None):
     if isinstance(articles, dict):
         articles = [articles]
     elif isinstance(articles, str):
@@ -305,7 +342,7 @@ async def LS_detail(articles, firm_info=None):
 
     async def sem_process_article(session, article):
         async with semaphore:
-            await process_article(session, article, headers)
+            await process_article(session, article, headers, db=db)
             import random
             await asyncio.sleep(random.uniform(2.5, 4.5))
 
@@ -329,10 +366,13 @@ async def LS_detailAll(articles=None, firm_info=None):
         return articles
 
     logger.info(f"총 {len(target_articles)}개의 LS 레포트에 대해 상세 정보를 추출합니다.")
-    updated_articles = await LS_detail(target_articles, firm_info)
+    # process_article 내에서 건별 DB 업데이트가 이루어지므로 LS_detail에 db 전달
+    updated_articles = await LS_detail(target_articles, firm_info, db=db)
     
+    # 안전망: 건별 업데이트가 처리하지 못한 건들 (report_id 없는 경우 등) 후처리
     for article in updated_articles:
-        if article.get('telegram_url') and str(article.get('telegram_url')).lower().endswith('.pdf'):
+        if article.get('telegram_url') and article.get('report_id') \
+           and str(article.get('telegram_url')).lower().endswith('.pdf'):
             await db.update_telegram_url(
                 record_id=article['report_id'], 
                 telegram_url=article['telegram_url'],
@@ -343,6 +383,23 @@ async def LS_detailAll(articles=None, firm_info=None):
             
     return updated_articles
 
+def upload_filename_to_cdn_url(upload_url_or_name: str) -> str | None:
+    """
+    upload URL(or filename)에서 emp_id, seq, date를 추출하여 CDN URL로 변환.
+
+    upload filename 패턴: {emp_id}_{seq}_{date}.ext
+      예) 31565_327_20260504.PNG → K_20260504_31565_327.pdf
+
+    run/fix_ls_db.py 등에서도 재사용 가능.
+    """
+    basename = os.path.basename(upload_url_or_name)
+    m = re.match(r'^(\d+)_(\d+)_(\d{8})\.', basename)
+    if m:
+        emp_id, seq, date_str = m.group(1), m.group(2), m.group(3)
+        return f"https://msg.ls-sec.co.kr/eum/K_{date_str}_{emp_id}_{seq}.pdf"
+    return None
+
+
 async def get_valid_url(new_filename, date_part, article, headers):
     base_url = "https://msg.ls-sec.co.kr/eum/K_{filename}"
     try:
@@ -350,20 +407,36 @@ async def get_valid_url(new_filename, date_part, article, headers):
     except ValueError:
         return await create_fallback_url(article, None)
 
-    # 탐색 범위를 전후 LS_SEARCH_DAYS일로 확대 (작성일과 서버 업로드일 차이 대응)
+    # 탐색 범위를 전후 LS_SEARCH_DAYS일로 확대
     date_range = [date_obj + timedelta(days=i) for i in range(-LS_SEARCH_DAYS, LS_SEARCH_DAYS + 1)]
+
+    # 병렬 HEAD probing (최대 5개 동시 요청으로 rate limit 방지)
+    sem = asyncio.Semaphore(5)
+    async def check_url(test_url: str) -> str | None:
+        async with sem:
+            try:
+                response = await asyncio.to_thread(
+                    lambda: requests.get(test_url, headers=headers, verify=False,
+                                         proxies=PROXIES, timeout=15)
+                )
+                if response.status_code == 200:
+                    return test_url
+            except Exception:
+                pass
+            return None
+
+    tasks = []
     for test_date in date_range:
         test_date_str = test_date.strftime("%Y%m%d")
         test_filename = new_filename.replace(date_part, test_date_str)
         test_url = base_url.format(filename=test_filename)
+        tasks.append(check_url(test_url))
 
-        try:
-            response = requests.get(test_url, headers=headers, verify=False, proxies=PROXIES, timeout=15)
-            if response.status_code == 200:
-                logger.debug(f"Valid URL found: {test_url}")
-                return test_url
-        except Exception:
-            pass
+    results = await asyncio.gather(*tasks)
+    for url in results:
+        if url:
+            logger.debug(f"Valid URL found: {url}")
+            return url
 
     return await create_fallback_url(article, None)
 
