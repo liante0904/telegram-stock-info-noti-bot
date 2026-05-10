@@ -172,7 +172,7 @@ async def fix_ls_urls():
         LIMIT 500
     """)
     total = len(records)
-    upload_count = sum(1 for r in records if r.get('telegram_url', '').startswith('https://www.ls-sec.co.kr/upload/'))
+    upload_count = sum(1 for r in records if (r.get('telegram_url') or '').startswith('https://www.ls-sec.co.kr/upload/'))
     empty_count = total - upload_count
     logger.info(f"복구 대상: {total}건 (upload/ fallback {upload_count}건, 빈 문자열 {empty_count}건)")
 
@@ -230,7 +230,7 @@ async def fix_ls_urls():
         # ── 1순위: detail 페이지 재방문 (LS_detail) ──
         try:
             result = await LS_detail([art])
-            if result and result[0].get('telegram_url', '').startswith('https://msg.ls-sec.co.kr/'):
+            if result and (result[0].get('telegram_url') or '').startswith('https://msg.ls-sec.co.kr/'):
                 new_url = result[0]['telegram_url']
                 ok = await db.update_telegram_url(
                     record_id=rid,
