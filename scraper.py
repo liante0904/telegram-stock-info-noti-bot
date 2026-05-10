@@ -224,9 +224,20 @@ async def run_async_scrapers(async_funcs, total_data):
 async def main(date_str=None):
     logger.info("=================== SCRAPER START ===================")
     total_data = []
+    db = get_db()
     
+    # ── LS증권: 목록 2p 스크래핑 → DB 키 비교 → 신규만 detail ──
+    ls_articles = LS_checkNewArticle()
+    if ls_articles:
+        logger.info(f"[LS] 신규 {len(ls_articles)}건 detail 추출 시작")
+        enriched = await LS_detail(ls_articles, db=db)
+        for a in enriched:
+            if a.get("telegram_url"):
+                total_data.append(a)
+        logger.success(f"[LS] {len(enriched)}건 detail 완료")
+
     sync_funcs = [
-        LS_checkNewArticle, Miraeasset_checkNewArticle, Sks_checkNewArticle, 
+        Miraeasset_checkNewArticle, Sks_checkNewArticle, 
         Samsung_checkNewArticle, Shinyoung_checkNewArticle, Hmsec_checkNewArticle,
         TOSSinvest_checkNewArticle, DS_checkNewArticle
     ]
@@ -251,7 +262,6 @@ async def main(date_str=None):
     if total_data:
         unique = { d.get("key"): d for d in total_data if d.get("key") }
         total_list = list(unique.values())
-        db = get_db()
         try:
             ins, upd = db.insert_json_data_list(total_list)
             logger.success(f"DB Sync: {ins} new, {upd} updated.")

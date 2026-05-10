@@ -52,7 +52,11 @@ def get_soup_with_warp(url, headers):
                 logger.error(f"LS WARP 최종 실패 (시도 {attempt}/{LS_WARP_RETRIES}): {url} ({e})")
                 return None
 
-def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
+def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2):
+    """LS 증권 목록 스크래핑 + DB 키 비교 → 신규 레코드만 반환.
+
+    max_pages: 스크래핑할 페이지 수 (기본 2페이지까지 긁음)
+    """
     global USE_WARP_ONLY
     sec_firm_order = 0
     json_data_list = []
@@ -60,100 +64,116 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None):
 
     base_urls = config.get_urls("LS_0")
     
-    # page가 1이거나 None이면 파라미터 제외, 그 외에만 currPage 추가
-    if not page or str(page) == '1':
-        TARGET_URL_TUPLE = tuple(base_urls)
-    else:
-        TARGET_URL_TUPLE = tuple(f"{url}&currPage={page}" for url in base_urls)
-
     if skip_boards is None:
         skip_boards = set()
 
-    for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
-        if article_board_order in skip_boards:
-            continue
-
-        soupList = []
-        soup = None
-
-        import random
-        time.sleep(random.uniform(1.0, 2.0))
-
-        firm_info = FirmInfo(
-            sec_firm_order=sec_firm_order,
-            article_board_order=article_board_order
-        )
-
-        # 1차 시도: 직접 접속. OCI 대역 차단 가능성이 있어 짧게 2회만 확인 후 WARP로 넘긴다.
-        # 이미 이전에 직접 접속이 실패한 적이 있다면 즉시 soup = None으로 처리하여 WARP로 넘어가게 함.
-        direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
-        if USE_WARP_ONLY:
-            soup = None
+    # ── 페이지 순회 (기본 1~2페이지) ──
+    for p in range(page, page + max_pages):
+        if p == 1:
+            TARGET_URL_TUPLE = tuple(base_urls)
         else:
-            for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
-                try:
-                    resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
-                    resp.raise_for_status()
-                    soup = BeautifulSoup(resp.content, "html.parser")
-                    soupList = soup.select('#contents > table > tbody > tr')
-                    break
-                except Exception as e:
-                    soup = None
-                    if direct_attempt < LS_DIRECT_RETRIES:
-                        logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
-                        time.sleep(direct_attempt)
-            
-            # 직접 접속 시도가 모두 실패하면 이후부터는 WARP만 사용하도록 설정
-            if soup is None:
-                logger.warning(f"LS 직접 접속 실패로 이후 모든 요청은 WARP를 사용합니다: {TARGET_URL}")
-                USE_WARP_ONLY = True
+            TARGET_URL_TUPLE = tuple(f"{url}&currPage={p}" for url in base_urls)
 
-        if soup is None:
-            soup = get_soup_with_warp(TARGET_URL, direct_headers)
-            if soup:
-                soupList = soup.select('#contents > table > tbody > tr')
-            else:
-                skip_boards.add(article_board_order)
+        page_has_articles = False
 
-        logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판... (Found {len(soupList)} articles)")
-
-        if not soupList and not is_imported:
-            continue
-
-        for list_item in soupList:
-            try:
-                writer = list_item.select('td')[2].get_text().strip()
-                str_date = list_item.select('td')[3].get_text().strip()
-                a_tag = list_item.select_one('a')
-                if not a_tag: continue
-
-                # KEY값에서 &currPage=1 부분만 정확히 제거 (공백 처리)
-                raw_href = a_tag['href'].replace("amp;", "")
-                LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + raw_href
-                LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL).replace("&currPage=1", "")
-                
-                title_text = a_tag.get_text().strip()
-                LIST_ARTICLE_TITLE = title_text[title_text.find("]")+1:].strip()
-
-                json_data_list.append({
-                    "sec_firm_order": sec_firm_order,
-                    "article_board_order": article_board_order,
-                    "firm_nm": firm_info.get_firm_name(),
-                    "reg_dt": re.sub(r"[-./]", "", str_date),
-                    "article_url": '',
-                    "download_url": '',
-                    "telegram_url": '',
-                    "pdf_url": '',
-                    "writer": writer,
-                    "key": LIST_ARTICLE_URL,
-                    "article_title": LIST_ARTICLE_TITLE,
-                    "save_time": datetime.now().isoformat()
-                })
-            except Exception as e:
-                logger.error(f"Error parsing LS article row: {e}")
+        for article_board_order, TARGET_URL in enumerate(TARGET_URL_TUPLE):
+            if article_board_order in skip_boards:
                 continue
 
+            soupList = []
+            soup = None
+
+            import random
+            time.sleep(random.uniform(1.0, 2.0))
+
+            firm_info = FirmInfo(
+                sec_firm_order=sec_firm_order,
+                article_board_order=article_board_order
+            )
+
+            # 1차 시도: 직접 접속
+            direct_headers = SyncWebScraper(TARGET_URL, firm_info).headers
+            if USE_WARP_ONLY:
+                soup = None
+            else:
+                for direct_attempt in range(1, LS_DIRECT_RETRIES + 1):
+                    try:
+                        resp = requests.get(TARGET_URL, headers=direct_headers, verify=False, timeout=10)
+                        resp.raise_for_status()
+                        soup = BeautifulSoup(resp.content, "html.parser")
+                        soupList = soup.select('#contents > table > tbody > tr')
+                        break
+                    except Exception as e:
+                        soup = None
+                        if direct_attempt < LS_DIRECT_RETRIES:
+                            logger.info(f"LS 직접 접속 실패 {direct_attempt}/{LS_DIRECT_RETRIES}, 재시도: {TARGET_URL} ({e})")
+                            time.sleep(direct_attempt)
+                
+                if soup is None:
+                    logger.warning(f"LS 직접 접속 실패로 이후 모든 요청은 WARP를 사용합니다: {TARGET_URL}")
+                    USE_WARP_ONLY = True
+
+            if soup is None:
+                soup = get_soup_with_warp(TARGET_URL, direct_headers)
+                if soup:
+                    soupList = soup.select('#contents > table > tbody > tr')
+                else:
+                    skip_boards.add(article_board_order)
+
+            logger.info(f"{firm_info.get_firm_name()}의 {firm_info.get_board_name()} 게시판 p.{p}... (Found {len(soupList)} articles)")
+
+            if not soupList and not is_imported:
+                continue
+
+            page_has_articles = True
+
+            for list_item in soupList:
+                try:
+                    writer = list_item.select('td')[2].get_text().strip()
+                    str_date = list_item.select('td')[3].get_text().strip()
+                    a_tag = list_item.select_one('a')
+                    if not a_tag: continue
+
+                    raw_href = a_tag['href'].replace("amp;", "")
+                    LIST_ARTICLE_URL = 'https://www.ls-sec.co.kr/EtwFrontBoard/' + raw_href
+                    LIST_ARTICLE_URL = clean_url(LIST_ARTICLE_URL).replace("&currPage=1", "")
+                    
+                    title_text = a_tag.get_text().strip()
+                    LIST_ARTICLE_TITLE = title_text[title_text.find("]")+1:].strip()
+
+                    json_data_list.append({
+                        "sec_firm_order": sec_firm_order,
+                        "article_board_order": article_board_order,
+                        "firm_nm": firm_info.get_firm_name(),
+                        "reg_dt": re.sub(r"[-./]", "", str_date),
+                        "article_url": '',
+                        "download_url": '',
+                        "telegram_url": '',
+                        "pdf_url": '',
+                        "writer": writer,
+                        "key": LIST_ARTICLE_URL,
+                        "article_title": LIST_ARTICLE_TITLE,
+                        "save_time": datetime.now().isoformat()
+                    })
+                except Exception as e:
+                    logger.error(f"Error parsing LS article row: {e}")
+                    continue
+
+        if not page_has_articles:
+            break  # 빈 페이지면 다음 페이지 없음
+
     gc.collect()
+
+    # ── DB 키 조회 → 신규 레코드만 필터 ──
+    if json_data_list:
+        db = get_db()
+        existing_keys = db.fetch_existing_keys(sec_firm_order=sec_firm_order, days_limit=14)
+        new_articles = [a for a in json_data_list if a.get("key") and a["key"] not in existing_keys]
+        skipped = len(json_data_list) - len(new_articles)
+        if skipped:
+            logger.info(f"[LS] {skipped}건 기존 등록, 신규 {len(new_articles)}건")
+        return new_articles
+
     return json_data_list
 
 def clean_url(url):
