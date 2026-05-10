@@ -167,7 +167,7 @@ def LS_checkNewArticle(page=1, is_imported=False, skip_boards=None, max_pages=2)
     # ── DB 키 조회 → 신규 레코드만 필터 ──
     if json_data_list:
         db = get_db()
-        existing_keys = db.fetch_existing_keys(sec_firm_order=sec_firm_order, days_limit=14)
+        existing_keys = db.fetch_existing_keys(sec_firm_order=sec_firm_order, days_limit=90)
         new_articles = [a for a in json_data_list if a.get("key") and a["key"] not in existing_keys]
         skipped = len(json_data_list) - len(new_articles)
         if skipped:
